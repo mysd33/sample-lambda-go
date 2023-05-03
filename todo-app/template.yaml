@@ -55,11 +55,6 @@ Resources:
         Ref: ApplicationResourceGroup
       AutoConfigurationEnabled: 'true'
 
-# API Gatway Private APIサンプル参考情報
-# https://sun-blog.site/%E3%80%90aws%E3%80%91sam%E3%81%A7private-api%EF%BC%88api-gateway-lambda%EF%BC%89/#template.yaml
-# https://betterprogramming.pub/private-serverless-rest-api-with-lambda-using-sam-2eb31864b243
-# https://zenn.dev/kazu777/articles/2275dd27c3c9cd
-
 # Security Group for VPC Endpoint  
   PrivateAPISecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -99,13 +94,20 @@ Resources:
       EndpointConfiguration:
         Type: PRIVATE
         VPCEndpointIds:
-          - !Ref PrivateAPIVPCEndpoint      
-      DefinitionBody:
-        Fn::Transform:
-          Name: AWS::Include
-          Parameters:
-            Location: ./openapi.yaml
-      #TracingEnabled: true
+          - !Ref PrivateAPIVPCEndpoint
+      Auth:
+        ResourcePolicy:
+          CustomStatements: [{
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "execute-api:Invoke",
+            "Resource": "execute-api:/Prod/GET/hello",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpce": !Ref PrivateAPIVPCEndpoint
+              }                        
+            }
+          }]
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
@@ -113,8 +115,8 @@ Outputs:
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   HelloWorldAPI:
     Description: API Gateway endpoint URL for Prod environment for First Function
-    #Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
-    Value: !Sub "https://${HelloApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+    #Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello"
+    Value: !Sub "https://${HelloApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello"
   HelloWorldFunction:
     Description: First Lambda Function ARN
     Value: !GetAtt HelloWorldFunction.Arn

@@ -17,7 +17,6 @@ lint = true
 stack_name = "todo-app-stack"
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
-resolve_s3 = true
 s3_bucket = "mysd33bucket123sam"
 s3_prefix = "todo-app-stack"
 region = "ap-northeast-1"
@@ -25,7 +24,6 @@ image_repositories = []
 parameter_overrides = "StackPrefix=\"Demo\""
 
 [default.package.parameters]
-resolve_s3 = true
 
 [default.sync.parameters]
 watch = true

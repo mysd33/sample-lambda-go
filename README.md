@@ -43,7 +43,11 @@ aws cloudformation validate-template --template-body file://cfn-ngw.yaml
 aws cloudformation create-stack --stack-name Demo-NATGW-Stack --template-body file://cfn-ngw.yaml
 ```
 ## 6. AWS SAMでLambda/API Gatewayの実行
-* SAMビルド
+* 事前準備
+    * samconfig.tomlの「s3_bucket」変数のバケット名を適切に修正してください。
+    * makeコマンドを使うときは、Makefile内の「STACK_BUCKET」変数のバケット名を適切に修正してください。
+        
+* SAMビルド    
 ```sh
 #todo-appフォルダに戻る
 cd ..
@@ -75,7 +79,7 @@ make deploy
 * マネージドコンソールから、EC2(Bation)へSystems Manager Session Managerで接続して、動作確認
 ```sh
 # 例
-curl https://5h5zxybd3c.execute-api.ap-northeast-1.amazonaws.com/Prod/hello/
+curl https://5h5zxybd3c.execute-api.ap-northeast-1.amazonaws.com/Prod/hello
 ```
 
 ## SAMのCloudFormationスタック削除
