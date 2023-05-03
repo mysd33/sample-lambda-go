@@ -1,0 +1,34 @@
+openapi: 3.0.3
+info:
+  title: todo-api
+  description: todo-api
+schemas:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /hello:
+    get:
+      x-amazon-apigateway-integration:
+        type: aws_proxy
+        uri:
+          Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HelloWorldFunction.Arn}/invocations
+        connectionType: "INTERNET"
+        contentHandling: CONVERT_TO_TEXT
+        httpMethod: POST
+        passthroughBehavior: when_no_templates                
+        payloadFormatVersion: 1.0
+x-amazon-apigateway-policy:
+  Version: '2012-10-17'
+  Statement:
+    - Effect: Allow
+      Principal: '*'
+      Action: 'execute-api:Invoke'
+      Resource:
+        - Fn::Sub: 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:*/*'
+      Condition:
+        StringEquals:
+          aws:SourceVpce: 
+            Ref: PrivateAPIVPCEndpoint

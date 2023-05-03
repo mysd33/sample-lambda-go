@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: SecurityGroup Template for CloudFormation Demo. Depends on cfn-vpc.yaml.
+#Metadata: 
+
+Parameters: 
+  StackPrefix:
+    Description: Stack Resource Name Prefix
+    Type: String
+    Default: Demo 
+
+#Mappings: 
+
+#Conditions: 
+
+Resources:
+  #Security Group of Bation EC2
+  BastionSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Access to the bastion
+      VpcId:
+        Fn::ImportValue: !Sub ${StackPrefix}-VPC-ID
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-Bastion-SG 
+Outputs:
+  BastionSecurityGroupID:
+    Description: BastionSecurityGroup ID
+    Value:  !Ref BastionSecurityGroup
+    Export: 
+      Name: !Sub ${StackPrefix}-BastionSecurityGroup-ID     

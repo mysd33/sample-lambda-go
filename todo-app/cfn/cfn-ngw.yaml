@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: NATGateway Template for CloudFormation Demo. Depends on cfn-vpc.yaml.
+#Metadata:
+
+Parameters:
+  StackPrefix:
+    Description: Stack Resource Name Prefix
+    Type: String
+    Default: Demo
+
+#Mappings:
+
+#Conditions:
+
+Resources:
+  #Elastic IP
+  NATGWEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-NATGW-EIP
+          
+  #NAT Gateway
+  NATGW:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NATGWEIP.AllocationId
+      SubnetId:
+        Fn::ImportValue: !Sub ${StackPrefix}-PublicSubnetOneId
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-NATGW
+  
+  #Private Route Table
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId:
+        Fn::ImportValue: !Sub ${StackPrefix}-VPC-ID
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-PrivRT
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGW
+  PrivateSubnetOneRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetOneId
+      RouteTableId: !Ref PrivateRouteTable
+  PrivateSubnetTwoRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId:
+        Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetTwoId
+      RouteTableId: !Ref PrivateRouteTable  
+
+#Outputs:

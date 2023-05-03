@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: EC2 bastion Template for CloudFormation Demo. Depends on cfn-iam.yaml, cfn-vpc.yaml, cfn-sg.yaml
+#Metadata: 
+
+Parameters: 
+  StackPrefix:
+    Description: Stack Resource Name Prefix
+    Type: String
+    Default: Demo
+  KeyPairName:
+    Description: KeyPair Name
+    Type: String
+    Default: myKeyPair
+  AMIImageId:
+    Description: AMI Image ID
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
+  EC2InstanceType:
+    Description: EC2 Instance Type
+    Type: String
+    Default: t3.micro
+
+#Mappings:   
+
+#Conditions: 
+
+Resources: 
+  BastionEC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      KeyName: !Ref KeyPairName      
+      ImageId: !Ref AMIImageId
+      InstanceType: !Ref EC2InstanceType 
+      IamInstanceProfile:
+        Fn::ImportValue: !Sub ${StackPrefix}-BastionInstanceProfile
+      SecurityGroupIds:
+        - Fn::ImportValue: !Sub ${StackPrefix}-BastionSecurityGroup-ID
+      SubnetId:
+        Fn::ImportValue: !Sub ${StackPrefix}-PublicSubnetOneId      
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-Bastion
+
+#Outputs:
+#  BastionDNSName: 
+#    Description: EC2 Instance Public DNS Name
+#    Value: !GetAtt BastionEC2.PublicDnsName
