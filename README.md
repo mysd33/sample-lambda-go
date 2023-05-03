@@ -7,6 +7,8 @@
 
 ## 1. IAMの作成
 ```sh
+#todo-appフォルダに移動
+cd todo-app
 #cfnフォルダに移動
 cd cfn
 aws cloudformation validate-template --template-body file://cfn-iam.yaml
