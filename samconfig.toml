@@ -21,10 +21,9 @@ s3_bucket = "mysd33bucket123sam"
 s3_prefix = "todo-app-stack"
 region = "ap-northeast-1"
 image_repositories = []
-parameter_overrides = "StackPrefix=\"Demo\""
+parameter_overrides = "StackPrefix=\"Demo\" UsersTableName=\"users\" TracingValue=\"Active\" Stage=\"Prod\" MemorySize=\"128\""
 
 [default.package.parameters]
-
 [default.sync.parameters]
 watch = true
 

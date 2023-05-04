@@ -5,22 +5,39 @@ Description: >
 
   Sample SAM Template for todo-app
 
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
-Globals:
-  Function:
-    Timeout: 5
-    MemorySize: 128
-
-    Tracing: Active
-  Api:
-    TracingEnabled: true
 Parameters:      
   StackPrefix:
     Description: Stack Resource Name Prefix
     Type: String
     Default: Demo
+  UsersTableName:
+    Type: String
+    Default: users    
+  TracingValue:
+    Type: String
+    Default: Active
+  Stage:
+    Type: String
+    Default: Prod
+  MemorySize:
+    Type: Number
+    MinValue: 128
+    MaxValue: 10240
+    Default: 128
+Conditions:
+  TracingEnabled: !Equals [!Ref TracingValue, Active]
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 5
+    MemorySize: !Ref MemorySize
+    Tracing: !Ref TracingValue
+  Api:
+    TracingEnabled: !If [TracingEnabled , true, false]
 Resources:
   HelloWorldFunction:
+# Lambda Function  
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Metadata:
       BuildMethod: go1.x
@@ -40,7 +57,95 @@ Resources:
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
           PARAM1: VALUE
+  PostUsersFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x    
+    Properties:
+      FunctionName: post-user-function
+      CodeUri: app/cmd/users/          
+      Handler: users
+      Runtime: provided.al2
+      Architectures:
+      - x86_64
+      # TODO
+      Policies: 
+      - AmazonDynamoDBFullAccess           
+      Events:
+        PostEvent:
+          Type: Api
+          Properties:
+            Path: /users
+            Method: POST
+            RestApiId: !Ref UserApi
+      Environment: 
+        Variables:
+          REGION: !Sub ${AWS::Region}
+          USERS_TABLE_NAME: !Ref UsersTableName
+      #Deployment Configurtion           
+      AutoPublishAlias: live            
+      DeploymentPreference:
+        #Type: Linear10PercentEvery1Minute
+        Type: AllAtOnce                              
+# API Gateway Private REST API
+  HelloApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Stage     
+      EndpointConfiguration:
+        Type: PRIVATE
+        VPCEndpointIds:
+          - !Ref PrivateAPIVPCEndpoint  
+      Auth:
+        ResourcePolicy:
+          CustomStatements: [{
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "execute-api:Invoke",
+            "Resource": !Sub "execute-api:/${Stage}/GET/hello",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpce": !Ref PrivateAPIVPCEndpoint
+              }                        
+            }
+          }]
+  UserApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Sub ${Stage}
+      EndpointConfiguration:
+        Type: PRIVATE
+        VPCEndpointIds:
+          - !Ref PrivateAPIVPCEndpoint  
+      Auth:
+        ResourcePolicy:
+          CustomStatements: [{
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "execute-api:Invoke",
+            "Resource": !Sub "execute-api:/${Stage}/POST/users",
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpce": !Ref PrivateAPIVPCEndpoint
+              }                        
+            }
+          }]
+  #DynamoDB
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref UsersTableName
+      KeySchema:
+        - AttributeName: user_id
+          KeyType:  HASH
+      AttributeDefinitions:
+        - AttributeName: user_id
+          AttributeType: S
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1       
 
+# Application Insights
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
     Properties:
@@ -86,29 +191,6 @@ Resources:
       SecurityGroupIds: 
         - !GetAtt PrivateAPISecurityGroup.GroupId
       PrivateDnsEnabled: true
-# API Gateway Private REST API
-  HelloApi:
-    Type: AWS::Serverless::Api
-    Properties:
-      StageName: Prod      
-      EndpointConfiguration:
-        Type: PRIVATE
-        VPCEndpointIds:
-          - !Ref PrivateAPIVPCEndpoint
-      Auth:
-        ResourcePolicy:
-          CustomStatements: [{
-            "Effect": "Allow",
-            "Principal": "*",
-            "Action": "execute-api:Invoke",
-            "Resource": "execute-api:/Prod/GET/hello",
-            "Condition": {
-              "StringEquals": {
-                "aws:SourceVpce": !Ref PrivateAPIVPCEndpoint
-              }                        
-            }
-          }]
-
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
@@ -116,7 +198,7 @@ Outputs:
   HelloWorldAPI:
     Description: API Gateway endpoint URL for Prod environment for First Function
     #Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello"
-    Value: !Sub "https://${HelloApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello"
+    Value: !Sub "https://${HelloApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/hello"
   HelloWorldFunction:
     Description: First Lambda Function ARN
     Value: !GetAtt HelloWorldFunction.Arn

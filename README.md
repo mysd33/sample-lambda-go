@@ -78,8 +78,16 @@ make deploy
 
 * マネージドコンソールから、EC2(Bation)へSystems Manager Session Managerで接続して、動作確認
 ```sh
-# 例
+# hello-worldの例
 curl https://5h5zxybd3c.execute-api.ap-northeast-1.amazonaws.com/Prod/hello
+```
+
+```sh
+# User APIサービスのPOSTコマンドの例
+curl -X POST -H "Content-Type: application/json" -d '{ "name" : "Taro"}' https://42b4c7bk9g.execute-api.ap-northeast-1.amazonaws.com/Prod/users
+
+# User APIサービスのGetコマンドの例（users/の後にPOSTコマンドで取得したユーザIDを指定）
+curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/users/d4d6cb7f-7691-11ec-9520-1ee887dd490e
 ```
 
 ## SAMのCloudFormationスタック削除
