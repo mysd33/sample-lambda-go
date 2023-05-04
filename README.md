@@ -7,8 +7,6 @@
 
 ## 1. IAMの作成
 ```sh
-#todo-appフォルダに移動
-cd todo-app
 #cfnフォルダに移動
 cd cfn
 aws cloudformation validate-template --template-body file://cfn-iam.yaml
@@ -49,7 +47,7 @@ aws cloudformation create-stack --stack-name Demo-NATGW-Stack --template-body fi
         
 * SAMビルド    
 ```sh
-#todo-appフォルダに戻る
+# トップのフォルダに戻る
 cd ..
 sam build
 # Windowsにmakeをインストールすればmakeでもいけます

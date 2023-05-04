@@ -42,6 +42,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x
     Properties:
+      FunctionName: hello-world    
       CodeUri: hello-world/
       Handler: bootstrap
       Runtime: provided.al2
@@ -64,7 +65,7 @@ Resources:
     Properties:
       FunctionName: post-user-function
       CodeUri: app/cmd/users/          
-      Handler: users
+      Handler: bootstrap
       Runtime: provided.al2
       Architectures:
       - x86_64
@@ -205,3 +206,15 @@ Outputs:
   HelloWorldFunctionIamRole:
     Description: Implicit IAM Role created for Hello World function
     Value: !GetAtt HelloWorldFunctionRole.Arn
+  UsersAPI:
+    Description: "API Gateway endpoint URL for Prod environment"
+    Value: !Sub "https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/users/"
+  PostUsersFunction:
+    Description: "Post Users Lambda Function ARN"
+    Value: !GetAtt PostUsersFunction.Arn
+  PostUsersFunctionIamRole:
+    Description: "Implicit IAM Role created for Post Users function ARN"
+    Value: !GetAtt PostUsersFunctionRole.Arn
+  PostUsersFunctionDeploymentGroup :
+    Description: "Post Users Lambda Function DeploymentGroup ARN"
+    Value: !Ref PostUsersFunctionDeploymentGroup
