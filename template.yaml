@@ -120,6 +120,7 @@ Resources:
   HelloApi:
     Type: AWS::Serverless::Api
     Properties:
+      Name: hello-world-api
       StageName: !Ref Stage     
       EndpointConfiguration:
         Type: PRIVATE
@@ -141,6 +142,7 @@ Resources:
   UserApi:
     Type: AWS::Serverless::Api
     Properties:
+      Name: user-api
       StageName: !Sub ${Stage}
       EndpointConfiguration:
         Type: PRIVATE
