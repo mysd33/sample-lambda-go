@@ -41,6 +41,7 @@ aws cloudformation create-stack --stack-name Demo-NATGW-Stack --template-body fi
 ## 6. AWS SAMでLambda/API Gatewayの実行
 * 事前準備
     * samconfig.tomlの「s3_bucket」変数のバケット名を適切に修正してください。
+    * 「sam deploy --guided」実行時に、samconfig.tomlに「resolve_s3 = true」が生成されたら削除してください。（「sam deploy」実行時にエラーが出ないようにするため）
     * makeコマンドを使うときは、Makefile内の「STACK_BUCKET」変数のバケット名を適切に修正してください。
         
 * SAMビルド    
@@ -52,7 +53,7 @@ sam build
 make
 ```
 
-* 必要に応じてローカル実行可能
+* 必要に応じてローカル実行可能(hello-worldのみ)
 ```sh
 sam local invoke
 sam local start-api
