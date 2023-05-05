@@ -8,6 +8,8 @@ STACK_BUCKET := mysd33bucket123sam
 .PHONY: deploy_guided
 .PHONY: delete
 
+.DEFAULT_GOAL := build
+
 clean:
 # for windows
 	rmdir /s /q .aws-sam
@@ -18,6 +20,8 @@ build:
 	sam.cmd build
 	xcopy /I config .aws-sam\build\GetUsersFunction\config
 	xcopy /I config .aws-sam\build\PostUsersFunction\config	
+	xcopy /I config .aws-sam\build\GetTodoFunction\config
+	xcopy /I config .aws-sam\build\PostTodoFunction\config	
 
 validate:
 	sam.cmd validate

@@ -13,6 +13,9 @@ Parameters:
   UsersTableName:
     Type: String
     Default: users    
+  TodoTableName:
+    Type: String
+    Default: todo
   TracingValue:
     Type: String
     Default: Active
@@ -37,7 +40,8 @@ Globals:
     TracingEnabled: !If [TracingEnabled , true, false]
 Resources:
   HelloWorldFunction:
-# Lambda Function  
+# Lambda Function
+# HelloWorld 
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Metadata:
       BuildMethod: go1.x
@@ -58,6 +62,7 @@ Resources:
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
           PARAM1: VALUE
+# User API  
   GetUsersFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -116,7 +121,67 @@ Resources:
       DeploymentPreference:
         #Type: Linear10PercentEvery1Minute
         Type: AllAtOnce                              
+# Todo API
+  GetTodoFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x    
+    Properties:
+      FunctionName: get-todo-function
+      CodeUri: app/cmd/todo/  
+      Handler: bootstrap
+      Runtime: provided.al2
+      Architectures:
+      - x86_64
+      Policies: 
+      - AmazonDynamoDBReadOnlyAccess 
+      Events:
+        GetEvent:
+          Type: Api
+          Properties:            
+            Path: /todo/{todo_id}
+            Method: GET
+            RestApiId: !Ref TodoApi            
+      Environment: 
+        Variables:
+          REGION: !Sub ${AWS::Region}
+          TODO_TABLE_NAME: !Ref TodoTableName
+      #Deployment Configurtion           
+      AutoPublishAlias: live
+      DeploymentPreference:
+        #Type: Linear10PercentEvery1Minute
+        Type: AllAtOnce
+  PostTodoFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x    
+    Properties:
+      FunctionName: post-todo-function
+      CodeUri: app/cmd/todo/          
+      Handler: bootstrap
+      Runtime: provided.al2
+      Architectures:
+      - x86_64
+      Policies: 
+      - AmazonDynamoDBFullAccess           
+      Events:
+        PostEvent:
+          Type: Api
+          Properties:
+            Path: /todo
+            Method: POST
+            RestApiId: !Ref TodoApi
+      Environment: 
+        Variables:
+          REGION: !Sub ${AWS::Region}
+          TODO_TABLE_NAME: !Ref TodoTableName
+      #Deployment Configurtion           
+      AutoPublishAlias: live            
+      DeploymentPreference:
+        #Type: Linear10PercentEvery1Minute
+        Type: AllAtOnce  
 # API Gateway Private REST API
+# HelloWorld 
   HelloApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -139,6 +204,7 @@ Resources:
               }                        
             }
           }]
+# User API          
   UserApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -169,6 +235,37 @@ Resources:
               }                        
             }
           }]
+# Todo API
+  TodoApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: todo-api
+      StageName: !Sub ${Stage}
+      EndpointConfiguration:
+        Type: PRIVATE
+        VPCEndpointIds:
+          - !Ref PrivateAPIVPCEndpoint
+      MethodSettings:
+        - DataTraceEnabled: true
+          LoggingLevel: 'ERROR'
+          ResourcePath: '/*'
+          HttpMethod: '*'          
+      Auth:
+        ResourcePolicy:
+          CustomStatements: [{
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "execute-api:Invoke",
+            "Resource": [
+              !Sub "execute-api:/${Stage}/POST/todo",
+              !Sub "execute-api:/${Stage}/GET/todo/*",
+            ],
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpce": !Ref PrivateAPIVPCEndpoint
+              }                        
+            }
+          }]          
   #IAM Role for API Gateway Account
   APIGatewayRole:
     Type: AWS::IAM::Role
@@ -202,7 +299,19 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1       
-
+  TodoTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref TodoTableName
+      KeySchema:
+        - AttributeName: todo_id
+          KeyType:  HASH
+      AttributeDefinitions:
+        - AttributeName: todo_id
+          AttributeType: S
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1   
 # Application Insights
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
@@ -284,3 +393,24 @@ Outputs:
   PostUsersFunctionDeploymentGroup :
     Description: "Post Users Lambda Function DeploymentGroup ARN"
     Value: !Ref PostUsersFunctionDeploymentGroup
+  TodoAPI:
+    Description: "API Gateway endpoint URL for Prod environment"
+    Value: !Sub "https://${TodoApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/todo"
+  GetTodoFunction:
+    Description: "Get Todo Lambda Function ARN"
+    Value: !GetAtt GetTodoFunction.Arn
+  GetTodoFunctionIamRole:
+    Description: "Implicit IAM Role created for Get Todo function ARN"
+    Value: !GetAtt GetTodoFunctionRole.Arn
+  GetTodoFunctionDeploymentGroup :
+    Description: "Get Todo Lambda Function DeploymentGroup ARN"
+    Value: !Ref GetTodoFunctionDeploymentGroup
+  PostTodoFunction:
+    Description: "Post Todo Lambda Function ARN"
+    Value: !GetAtt PostTodoFunction.Arn
+  PostTodoFunctionIamRole:
+    Description: "Implicit IAM Role created for Post Todo function ARN"
+    Value: !GetAtt PostTodoFunctionRole.Arn
+  PostTodoFunctionDeploymentGroup :
+    Description: "Post Todo Lambda Function DeploymentGroup ARN"
+    Value: !Ref PostTodoFunctionDeploymentGroup    

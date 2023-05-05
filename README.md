@@ -87,6 +87,13 @@ curl -X POST -H "Content-Type: application/json" -d '{ "name" : "Taro"}' https:/
 curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/users/d4d6cb7f-7691-11ec-9520-1ee887dd490e
 ```
 
+```sh
+# Todo APIサービスのPOSTコマンドの例
+curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "ミルクを買う"}' https://42b4c7bk9g.execute-api.ap-northeast-1.amazonaws.com/Prod/todo
+
+# Todo APIサービスのGetコマンドの例（todo/の後にPOSTコマンドで取得したTodo IDを指定）
+curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/tod/d4d6cb7f-7691-11ec-9520-1ee887dd490e
+```
 ## SAMのCloudFormationスタック削除
 ```sh
 # Windowsにmakeをインストールすればmakeでもいけます

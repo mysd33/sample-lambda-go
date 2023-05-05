@@ -70,6 +70,7 @@ func getHandler(ctx context.Context, request events.APIGatewayProxyRequest) (eve
 	//サービスの実行
 	result, err := userService.Find(userId)
 	if err != nil {
+		log.Error("service execution error: %s", err)
 		return api.ErrorResponse(err)
 	}
 	//レスポンスデータの返却
@@ -90,6 +91,7 @@ func postHandler(ctx context.Context, request events.APIGatewayProxyRequest) (ev
 	//サービスの実行
 	result, err := userService.Regist(p.Name)
 	if err != nil {
+		log.Error("service execution error: %s", err)
 		return api.ErrorResponse(err)
 	}
 	//レスポンスデータの返却
