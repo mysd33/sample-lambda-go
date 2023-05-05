@@ -2,8 +2,6 @@
 
 ## 構成イメージ
 ![構成イメージ](image/demo.drawio.png)
-* 現状は、API GatewayのPrivate APIに対応した部分に特化して実装
-* 今後、サンプルAPとして充足化していく予定
 
 ## 1. IAMの作成
 ```sh
