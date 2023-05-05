@@ -58,6 +58,35 @@ Resources:
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
           PARAM1: VALUE
+  GetUsersFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x    
+    Properties:
+      FunctionName: get-user-function
+      CodeUri: app/cmd/users/  
+      Handler: bootstrap
+      Runtime: provided.al2
+      Architectures:
+      - x86_64
+      Policies: 
+      - AmazonDynamoDBReadOnlyAccess 
+      Events:
+        GetEvent:
+          Type: Api
+          Properties:            
+            Path: /users/{user_id}
+            Method: GET
+            RestApiId: !Ref UserApi            
+      Environment: 
+        Variables:
+          REGION: !Sub ${AWS::Region}
+          USERS_TABLE_NAME: !Ref UsersTableName        
+      #Deployment Configurtion           
+      AutoPublishAlias: live
+      DeploymentPreference:
+        #Type: Linear10PercentEvery1Minute
+        Type: AllAtOnce  
   PostUsersFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -69,7 +98,6 @@ Resources:
       Runtime: provided.al2
       Architectures:
       - x86_64
-      # TODO
       Policies: 
       - AmazonDynamoDBFullAccess           
       Events:
@@ -124,7 +152,10 @@ Resources:
             "Effect": "Allow",
             "Principal": "*",
             "Action": "execute-api:Invoke",
-            "Resource": !Sub "execute-api:/${Stage}/POST/users",
+            "Resource": [
+              !Sub "execute-api:/${Stage}/POST/users",
+              !Sub "execute-api:/${Stage}/GET/users/*",
+            ],
             "Condition": {
               "StringEquals": {
                 "aws:SourceVpce": !Ref PrivateAPIVPCEndpoint
@@ -208,7 +239,16 @@ Outputs:
     Value: !GetAtt HelloWorldFunctionRole.Arn
   UsersAPI:
     Description: "API Gateway endpoint URL for Prod environment"
-    Value: !Sub "https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/users/"
+    Value: !Sub "https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/users"
+  GetUsersFunction:
+    Description: "Get Users Lambda Function ARN"
+    Value: !GetAtt GetUsersFunction.Arn
+  GetUsersFunctionIamRole:
+    Description: "Implicit IAM Role created for Get Users function ARN"
+    Value: !GetAtt GetUsersFunctionRole.Arn
+  GetUsersFunctionDeploymentGroup :
+    Description: "Get Users Lambda Function DeploymentGroup ARN"
+    Value: !Ref GetUsersFunctionDeploymentGroup
   PostUsersFunction:
     Description: "Post Users Lambda Function ARN"
     Value: !GetAtt PostUsersFunction.Arn

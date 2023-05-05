@@ -2,6 +2,7 @@ STACK_NAME := todo-app-stack
 STACK_BUCKET := mysd33bucket123sam
 
 .PHONY: build
+.PHONY: validate
 .PHONY: deploy
 .PHONY: deploy_guided
 .PHONY: delete
@@ -12,6 +13,9 @@ build:
 	sam.cmd build
 	xcopy /I config .aws-sam\build\GetUsersFunction\config
 	xcopy /I config .aws-sam\build\PostUsersFunction\config	
+
+validate:
+	sam.cmd validate
 
 deploy_guided:
 # for windows
