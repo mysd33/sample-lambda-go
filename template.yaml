@@ -147,7 +147,12 @@ Resources:
       EndpointConfiguration:
         Type: PRIVATE
         VPCEndpointIds:
-          - !Ref PrivateAPIVPCEndpoint  
+          - !Ref PrivateAPIVPCEndpoint
+      MethodSettings:
+        - DataTraceEnabled: true
+          LoggingLevel: 'ERROR'
+          ResourcePath: '/*'
+          HttpMethod: '*'          
       Auth:
         ResourcePolicy:
           CustomStatements: [{
@@ -164,6 +169,25 @@ Resources:
               }                        
             }
           }]
+  #IAM Role for API Gateway Account
+  APIGatewayRole:
+    Type: AWS::IAM::Role
+    Properties:      
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: apigateway.amazonaws.com      
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+  #API Gateway Account Config
+  ApiGwAccountConfig:
+    Type: AWS::ApiGateway::Account
+    Properties:
+      CloudWatchRoleArn: !GetAtt APIGatewayRole.Arn
+
   #DynamoDB
   UsersTable:
     Type: AWS::DynamoDB::Table
