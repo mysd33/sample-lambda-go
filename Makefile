@@ -1,11 +1,16 @@
 STACK_NAME := todo-app-stack
 STACK_BUCKET := mysd33bucket123sam
 
+.PHONY: clean
 .PHONY: build
 .PHONY: validate
 .PHONY: deploy
 .PHONY: deploy_guided
 .PHONY: delete
+
+clean:
+# for windows
+	rmdir /s /q .aws-sam
 
 build:
 # sam build
