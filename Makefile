@@ -23,6 +23,9 @@ build:
 	xcopy /I config .aws-sam\build\GetTodoFunction\config
 	xcopy /I config .aws-sam\build\PostTodoFunction\config	
 
+unit_test:
+	cd app & go test -v ./internal/...
+
 validate:
 	sam.cmd validate
 
