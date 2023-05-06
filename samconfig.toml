@@ -17,11 +17,11 @@ lint = true
 stack_name = "todo-app-stack"
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
-s3_bucket = "mysd33bucket123sam"
 s3_prefix = "todo-app-stack"
 region = "ap-northeast-1"
 image_repositories = []
-parameter_overrides = "StackPrefix=\"Demo\" UsersTableName=\"users\" TracingValue=\"Active\" Stage=\"Prod\" MemorySize=\"128\""
+parameter_overrides = "StackPrefix=\"Demo\" UsersTableName=\"users\" TodoTableName=\"todo\" TracingValue=\"Active\" Stage=\"Prod\" MemorySize=\"128\""
+resolve_s3 = true
 
 [default.package.parameters]
 [default.sync.parameters]

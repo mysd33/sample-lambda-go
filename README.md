@@ -23,7 +23,7 @@ aws cloudformation validate-template --template-body file://cfn-sg.yaml
 aws cloudformation create-stack --stack-name Demo-SG-Stack --template-body file://cfn-sg.yaml
 ```
 
-## 4. EC2(Basion)の作成
+## 4. EC2(Bastion)の作成
 ```sh
 aws cloudformation validate-template --template-body file://cfn-bastion-ec2.yaml
 aws cloudformation create-stack --stack-name Demo-Bastion-Stack --template-body file://cfn-bastion-ec2.yaml
@@ -38,12 +38,7 @@ aws cloudformation create-stack --stack-name Demo-Bastion-Stack --template-body 
 aws cloudformation validate-template --template-body file://cfn-ngw.yaml
 aws cloudformation create-stack --stack-name Demo-NATGW-Stack --template-body file://cfn-ngw.yaml
 ```
-## 6. AWS SAMでLambda/API Gatewayの実行
-* 事前準備
-    * samconfig.tomlの「s3_bucket」変数のバケット名を適切に修正してください。
-    * 「sam deploy --guided」実行時に、samconfig.tomlに「resolve_s3 = true」が生成されたら削除してください。（「sam deploy」実行時にエラーが出ないようにするため）
-    * makeコマンドを使うときは、Makefile内の「STACK_BUCKET」変数のバケット名を適切に修正してください。
-        
+## 6. AWS SAMでLambda/API Gatewayの実行        
 * SAMビルド    
 ```sh
 # トップのフォルダに戻る

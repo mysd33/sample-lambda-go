@@ -1,5 +1,4 @@
 STACK_NAME := todo-app-stack
-STACK_BUCKET := mysd33bucket123sam
 
 .PHONY: clean
 .PHONY: build
@@ -38,5 +37,4 @@ deploy:
 	sam.cmd deploy
 
 delete:
-	aws cloudformation delete-stack --stack-name $(STACK_NAME)
-	aws s3 rm "s3://$(STACK_BUCKET)" --recursive
+	sam.cmd delete --stack-name $(STACK_NAME)
