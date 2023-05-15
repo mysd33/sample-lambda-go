@@ -33,11 +33,42 @@ Conditions:
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
+    Handler: bootstrap
+    Runtime: provided.al2
+    Architectures:
+      - x86_64
     Timeout: 5
     MemorySize: !Ref MemorySize
     Tracing: !Ref TracingValue
+    Environment:
+      Variables:
+        REGION: !Sub ${AWS::Region}
+        # For DynamoDB
+        TODO_TABLE_NAME: !Ref TodoTableName
+        USERS_TABLE_NAME: !Ref UsersTableName 
+        # For RDB
+        # TODO:
+        RDB_USER: XXXX
+        RDB_PASSWORD: XXXX
+        RDB_ENDPOINT: XXXX
+        RDB_PORT: XXXX
+        RDB_DB_NAME: XXXX
+    # Deployment Configurtion           
+    AutoPublishAlias: live            
+    DeploymentPreference:
+      #Type: Linear10PercentEvery1Minute
+      Type: AllAtOnce
   Api:
+    EndpointConfiguration:
+      Type: PRIVATE
+      VPCEndpointIds:
+        - !Ref PrivateAPIVPCEndpoint   
     TracingEnabled: !If [TracingEnabled , true, false]
+    MethodSettings:
+      - DataTraceEnabled: true
+        LoggingLevel: 'ERROR'
+        ResourcePath: '/*'
+        HttpMethod: '*'     
 Resources:
   HelloWorldFunction:
 # Lambda Function
@@ -48,10 +79,6 @@ Resources:
     Properties:
       FunctionName: hello-world    
       CodeUri: app/cmd/hello-world
-      Handler: bootstrap
-      Runtime: provided.al2
-      Architectures:
-      - x86_64
       Events:
         CatchAll:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -70,10 +97,6 @@ Resources:
     Properties:
       FunctionName: get-user-function
       CodeUri: app/cmd/users/  
-      Handler: bootstrap
-      Runtime: provided.al2
-      Architectures:
-      - x86_64
       Policies: 
       - AmazonDynamoDBReadOnlyAccess 
       Events:
@@ -98,11 +121,7 @@ Resources:
       BuildMethod: go1.x    
     Properties:
       FunctionName: post-user-function
-      CodeUri: app/cmd/users/          
-      Handler: bootstrap
-      Runtime: provided.al2
-      Architectures:
-      - x86_64
+      CodeUri: app/cmd/users/
       Policies: 
       - AmazonDynamoDBFullAccess           
       Events:
@@ -111,16 +130,7 @@ Resources:
           Properties:
             Path: /users
             Method: POST
-            RestApiId: !Ref UserApi
-      Environment: 
-        Variables:
-          REGION: !Sub ${AWS::Region}
-          USERS_TABLE_NAME: !Ref UsersTableName
-      #Deployment Configurtion           
-      AutoPublishAlias: live            
-      DeploymentPreference:
-        #Type: Linear10PercentEvery1Minute
-        Type: AllAtOnce                              
+            RestApiId: !Ref UserApi                           
 # Todo API
   GetTodoFunction:
     Type: AWS::Serverless::Function
@@ -128,11 +138,7 @@ Resources:
       BuildMethod: go1.x    
     Properties:
       FunctionName: get-todo-function
-      CodeUri: app/cmd/todo/  
-      Handler: bootstrap
-      Runtime: provided.al2
-      Architectures:
-      - x86_64
+      CodeUri: app/cmd/todo/
       Policies: 
       - AmazonDynamoDBReadOnlyAccess 
       Events:
@@ -141,27 +147,14 @@ Resources:
           Properties:            
             Path: /todo/{todo_id}
             Method: GET
-            RestApiId: !Ref TodoApi            
-      Environment: 
-        Variables:
-          REGION: !Sub ${AWS::Region}
-          TODO_TABLE_NAME: !Ref TodoTableName
-      #Deployment Configurtion           
-      AutoPublishAlias: live
-      DeploymentPreference:
-        #Type: Linear10PercentEvery1Minute
-        Type: AllAtOnce
+            RestApiId: !Ref TodoApi
   PostTodoFunction:
     Type: AWS::Serverless::Function
     Metadata:
       BuildMethod: go1.x    
     Properties:
       FunctionName: post-todo-function
-      CodeUri: app/cmd/todo/          
-      Handler: bootstrap
-      Runtime: provided.al2
-      Architectures:
-      - x86_64
+      CodeUri: app/cmd/todo/
       Policies: 
       - AmazonDynamoDBFullAccess           
       Events:
@@ -171,26 +164,13 @@ Resources:
             Path: /todo
             Method: POST
             RestApiId: !Ref TodoApi
-      Environment: 
-        Variables:
-          REGION: !Sub ${AWS::Region}
-          TODO_TABLE_NAME: !Ref TodoTableName
-      #Deployment Configurtion           
-      AutoPublishAlias: live            
-      DeploymentPreference:
-        #Type: Linear10PercentEvery1Minute
-        Type: AllAtOnce  
 # API Gateway Private REST API
 # HelloWorld 
   HelloApi:
     Type: AWS::Serverless::Api
     Properties:
       Name: hello-world-api
-      StageName: !Ref Stage     
-      EndpointConfiguration:
-        Type: PRIVATE
-        VPCEndpointIds:
-          - !Ref PrivateAPIVPCEndpoint  
+      StageName: !Ref Stage  
       Auth:
         ResourcePolicy:
           CustomStatements: [{
@@ -209,16 +189,7 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       Name: user-api
-      StageName: !Sub ${Stage}
-      EndpointConfiguration:
-        Type: PRIVATE
-        VPCEndpointIds:
-          - !Ref PrivateAPIVPCEndpoint
-      MethodSettings:
-        - DataTraceEnabled: true
-          LoggingLevel: 'ERROR'
-          ResourcePath: '/*'
-          HttpMethod: '*'          
+      StageName: !Sub ${Stage}        
       Auth:
         ResourcePolicy:
           CustomStatements: [{
@@ -240,16 +211,7 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       Name: todo-api
-      StageName: !Sub ${Stage}
-      EndpointConfiguration:
-        Type: PRIVATE
-        VPCEndpointIds:
-          - !Ref PrivateAPIVPCEndpoint
-      MethodSettings:
-        - DataTraceEnabled: true
-          LoggingLevel: 'ERROR'
-          ResourcePath: '/*'
-          HttpMethod: '*'          
+      StageName: !Sub ${Stage}         
       Auth:
         ResourcePolicy:
           CustomStatements: [{
@@ -279,13 +241,13 @@ Resources:
               Service: apigateway.amazonaws.com      
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
-  #API Gateway Account Config
+# API Gateway Account Config
   ApiGwAccountConfig:
     Type: AWS::ApiGateway::Account
     Properties:
       CloudWatchRoleArn: !GetAtt APIGatewayRole.Arn
 
-  #DynamoDB
+# DynamoDB
   UsersTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -311,7 +273,8 @@ Resources:
           AttributeType: S
       ProvisionedThroughput:
         ReadCapacityUnits: 1
-        WriteCapacityUnits: 1   
+        WriteCapacityUnits: 1
+
 # Application Insights
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
@@ -344,6 +307,7 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${StackPrefix}-PrivateAPI-SG
+
 # VPC Endpoint for API Gateway
   PrivateAPIVPCEndpoint:
     Type: AWS::EC2::VPCEndpoint

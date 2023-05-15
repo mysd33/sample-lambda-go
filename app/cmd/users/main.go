@@ -43,14 +43,30 @@ func init() {
 		log.Fatal("初期化処理エラー:%s", err.Error())
 		panic(err.Error())
 	}
-	userRepository := repository.NewUserRepository()
+	// リポジトリの作成
+	// DynamoDBの場合
+	userRepository := repository.NewUserRepositoryForDynamoDB()
+	// RDBの場合
+	// userRepository := repository.NewUserRepositoryForRDB()
+
+	// サービスの作成
 	userService = service.NewUserService(log, cfg, &userRepository)
 }
 
 // ハンドラメソッド
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	// RDBコネクションの確立
+	/*
+		db, err := rdb.RDSConnect()
+		if err != nil {
+			return api.ErrorResponse(err)
+		}*/
+	// 終了時にRDBコネクションの切断
+	//defer db.Close()
+
 	//ctxの格納
 	apcontext.Context = ctx
+	//apcontext.DB = db
 
 	//Getリクエストの処理
 	if request.HTTPMethod == http.MethodGet {

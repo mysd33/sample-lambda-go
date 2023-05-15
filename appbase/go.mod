@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/aws/aws-lambda-go v1.40.0
 	github.com/google/uuid v1.3.0
+	github.com/lib/pq v1.10.9
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.15.0
 	github.com/teris-io/shortid v0.0.0-20220617161101-71ec9f2aa569

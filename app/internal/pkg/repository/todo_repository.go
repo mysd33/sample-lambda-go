@@ -3,7 +3,6 @@ package repository
 import (
 	"app/internal/pkg/entity"
 	"context"
-	"os"
 
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/id"
@@ -13,10 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-xray-sdk-go/xray"
 	"github.com/pkg/errors"
-)
-
-var (
-	todoTable = os.Getenv("TODO_TABLE_NAME")
 )
 
 type TodoRepository interface {
