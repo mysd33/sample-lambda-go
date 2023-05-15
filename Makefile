@@ -1,5 +1,3 @@
-STACK_NAME := todo-app-stack
-
 .PHONY: clean
 .PHONY: build
 .PHONY: validate
@@ -37,4 +35,4 @@ deploy:
 	sam.cmd deploy
 
 delete:
-	sam.cmd delete --stack-name $(STACK_NAME)
+	sam.cmd delete

@@ -99,6 +99,7 @@ curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/tod/d4d6cb
 ```
 ## SAMのCloudFormationスタック削除
 ```sh
+sam delete
 # Windowsにmakeをインストールすればmakeでもいけます
 make delete
 ```
