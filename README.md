@@ -45,8 +45,43 @@ aws cloudformation create-stack --stack-name Demo-NATGW-Stack --template-body fi
 ## 7. RDS Proxy作成
 * TODO:作成中
 
+## 8. EC2(Bastion)の作成
+* psqlによるRDBのテーブル作成や、APIGatewayのPrivate APIにアクセスするための踏み台を作成
+```sh
+aws cloudformation validate-template --template-body file://cfn-bastion-ec2.yaml
+aws cloudformation create-stack --stack-name Demo-Bastion-Stack --template-body file://cfn-bastion-ec2.yaml
+```
 
-## 8. AWS SAMでLambda/API Gateway等のデプロイ       
+* 必要に応じてキーペア名等のパラメータを指定
+    * 「--parameters ParameterKey=KeyPairName,ParameterValue=myKeyPair」
+
+## 9. RDBのテーブル作成
+* Bastionにログインし、psqlをインストールし、DB接続する。
+    * 以下参考に、Bastionにpsqlをインストールするとよい
+        * https://techviewleo.com/how-to-install-postgresql-database-on-amazon-linux/
+* DB接続後、ユーザテーブルを作成する。        
+```sh
+sudo amazon-linux-extras install epel
+
+sudo tee /etc/yum.repos.d/pgdg.repo<<EOF
+[pgdg14]
+name=PostgreSQL 14 for RHEL/CentOS 7 - x86_64
+baseurl=http://download.postgresql.org/pub/repos/yum/14/redhat/rhel-7-x86_64
+enabled=1
+gpgcheck=0
+EOF
+
+sudo yum makecache
+sudo yum install postgresql14
+
+#DBに接続    
+psql -h (Auroraのクラスタエンドポイント) -U postgres -d testdb    
+#TODO: ユーザテーブル作成
+
+```
+
+
+## 10. AWS SAMでLambda/API Gateway等のデプロイ       
 * SAMビルド    
 ```sh
 # トップのフォルダに戻る
@@ -76,16 +111,9 @@ sam deploy
 make deploy
 ```
 
-## 9. EC2(Bastion)の作成
-* APIGatewayのPrivate APIにアクセスするためのBastionを作成
-```sh
-aws cloudformation validate-template --template-body file://cfn-bastion-ec2.yaml
-aws cloudformation create-stack --stack-name Demo-Bastion-Stack --template-body file://cfn-bastion-ec2.yaml
-```
-* 必要に応じてキーペア名等のパラメータを指定
-    * 「--parameters ParameterKey=KeyPairName,ParameterValue=myKeyPair」
 
-## 10. APの実行確認
+
+## 11. APの実行確認
 
 * マネージドコンソールから、EC2(Bation)へSystems Manager Session Managerで接続して、動作確認
 ```sh
