@@ -17,36 +17,36 @@ aws cloudformation validate-template --template-body file://cfn-vpc.yaml
 aws cloudformation create-stack --stack-name Demo-VPC-Stack --template-body file://cfn-vpc.yaml
 ```
 
-## 3. VPC Endpointの作成とプライベートサブネットのルートテーブル更新
-* TODO: 作成
-```sh
-aws cloudformation validate-template --template-body file://cfn-vpe.yaml
-aws cloudformation create-stack --stack-name ECS-VPE-Stack --template-body file://cfn-vpe.yaml
-```
-
-## 4. Security Groupの作成
+## 3. Security Groupの作成
 ```sh
 aws cloudformation validate-template --template-body file://cfn-sg.yaml
 aws cloudformation create-stack --stack-name Demo-SG-Stack --template-body file://cfn-sg.yaml
 ```
 
-## 5. EC2(Bastion)の作成
+## 4. VPC Endpointの作成とプライベートサブネットのルートテーブル更新
+* VPC内LambdaからDynamoDBへアクセスするためのVPC Endpointを作成
 ```sh
-aws cloudformation validate-template --template-body file://cfn-bastion-ec2.yaml
-aws cloudformation create-stack --stack-name Demo-Bastion-Stack --template-body file://cfn-bastion-ec2.yaml
+aws cloudformation validate-template --template-body file://cfn-vpe.yaml
+aws cloudformation create-stack --stack-name Demo-VPE-Stack --template-body file://cfn-vpe.yaml
 ```
-* 必要に応じてキーペア名等のパラメータを指定
-    * 「--parameters ParameterKey=KeyPairName,ParameterValue=myKeyPair」
-
-## 6. NAT Gatewayの作成とプライベートサブネットのルートテーブル更新
-* 現状は作成不要。VPC内Lambdaからインターネットに接続する場合に必要となる。
+## 5. NAT Gatewayの作成とプライベートサブネットのルートテーブル更新
+* VPC内Lambdaからインターネットに接続する場合に必要となる。
+* hello-worldのサンプルAPでは、"https://checkip.amazonaws.com"へアクセスしに行くので、これを試す場合には作成が必要となる。
 
 ```sh
 aws cloudformation validate-template --template-body file://cfn-ngw.yaml
 aws cloudformation create-stack --stack-name Demo-NATGW-Stack --template-body file://cfn-ngw.yaml
 ```
 
-## 7. AWS SAMでLambda/API Gatewayの実行        
+## 6. Aurora for PostgreSQLのクラスタ作成
+* TODO:作成中
+
+
+## 7. RDS Proxy作成
+* TODO:作成中
+
+
+## 8. AWS SAMでLambda/API Gateway等のデプロイ       
 * SAMビルド    
 ```sh
 # トップのフォルダに戻る
@@ -75,6 +75,17 @@ sam deploy
 # Windowsにmakeをインストールすればmakeでもいけます
 make deploy
 ```
+
+## 9. EC2(Bastion)の作成
+* APIGatewayのPrivate APIにアクセスするためのBastionを作成
+```sh
+aws cloudformation validate-template --template-body file://cfn-bastion-ec2.yaml
+aws cloudformation create-stack --stack-name Demo-Bastion-Stack --template-body file://cfn-bastion-ec2.yaml
+```
+* 必要に応じてキーペア名等のパラメータを指定
+    * 「--parameters ParameterKey=KeyPairName,ParameterValue=myKeyPair」
+
+## 10. APの実行確認
 
 * マネージドコンソールから、EC2(Bation)へSystems Manager Session Managerで接続して、動作確認
 ```sh

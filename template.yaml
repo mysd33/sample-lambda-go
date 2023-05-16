@@ -40,6 +40,12 @@ Globals:
     Timeout: 5
     MemorySize: !Ref MemorySize
     Tracing: !Ref TracingValue
+    VpcConfig:
+      SecurityGroupIds:
+        - Fn::ImportValue: !Sub ${StackPrefix}-LambdaSecurityGroup-ID
+      SubnetIds:
+        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetOneId
+        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetTwoId
     Environment:
       Variables:
         REGION: !Sub ${AWS::Region}
@@ -62,7 +68,7 @@ Globals:
     EndpointConfiguration:
       Type: PRIVATE
       VPCEndpointIds:
-        - !Ref PrivateAPIVPCEndpoint   
+        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateAPIVPCEndpoint-ID
     TracingEnabled: !If [TracingEnabled , true, false]
     MethodSettings:
       - DataTraceEnabled: true
@@ -180,7 +186,7 @@ Resources:
             "Resource": !Sub "execute-api:/${Stage}/GET/hello",
             "Condition": {
               "StringEquals": {
-                "aws:SourceVpce": !Ref PrivateAPIVPCEndpoint
+                "aws:SourceVpce": { "Fn::ImportValue" : {"Fn::Sub" : "${StackPrefix}-PrivateAPIVPCEndpoint-ID" }}
               }                        
             }
           }]
@@ -202,7 +208,7 @@ Resources:
             ],
             "Condition": {
               "StringEquals": {
-                "aws:SourceVpce": !Ref PrivateAPIVPCEndpoint
+                "aws:SourceVpce": { "Fn::ImportValue" : {"Fn::Sub" : "${StackPrefix}-PrivateAPIVPCEndpoint-ID" }}                
               }                        
             }
           }]
@@ -224,7 +230,7 @@ Resources:
             ],
             "Condition": {
               "StringEquals": {
-                "aws:SourceVpce": !Ref PrivateAPIVPCEndpoint
+                "aws:SourceVpce": { "Fn::ImportValue" : {"Fn::Sub" : "${StackPrefix}-PrivateAPIVPCEndpoint-ID" }}                
               }                        
             }
           }]          
@@ -290,38 +296,6 @@ Resources:
         Ref: ApplicationResourceGroup
       AutoConfigurationEnabled: 'true'
 
-# Security Group for VPC Endpoint  
-  PrivateAPISecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      VpcId:
-        Fn::ImportValue: !Sub ${StackPrefix}-VPC-ID
-      GroupDescription: Access to the API Gateway Private API
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          SourceSecurityGroupId: 
-            Fn::ImportValue: !Sub ${StackPrefix}-BastionSecurityGroup-ID
-          #CidrIp: !FindInMap [CidrConfig, !Ref EnvironmentType, VPC]
-      Tags:
-        - Key: Name
-          Value: !Sub ${StackPrefix}-PrivateAPI-SG
-
-# VPC Endpoint for API Gateway
-  PrivateAPIVPCEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:      
-      VpcEndpointType: Interface
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.execute-api
-      SubnetIds:
-        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetOneId
-        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetTwoId
-      VpcId: 
-        Fn::ImportValue: !Sub ${StackPrefix}-VPC-ID          
-      SecurityGroupIds: 
-        - !GetAtt PrivateAPISecurityGroup.GroupId
-      PrivateDnsEnabled: true
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM

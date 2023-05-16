@@ -32,32 +32,12 @@ Resources:
         - Key: Name
           Value: !Sub ${StackPrefix}-NATGW
   
-  #Private Route Table
-  PrivateRouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId:
-        Fn::ImportValue: !Sub ${StackPrefix}-VPC-ID
-      Tags:
-        - Key: Name
-          Value: !Sub ${StackPrefix}-PrivRT
-  PrivateRoute:
+  PrivateRouteForNATGW:
     Type: AWS::EC2::Route
     Properties:
-      RouteTableId: !Ref PrivateRouteTable
+      RouteTableId:
+        Fn::ImportValue: !Sub ${StackPrefix}-PrivateRouteTableId
       DestinationCidrBlock: 0.0.0.0/0
       NatGatewayId: !Ref NATGW
-  PrivateSubnetOneRouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId:
-        Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetOneId
-      RouteTableId: !Ref PrivateRouteTable
-  PrivateSubnetTwoRouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId:
-        Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetTwoId
-      RouteTableId: !Ref PrivateRouteTable  
 
 #Outputs:

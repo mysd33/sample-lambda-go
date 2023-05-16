@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: VPCEndpoint Template for CloudFormation Demo. Depends on cfn-vpc.yaml, cfn-sg.yaml.
+#Metadata: 
+
+Parameters: 
+  StackPrefix:
+    Description: Stack Resource Name Prefix
+    Type: String
+    Default: Demo 
+  
+#Mappings: 
+
+#Conditions: 
+
+Resources:
+# DynamoDB VPC Endoint 
+  DynamoDBEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: Gateway
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.dynamodb
+      VpcId: 
+        Fn::ImportValue: !Sub ${StackPrefix}-VPC-ID
+      RouteTableIds:
+        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateRouteTableId
+# VPC Endpoint for API Gateway
+  PrivateAPIVPCEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:      
+      VpcEndpointType: Interface
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.execute-api
+      SubnetIds:
+        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetOneId
+        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetTwoId
+      VpcId: 
+        Fn::ImportValue: !Sub ${StackPrefix}-VPC-ID          
+      SecurityGroupIds: 
+        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateAPISecurityGroup-ID
+      PrivateDnsEnabled: true        
+Outputs:
+  PrivateAPIVPCEndpointID:
+    Description: Private API VPC Endpoint ID
+    Value: !Ref PrivateAPIVPCEndpoint
+    Export: 
+      Name: !Sub ${StackPrefix}-PrivateAPIVPCEndpoint-ID  

@@ -13,19 +13,57 @@ Parameters:
 #Conditions: 
 
 Resources:
-  #Security Group of Bation EC2
+# Security Group of Bation EC2
   BastionSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Access to the bastion
+      GroupDescription: Bastion Security Group
       VpcId:
         Fn::ImportValue: !Sub ${StackPrefix}-VPC-ID
       Tags:
         - Key: Name
-          Value: !Sub ${StackPrefix}-Bastion-SG 
+          Value: !Sub ${StackPrefix}-Bastion-SG
+# Security Group for VPC Endpoint  
+  PrivateAPISecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId:
+        Fn::ImportValue: !Sub ${StackPrefix}-VPC-ID
+      GroupDescription: the API Gateway Private API Security Group
+      SecurityGroupIngress:
+        # Allow to access from the Bation
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          SourceSecurityGroupId: 
+            Fn::ImportValue: !Sub ${StackPrefix}-BastionSecurityGroup-ID
+          #CidrIp: !FindInMap [CidrConfig, !Ref EnvironmentType, VPC]
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-PrivateAPI-SG          
+# Security Group of Lambda
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Lambda Security Group
+      VpcId:
+        Fn::ImportValue: !Sub ${StackPrefix}-VPC-ID
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-Lambda-SG 
 Outputs:
   BastionSecurityGroupID:
     Description: BastionSecurityGroup ID
     Value:  !Ref BastionSecurityGroup
     Export: 
       Name: !Sub ${StackPrefix}-BastionSecurityGroup-ID     
+  LambdaSecurityGroupID:
+    Description: LambdaSecurityGroup ID
+    Value:  !Ref LambdaSecurityGroup
+    Export: 
+      Name: !Sub ${StackPrefix}-LambdaSecurityGroup-ID          
+  PrivateAPISecurityGroupID:
+    Description: PrivateAPISecurityGroup ID
+    Value:  !Ref PrivateAPISecurityGroup
+    Export: 
+      Name: !Sub ${StackPrefix}-PrivateAPISecurityGroup-ID        

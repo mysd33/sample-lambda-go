@@ -24,18 +24,24 @@ Mappings:
       PublicTwo: 10.0.1.0/24
       PrivateOne: 10.0.2.0/24
       PrivateTwo: 10.0.3.0/24
+      PrivateThree: 10.0.4.0/24
+      PrivateFour: 10.0.5.0/24
     Staging:
       VPC: 10.1.0.0/16
       PublicOne: 10.1.0.0/24
       PublicTwo: 10.1.1.0/24
       PrivateOne: 10.1.2.0/24
       PrivateTwo: 10.1.3.0/24
+      PrivateThree: 10.0.4.0/24
+      PrivateFour: 10.0.5.0/24
     Production:
       VPC: 10.2.0.0/16
       PublicOne: 10.2.0.0/24
       PublicTwo: 10.2.1.0/24
       PrivateOne: 10.2.2.0/24
       PrivateTwo: 10.2.3.0/24
+      PrivateThree: 10.0.4.0/24
+      PrivateFour: 10.0.5.0/24
 
 #Conditions:
 
@@ -98,7 +104,28 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${StackPrefix}-PrivSubnet2          
-
+  PrivateSubnetThree:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - 0
+        - Fn::GetAZs: !Ref AWS::Region
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrConfig, !Ref EnvironmentType, PrivateThree]
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-PrivSubnet3
+  PrivateSubnetFour:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+        - 1
+        - Fn::GetAZs: !Ref AWS::Region
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrConfig, !Ref EnvironmentType, PrivateFour]
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-PrivSubnet4
   #Internet Gateway
   InternetGateway:
     Type: AWS::EC2::InternetGateway
@@ -112,7 +139,7 @@ Resources:
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
 
-  #RouteTable
+  #Public RouteTable
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -137,7 +164,34 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnetTwo
       RouteTableId: !Ref PublicRouteTable  
-
+  #Private Route Table
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC        
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-PrivRT
+  PrivateSubnetOneRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetOne
+      RouteTableId: !Ref PrivateRouteTable
+  PrivateSubnetTwoRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetTwo
+      RouteTableId: !Ref PrivateRouteTable  
+  PrivateSubnetThreeRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetThree
+      RouteTableId: !Ref PrivateRouteTable  
+  PrivateSubnetFourRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetFour
+      RouteTableId: !Ref PrivateRouteTable              
 Outputs:
   VPCId:
     Description: VPC ID
@@ -169,3 +223,18 @@ Outputs:
     Value: !Ref PrivateSubnetTwo
     Export:
       Name: !Sub ${StackPrefix}-PrivateSubnetTwoId
+  PrivateSubnetThreeId:
+    Description: Private subnet three ID
+    Value: !Ref PrivateSubnetThree
+    Export:
+      Name: !Sub ${StackPrefix}-PrivateSubnetThreeId
+  PrivateSubnetFourId:
+    Description: Private subnet four ID
+    Value: !Ref PrivateSubnetFour
+    Export:
+      Name: !Sub ${StackPrefix}-PrivateSubnetFourId      
+  PrivateRouteTableId:
+    Description: Private Route Table ID
+    Value: !Ref PrivateRouteTable
+    Export: 
+      Name: !Sub ${StackPrefix}-PrivateRouteTableId
