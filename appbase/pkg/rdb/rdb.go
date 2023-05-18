@@ -31,6 +31,8 @@ func RDSConnect() (*sql.DB, error) {
 		rdbPassword,
 		rdbName)
 	db, err := sql.Open("postgres", connectStr)
+	//TODO: X-RayのSQLトレース対応も後で試してみる
+	//db, err := xray.SQLContext("postgres", connectStr)
 	if err != nil {
 		panic(err.Error())
 	}
