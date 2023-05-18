@@ -5,7 +5,6 @@ import (
 	"context"
 
 	"example.com/appbase/pkg/apcontext"
-	"example.com/appbase/pkg/id"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -60,10 +59,6 @@ func (ur *UserRepositoryImplByDynamoDB) PutUser(user *entity.User) (*entity.User
 }
 
 func (ur *UserRepositoryImplByDynamoDB) doPutUser(user *entity.User, ctx context.Context) (*entity.User, error) {
-	//ID採番
-	userId := id.GenerateId()
-	user.ID = userId
-
 	av, err := dynamodbattribute.MarshalMap(user)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to marshal item")

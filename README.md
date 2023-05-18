@@ -38,12 +38,21 @@ aws cloudformation validate-template --template-body file://cfn-ngw.yaml
 aws cloudformation create-stack --stack-name Demo-NATGW-Stack --template-body file://cfn-ngw.yaml
 ```
 
-## 6. Aurora for PostgreSQLのクラスタ作成
-* TODO:作成中
-
+## 6. RDS Aurora for PostgreSQLのクラスタ、SecretsManagerのシークレット作成
+* Auroraのクラスタを作成するとともに、RDS Proxyが利用するAuroraの認証情報のシークレットをSecretsManagerで作成する。
+* リソース作成に少し時間がかかる。
+* TODO: Aurora Serverless v2対応
+```sh
+aws cloudformation validate-template --template-body file://cfn-rds-aurora.yaml
+aws cloudformation create-stack --stack-name Demo-Aurora-Stack --template-body file://cfn-rds-aurora.yaml --parameters ParameterKey=DBUsername,ParameterValue=postgres ParameterKey=DBPassword,ParameterValue=password
+```
 
 ## 7. RDS Proxy作成
-* TODO:作成中
+* リソース作成に少し時間がかかる。
+```sh
+aws cloudformation validate-template --template-body file://cfn-rds-proxy.yaml
+aws cloudformation create-stack --stack-name Demo-RDSProxy-Stack --template-body file://cfn-rds-proxy.yaml
+```
 
 ## 8. EC2(Bastion)の作成
 * psqlによるRDBのテーブル作成や、APIGatewayのPrivate APIにアクセスするための踏み台を作成
@@ -74,14 +83,25 @@ EOF
 sudo yum makecache
 sudo yum install postgresql14
 
-#DBに接続    
+#Auroraに直接接続    
 psql -h (Auroraのクラスタエンドポイント) -U postgres -d testdb    
-#TODO: ユーザテーブル作成
+
+#ユーザテーブル作成
+CREATE TABLE IF NOT EXISTS m_user (user_id VARCHAR(50) PRIMARY KEY, user_name VARCHAR(50));
+#ユーザテーブルの作成を確認
+\dt
+#いったん切断
+\q
+
+#RDS Proxyから接続しなおす
+psql -h (RDS Proxyのエンドポイント) -U postgres -d testdb
+#ユーザテーブルの作成を確認
+\dt
 
 ```
 
 
-## 10. AWS SAMでLambda/API Gateway等のデプロイ       
+## 10. AWS SAMでLambda/API Gateway、DynamoDBのデプロイ       
 * SAMビルド    
 ```sh
 # トップのフォルダに戻る
@@ -106,9 +126,24 @@ sam deploy --guided
 make deploy_guided
 
 # 2回目以降は
-sam deploy
+set DB_USER_NAME=postgres
+set DB_PASSWORD=password
+
+sam deploy --parameter-overrides DBUsername=%DB_USER_NAME% DBPassword=%DB_PASSWORD%
 # Windowsにmakeをインストールすればmakeでもいけます
 make deploy
+```
+
+* （参考）再度ビルドするとき
+```sh
+# 念のため、.aws-sam配下のビルド資材を削除
+rmdir /s /q .aws-sam
+# ビルド
+sam build
+
+# Windowsにmakeをインストールすればmakeでもいけます
+make clean
+make
 ```
 
 

@@ -8,3 +8,5 @@ import (
 var Context context.Context
 
 var DB *sql.DB
+
+var Tx *sql.Tx

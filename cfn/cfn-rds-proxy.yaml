@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: RDS Proxy Template for CloudFormation Demo. Depends on cfn-vpc.yaml, cfn-sg.yaml, cfn-iam.yaml, cfn-rds-aurora.yaml.
+#Metadata: 
+
+Parameters: 
+  StackPrefix:
+    Description: Stack Resource Name Prefix
+    Type: String
+    Default: Demo
+
+#Mappings: 
+
+#Conditions: 
+
+Resources: 
+  RDSProxy:
+    Type: AWS::RDS::DBProxy
+    Properties:
+      Auth:
+        - AuthScheme: SECRETS
+          SecretArn: 
+            Fn::ImportValue: !Sub ${StackPrefix}-RDSSecretsManagerArn
+          IAMAuth: DISABLED
+      DBProxyName: !Sub ${StackPrefix}-rds-proxy
+      DebugLogging: false
+      EngineFamily: POSTGRESQL      
+      RequireTLS: false
+      RoleArn:
+        Fn::ImportValue: !Sub ${StackPrefix}-RDSProxyRoleArn
+      VpcSecurityGroupIds: 
+        - Fn::ImportValue: !Sub ${StackPrefix}-RDSProxySecurityGroup-ID 
+      VpcSubnetIds:
+        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetThreeId
+        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetFourId
+
+  DBProxyTargetGroup:
+    Type: AWS::RDS::DBProxyTargetGroup
+    Properties:
+      DBProxyName: !Ref RDSProxy
+      DBClusterIdentifiers:
+        - Fn::ImportValue: !Sub ${StackPrefix}-RDSClusterID
+      TargetGroupName: default
+Outputs:  
+  RDSProxyEndpoint:
+    Description: RDS Proxy Endpoint
+    Value: !GetAtt RDSProxy.Endpoint
+    Export: 
+      Name: !Sub ${StackPrefix}-RDSProxyEndpoint

@@ -11,6 +11,7 @@ import (
 var (
 	// RDBに作成したユーザ名
 	rdbUser = os.Getenv("RDB_USER")
+	// TODO: 本当はIAM認証でトークン取得
 	// RDBユーザのパスワード
 	rdbPassword = os.Getenv("RDB_PASSWORD")
 	// RDS Proxyのエンドポイント

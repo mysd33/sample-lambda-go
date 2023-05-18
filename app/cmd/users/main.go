@@ -9,6 +9,7 @@ import (
 	"example.com/appbase/pkg/api"
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/logging"
+	"example.com/appbase/pkg/rdb"
 
 	"app/internal/app/user/service"
 	"app/internal/pkg/entity"
@@ -45,9 +46,9 @@ func init() {
 	}
 	// リポジトリの作成
 	// DynamoDBの場合
-	userRepository := repository.NewUserRepositoryForDynamoDB()
+	// userRepository := repository.NewUserRepositoryForDynamoDB()
 	// RDBの場合
-	// userRepository := repository.NewUserRepositoryForRDB()
+	userRepository := repository.NewUserRepositoryForRDB()
 
 	// サービスの作成
 	userService = service.NewUserService(log, cfg, &userRepository)
@@ -56,17 +57,16 @@ func init() {
 // ハンドラメソッド
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// RDBコネクションの確立
-	/*
-		db, err := rdb.RDSConnect()
-		if err != nil {
-			return api.ErrorResponse(err)
-		}*/
+	db, err := rdb.RDSConnect()
+	if err != nil {
+		return api.ErrorResponse(err)
+	}
 	// 終了時にRDBコネクションの切断
-	//defer db.Close()
+	defer db.Close()
 
 	//ctxの格納
 	apcontext.Context = ctx
-	//apcontext.DB = db
+	apcontext.DB = db
 
 	//Getリクエストの処理
 	if request.HTTPMethod == http.MethodGet {
@@ -81,19 +81,48 @@ func getHandler(ctx context.Context, request events.APIGatewayProxyRequest) (eve
 	//リクエストデータの解析
 	userId, err := parseGetRequest(request)
 	if err != nil {
+		log.Error("parse request error: %s", err)
 		return api.ErrorResponse(err)
 	}
-	//サービスの実行
+	// トランザクション開始
+	tx, err := apcontext.DB.BeginTx(ctx, nil)
+	if err != nil {
+		log.Error("transaction begin error: %s", err)
+		return api.ErrorResponse(err)
+	}
+	apcontext.Tx = tx
+
+	// サービスの実行
 	result, err := userService.Find(userId)
 	if err != nil {
+		// トランザクションロールバック
+		err2 := tx.Rollback()
+		if err2 != nil {
+			log.Error("transaction rollback error: %s", err2)
+			return api.ErrorResponse(err2)
+		}
 		log.Error("service execution error: %s", err)
 		return api.ErrorResponse(err)
 	}
-	//レスポンスデータの返却
+	// レスポンスデータの返却
 	resultString, err := formatResponse(result)
 	if err != nil {
+		// トランザクションロールバック
+		err2 := tx.Rollback()
+		if err2 != nil {
+			log.Error("transaction rollback error: %s", err2)
+			return api.ErrorResponse(err2)
+		}
+		log.Error("format response error: %s", err)
 		return api.ErrorResponse(err)
 	}
+	// トランザクションコミット
+	err = tx.Commit()
+	if err != nil {
+		log.Error("transaction commit error: %s", err)
+		return api.ErrorResponse(err)
+	}
+
 	return api.OkResponse(resultString)
 }
 
@@ -102,19 +131,49 @@ func postHandler(ctx context.Context, request events.APIGatewayProxyRequest) (ev
 	//リクエストデータの解析
 	p, err := parsePostRequest(request)
 	if err != nil {
+		log.Error("parse request error: %s", err)
 		return api.ErrorResponse(err)
 	}
+	// トランザクション開始
+	tx, err := apcontext.DB.BeginTx(ctx, nil)
+	if err != nil {
+		log.Error("transaction begin error: %s", err)
+		return api.ErrorResponse(err)
+	}
+	apcontext.Tx = tx
+
 	//サービスの実行
 	result, err := userService.Regist(p.Name)
 	if err != nil {
+		// トランザクションロールバック
+		err2 := tx.Rollback()
+		if err2 != nil {
+			log.Error("transaction rollback error: %s", err2)
+			return api.ErrorResponse(err2)
+		}
 		log.Error("service execution error: %s", err)
 		return api.ErrorResponse(err)
 	}
+
 	//レスポンスデータの返却
 	resultString, err := formatResponse(result)
 	if err != nil {
+		// トランザクションロールバック
+		err2 := tx.Rollback()
+		if err2 != nil {
+			log.Error("transaction rollback error: %s", err2)
+			return api.ErrorResponse(err2)
+		}
+		log.Error("format response error: %s", err)
 		return api.ErrorResponse(err)
 	}
+	// トランザクションコミット
+	err = tx.Commit()
+	if err != nil {
+		log.Error("transaction commit error: %s", err)
+		return api.ErrorResponse(err)
+	}
+
 	return api.OkResponse(resultString)
 }
 

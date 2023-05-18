@@ -32,7 +32,7 @@ deploy_guided:
 
 deploy:
 # for windows
-	sam.cmd deploy
+	sam.cmd deploy --parameter-overrides DBUsername=%DB_USER_NAME% DBPassword=%DB_PASSWORD%
 
 delete:
 	sam.cmd delete

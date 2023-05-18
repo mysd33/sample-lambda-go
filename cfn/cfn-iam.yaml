@@ -33,11 +33,52 @@ Resources:
         - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
       Tags:
         - Key: Name
-          Value: !Sub ${StackPrefix}-BastionRole        
-
+          Value: !Sub ${StackPrefix}-BastionRole      
+  #IAM Role for RDS Proxy
+  RDSProxyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - rds.amazonaws.com
+            Action:
+              - sts:AssumeRole 
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-RDSProxyRole
+  RDSProxyPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${StackPrefix}-RDSProxyPolicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue            
+            Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*
+          - Effect: Allow
+            Action:
+              - kms:Decrypt            
+            Resource: !Sub arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/*
+            Condition:
+              StringEquals:
+                kms:ViaService: !Sub secretsmanager.${AWS::Region}.amazonaws.com
+      Roles:
+        - !Ref RDSProxyRole
 Outputs:
   BastionInstanceProfile:
-      Description: BastionInstanceProfile Logical ID
-      Value: !Ref BastionInstanceProfile
-      Export: 
-        Name: !Sub ${StackPrefix}-BastionInstanceProfile
+    Description: BastionInstanceProfile Logical ID
+    Value: !Ref BastionInstanceProfile
+    Export: 
+      Name: !Sub ${StackPrefix}-BastionInstanceProfile
+  RDSProxyRoleArn:
+    Description: Information about the value
+    Value: !GetAtt RDSProxyRole.Arn
+    Export: 
+      Name: !Sub ${StackPrefix}-RDSProxyRoleArn

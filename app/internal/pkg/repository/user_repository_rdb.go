@@ -14,9 +14,9 @@ type UserRepositoryImplByRDB struct {
 }
 
 func (ur *UserRepositoryImplByRDB) GetUser(userId string) (*entity.User, error) {
-	db := apcontext.DB
+	tx := apcontext.Tx
 	var user entity.User
-	row := db.QueryRow("SELECT * FROM user WHEN user_id = ?", userId)
+	row := tx.QueryRow("SELECT user_id, user_name FROM m_user WHERE user_id = $1", userId)
 	err := row.Scan(&user.ID, &user.Name)
 	if err != nil {
 		return nil, err
@@ -25,8 +25,9 @@ func (ur *UserRepositoryImplByRDB) GetUser(userId string) (*entity.User, error) 
 }
 
 func (ur *UserRepositoryImplByRDB) PutUser(user *entity.User) (*entity.User, error) {
-	db := apcontext.DB
-	_, err := db.Exec("INSERT INTO user (user_id, name) VALUES (?, ?)", user.ID, user.Name)
+	tx := apcontext.Tx
+	_, err := tx.Exec("INSERT INTO m_user(user_id, user_name) VALUES($1, $2)", user.ID, user.Name)
+
 	if err != nil {
 		return nil, err
 	}
