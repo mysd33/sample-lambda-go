@@ -13,8 +13,7 @@ clean:
 
 build:
 # sam build
-# for windows
-	sam.cmd build
+	sam build
 	xcopy /I config .aws-sam\build\GetUsersFunction\config
 	xcopy /I config .aws-sam\build\PostUsersFunction\config	
 	xcopy /I config .aws-sam\build\GetTodoFunction\config
@@ -24,15 +23,13 @@ unit_test:
 	cd app & go test -v ./internal/...
 
 validate:
-	sam.cmd validate
+	sam validate
 
 deploy_guided:
-# for windows
-	sam.cmd deploy --guided
+	sam deploy --guided
 
 deploy:
-# for windows
-	sam.cmd deploy --parameter-overrides DBUsername=%DB_USER_NAME% DBPassword=%DB_PASSWORD%
+	sam deploy --parameter-overrides DBUsername=%DB_USER_NAME% DBPassword=%DB_PASSWORD%
 
 delete:
-	sam.cmd delete
+	sam delete
