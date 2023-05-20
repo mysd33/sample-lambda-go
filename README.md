@@ -49,9 +49,8 @@ aws cloudformation validate-template --template-body file://cfn-ngw.yaml
 aws cloudformation create-stack --stack-name Demo-NATGW-Stack --template-body file://cfn-ngw.yaml
 ```
 
-## 6. RDS Aurora for PostgreSQL、SecretsManager、RDS Proxy作成
-* リソース作成に少し時間がかかる。
-* TODO: Aurora Serverless v2対応
+## 6. RDS Aurora Serverless v2 for PostgreSQL、SecretsManager、RDS Proxy作成
+* リソース作成に少し時間がかかる。(20分程度)
 ```sh
 aws cloudformation validate-template --template-body file://cfn-rds.yaml
 aws cloudformation create-stack --stack-name Demo-RDS-Stack --template-body file://cfn-rds.yaml --parameters ParameterKey=DBUsername,ParameterValue=postgres ParameterKey=DBPassword,ParameterValue=password
@@ -161,8 +160,9 @@ make
 
 ## 11. APの実行確認
 * マネージドコンソールから、EC2(Bation)へSystems Manager Session Managerで接続して、curlコマンドで動作確認
+    * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
 
-* hello-worldのAPI実行例
+* hello-worldのAPI実行例    
 ```sh
 curl https://5h5zxybd3c.execute-api.ap-northeast-1.amazonaws.com/Prod/hello
 
@@ -181,7 +181,7 @@ curl -X POST -H "Content-Type: application/json" -d '{ "name" : "Taro"}' https:/
 
 * Userサービスでユーザー情報を取得するGetのAPIの実行例（users/の後にPOSTのAPIで取得したユーザIDを指定）
 ```sh
-curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/users/99bf4d94-f6a4-11ed-85ec-be18af968bc1
+curl https://42b4c7bk9g.execute-api.ap-northeast-1.amazonaws.com/Prod/users/99bf4d94-f6a4-11ed-85ec-be18af968bc1
 
 # 対象のユーザ情報をRDBから取得し返却
 {"user_id":"99bf4d94-f6a4-11ed-85ec-be18af968bc1","user_name":"Taro"}
@@ -190,7 +190,7 @@ curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/users/99bf
 * Todoサービスでやることリストを登録するPOSTのAPI実行例
     * TodoサービスはDynamoDBアクセスするLambda/goのサンプルAP
 ```sh
-curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "ミルクを買う"}' https://42b4c7bk9g.execute-api.ap-northeast-1.amazonaws.com/Prod/todo
+curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "ミルクを買う"}' https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/todo
 
 # 登録結果を返却
 {"todo_id":"04a14ad3-f6a5-11ed-b40f-f2ead45b980a","todo_title":"ミルクを買う"}

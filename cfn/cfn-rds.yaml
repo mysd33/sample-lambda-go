@@ -30,18 +30,25 @@ Parameters:
   DBEngineVersion:
     Description: Version number of the database engine
     Type: String
-    Default: 14.4  
+    Default: 14.6  
   DBEngineFamily:
     Description: Family of the database engine
     Type: String
     Default: aurora-postgresql14
-  DBInstanceClassName:
-    Description: DB Instance Class
-    Type: String
-    #https://docs.aws.amazon.com/ja_jp/AmazonRDS/latest/AuroraUserGuide/Concepts.DBInstanceClass.html#Concepts.DBInstanceClass.SupportAurora
-    Default: db.t3.medium    
-    #Default: db.r5.large
-    
+  #DBInstanceClassName:
+  #  Description: DB Instance Class
+  #  Type: String
+  #  #https://docs.aws.amazon.com/ja_jp/AmazonRDS/latest/AuroraUserGuide/Concepts.DBInstanceClass.html#Concepts.DBInstanceClass.SupportAurora
+  #  Default: db.t3.medium    
+  #  #Default: db.r5.large
+  AuroraServerlessMaxCapacity: 
+    Description: Aurora Serverless V2 ScalingConfiguration MaxCapacity
+    Type: Number
+    Default: 2
+  AuroraServerlessMinCapacity: 
+    Description: Aurora Serverless V2 ScalingConfiguration MinCapacity
+    Type: Number
+    Default: 0.5
 
 Resources:
 # RDS Aurora
@@ -72,12 +79,17 @@ Resources:
       Port: 5432
       VpcSecurityGroupIds:
         - Fn::ImportValue: !Sub ${StackPrefix}-AuroraSecurityGroup-ID          
+      ServerlessV2ScalingConfiguration: 
+        MaxCapacity: !Ref AuroraServerlessMaxCapacity
+        MinCapacity: !Ref AuroraServerlessMinCapacity
+
 
   RDSDBInstance1:
     Type: 'AWS::RDS::DBInstance'
     Properties:
       DBClusterIdentifier: !Ref RDSCluster
-      DBInstanceClass: !Ref DBInstanceClassName
+      DBInstanceClass: db.serverless
+      #DBInstanceClass: !Ref DBInstanceClassName      
       DBInstanceIdentifier: aurora-postgresql-instance1      
       Engine: aurora-postgresql
   
@@ -85,7 +97,8 @@ Resources:
     Type: 'AWS::RDS::DBInstance'
     Properties:
       DBClusterIdentifier: !Ref RDSCluster
-      DBInstanceClass: !Ref DBInstanceClassName
+      DBInstanceClass: db.serverless
+      #DBInstanceClass: !Ref DBInstanceClassName
       DBInstanceIdentifier: aurora-postgresql-instance2      
       Engine: aurora-postgresql
 
