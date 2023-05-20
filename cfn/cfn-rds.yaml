@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Aurora PostgreSQL Template for CloudFormation Demo. Depends on cfn-vpc.yaml, cfn-sg.yaml
+Description: RDS Aurora PostgreSQL RDS Proxy Template for CloudFormation Demo. Depends on cfn-iam.yaml, cfn-vpc.yaml, cfn-sg.yaml
 #Metadata: 
 
 Parameters: 
@@ -44,6 +44,7 @@ Parameters:
     
 
 Resources:
+# RDS Aurora
   RDSDBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
@@ -88,6 +89,7 @@ Resources:
       DBInstanceIdentifier: aurora-postgresql-instance2      
       Engine: aurora-postgresql
 
+# Secrets Manager
   RDSSecretsManager:
     Type: AWS::SecretsManager::Secret
     Properties:
@@ -101,6 +103,33 @@ Resources:
         - Key: Name
           Value: !Sub ${StackPrefix}-SecretsManager     
 
+# RDS Proxy
+  RDSProxy:
+    Type: AWS::RDS::DBProxy
+    Properties:
+      Auth:
+        - AuthScheme: SECRETS
+          SecretArn: !Ref RDSSecretsManager            
+          IAMAuth: DISABLED
+      DBProxyName: !Sub ${StackPrefix}-rds-proxy
+      DebugLogging: false
+      EngineFamily: POSTGRESQL      
+      RequireTLS: false
+      RoleArn:
+        Fn::ImportValue: !Sub ${StackPrefix}-RDSProxyRoleArn
+      VpcSecurityGroupIds: 
+        - Fn::ImportValue: !Sub ${StackPrefix}-RDSProxySecurityGroup-ID 
+      VpcSubnetIds:
+        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetThreeId
+        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetFourId
+
+  DBProxyTargetGroup:
+    Type: AWS::RDS::DBProxyTargetGroup
+    Properties:
+      DBProxyName: !Ref RDSProxy
+      DBClusterIdentifiers:
+        - !Ref RDSCluster
+      TargetGroupName: default
 Outputs:
   RDSClusterID:
     Description: RDS Aurora Cluster ID
@@ -132,3 +161,8 @@ Outputs:
     Value: !Ref RDSSecretsManager
     Export: 
       Name: !Sub ${StackPrefix}-RDSSecretsManagerArn
+  RDSProxyEndpoint:
+    Description: RDS Proxy Endpoint
+    Value: !GetAtt RDSProxy.Endpoint
+    Export: 
+      Name: !Sub ${StackPrefix}-RDSProxyEndpoint      

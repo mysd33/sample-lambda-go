@@ -10,9 +10,9 @@ Parameters:
     Description: Stack Resource Name Prefix
     Type: String
     Default: Demo
-  UsersTableName:
-    Type: String
-    Default: users    
+#  UsersTableName:
+#    Type: String
+#    Default: users    
   TodoTableName:
     Type: String
     Default: todo
@@ -72,10 +72,9 @@ Globals:
       Variables:
         REGION: !Sub ${AWS::Region}
         # For DynamoDB
+#        USERS_TABLE_NAME: !Ref UsersTableName         
         TODO_TABLE_NAME: !Ref TodoTableName
-        USERS_TABLE_NAME: !Ref UsersTableName 
-        # For RDB
-        # TODO
+        # For RDB        
         RDB_USER: !Ref DBUsername        
         RDB_PASSWORD: !Ref DBPassword
         RDB_ENDPOINT:
@@ -134,16 +133,7 @@ Resources:
           Properties:            
             Path: /users/{user_id}
             Method: GET
-            RestApiId: !Ref UserApi            
-      Environment: 
-        Variables:
-          REGION: !Sub ${AWS::Region}
-          USERS_TABLE_NAME: !Ref UsersTableName        
-      #Deployment Configurtion           
-      AutoPublishAlias: live
-      DeploymentPreference:
-        #Type: Linear10PercentEvery1Minute
-        Type: AllAtOnce  
+            RestApiId: !Ref UserApi 
   PostUsersFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -275,35 +265,6 @@ Resources:
     Type: AWS::ApiGateway::Account
     Properties:
       CloudWatchRoleArn: !GetAtt APIGatewayRole.Arn
-
-# DynamoDB
-  # User table on DynamoDB is not used now
-  UsersTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: !Ref UsersTableName
-      KeySchema:
-        - AttributeName: user_id
-          KeyType:  HASH
-      AttributeDefinitions:
-        - AttributeName: user_id
-          AttributeType: S
-      ProvisionedThroughput:
-        ReadCapacityUnits: 1
-        WriteCapacityUnits: 1       
-  TodoTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: !Ref TodoTableName
-      KeySchema:
-        - AttributeName: todo_id
-          KeyType:  HASH
-      AttributeDefinitions:
-        - AttributeName: todo_id
-          AttributeType: S
-      ProvisionedThroughput:
-        ReadCapacityUnits: 1
-        WriteCapacityUnits: 1
 
 # Application Insights
   ApplicationResourceGroup:

@@ -5,7 +5,6 @@ import (
 	"app/internal/pkg/repository"
 
 	"example.com/appbase/pkg/config"
-	"example.com/appbase/pkg/id"
 	"example.com/appbase/pkg/logging"
 )
 
@@ -36,10 +35,6 @@ func (us *UserServiceImpl) Regist(userName string) (*entity.User, error) {
 
 	user := entity.User{}
 	user.Name = userName
-	//ID採番
-	userId := id.GenerateId()
-	user.ID = userId
-
 	return (*us.Repository).PutUser(&user)
 }
 

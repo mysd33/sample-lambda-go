@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: DynamoDB Template for CloudFormation Demo. Depends on .
+#Metadata: 
+
+Parameters: 
+#  UsersTableName:
+#    Type: String
+#    Default: users    
+  TodoTableName:
+    Type: String
+    Default: todo
+
+#Mappings: 
+
+#Conditions: 
+
+Resources: 
+# DynamoDB
+# User table on DynamoDB is not used now
+#  UsersTable:
+#    Type: AWS::DynamoDB::Table
+#    Properties:
+#      TableName: !Ref UsersTableName
+#      KeySchema:
+#        - AttributeName: user_id
+#          KeyType:  HASH
+#      AttributeDefinitions:
+#        - AttributeName: user_id
+#          AttributeType: S
+#      ProvisionedThroughput:
+#        ReadCapacityUnits: 1
+#        WriteCapacityUnits: 1       
+  TodoTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref TodoTableName
+      KeySchema:
+        - AttributeName: todo_id
+          KeyType:  HASH
+      AttributeDefinitions:
+        - AttributeName: todo_id
+          AttributeType: S
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+#Outputs:

@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/aws/aws-xray-sdk-go/xray"
 	_ "github.com/lib/pq"
 )
 
 var (
 	// RDBに作成したユーザ名
 	rdbUser = os.Getenv("RDB_USER")
-	// TODO: 本当はIAM認証でトークン取得
+	// TODO: IAM認証でトークン取得
 	// RDBユーザのパスワード
 	rdbPassword = os.Getenv("RDB_PASSWORD")
 	// RDS Proxyのエンドポイント
@@ -23,16 +24,26 @@ var (
 )
 
 func RDSConnect() (*sql.DB, error) {
+	// X-RayのSQLトレースに対応したDB接続の取得
 	connectStr := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		rdbEndpoint,
-		rdbPort,
+		"postgres://%s:%s@%s:%s/%s",
 		rdbUser,
 		rdbPassword,
+		rdbEndpoint,
+		rdbPort,
 		rdbName)
-	db, err := sql.Open("postgres", connectStr)
-	//TODO: X-RayのSQLトレース対応も後で試してみる
-	//db, err := xray.SQLContext("postgres", connectStr)
+	db, err := xray.SQLContext("postgres", connectStr)
+
+	/*
+		connectStr := fmt.Sprintf(
+			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+			rdbEndpoint,
+			rdbPort,
+			rdbUser,
+			rdbPassword,
+			rdbName)
+		db, err := sql.Open("postgres", connectStr)*/
+
 	if err != nil {
 		panic(err.Error())
 	}
