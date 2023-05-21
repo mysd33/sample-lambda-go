@@ -118,7 +118,7 @@ aws cloudformation create-stack --stack-name Demo-DynamoDB-Stack --template-body
 # トップのフォルダに戻る
 cd ..
 sam build
-# Windowsにmakeをインストールすればmakeでもいけます
+# Windowsでもmakeをインストールすればmakeでいけます
 make
 ```
 
@@ -133,14 +133,14 @@ curl http://127.0.0.1:3000/hello
 ```sh
 # 1回目は
 sam deploy --guided
-# Windowsにmakeをインストールすればmakeでもいけます
+# Windowsでもmakeをインストールすればmakeでいけます
 make deploy_guided
 
 # 2回目以降は
 set DB_USER_NAME=postgres
 set DB_PASSWORD=password
 sam deploy --parameter-overrides DBUsername=%DB_USER_NAME% DBPassword=%DB_PASSWORD%
-# Windowsにmakeをインストールすればmakeでもいけます
+# Windowsでもmakeをインストールすればmakeでいけます
 set DB_USER_NAME=postgres
 set DB_PASSWORD=password
 make deploy
@@ -153,7 +153,7 @@ rmdir /s /q .aws-sam
 # ビルド
 sam build
 
-# Windowsにmakeをインストールすればmakeでもいけます
+# Windowsでもmakeをインストールすればmakeでいけます
 make
 ```
 
@@ -206,7 +206,7 @@ curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/todo/04a14
 ## 12. SAMのCloudFormationスタック削除
 ```sh
 sam delete
-# Windowsにmakeをインストールすればmakeでもいけます
+# Windowsでもmakeをインストールすればmakeでいけます
 make delete
 ```
 
@@ -221,3 +221,31 @@ aws cloudformation delete-stack --stack-name Demo-SG-Stack
 aws cloudformation delete-stack --stack-name Demo-VPC-Stack 
 aws cloudformation delete-stack --stack-name Demo-IAM-Stack 
 ```
+
+## ソフトウェアフレームワーク
+* 本サンプルアプリケーションでは、ソフトウェアフレームワーク実装例も同梱している。簡単のため、アプリケーションと同じプロジェクトでソース管理している。
+* ソースコードはappbaseフォルダ配下にexample.com/appbaseパッケージとして格納されている。    
+    * 本格的な開発を実施する場合には、業務アプリケーションと別のGitリポジトリとして管理し、参照するようにすべきであるが、ここでは、あえて同じプロジェクトに格納してノウハウを簡単に参考にしてもらいやすいようにしている。
+* 各機能と実現方式は、以下の通り。
+
+| 機能 | 機能概要と実現方式 | 拡張実装 | 拡張実装の格納パッケージ |
+| ---- | ---- | ---- | ---- |
+| 分散トレーシング（X-Ray） | AWS X-Rayを利用して、サービス間の分散トレーシング・可視化を実現する。実現には、AWS SAMのtemplate.ymlでの設定やSDKが提供する各withContextメソッドといった利用する。なお、Contextをメソッドの引数に引き渡さなくても取得できるようにグローバル変数で管理する。 | ○ | com.example/appbase/pkg/apcontext |
+| RDBアクセス | go標準のdatabase/sqlパッケージを利用する。DB接続等の共通処理を個別に実装しなくてもよい仕組みとする。 | ○ | com.example/appbase/pkg/rdb |
+
+
+
+* 以下は、今後追加を検討中。
+
+| 機能 | 機能概要と実現方式 | 拡張実装 | 拡張実装の格納パッケージ |
+| ---- | ---- | ---- | ---- |
+| オンラインAP制御 | APIの要求受信、ビジネスロジック実行、応答返却まで一連の定型的な処理を実行を制御する共通機能を提供する。 | ○ | 未定 |
+| 入力チェック| 未定 | ○ | 未定 |
+| 集約例外ハンドリング | オンラインAP制御機能と連携し、エラー（例外）発生時、エラーログの出力、DBのロールバック、エラー画面やエラー電文の返却といった共通的なエラーハンドリングを実施する。 | ○ | 未定 |
+| トランザクション管理機能（RDB） | オンラインAP制御機能と連携し、サービスクラスの実行前後にRDBのトランザクション開始・終了を機能を提供する。 | ○ | 未定 |
+| トランザクション管理機能（DynamoDB） | オンラインAP制御機能と連携し、サービスクラスの実行前後にRDBのトランザクション開始・終了を機能を提供する。 | ○ | 未定 |
+| API認証・認可| APIGatewayのCognitoオーサライザまたはLambdaオーサライザを利用し、APIの認証、認可を行う。 | ○ | 未定 |
+| メッセージ管理 | go標準のembededでログ等に出力するメッセージを設定ファイルで一元管理する。 | ○ | 未定 |
+| エラー（例外） | エラーコード（メッセージID）やメッセージを管理可能な共通的なビジネスエラー、システムエラー用のGoのErrorオブジェクトを提供する。 | ○ | 未定 |
+| ロギング | go.uber.org/zapの機能を利用し、プロファイルによって動作環境に応じたログレベルや出力先（ファイルや標準出力）、出力形式（タブ区切りやJSON）に切替可能とする。またメッセージIDをもとにログ出力可能な汎用的なAPIを提供する。 | ○ | com.example/appbase/pkg/logging |
+| プロパティ管理 | spf13/viperの機能を利用し、APから環境依存のパラメータを切り出し、プロファイルによって動作環境に応じたパラメータ値に置き換え可能とする。 | ○ | com.example/appbase/pkg/config |
