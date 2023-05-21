@@ -231,8 +231,8 @@ aws cloudformation delete-stack --stack-name Demo-IAM-Stack
 | 機能 | 機能概要と実現方式 | 拡張実装 | 拡張実装の格納パッケージ |
 | ---- | ---- | ---- | ---- |
 | 分散トレーシング（X-Ray） | AWS X-Rayを利用して、サービス間の分散トレーシング・可視化を実現する。実現には、AWS SAMのtemplate.ymlでの設定やSDKが提供する各withContextメソッドといった利用する。なお、Contextをメソッドの引数に引き渡さなくても取得できるようにグローバル変数で管理する。 | ○ | com.example/appbase/pkg/apcontext |
-| RDBアクセス | go標準のdatabase/sqlパッケージを利用する。DB接続等の共通処理を個別に実装しなくてもよい仕組みとする。 | ○ | com.example/appbase/pkg/rdb |
-
+| RDBアクセス | go標準のdatabase/sqlパッケージを利用しRDBへアクセスする。DB接続等の共通処理を個別に実装しなくてもよい仕組みとする。 | ○ | com.example/appbase/pkg/rdb |
+| DynamoDBアクセス | AWS SDKを利用しDynamoDBへアクセスする。 | - | - |
 
 
 * 以下は、今後追加を検討中。
