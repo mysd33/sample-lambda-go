@@ -4,7 +4,7 @@ version = 0.1
 
 [default]
 [default.global.parameters]
-stack_name = "todo-app"
+stack_name = "todo-app-stack"
 
 [default.build.parameters]
 cached = true
@@ -14,13 +14,12 @@ parallel = true
 lint = true
 
 [default.deploy.parameters]
-stack_name = "todo-app-stack"
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
 s3_prefix = "todo-app-stack"
 region = "ap-northeast-1"
 image_repositories = []
-parameter_overrides = "StackPrefix=\"Demo\" UsersTableName=\"users\" TodoTableName=\"todo\" TracingValue=\"Active\" Stage=\"Prod\" MemorySize=\"128\" DBName=\"testdb\""
+parameter_overrides = "StackPrefix=\"Demo\" TodoTableName=\"todo\" TracingValue=\"Active\" Stage=\"Prod\" MemorySize=\"128\""
 resolve_s3 = true
 
 [default.package.parameters]

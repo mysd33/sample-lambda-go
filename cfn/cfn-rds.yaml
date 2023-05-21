@@ -163,7 +163,7 @@ Outputs:
     Description: RDS Aurora Cluster Endpoint Port
     Value: !GetAtt RDSCluster.Endpoint.Port
     Export: 
-      Name: !Sub ${StackPrefix}-RDSClusterEndpoint
+      Name: !Sub ${StackPrefix}-RDSClusterEndpointPort
   RDSDBName:
     Description: RDS Database Name
     Value: !Ref DBName

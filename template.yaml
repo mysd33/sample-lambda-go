@@ -44,11 +44,7 @@ Parameters:
     MaxLength: '41'
     AllowedPattern: '[a-zA-Z0-9]*'
     ConstraintDescription: must contain only alphanumeric characters.
-    Default: password
-  DBName:
-    Description: Database Name
-    Type: String
-    Default: testdb    
+    Default: password   
 Conditions:
   TracingEnabled: !Equals [!Ref TracingValue, Active]
 
@@ -79,8 +75,10 @@ Globals:
         RDB_PASSWORD: !Ref DBPassword
         RDB_ENDPOINT:
           Fn::ImportValue: !Sub ${StackPrefix}-RDSProxyEndpoint
-        RDB_PORT: 5432
-        RDB_DB_NAME: !Ref DBName
+        RDB_PORT:
+          Fn::ImportValue: !Sub ${StackPrefix}-RDSClusterEndpointPort
+        RDB_DB_NAME:
+          Fn::ImportValue: !Sub ${StackPrefix}-RDSDBName
     # Deployment Configurtion           
     AutoPublishAlias: live            
     DeploymentPreference:
