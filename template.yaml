@@ -85,6 +85,7 @@ Globals:
       #Type: Linear10PercentEvery1Minute
       Type: AllAtOnce
   Api:
+    OpenApiVersion: 3.0.3      
     EndpointConfiguration:
       Type: PRIVATE
       VPCEndpointIds:
@@ -94,7 +95,11 @@ Globals:
       - DataTraceEnabled: true
         LoggingLevel: 'ERROR'
         ResourcePath: '/*'
-        HttpMethod: '*'     
+        HttpMethod: '*'   
+    AccessLogSetting:
+      Format: '{ "requestId":"$context.requestId", "extendedRequestId":"$context.extendedRequestId", "ip": "$context.identity.sourceIp", "caller":"$context.identity.caller", "user":"$context.identity.user", "requestTime":"$context.requestTime", "httpMethod":"$context.httpMethod", "resourcePath":"$context.resourcePath", "status":"$context.status", "protocol":"$context.protocol", "responseLength":"$context.responseLength", "integrationLatency":"$context.integration.latency", "responseLatency":"$context.responseLatency" }'
+      DestinationArn: !GetAtt ApiGwAccessLogGroup.Arn
+           
 Resources:
   HelloWorldFunction:
 # Lambda Function
@@ -244,8 +249,8 @@ Resources:
                 "aws:SourceVpce": { "Fn::ImportValue" : {"Fn::Sub" : "${StackPrefix}-PrivateAPIVPCEndpoint-ID" }}                
               }                        
             }
-          }]          
-  #IAM Role for API Gateway Account
+          }]        
+# IAM Role for API Gateway Account
   APIGatewayRole:
     Type: AWS::IAM::Role
     Properties:      
@@ -257,12 +262,18 @@ Resources:
             Principal:
               Service: apigateway.amazonaws.com      
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs 
 # API Gateway Account Config
   ApiGwAccountConfig:
     Type: AWS::ApiGateway::Account
     Properties:
       CloudWatchRoleArn: !GetAtt APIGatewayRole.Arn
+# API Gateway Access Log Group
+  ApiGwAccessLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/apigateway/accesslog/${AWS::StackName}
+      RetentionInDays: 7
 
 # Application Insights
   ApplicationResourceGroup:

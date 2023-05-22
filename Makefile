@@ -11,7 +11,7 @@ clean:
 # for windows
 	rmdir /s /q .aws-sam
 
-build: clean
+build:
 	sam build
 	xcopy /I config .aws-sam\build\GetUsersFunction\config
 	xcopy /I config .aws-sam\build\PostUsersFunction\config	
