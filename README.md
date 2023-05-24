@@ -137,12 +137,9 @@ sam deploy --guided
 make deploy_guided
 
 # 2回目以降は
-set DB_USER_NAME=postgres
-set DB_PASSWORD=password
-sam deploy --parameter-overrides DBUsername=%DB_USER_NAME% DBPassword=%DB_PASSWORD%
+sam deploy
 # Windowsでもmakeをインストールすればmakeでいけます
-set DB_USER_NAME=postgres
-set DB_PASSWORD=password
+
 make deploy
 ```
 
@@ -174,7 +171,7 @@ Hello, 18.180.139.158
 * Userサービスでユーザ情報を登録するPOSTのAPI実行例
     * UserサービスはRDB(RDS Proxy経由でAuroraへ)アクセスするLambda/goのサンプルAP
 ```sh
-curl -X POST -H "Content-Type: application/json" -d '{ "name" : "Taro"}' https://42b4c7bk9g.execute-api.ap-northeast-1.amazonaws.com/Prod/users
+curl -X POST -H "Content-Type: application/json" -d '{ "user_name" : "Taro"}' https://42b4c7bk9g.execute-api.ap-northeast-1.amazonaws.com/Prod/users
 
 # 登録結果を返却
 {"user_id":"99bf4d94-f6a4-11ed-85ec-be18af968bc1","user_name":"Taro"}

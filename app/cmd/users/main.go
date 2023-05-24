@@ -31,7 +31,7 @@ var (
 
 // リクエストデータ
 type Request struct {
-	Name string `json:"name"`
+	Name string `json:"user_name"`
 }
 
 // コードルドスタート時の初期化処理

@@ -28,7 +28,7 @@ deploy_guided:
 	sam deploy --guided
 
 deploy:
-	sam deploy --parameter-overrides DBUsername=%DB_USER_NAME% DBPassword=%DB_PASSWORD%
+	sam deploy
 
 delete:
 	sam delete

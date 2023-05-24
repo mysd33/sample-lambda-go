@@ -26,25 +26,7 @@ Parameters:
     Type: Number
     MinValue: 128
     MaxValue: 10240
-    Default: 128
-  DBUsername:
-    NoEcho: 'true'
-    Description: Username for PostgreSQL database access
-    Type: String
-    MinLength: '1'
-    MaxLength: '16'
-    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
-    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
-    Default: postgres
-  DBPassword:
-    NoEcho: 'true'
-    Description: Password for PostgreSQL database access
-    Type: String
-    MinLength: '8'
-    MaxLength: '41'
-    AllowedPattern: '[a-zA-Z0-9]*'
-    ConstraintDescription: must contain only alphanumeric characters.
-    Default: password   
+    Default: 128   
 Conditions:
   TracingEnabled: !Equals [!Ref TracingValue, Active]
 
@@ -70,9 +52,9 @@ Globals:
         # For DynamoDB
 #        USERS_TABLE_NAME: !Ref UsersTableName         
         TODO_TABLE_NAME: !Ref TodoTableName
-        # For RDB        
-        RDB_USER: !Ref DBUsername        
-        RDB_PASSWORD: !Ref DBPassword
+        # For RDB
+        RDB_USER: !Sub "{{resolve:secretsmanager:${StackPrefix}-RDS-Secrets:SecretString:username}}"
+        RDB_PASSWORD: !Sub "{{resolve:secretsmanager:${StackPrefix}-RDS-Secrets:SecretString:password}}"
         RDB_ENDPOINT:
           Fn::ImportValue: !Sub ${StackPrefix}-RDSProxyEndpoint
         RDB_PORT:
