@@ -4,7 +4,7 @@ version = 0.1
 
 [default]
 [default.global.parameters]
-stack_name = "todo-app-stack"
+stack_name = "todo-go-app"
 
 [default.build.parameters]
 cached = true
@@ -16,7 +16,7 @@ lint = true
 [default.deploy.parameters]
 capabilities = "CAPABILITY_IAM"
 confirm_changeset = true
-s3_prefix = "todo-app-stack"
+s3_prefix = "todo-go-app"
 region = "ap-northeast-1"
 image_repositories = []
 parameter_overrides = "StackPrefix=\"Demo\" TodoTableName=\"todo\" TracingValue=\"Active\" Stage=\"Prod\" MemorySize=\"128\""
