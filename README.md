@@ -202,6 +202,7 @@ curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/todo/04a14
 {"todo_id":"04a14ad3-f6a5-11ed-b40f-f2ead45b980a","todo_title":"ミルクを買う"}
 ```
 ## 12. SAMのCloudFormationスタック削除
+* VPC内Lambdaが参照するHyperplane ENIの削除に最大20分かかるため、スタックの削除に時間がかかる。
 ```sh
 sam delete
 # Windowsでもmakeをインストールすればmakeでいけます
