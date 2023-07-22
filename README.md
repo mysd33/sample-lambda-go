@@ -72,7 +72,7 @@ aws cloudformation create-stack --stack-name Demo-Bastion-Stack --template-body 
         * https://techviewleo.com/how-to-install-postgresql-database-on-amazon-linux/
 * DB接続後、ユーザテーブルを作成する。        
 ```sh
-sudo amazon-linux-extras install epel
+sudo amazon-linux-extras install -y epel
 
 sudo tee /etc/yum.repos.d/pgdg.repo<<EOF
 [pgdg14]
@@ -83,7 +83,7 @@ gpgcheck=0
 EOF
 
 sudo yum makecache
-sudo yum install postgresql14
+sudo yum install -y postgresql14
 
 #Auroraに直接接続
 #CloudFormationのDemo-RDS-Stackスタックの出力「RDSClusterEndpointAddress」の値を参照

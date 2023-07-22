@@ -26,7 +26,22 @@ Parameters:
     Type: Number
     MinValue: 128
     MaxValue: 10240
-    Default: 128   
+    Default: 128 
+  HelloWorldFunctionName:
+    Type: String
+    Default: hello-world      
+  GetUsersFunctionName:
+    Type: String
+    Default: get-user-function
+  PostUsersFunctionName:
+    Type: String
+    Default: post-user-function
+  GetTodoFunctionName:    
+    Type: String
+    Default: get-todo-function  
+  PostTodoFunctionName:
+    Type: String
+    Default: post-todo-function 
 Conditions:
   TracingEnabled: !Equals [!Ref TracingValue, Active]
 
@@ -90,7 +105,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x
     Properties:
-      FunctionName: hello-world    
+      FunctionName: !Ref HelloWorldFunctionName
       CodeUri: app/cmd/hello-world
       Events:
         CatchAll:
@@ -108,10 +123,8 @@ Resources:
     Metadata:
       BuildMethod: go1.x    
     Properties:
-      FunctionName: get-user-function
+      FunctionName: !Ref GetUsersFunctionName
       CodeUri: app/cmd/users/  
-      Policies: 
-      - AmazonDynamoDBReadOnlyAccess 
       Events:
         GetEvent:
           Type: Api
@@ -124,10 +137,8 @@ Resources:
     Metadata:
       BuildMethod: go1.x    
     Properties:
-      FunctionName: post-user-function
+      FunctionName: !Ref PostUsersFunctionName
       CodeUri: app/cmd/users/
-      Policies: 
-      - AmazonDynamoDBFullAccess           
       Events:
         PostEvent:
           Type: Api
@@ -141,10 +152,12 @@ Resources:
     Metadata:
       BuildMethod: go1.x    
     Properties:
-      FunctionName: get-todo-function
+      FunctionName: !Ref GetTodoFunctionName
       CodeUri: app/cmd/todo/
       Policies: 
-      - AmazonDynamoDBReadOnlyAccess 
+        - DynamoDBReadPolicy:
+            TableName:
+              !Ref TodoTableName          
       Events:
         GetEvent:
           Type: Api
@@ -157,10 +170,12 @@ Resources:
     Metadata:
       BuildMethod: go1.x    
     Properties:
-      FunctionName: post-todo-function
+      FunctionName: !Ref PostTodoFunctionName
       CodeUri: app/cmd/todo/
-      Policies: 
-      - AmazonDynamoDBFullAccess           
+      Policies:       
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref TodoTableName              
       Events:
         PostEvent:
           Type: Api
@@ -256,7 +271,33 @@ Resources:
     Properties:
       LogGroupName: !Sub /aws/apigateway/accesslog/${AWS::StackName}
       RetentionInDays: 7
-
+# Lambda Log group
+  HelloWorldFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${HelloWorldFunctionName}
+      RetentionInDays: 7
+  GetUsersFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${GetUsersFunctionName}
+      RetentionInDays: 7      
+  PostUsersFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${PostUsersFunctionName}
+      RetentionInDays: 7
+  GetTodoFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${GetTodoFunctionName}
+      RetentionInDays: 7
+  PostTodoFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${PostTodoFunctionName}
+      RetentionInDays: 7
+      
 # Application Insights
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
