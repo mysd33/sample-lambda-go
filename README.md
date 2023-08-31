@@ -5,6 +5,8 @@
     * VPC内にEC2で構築した、Bastionからアクセスする
 * LambdaからDynamoDBやRDS AuroraへのDBアクセスを実現
     * LambdaはVPC内Lambdaとして、RDS Aurora（RDS Proxy経由）でのアクセスも可能としている
+    * RDS Proxyの利用時の注意（ピン留め）
+        * なお、SQLを記載するにあたり、従来はプリペアドステートメントを使用するのが一般的であるが、RDS Proxyを使用する場合には、[ピン留め(Pinning)](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-managing.html#rds-proxy-pinning)という現象が発生してしまう。その間、コネクションが、切断されるまで占有されつづけてしまい再利用できず、複数リクエストを同時実行する際の性能面に影響が出る恐れがある。そこで、本サンプルAPのRDBアクセス処理では、SQLインジェクションが起きないようにエスケープしつつも、プリペアドステートメントを使用しないよう実装している。
 
 ![構成イメージ](image/demo.png)
 
