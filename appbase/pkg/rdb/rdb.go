@@ -24,6 +24,7 @@ var (
 )
 
 func RDSConnect() (*sql.DB, error) {
+	// TODO: X-Rayを使ったDB接続をすると、プリペアドステートメントを使用していなくても、RDS Proxyでのピン留めが起きてしまう
 	// X-RayのSQLトレースに対応したDB接続の取得
 	connectStr := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s",
