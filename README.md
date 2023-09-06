@@ -16,7 +16,7 @@
 
 
 * RDS Proxyの利用時の注意（ピン留め）
-    * SQLを記載するにあたり、従来はプリペアドステートメントを使用するのが一般的であるが、RDS Proxyを使用する場合には、[ピン留め(Pinning)](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-managing.html#rds-proxy-pinning)という現象が発生してしまう。その間、コネクションが、切断されるまで占有されつづけてしまい再利用できず、複数リクエストを同時実行する際の性能面に影響が出る恐れがある。
+    * SQLを記載するにあたり、従来はプリペアドステートメントを使用するのが一般的であるが、RDS Proxyを使用する場合には、[ピン留め(Pinning)](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-managing.html#rds-proxy-pinning)という現象が発生してしまう。その間、コネクションが切断されるまで占有されつづけてしまい再利用できず、大量のリクエストを同時に処理する場合にはコネクション枯渇し性能面に影響が出る恐れがある。
         * ピン留めが発生してるかについては、CloudWatch Logsでロググループ「/aws/rds/proxy/demo-rds-proxy」を確認して、以下のような文言が出ていないか確認するとよい。
 
         ```
@@ -25,9 +25,9 @@
 
     * 本サンプルAPのRDBアクセス処理では、プリペアドステートメントを使用しないよう実装することで、ピン留めが発生しないようにしている。注意点として、SQLインジェクションが起きないようにエスケープ処理を忘れずに実装している。
 
-    * なお、X-Ray SDKでSQLトレースするため[xray.SQLContext関数を利用する](https://docs.aws.amazon.com/ja_jp/xray/latest/devguide/xray-sdk-go-sqlclients.html)際に確立するDBコネクションでピン留めが発生してしまうことが動作確認してみて分かった。
-        * おそらく、xray.SQLContext関数を利用する際にxray対応のDBドライバ登録のため確立したDBコネクションでピン留めが発生しているようで、CloudWatchのログを見る限り直ちにコネクション切断されるので、ピン留めの影響は小さいのではないかと想定はされる。
-        * 本処理のSQLに対するDBコネクションについてはプリペアドステートメントを使用しなければピン留めは発生しないので問題はなさそうである。
+    * なお、本サンプルAPのようにX-Ray SDKでSQLトレースする場合、[xray.SQLContext関数を利用する](https://docs.aws.amazon.com/ja_jp/xray/latest/devguide/xray-sdk-go-sqlclients.html)際に確立するDBコネクションでピン留めが発生する。
+        * xray.SQLContext関数を利用する際に、内部で発行されるSQL（"SELECT version(), current_user, current_database()"）がプリペアドステートメントを使用しているためピン留めが発生する。ピン留めの発生は回避できないとのこと。ただ、CloudWatchのRDS Proxyのログを見ても分かるが、直ちにコネクション切断されるため、ピン留めによる影響は小さいと想定される。（AWSサポート回答より）
+        
 ## 1. IAMの作成
 ```sh
 #cfnフォルダに移動
