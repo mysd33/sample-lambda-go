@@ -13,10 +13,8 @@ clean:
 
 build:
 	sam build
-	xcopy /I config .aws-sam\build\GetUsersFunction\config
-	xcopy /I config .aws-sam\build\PostUsersFunction\config	
-	xcopy /I config .aws-sam\build\GetTodoFunction\config
-	xcopy /I config .aws-sam\build\PostTodoFunction\config	
+	xcopy /I config .aws-sam\build\UsersFunction\config	
+	xcopy /I config .aws-sam\build\TodoFunction\config
 
 unit_test:
 	cd app & go test -v ./internal/...

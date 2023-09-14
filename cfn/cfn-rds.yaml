@@ -126,6 +126,7 @@ Resources:
           IAMAuth: DISABLED
       DBProxyName: !Sub ${StackPrefix}-rds-proxy
       DebugLogging: false
+      #DebugLogging: true    
       EngineFamily: POSTGRESQL      
       RequireTLS: false
       RoleArn:

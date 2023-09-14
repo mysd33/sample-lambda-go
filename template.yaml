@@ -30,18 +30,12 @@ Parameters:
   HelloWorldFunctionName:
     Type: String
     Default: hello-world      
-  GetUsersFunctionName:
+  UsersFunctionName:
     Type: String
-    Default: get-user-function
-  PostUsersFunctionName:
+    Default: user-function
+  TodoFunctionName:    
     Type: String
-    Default: post-user-function
-  GetTodoFunctionName:    
-    Type: String
-    Default: get-todo-function  
-  PostTodoFunctionName:
-    Type: String
-    Default: post-todo-function 
+    Default: todo-function  
 Conditions:
   TracingEnabled: !Equals [!Ref TracingValue, Active]
 
@@ -118,12 +112,12 @@ Resources:
         Variables:
           PARAM1: VALUE
 # User API  
-  GetUsersFunction:
+  UsersFunction:
     Type: AWS::Serverless::Function
     Metadata:
       BuildMethod: go1.x    
     Properties:
-      FunctionName: !Ref GetUsersFunctionName
+      FunctionName: !Ref UsersFunctionName
       CodeUri: app/cmd/users/  
       Events:
         GetEvent:
@@ -131,15 +125,7 @@ Resources:
           Properties:            
             Path: /users/{user_id}
             Method: GET
-            RestApiId: !Ref UserApi 
-  PostUsersFunction:
-    Type: AWS::Serverless::Function
-    Metadata:
-      BuildMethod: go1.x    
-    Properties:
-      FunctionName: !Ref PostUsersFunctionName
-      CodeUri: app/cmd/users/
-      Events:
+            RestApiId: !Ref UserApi
         PostEvent:
           Type: Api
           Properties:
@@ -147,17 +133,17 @@ Resources:
             Method: POST
             RestApiId: !Ref UserApi                           
 # Todo API
-  GetTodoFunction:
+  TodoFunction:
     Type: AWS::Serverless::Function
     Metadata:
       BuildMethod: go1.x    
     Properties:
-      FunctionName: !Ref GetTodoFunctionName
+      FunctionName: !Ref TodoFunctionName
       CodeUri: app/cmd/todo/
       Policies: 
-        - DynamoDBReadPolicy:
+        - DynamoDBCrudPolicy:
             TableName:
-              !Ref TodoTableName          
+              !Ref TodoTableName                        
       Events:
         GetEvent:
           Type: Api
@@ -165,18 +151,6 @@ Resources:
             Path: /todo/{todo_id}
             Method: GET
             RestApiId: !Ref TodoApi
-  PostTodoFunction:
-    Type: AWS::Serverless::Function
-    Metadata:
-      BuildMethod: go1.x    
-    Properties:
-      FunctionName: !Ref PostTodoFunctionName
-      CodeUri: app/cmd/todo/
-      Policies:       
-        - DynamoDBCrudPolicy:
-            TableName:
-              !Ref TodoTableName              
-      Events:
         PostEvent:
           Type: Api
           Properties:
@@ -277,25 +251,15 @@ Resources:
     Properties:
       LogGroupName: !Sub /aws/lambda/${HelloWorldFunctionName}
       RetentionInDays: 7
-  GetUsersFunctionLogGroup:
+  UsersFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/lambda/${GetUsersFunctionName}
+      LogGroupName: !Sub /aws/lambda/${UsersFunctionName}
       RetentionInDays: 7      
-  PostUsersFunctionLogGroup:
+  TodoFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/lambda/${PostUsersFunctionName}
-      RetentionInDays: 7
-  GetTodoFunctionLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub /aws/lambda/${GetTodoFunctionName}
-      RetentionInDays: 7
-  PostTodoFunctionLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub /aws/lambda/${PostTodoFunctionName}
+      LogGroupName: !Sub /aws/lambda/${TodoFunctionName}
       RetentionInDays: 7
       
 # Application Insights
@@ -330,42 +294,24 @@ Outputs:
   UsersAPI:
     Description: "API Gateway endpoint URL for Prod environment"
     Value: !Sub "https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/users"
-  GetUsersFunction:
-    Description: "Get Users Lambda Function ARN"
-    Value: !GetAtt GetUsersFunction.Arn
-  GetUsersFunctionIamRole:
-    Description: "Implicit IAM Role created for Get Users function ARN"
-    Value: !GetAtt GetUsersFunctionRole.Arn
-  GetUsersFunctionDeploymentGroup :
-    Description: "Get Users Lambda Function DeploymentGroup ARN"
-    Value: !Ref GetUsersFunctionDeploymentGroup
-  PostUsersFunction:
-    Description: "Post Users Lambda Function ARN"
-    Value: !GetAtt PostUsersFunction.Arn
-  PostUsersFunctionIamRole:
-    Description: "Implicit IAM Role created for Post Users function ARN"
-    Value: !GetAtt PostUsersFunctionRole.Arn
-  PostUsersFunctionDeploymentGroup :
-    Description: "Post Users Lambda Function DeploymentGroup ARN"
-    Value: !Ref PostUsersFunctionDeploymentGroup
+  UsersFunction:
+    Description: "Users Lambda Function ARN"
+    Value: !GetAtt UsersFunction.Arn
+  UsersFunctionIamRole:
+    Description: "Implicit IAM Role created for Users function ARN"
+    Value: !GetAtt UsersFunctionRole.Arn
+  UsersFunctionDeploymentGroup:
+    Description: "Users Lambda Function DeploymentGroup ARN"
+    Value: !Ref UsersFunctionDeploymentGroup
   TodoAPI:
     Description: "API Gateway endpoint URL for Prod environment"
     Value: !Sub "https://${TodoApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/todo"
-  GetTodoFunction:
-    Description: "Get Todo Lambda Function ARN"
-    Value: !GetAtt GetTodoFunction.Arn
-  GetTodoFunctionIamRole:
-    Description: "Implicit IAM Role created for Get Todo function ARN"
-    Value: !GetAtt GetTodoFunctionRole.Arn
-  GetTodoFunctionDeploymentGroup :
-    Description: "Get Todo Lambda Function DeploymentGroup ARN"
-    Value: !Ref GetTodoFunctionDeploymentGroup
-  PostTodoFunction:
-    Description: "Post Todo Lambda Function ARN"
-    Value: !GetAtt PostTodoFunction.Arn
-  PostTodoFunctionIamRole:
-    Description: "Implicit IAM Role created for Post Todo function ARN"
-    Value: !GetAtt PostTodoFunctionRole.Arn
-  PostTodoFunctionDeploymentGroup :
-    Description: "Post Todo Lambda Function DeploymentGroup ARN"
-    Value: !Ref PostTodoFunctionDeploymentGroup    
+  TodoFunction:
+    Description: "Todo Lambda Function ARN"
+    Value: !GetAtt TodoFunction.Arn
+  TodoFunctionIamRole:
+    Description: "Implicit IAM Role created for Todo function ARN"
+    Value: !GetAtt TodoFunctionRole.Arn
+  TodoFunctionDeploymentGroup:
+    Description: "Todo Lambda Function DeploymentGroup ARN"
+    Value: !Ref TodoFunctionDeploymentGroup
