@@ -12,7 +12,8 @@
     * API Gateway、Lambdaにおいて、X-Rayによる可視化にも対応している
     * RDB(RDS Aurora)へのアクセス、DynamoDBへのアクセスのトレースにも対応
 
-![X-Rayの可視化の例](image/xray.png)
+![X-Rayの可視化の例](image/xray-aurora.png)
+![X-Rayの可視化の例2](image/xray-dynamodb.png)
 
 
 * RDS Proxyの利用時の注意（ピン留め）
