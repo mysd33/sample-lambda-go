@@ -6,11 +6,11 @@ import (
 
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/id"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-xray-sdk-go/xray"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 	"github.com/pkg/errors"
 )
 
@@ -19,17 +19,24 @@ type TodoRepository interface {
 	PutTodo(todo *entity.Todo) (*entity.Todo, error)
 }
 
-func NewTodoRepository() TodoRepository {
-	sess := session.Must(session.NewSession(&aws.Config{
-		Region: aws.String(region)}),
-	)
-	dynamo := dynamodb.New(sess)
-	xray.AWS(dynamo.Client)
-	return &TodoRepositoryImpl{instance: dynamo}
+func NewTodoRepository() (TodoRepository, error) {
+	// AWS SDK for Go v2 Migration
+	// https://github.com/aws/aws-sdk-go-v2
+	// https://aws.github.io/aws-sdk-go-v2/docs/migrating/
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion(region))
+	if err != nil {
+		return nil, err
+	}
+	// Instrumenting AWS SDK v2
+	// https://github.com/aws/aws-xray-sdk-go
+	awsv2.AWSV2Instrumentor(&cfg.APIOptions)
+	dynamo := dynamodb.NewFromConfig(cfg)
+	return &TodoRepositoryImpl{instance: dynamo}, nil
 }
 
 type TodoRepositoryImpl struct {
-	instance *dynamodb.DynamoDB
+	instance *dynamodb.Client
 }
 
 func (tr *TodoRepositoryImpl) GetTodo(todoId string) (*entity.Todo, error) {
@@ -37,23 +44,23 @@ func (tr *TodoRepositoryImpl) GetTodo(todoId string) (*entity.Todo, error) {
 }
 
 func (tr *TodoRepositoryImpl) doGetTodo(todoId string, ctx context.Context) (*entity.Todo, error) {
+	// AWS SDK for Go v2 Migration
+	// https://docs.aws.amazon.com/ja_jp/code-library/latest/ug/go_2_dynamodb_code_examples.html
+	// https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/gov2/dynamodb
 	//Itemの取得（X-Rayトレース）
-	result, err := tr.instance.GetItemWithContext(ctx, &dynamodb.GetItemInput{
+	todo := entity.Todo{ID: todoId}
+	key, err := todo.GetKey()
+	if err != nil {
+		return nil, errors.Wrapf(err, "fail to get key")
+	}
+	result, err := tr.instance.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(todoTable),
-		Key: map[string]*dynamodb.AttributeValue{
-			"todo_id": {
-				S: aws.String(todoId),
-			},
-		},
+		Key:       key,
 	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get item")
 	}
-	if result.Item == nil {
-		return nil, nil
-	}
-	todo := entity.Todo{}
-	err = dynamodbattribute.UnmarshalMap(result.Item, &todo)
+	err = attributevalue.UnmarshalMap(result.Item, &todo)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to marshal item")
 	}
@@ -65,11 +72,15 @@ func (tr *TodoRepositoryImpl) PutTodo(todo *entity.Todo) (*entity.Todo, error) {
 }
 
 func (tr *TodoRepositoryImpl) doPutTodo(todo *entity.Todo, ctx context.Context) (*entity.Todo, error) {
+	// AWS SDK for Go v2 Migration
+	// https://docs.aws.amazon.com/ja_jp/code-library/latest/ug/go_2_dynamodb_code_examples.html
+	// https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/gov2/dynamodb
+
 	//ID採番
 	todoId := id.GenerateId()
 	todo.ID = todoId
 
-	av, err := dynamodbattribute.MarshalMap(todo)
+	av, err := attributevalue.MarshalMap(todo)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to marshal item")
 	}
@@ -78,7 +89,7 @@ func (tr *TodoRepositoryImpl) doPutTodo(todo *entity.Todo, ctx context.Context) 
 		TableName: aws.String(todoTable),
 	}
 	//Itemの登録（X-Rayトレース）
-	_, err = tr.instance.PutItemWithContext(ctx, input)
+	_, err = tr.instance.PutItem(ctx, input)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to put item")
 	}

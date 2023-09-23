@@ -40,7 +40,12 @@ func init() {
 		log.Fatal("初期化処理エラー:%s", err.Error())
 		panic(err.Error())
 	}
-	todoRepository := repository.NewTodoRepository()
+	todoRepository, err := repository.NewTodoRepository()
+	if err != nil {
+		//TODO: エラーハンドリング
+		log.Fatal("初期化処理エラー:%s", err.Error())
+		panic(err.Error())
+	}
 	todoService = service.NewTodoService(log, cfg, &todoRepository)
 }
 

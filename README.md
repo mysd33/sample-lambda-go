@@ -5,6 +5,8 @@
     * VPC内にEC2で構築した、Bastionからアクセスする
 * LambdaからDynamoDBやRDS AuroraへのDBアクセスを実現
     * LambdaはVPC内Lambdaとして、RDS Aurora（RDS Proxy経由）でのアクセスも可能としている
+* AWS SDK for Go v2に対応
+    * AWS SDKやX-Ray SDKの利用方法がv1の時と変更になっている
 
 ![構成イメージ](image/demo.png)
 

@@ -46,7 +46,12 @@ func init() {
 	}
 	// リポジトリの作成
 	// DynamoDBの場合
-	// userRepository := repository.NewUserRepositoryForDynamoDB()
+	// userRepository, err := repository.NewUserRepositoryForDynamoDB()
+	// if err != nil {
+	//TODO: エラーハンドリング
+	//	log.Fatal("初期化処理エラー:%s", err.Error())
+	//	panic(err.Error())
+	//}
 	// RDBの場合
 	userRepository := repository.NewUserRepositoryForRDB()
 

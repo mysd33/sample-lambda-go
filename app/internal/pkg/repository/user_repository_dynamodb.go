@@ -6,25 +6,32 @@ import (
 
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/id"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-xray-sdk-go/xray"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 	"github.com/pkg/errors"
 )
 
-func NewUserRepositoryForDynamoDB() UserRepository {
-	sess := session.Must(session.NewSession(&aws.Config{
-		Region: aws.String(region)}),
-	)
-	dynamo := dynamodb.New(sess)
-	xray.AWS(dynamo.Client)
-	return &UserRepositoryImplByDynamoDB{instance: dynamo}
+func NewUserRepositoryForDynamoDB() (UserRepository, error) {
+	// AWS SDK for Go v2 Migration
+	// https://github.com/aws/aws-sdk-go-v2
+	// https://aws.github.io/aws-sdk-go-v2/docs/migrating/
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion(region))
+	if err != nil {
+		return nil, err
+	}
+	// Instrumenting AWS SDK v2
+	// https://github.com/aws/aws-xray-sdk-go
+	awsv2.AWSV2Instrumentor(&cfg.APIOptions)
+	dynamo := dynamodb.NewFromConfig(cfg)
+	return &UserRepositoryImplByDynamoDB{instance: dynamo}, nil
 }
 
 type UserRepositoryImplByDynamoDB struct {
-	instance *dynamodb.DynamoDB
+	instance *dynamodb.Client
 }
 
 func (ur *UserRepositoryImplByDynamoDB) GetUser(userId string) (*entity.User, error) {
@@ -32,14 +39,18 @@ func (ur *UserRepositoryImplByDynamoDB) GetUser(userId string) (*entity.User, er
 }
 
 func (ur *UserRepositoryImplByDynamoDB) doGetUser(userId string, ctx context.Context) (*entity.User, error) {
+	// AWS SDK for Go v2 Migration
+	// https://docs.aws.amazon.com/ja_jp/code-library/latest/ug/go_2_dynamodb_code_examples.html
+	// https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/gov2/dynamodb
 	//Itemの取得（X-Rayトレース）
-	result, err := ur.instance.GetItemWithContext(ctx, &dynamodb.GetItemInput{
+	user := entity.User{ID: userId}
+	key, err := user.GetKey()
+	if err != nil {
+		return nil, errors.Wrapf(err, "fail to get key")
+	}
+	result, err := ur.instance.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(userTable),
-		Key: map[string]*dynamodb.AttributeValue{
-			"user_id": {
-				S: aws.String(userId),
-			},
-		},
+		Key:       key,
 	})
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get item")
@@ -47,8 +58,8 @@ func (ur *UserRepositoryImplByDynamoDB) doGetUser(userId string, ctx context.Con
 	if result.Item == nil {
 		return nil, nil
 	}
-	user := entity.User{}
-	err = dynamodbattribute.UnmarshalMap(result.Item, &user)
+
+	err = attributevalue.UnmarshalMap(result.Item, &user)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to marshal item")
 	}
@@ -64,7 +75,7 @@ func (ur *UserRepositoryImplByDynamoDB) doPutUser(user *entity.User, ctx context
 	userId := id.GenerateId()
 	user.ID = userId
 
-	av, err := dynamodbattribute.MarshalMap(user)
+	av, err := attributevalue.MarshalMap(user)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to marshal item")
 	}
@@ -73,7 +84,7 @@ func (ur *UserRepositoryImplByDynamoDB) doPutUser(user *entity.User, ctx context
 		TableName: aws.String(userTable),
 	}
 	//Itemの登録（X-Rayトレース）
-	_, err = ur.instance.PutItemWithContext(ctx, input)
+	_, err = ur.instance.PutItem(ctx, input)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to put item")
 	}
