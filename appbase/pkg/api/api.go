@@ -1,43 +1,18 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
-	"github.com/aws/aws-lambda-go/events"
-	"github.com/pkg/errors"
+	"github.com/gin-gonic/gin"
 )
 
-func ParsePostRequest(req events.APIGatewayProxyRequest, v interface{}) error {
-	if req.HTTPMethod != http.MethodPost {
-		return errors.Errorf("use POST request")
-	}
-	err := json.Unmarshal([]byte(req.Body), v)
+func ReturnResponseBody(ctx *gin.Context, result interface{}, err error) {
 	if err != nil {
-		return errors.Wrapf(err, "failed to parse request")
+		//TODO: エラー時の応答メッセージ
+		ctx.JSON(http.StatusBadRequest, errorResponseBody(err.Error()))
 	}
-	return nil
-}
-
-func OkResponse(result string) (events.APIGatewayProxyResponse, error) {
-	return response(
-		http.StatusOK,
-		result), nil
-}
-
-func ErrorResponse(err error) (events.APIGatewayProxyResponse, error) {
-	return response(
-		http.StatusBadRequest,
-		errorResponseBody(err.Error())), nil
-}
-
-func response(code int, body string) events.APIGatewayProxyResponse {
-	return events.APIGatewayProxyResponse{
-		StatusCode: code,
-		Body:       body,
-		Headers:    map[string]string{"Content-Type": "application/json"},
-	}
+	ctx.JSON(http.StatusOK, result)
 }
 
 func errorResponseBody(msg string) string {
