@@ -3,6 +3,7 @@ package controller
 import (
 	"app/internal/app/todo/service"
 
+	"example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/logging"
 	"github.com/gin-gonic/gin"
 )
@@ -17,7 +18,7 @@ type TodoController interface {
 	Regist(ctx *gin.Context) (interface{}, error)
 }
 
-func NewTodoController(log logging.Logger, service *service.TodoService) TodoController {
+func New(log logging.Logger, service *service.TodoService) TodoController {
 	return &TodoControllerImpl{log: log, service: service}
 }
 
@@ -31,8 +32,10 @@ func (c *TodoControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
 	todoId := ctx.Param("todo_id")
 	// TODO: 入力チェック
 
-	// サービスの実行
-	return (*c.service).Find(todoId)
+	// DynamoDBトランザクション管理してサービスの実行
+	return dynamodb.HandleTransaction(func() (interface{}, error) {
+		return (*c.service).Find(todoId)
+	})
 }
 
 func (c *TodoControllerImpl) Regist(ctx *gin.Context) (interface{}, error) {
@@ -41,6 +44,8 @@ func (c *TodoControllerImpl) Regist(ctx *gin.Context) (interface{}, error) {
 	ctx.BindJSON(&request)
 	// TODO: 入力チェック
 
-	// サービスの実行
-	return (*c.service).Regist(request.TodoTitle)
+	// DynamoDBトランザクション管理してサービスの実行
+	return dynamodb.HandleTransaction(func() (interface{}, error) {
+		return (*c.service).Regist(request.TodoTitle)
+	})
 }

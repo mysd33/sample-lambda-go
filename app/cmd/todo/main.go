@@ -8,7 +8,7 @@ import (
 
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/config"
-	"example.com/appbase/pkg/handlerinterceptor"
+	"example.com/appbase/pkg/interceptor"
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -21,7 +21,6 @@ var ginLambda *ginadapter.GinLambda
 
 // コードルドスタート時の初期化処理
 func init() {
-	var err error
 	log := logging.NewLogger()
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -29,17 +28,17 @@ func init() {
 		panic(err.Error())
 	}
 	// リポジトリの作成
-	todoRepository, err := repository.NewTodoRepository()
+	todoRepository, err := repository.New()
 	if err != nil {
 		log.Fatal("初期化処理エラー:%s", err.Error())
 		panic(err.Error())
 	}
 	// サービスの作成
-	todoService := service.NewTodoService(log, cfg, &todoRepository)
+	todoService := service.New(log, cfg, &todoRepository)
 	// コントローラの作成
-	todoController := controller.NewTodoController(log, &todoService)
+	todoController := controller.New(log, &todoService)
 	// ハンドラインタセプタの作成
-	interceptor := handlerinterceptor.HandlerInterceptor{Log: log}
+	interceptor := interceptor.New(log)
 
 	// ginによるURLマッピング
 	r := gin.Default()

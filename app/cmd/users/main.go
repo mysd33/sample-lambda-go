@@ -5,7 +5,7 @@ import (
 
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/config"
-	"example.com/appbase/pkg/handlerinterceptor"
+	"example.com/appbase/pkg/interceptor"
 	"example.com/appbase/pkg/logging"
 
 	"app/internal/app/user/controller"
@@ -23,28 +23,26 @@ var ginLambda *ginadapter.GinLambda
 
 // コードルドスタート時の初期化処理
 func init() {
-	var err error
 	log := logging.NewLogger()
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal("初期化処理エラー:%s", err.Error())
 		panic(err.Error())
 	}
-	// リポジトリの作成
-	// DynamoDBの場合
-	// userRepository, err := repository.NewUserRepositoryForDynamoDB()
+	// リポジトリの作成（DynamoDBの場合）
+	// userRepository, err := repository.NewForDynamoDB()
 	// if err != nil {
 	//	log.Fatal("初期化処理エラー:%s", err.Error())
 	//	panic(err.Error())
 	//}
-	// RDBの場合
-	userRepository := repository.NewUserRepositoryForRDB()
+	// リポジトリの作成（RDBの場合）
+	userRepository := repository.NewForRDB()
 	// サービスの作成
-	userService := service.NewUserService(log, cfg, &userRepository)
+	userService := service.New(log, cfg, &userRepository)
 	// コントローラの作成
-	userController := controller.NewUserController(log, &userService)
+	userController := controller.New(log, &userService)
 	// ハンドラインタセプタの作成
-	interceptor := handlerinterceptor.HandlerInterceptor{Log: log}
+	interceptor := interceptor.New(log)
 
 	// ginによるURLマッピング定義
 	r := gin.Default()

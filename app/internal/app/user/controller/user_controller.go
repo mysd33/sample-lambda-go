@@ -18,7 +18,7 @@ type UserController interface {
 	Regist(ctx *gin.Context) (interface{}, error)
 }
 
-func NewUserController(log logging.Logger, service *service.UserService) UserController {
+func New(log logging.Logger, service *service.UserService) UserController {
 	return &UserControllerImpl{log: log, service: service}
 }
 
@@ -33,7 +33,7 @@ func (c *UserControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
 	// TODO: 入力チェック
 
 	// RDBトランザクション開始してサービスの実行
-	return rdb.HandleRDBTransaction(func() (interface{}, error) {
+	return rdb.HandleTransaction(func() (interface{}, error) {
 		return (*c.service).Find(userId)
 	})
 }
@@ -45,7 +45,7 @@ func (c *UserControllerImpl) Regist(ctx *gin.Context) (interface{}, error) {
 	// TODO: 入力チェック
 
 	// RDBトランザクション開始してサービスの実行
-	return rdb.HandleRDBTransaction(func() (interface{}, error) {
+	return rdb.HandleTransaction(func() (interface{}, error) {
 		return (*c.service).Regist(request.Name)
 	})
 }

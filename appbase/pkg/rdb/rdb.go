@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"example.com/appbase/pkg/apcontext"
+	"example.com/appbase/pkg/domain"
 	"github.com/aws/aws-xray-sdk-go/xray"
 	_ "github.com/lib/pq"
 )
@@ -53,9 +54,7 @@ func RDSConnect() (*sql.DB, error) {
 	return db, nil
 }
 
-type ServiceFunc func() (interface{}, error)
-
-func HandleRDBTransaction(serviceFunc ServiceFunc) (interface{}, error) {
+func HandleTransaction(serviceFunc domain.ServiceFunc) (interface{}, error) {
 	// RDBトランザクション開始
 	err := startTransaction()
 	if err != nil {

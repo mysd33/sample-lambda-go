@@ -13,7 +13,7 @@ type TodoService interface {
 	Find(todoId string) (*entity.Todo, error)
 }
 
-func NewTodoService(log logging.Logger,
+func New(log logging.Logger,
 	config *config.Config,
 	repository *repository.TodoRepository,
 ) TodoService {

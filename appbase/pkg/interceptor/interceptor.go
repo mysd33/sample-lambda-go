@@ -1,4 +1,4 @@
-package handlerinterceptor
+package interceptor
 
 import (
 	"errors"
@@ -12,7 +12,11 @@ import (
 )
 
 type HandlerInterceptor struct {
-	Log logging.Logger
+	log logging.Logger
+}
+
+func New(log logging.Logger) HandlerInterceptor {
+	return HandlerInterceptor{log: log}
 }
 
 type ControllerFunc func(ctx *gin.Context) (interface{}, error)
@@ -24,20 +28,20 @@ func (i HandlerInterceptor) Handle(controllerFunc ControllerFunc) func(ctx *gin.
 	return func(ctx *gin.Context) {
 		fv := reflect.ValueOf(controllerFunc)
 		funcName := runtime.FuncForPC(fv.Pointer()).Name()
-		i.Log.Info("Controller開始: %s", funcName)
+		i.log.Info("Controller開始: %s", funcName)
 		// Controllerの実行
 		result, err := controllerFunc(ctx)
 		// 集約エラーハンドリングによるログ出力
 		if err != nil {
 			if errors.As(err, &businessError) {
-				i.Log.Warn(businessError.Error())
+				i.log.Warn(businessError.Error())
 			} else if errors.As(err, &systemError) {
-				i.Log.Fatal(systemError.Error())
+				i.log.Fatal(systemError.Error())
 			} else {
-				i.Log.Fatal("予期せぬエラー: %s", err.Error())
+				i.log.Fatal("予期せぬエラー: %s", err.Error())
 			}
 		} else {
-			i.Log.Info("Controller正常終了: %s", funcName)
+			i.log.Info("Controller正常終了: %s", funcName)
 		}
 		api.ReturnResponseBody(ctx, result, err)
 	}

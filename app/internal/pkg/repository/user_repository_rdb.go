@@ -9,7 +9,7 @@ import (
 	"github.com/lib/pq"
 )
 
-func NewUserRepositoryForRDB() UserRepository {
+func NewForRDB() UserRepository {
 	return &UserRepositoryImplByRDB{}
 }
 

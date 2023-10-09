@@ -13,7 +13,7 @@ type UserService interface {
 	Find(userId string) (*entity.User, error)
 }
 
-func NewUserService(log logging.Logger,
+func New(log logging.Logger,
 	config *config.Config,
 	repository *repository.UserRepository,
 ) UserService {

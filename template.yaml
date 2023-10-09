@@ -182,7 +182,7 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       Name: user-api
-      StageName: !Sub ${Stage}        
+      StageName: !Ref Stage
       Auth:
         ResourcePolicy:
           CustomStatements: [{
@@ -204,7 +204,7 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       Name: todo-api
-      StageName: !Sub ${Stage}         
+      StageName: !Ref Stage
       Auth:
         ResourcePolicy:
           CustomStatements: [{
