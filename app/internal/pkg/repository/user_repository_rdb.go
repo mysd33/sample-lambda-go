@@ -1,3 +1,4 @@
+// repositoryのパッケージ
 package repository
 
 import (
@@ -10,10 +11,12 @@ import (
 	"github.com/lib/pq"
 )
 
+// NewUserRepositoryForRDB は、RDB保存のためのUserRepository実装を作成します。
 func NewUserRepositoryForRDB() UserRepository {
 	return &UserRepositoryImplByRDB{}
 }
 
+// UserRepositoryImplByRDB は、RDB保存のためのUserRepository実装です。
 type UserRepositoryImplByRDB struct {
 }
 

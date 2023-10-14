@@ -1,3 +1,4 @@
+// serviceのパッケージ
 package service
 
 import (
@@ -8,36 +9,41 @@ import (
 	"example.com/appbase/pkg/logging"
 )
 
+// UserService は、ユーザ管理業務のServiceインタフェースです。
 type UserService interface {
-	Regist(userName string) (*entity.User, error)
+	// Find は、userIdのユーザを照会します。
 	Find(userId string) (*entity.User, error)
+	// Regist は、ユーザ名userNameのユーザを登録します。
+	Regist(userName string) (*entity.User, error)
 }
 
+// New は、UserServiceを作成します。
 func New(log logging.Logger,
 	config *config.Config,
-	repository *repository.UserRepository,
+	repository repository.UserRepository,
 ) UserService {
-	return &UserServiceImpl{Log: log, Config: config, Repository: repository}
+	return &UserServiceImpl{log: log, config: config, repository: repository}
 }
 
+// UserServiceImpl は、UserServiceを実装する構造体です。
 type UserServiceImpl struct {
-	Log        logging.Logger
-	Config     *config.Config
-	Repository *repository.UserRepository
+	log        logging.Logger
+	config     *config.Config
+	repository repository.UserRepository
 }
 
 func (us *UserServiceImpl) Regist(userName string) (*entity.User, error) {
 	//TODO: Viperによる設定ファイルの読み込みのとりあえずの確認
-	us.Log.Info("hoge.name=%s", us.Config.Hoge.Name)
+	us.log.Info("hoge.name=%s", us.config.Hoge.Name)
 
 	//Zapによるログ出力の例
-	us.Log.Info("UserName=%s", userName)
+	us.log.Info("UserName=%s", userName)
 
 	user := entity.User{}
 	user.Name = userName
-	return (*us.Repository).PutUser(&user)
+	return us.repository.PutUser(&user)
 }
 
 func (us *UserServiceImpl) Find(userId string) (*entity.User, error) {
-	return (*us.Repository).GetUser(userId)
+	return us.repository.GetUser(userId)
 }

@@ -30,7 +30,10 @@
 
     * なお、本サンプルAPのようにX-Ray SDKでSQLトレースする場合、[xray.SQLContext関数を利用する](https://docs.aws.amazon.com/ja_jp/xray/latest/devguide/xray-sdk-go-sqlclients.html)際に確立するDBコネクションでピン留めが発生する。
         * xray.SQLContext関数を利用する際に、内部で発行されるSQL（"SELECT version(), current_user, current_database()"）がプリペアドステートメントを使用しているためピン留めが発生する。ピン留めの発生は回避できないとのこと。ただ、CloudWatchのRDS Proxyのログを見ても分かるが、直ちにコネクション切断されるため、ピン留めによる影響は小さいと想定される。（AWSサポート回答より）
-        
+
+## 事前準備
+* ローカル環境に、AWS CLI、AWS SAM CLI、Docker環境が必要
+
 ## 1. IAMの作成
 ```sh
 #cfnフォルダに移動
@@ -139,7 +142,7 @@ sam build
 make
 ```
 
-* 必要に応じてローカル実行可能(hello-worldのみ)
+* 必要に応じてローカル実行可能(hello-worldのみ動作確認可能)
 ```sh
 sam local invoke
 sam local start-api
@@ -237,6 +240,30 @@ aws cloudformation delete-stack --stack-name Demo-SG-Stack
 aws cloudformation delete-stack --stack-name Demo-VPC-Stack 
 aws cloudformation delete-stack --stack-name Demo-IAM-Stack 
 ```
+
+## godocの表示
+- godocをインストール
+```sh
+go install golang.org/x/tools/cmd/godoc@latest     
+```
+
+- 使い方は、[godoc](https://pkg.go.dev/golang.org/x/tools/cmd/godoc)を参照のこと
+
+- appフォルダでgodocコマンドを実行
+```sh
+cd app
+godoc
+```
+
+- もしくはappbaseフォルダでgodocコマンドを実行    
+```sh
+cd app
+godoc
+```
+
+- [http://localhost:6060](http://localhost:6060)へアクセス
+    - 「example.com/」の「appbase」パッケージ[http://localhost:6060/pkg/example.com/appbase/](http://localhost:6060/pkg/example.com/appbase/)に表示される。
+    - 「app」パッケージは、ほぼ全てが「internal」パッケージに配置しているため、デフォルトでは表示されない。m=allをクエリパラメータに指定して、[http://localhost:6060/pkg/app/?m=all](http://localhost:6060/pkg/app/?m=all)にアクセスするとよい。
 
 ## ソフトウェアフレームワーク
 * 本サンプルアプリケーションでは、ソフトウェアフレームワーク実装例も同梱している。簡単のため、アプリケーションと同じプロジェクトでソース管理している。

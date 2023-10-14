@@ -1,3 +1,6 @@
+/*
+rdb パッケージは、RDBアクセスに関する機能を提供するパッケージです。
+*/
 package rdb
 
 import (
@@ -30,7 +33,8 @@ var (
 	rdbName = os.Getenv("RDB_DB_NAME")
 )
 
-func RDSConnect() (*sql.DB, error) {
+// RDBConnectは、RDBに接続します。
+func RDBConnect() (*sql.DB, error) {
 	// X-Rayを使ったDB接続をすると、プリペアドステートメントを使用していなくても、RDS Proxyでのピン留めが起きてしまう
 	// ただし、ピン留めは短時間のため影響は少ない
 	// X-RayのSQLトレースに対応したDB接続の取得
@@ -61,9 +65,10 @@ func RDSConnect() (*sql.DB, error) {
 	return db, nil
 }
 
-func HandleTransaction(serviceFunc domain.ServiceFunc) (interface{}, error) {
+// ExecuteTransactionは、Serviceの関数serviceFuncの実行前後で、RDBトランザクションを実行します。
+func ExecuteTransaction(serviceFunc domain.ServiceFunc) (interface{}, error) {
 	// RDBコネクションの確立
-	db, err := RDSConnect()
+	db, err := RDBConnect()
 	if err != nil {
 		return nil, err
 	}

@@ -1,3 +1,4 @@
+// repositoryのパッケージ
 package repository
 
 import (
@@ -14,11 +15,15 @@ import (
 	"github.com/pkg/errors"
 )
 
+// TodoRepository は、Todoを管理するRepositoryインタフェースです。
 type TodoRepository interface {
+	// GetTodo は、todoIdが一致するTodoを取得します。
 	GetTodo(todoId string) (*entity.Todo, error)
+	// PutTodo は、指定されたTodoを登録します。
 	PutTodo(todo *entity.Todo) (*entity.Todo, error)
 }
 
+// NewTodoRepository は、TodoRepositoryを作成します。
 func NewTodoRepository() (TodoRepository, error) {
 	// AWS SDK for Go v2 Migration
 	// https://github.com/aws/aws-sdk-go-v2
@@ -35,6 +40,7 @@ func NewTodoRepository() (TodoRepository, error) {
 	return &TodoRepositoryImpl{instance: dynamo}, nil
 }
 
+// TodoRepositoryImpl は、TodoRepositoryを実装する構造体です。
 type TodoRepositoryImpl struct {
 	instance *dynamodb.Client
 }

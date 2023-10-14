@@ -1,3 +1,6 @@
+/*
+api パッケージは、REST APIに関する機能を提供するパッケージです。
+*/
 package api
 
 import (
@@ -7,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// ReturnResponseBody は、処理結果resultまたはエラーerrに対応するレスポンスボディを返却します。
 func ReturnResponseBody(ctx *gin.Context, result interface{}, err error) {
 	if err != nil {
 		//TODO: エラー時の応答メッセージ

@@ -38,9 +38,9 @@ func init() {
 	// リポジトリの作成（RDBの場合）
 	userRepository := repository.NewUserRepositoryForRDB()
 	// サービスの作成
-	userService := service.New(log, cfg, &userRepository)
+	userService := service.New(log, cfg, userRepository)
 	// コントローラの作成
-	userController := controller.New(log, &userService)
+	userController := controller.New(log, userService)
 	// ハンドラインタセプタの作成
 	interceptor := interceptor.New(log)
 
@@ -52,7 +52,7 @@ func init() {
 	ginLambda = ginadapter.New(r)
 }
 
-// ハンドラメソッド
+// Lambdaのハンドラメソッド
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// ctxをコンテキスト領域に格納
 	apcontext.Context = ctx

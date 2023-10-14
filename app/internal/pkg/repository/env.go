@@ -1,3 +1,4 @@
+// repositoryのパッケージ
 package repository
 
 import "os"

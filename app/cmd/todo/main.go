@@ -34,9 +34,9 @@ func init() {
 		panic(err.Error())
 	}
 	// サービスの作成
-	todoService := service.New(log, cfg, &todoRepository)
+	todoService := service.New(log, cfg, todoRepository)
 	// コントローラの作成
-	todoController := controller.New(log, &todoService)
+	todoController := controller.New(log, todoService)
 	// ハンドラインタセプタの作成
 	interceptor := interceptor.New(log)
 
@@ -48,7 +48,7 @@ func init() {
 	ginLambda = ginadapter.New(r)
 }
 
-// ハンドラメソッド
+// Lambdaのハンドラメソッド
 func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// ctxをコンテキスト領域に格納
 	apcontext.Context = ctx

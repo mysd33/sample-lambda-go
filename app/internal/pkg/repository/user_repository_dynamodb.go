@@ -1,3 +1,4 @@
+// repositoryのパッケージ
 package repository
 
 import (
@@ -14,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// NewUserRepositoryForDynamoDB は、DynamoDB保存のためのUserRepository実装を作成します。
 func NewUserRepositoryForDynamoDB() (UserRepository, error) {
 	// AWS SDK for Go v2 Migration
 	// https://github.com/aws/aws-sdk-go-v2
@@ -30,6 +32,7 @@ func NewUserRepositoryForDynamoDB() (UserRepository, error) {
 	return &UserRepositoryImplByDynamoDB{instance: dynamo}, nil
 }
 
+// UserRepositoryImplByDynamoDB は、DynamoDB保存のためのUserRepository実装です。
 type UserRepositoryImplByDynamoDB struct {
 	instance *dynamodb.Client
 }

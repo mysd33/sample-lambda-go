@@ -1,3 +1,4 @@
+// controllerのパッケージ
 package controller
 
 import (
@@ -8,23 +9,28 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// リクエストデータ
+// Request は、REST APIで受け取るリクエストデータの構造体です。
 type Request struct {
 	Name string `json:"user_name"`
 }
 
+// UserController は、ユーザ管理業務のContollerインタフェースです。
 type UserController interface {
+	// Find は、パスパラメータで指定されたuser_idのユーザ情報を照会します。
 	Find(ctx *gin.Context) (interface{}, error)
+	// Regist は、リクエストデータで受け取ったユーザ情報を登録します。
 	Regist(ctx *gin.Context) (interface{}, error)
 }
 
-func New(log logging.Logger, service *service.UserService) UserController {
+// New は、UserControllerを作成します。
+func New(log logging.Logger, service service.UserService) UserController {
 	return &UserControllerImpl{log: log, service: service}
 }
 
+// UserControllerImpl は、UserControllerを実装する構造体です。
 type UserControllerImpl struct {
 	log     logging.Logger
-	service *service.UserService
+	service service.UserService
 }
 
 func (c *UserControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
@@ -33,8 +39,8 @@ func (c *UserControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
 	// TODO: 入力チェック
 
 	// RDBトランザクション開始してサービスの実行
-	return rdb.HandleTransaction(func() (interface{}, error) {
-		return (*c.service).Find(userId)
+	return rdb.ExecuteTransaction(func() (interface{}, error) {
+		return c.service.Find(userId)
 	})
 }
 
@@ -45,7 +51,7 @@ func (c *UserControllerImpl) Regist(ctx *gin.Context) (interface{}, error) {
 	// TODO: 入力チェック
 
 	// RDBトランザクション開始してサービスの実行
-	return rdb.HandleTransaction(func() (interface{}, error) {
-		return (*c.service).Regist(request.Name)
+	return rdb.ExecuteTransaction(func() (interface{}, error) {
+		return c.service.Regist(request.Name)
 	})
 }

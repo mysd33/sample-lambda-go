@@ -44,7 +44,7 @@ func TestRegist(t *testing.T) {
 	mockReturnValue := entity.User{ID: id.GenerateId(), Name: expectedName}
 	mock.On("PutUser", &mockInputValue).Return(&mockReturnValue, nil)
 	var repository repository.UserRepository = mock
-	sut := service.New(log, cfg, &repository)
+	sut := service.New(log, cfg, repository)
 	//テスト対象メソッドの呼び出し
 	actual, _ := sut.Regist(inputUserName)
 	println(actual)

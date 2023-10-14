@@ -1,3 +1,4 @@
+// entityのパッケージ
 package entity
 
 import (
@@ -5,11 +6,15 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
+// Todo はやることリスト（Todo）のEntityです。
 type Todo struct {
-	ID    string `json:"todo_id" dynamodbav:"todo_id"`
+	// ID は、TodoのIDです。
+	ID string `json:"todo_id" dynamodbav:"todo_id"`
+	// Title は、Todoのタイトルです。
 	Title string `json:"todo_title" dynamodbav:"todo_title"`
 }
 
+// GetKey は、DynamoDBのキー情報を取得します。
 func (todo Todo) GetKey() (map[string]types.AttributeValue, error) {
 	id, err := attributevalue.Marshal(todo.ID)
 	if err != nil {

@@ -1,3 +1,4 @@
+// controllerのパッケージ
 package controller
 
 import (
@@ -8,23 +9,29 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// リクエストデータ
+// Request は、REST APIで受け取るリクエストデータの構造体です。
 type Request struct {
+	// TodoTitle は、Todoのタイトルです。
 	TodoTitle string `json:"todo_title"`
 }
 
+// TodoController は、Todo業務のControllerインタフェースです。
 type TodoController interface {
+	// Find は、パスパラメータで指定されたtodo_idのTodoを照会します。
 	Find(ctx *gin.Context) (interface{}, error)
+	// Regist は、リクエストデータで受け取ったTodoを登録します。
 	Regist(ctx *gin.Context) (interface{}, error)
 }
 
-func New(log logging.Logger, service *service.TodoService) TodoController {
+// New は、TodoControllerを作成します。
+func New(log logging.Logger, service service.TodoService) TodoController {
 	return &TodoControllerImpl{log: log, service: service}
 }
 
+// TodoControllerImpl は、TodoControllerを実装する構造体です。
 type TodoControllerImpl struct {
 	log     logging.Logger
-	service *service.TodoService
+	service service.TodoService
 }
 
 func (c *TodoControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
@@ -33,8 +40,8 @@ func (c *TodoControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
 	// TODO: 入力チェック
 
 	// DynamoDBトランザクション管理してサービスの実行
-	return dynamodb.HandleTransaction(func() (interface{}, error) {
-		return (*c.service).Find(todoId)
+	return dynamodb.ExecuteTransaction(func() (interface{}, error) {
+		return c.service.Find(todoId)
 	})
 }
 
@@ -45,7 +52,7 @@ func (c *TodoControllerImpl) Regist(ctx *gin.Context) (interface{}, error) {
 	// TODO: 入力チェック
 
 	// DynamoDBトランザクション管理してサービスの実行
-	return dynamodb.HandleTransaction(func() (interface{}, error) {
-		return (*c.service).Regist(request.TodoTitle)
+	return dynamodb.ExecuteTransaction(func() (interface{}, error) {
+		return c.service.Regist(request.TodoTitle)
 	})
 }

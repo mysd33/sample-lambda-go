@@ -1,3 +1,6 @@
+/*
+config パッケージは、設定ファイルを管理するパッケージです。
+*/
 package config
 
 import (
@@ -7,17 +10,17 @@ import (
 	"github.com/spf13/viper"
 )
 
-// 設定ファイルの構造体(Viper)
+// Config は、設定ファイルの構造体(Viper)です。
 type Config struct {
 	Hoge Hoge `yaml:"hoge"`
 }
 
-// TODO: とりあえずのサンプル
+// TODO: とりあえずのサンプル設定
 type Hoge struct {
 	Name string `yaml:"name"`
 }
 
-// 設定ファイルのロード
+// LoadConfig は、設定ファイルをロードします。
 func LoadConfig() (*Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
