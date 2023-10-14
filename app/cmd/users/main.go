@@ -30,13 +30,13 @@ func init() {
 		panic(err.Error())
 	}
 	// リポジトリの作成（DynamoDBの場合）
-	// userRepository, err := repository.NewForDynamoDB()
+	// userRepository, err := repository.NewUserRepositoryForDynamoDB()
 	// if err != nil {
 	//	log.Fatal("初期化処理エラー:%s", err.Error())
 	//	panic(err.Error())
-	//}
+	// }
 	// リポジトリの作成（RDBの場合）
-	userRepository := repository.NewForRDB()
+	userRepository := repository.NewUserRepositoryForRDB()
 	// サービスの作成
 	userService := service.New(log, cfg, &userRepository)
 	// コントローラの作成

@@ -28,7 +28,7 @@ func init() {
 		panic(err.Error())
 	}
 	// リポジトリの作成
-	todoRepository, err := repository.New()
+	todoRepository, err := repository.NewTodoRepository()
 	if err != nil {
 		log.Fatal("初期化処理エラー:%s", err.Error())
 		panic(err.Error())

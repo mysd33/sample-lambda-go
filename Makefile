@@ -1,5 +1,6 @@
 .PHONY: clean
 .PHONY: build
+.PHONY: fmt
 .PHONY: validate
 .PHONY: deploy
 .PHONY: deploy_guided
@@ -13,11 +14,16 @@ clean:
 
 build:
 	sam build
-	xcopy /I config .aws-sam\build\UsersFunction\config	
-	xcopy /I config .aws-sam\build\TodoFunction\config
+	xcopy /I configs .aws-sam\build\UsersFunction\configs	
+	xcopy /I configs .aws-sam\build\TodoFunction\configs
+
+fmt:
+	cd app & go fmt ./...
+	cd appbase & go fmt ./...
 
 unit_test:
 	cd app & go test -v ./internal/...
+	cd appbase & go test -v ./pkg/...
 
 validate:
 	sam validate

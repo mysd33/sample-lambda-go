@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func NewForDynamoDB() (UserRepository, error) {
+func NewUserRepositoryForDynamoDB() (UserRepository, error) {
 	// AWS SDK for Go v2 Migration
 	// https://github.com/aws/aws-sdk-go-v2
 	// https://aws.github.io/aws-sdk-go-v2/docs/migrating/

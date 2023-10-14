@@ -6,10 +6,11 @@ import (
 
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/id"
+	"example.com/appbase/pkg/rdb"
 	"github.com/lib/pq"
 )
 
-func NewForRDB() UserRepository {
+func NewUserRepositoryForRDB() UserRepository {
 	return &UserRepositoryImplByRDB{}
 }
 
@@ -17,7 +18,7 @@ type UserRepositoryImplByRDB struct {
 }
 
 func (ur *UserRepositoryImplByRDB) GetUser(userId string) (*entity.User, error) {
-	tx := apcontext.Tx
+	tx := rdb.Tx
 	ctx := apcontext.Context
 	var user entity.User
 	//プリペアードステートメントによる例
@@ -43,7 +44,7 @@ func (ur *UserRepositoryImplByRDB) PutUser(user *entity.User) (*entity.User, err
 	userId := id.GenerateId()
 	user.ID = userId
 
-	tx := apcontext.Tx
+	tx := rdb.Tx
 	ctx := apcontext.Context
 	//プリペアードステートメントによる例
 	//X-RayのSQLトレース対応にも対応
