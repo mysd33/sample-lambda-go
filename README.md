@@ -237,7 +237,7 @@ aws cloudformation delete-stack --stack-name Demo-IAM-Stack
 ## ローカルでの実行確認
 * AWS上でLambda等をデプロイしなくてもsam localコマンドを使ってローカル実行確認も可能である
 
-* Postgres SQLのDockerコンテナ起動
+* Postgres SQLのDockerコンテナを起動
 ```sh
 docker run --name test-postgres -p 5432:5432 -e POSTGRES_PASSWORD=password -d postgres
 #Postgresのコンテナにシェルで入って、psqlコマンドで接続
@@ -256,43 +256,45 @@ tesdb> \dt
 tesdb> \q
 ```
 
-* DynamoDB LocalのDockerコンテナ起動
-    * TBD
+* DynamoDB LocalのDockerコンテナを起動
 ```sh
 cd dynamodb-local
 docker-compose up
 ```
 
-* DynamoDBLocalのテーブル作成、アイテムの確認に、dynamodb-adminを使うと便利である。
-    * [dynamodb-admin](https://github.com/aaronshaf/dynamodb-admin)
+* dynamodb-adminでtodoテーブルを作成
+    * [dynamodb-admin](https://github.com/aaronshaf/dynamodb-admin)をインストールし、起動する
         * [dynamodb-adminのインストール＆起動方法](https://github.com/aaronshaf/dynamodb-admin#use-as-globally-installed-app)
 
         ```
         dynamodb-admin
         ```
 
-    * ブラウザで[http://localhost:8001/](http://localhost:8001/)にアクセスし、「Create Table」ボタンをクリック
+    * ブラウザで[http://localhost:8001/](http://localhost:8001/)にアクセスし「Create Table」ボタンをクリック    
     * 「Table Name」…「todo」、「Hash Attribute Name」…「todo_id」、「Hash Attribute Type」…「String」で作成
 
-
 * local-env.jsonの修正
-```json
-{
-    "Parameters": {
-        "RDB_USER": "postgres",
-        "RDB_PASSWORD": "password",
-        # ローカルマシンのIPアドレスに修正（以下は192.168.1.21で設定した例）
-        "RDB_ENDPOINT": "192.168.1.21",
-        "RDB_PORT": "5432",
-        "RDB_DB_NAME": "testdb",
-        "RDB_SSL_MODE": "disable",
-        # ローカルマシンのIPアドレスに修正（以下は192.168.1.2で設定した例）        
-        "DYNAMODB_LOCAL_ENDPOINT": "http://192.168.1.21:8000"         
-    }
-}
-```
+    * Lambdaが参照する環境変数を上書きするためのファイル（local-env.json）を開く
+    * 「RDB_ENDPOINT」と「DYNAMODB_LOCAL_ENDPOINT」のIPアドレスをDocker起動しているローカルマシンのIPアドレスに修正する
 
-* sam localコマンドの実行
+    ```json
+    {
+        "Parameters": {
+            "RDB_USER": "postgres",
+            "RDB_PASSWORD": "password",
+            # ローカルマシンのIPアドレスに修正（以下は192.168.1.21で設定した例）
+            "RDB_ENDPOINT": "192.168.1.21",
+            "RDB_PORT": "5432",
+            "RDB_DB_NAME": "testdb",
+            "RDB_SSL_MODE": "disable",
+            # ローカルマシンのIPアドレスに修正（以下は192.168.1.2で設定した例）        
+            "DYNAMODB_LOCAL_ENDPOINT": "http://192.168.1.21:8000"         
+        }
+    }
+    ```
+
+* sam localコマンドを実行
+
 ```sh
 sam local start-api --env-vars local-env.json
 
@@ -300,7 +302,7 @@ sam local start-api --env-vars local-env.json
 make local_startapi 
 ```
 
-* 動作確認
+* APの動作確認
 ```sh
 curl http://127.0.0.1:3000/hello
 
