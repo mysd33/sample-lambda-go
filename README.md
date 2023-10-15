@@ -273,27 +273,8 @@ docker-compose up
     * ブラウザで[http://localhost:8001/](http://localhost:8001/)にアクセスし「Create Table」ボタンをクリック    
     * 「Table Name」…「todo」、「Hash Attribute Name」…「todo_id」、「Hash Attribute Type」…「String」で作成
 
-* local-env.jsonの修正
-    * Lambdaが参照する環境変数を上書きするためのファイル（local-env.json）を開く
-    * 「RDB_ENDPOINT」と「DYNAMODB_LOCAL_ENDPOINT」のIPアドレスをDocker起動しているローカルマシンのIPアドレスに修正する
-
-    ```json
-    {
-        "Parameters": {
-            "RDB_USER": "postgres",
-            "RDB_PASSWORD": "password",
-            # ローカルマシンのIPアドレスに修正（以下は192.168.1.21で設定した例）
-            "RDB_ENDPOINT": "192.168.1.21",
-            "RDB_PORT": "5432",
-            "RDB_DB_NAME": "testdb",
-            "RDB_SSL_MODE": "disable",
-            # ローカルマシンのIPアドレスに修正（以下は192.168.1.2で設定した例）        
-            "DYNAMODB_LOCAL_ENDPOINT": "http://192.168.1.21:8000"         
-        }
-    }
-    ```
-
 * sam localコマンドを実行
+    * local-env.jsonファイルに、上書きする環境変数が記載されている
 
 ```sh
 sam local start-api --env-vars local-env.json

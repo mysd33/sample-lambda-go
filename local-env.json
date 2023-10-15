@@ -2,10 +2,10 @@
     "Parameters": {
         "RDB_USER": "postgres",
         "RDB_PASSWORD": "password",
-        "RDB_ENDPOINT": "192.168.1.21",
+        "RDB_ENDPOINT": "host.docker.internal",
         "RDB_PORT": "5432",
         "RDB_DB_NAME": "testdb",
         "RDB_SSL_MODE": "disable",
-        "DYNAMODB_LOCAL_ENDPOINT": "http://192.168.1.21:8000/"
+        "DYNAMODB_LOCAL_ENDPOINT": "http://host.docker.internal:8000/"
     }
 }
