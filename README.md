@@ -336,7 +336,7 @@ godoc
 ```
 
 - godoc起動中の状態で、[http://localhost:6060](http://localhost:6060)へアクセス
-    - 「example.com/」の「appbase」パッケージ[http://localhost:6060/pkg/example.com/appbase/](http://localhost:6060/pkg/example.com/appbase/)に表示される。
+    - 「example.com/」の「appbase」パッケージは、[http://localhost:6060/pkg/example.com/appbase/](http://localhost:6060/pkg/example.com/appbase/)に表示される。
     - 「app」パッケージは、ほぼ全てが「internal」パッケージに配置しているため、デフォルトでは表示されない。m=allをクエリパラメータに指定して、[http://localhost:6060/pkg/app/?m=all](http://localhost:6060/pkg/app/?m=all)にアクセスするとよい。
 
 ## ソフトウェアフレームワーク

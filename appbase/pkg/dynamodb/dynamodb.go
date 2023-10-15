@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 )
 
+// CreateDynamoDBClient は、DynamoDBClientを作成します。
 func CreateDynamoDBClient() (*dynamodb.Client, error) {
 	// リージョン名
 	region := os.Getenv("REGION")
