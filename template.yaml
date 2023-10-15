@@ -70,7 +70,7 @@ Globals:
           Fn::ImportValue: !Sub ${StackPrefix}-RDSClusterEndpointPort
         RDB_DB_NAME:
           Fn::ImportValue: !Sub ${StackPrefix}-RDSDBName
-        RDB_SSL_MODE: "prefer"
+        RDB_SSL_MODE: "require"
         DYNAMODB_LOCAL_ENDPOINT: ""
     # Deployment Configurtion           
     AutoPublishAlias: live            
