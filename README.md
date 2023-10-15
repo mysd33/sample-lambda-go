@@ -142,13 +142,6 @@ sam build
 make
 ```
 
-* 必要に応じてローカル実行可能(hello-worldのみ動作確認可能)
-```sh
-sam local invoke
-sam local start-api
-curl http://127.0.0.1:3000/hello
-```
-
 * SAMデプロイ
 ```sh
 # 1回目は
@@ -241,27 +234,106 @@ aws cloudformation delete-stack --stack-name Demo-VPC-Stack
 aws cloudformation delete-stack --stack-name Demo-IAM-Stack 
 ```
 
+## ローカルでの実行確認
+* AWS上でLambda等をデプロイしなくてもsam localコマンドを使ってローカル実行確認も可能である
+
+* Postgres SQLのDockerコンテナ起動
+```sh
+docker run --name test-postgres -p 5432:5432 -e POSTGRES_PASSWORD=password -d postgres
+#Postgresのコンテナにシェルで入って、psqlコマンドで接続
+docker exec -i -t test-postgres /bin/bash
+> psql -U postgres
+
+# psqlで、testdbデータベースを作成
+postgres> CREATE DATABASE testdb;
+# testdbに切替
+postgres> \c testdb
+#ユーザテーブル作成
+tesdb> CREATE TABLE IF NOT EXISTS m_user (user_id VARCHAR(50) PRIMARY KEY, user_name VARCHAR(50));
+#ユーザテーブルの作成を確認
+tesdb> \dt
+#切断
+tesdb> \q
+```
+
+* DynamoDB LocalのDockerコンテナ起動
+    * TBD
+```sh
+cd dynamodb-local
+docker-compose up
+```
+
+* DynamoDBLocalのテーブル作成、アイテムの確認に、dynamodb-adminを使うと便利である。
+    * [dynamodb-admin](https://github.com/aaronshaf/dynamodb-admin)
+        * [dynamodb-adminのインストール＆起動方法](https://github.com/aaronshaf/dynamodb-admin#use-as-globally-installed-app)
+
+        ```
+        dynamodb-admin
+        ```
+
+    * ブラウザで[http://localhost:8001/](http://localhost:8001/)にアクセスし、「Create Table」ボタンをクリック
+    * 「Table Name」…「todo」、「Hash Attribute Name」…「todo_id」、「Hash Attribute Type」…「String」で作成
+
+
+* local-env.jsonの修正
+```json
+{
+    "Parameters": {
+        "RDB_USER": "postgres",
+        "RDB_PASSWORD": "password",
+        # ローカルマシンのIPアドレスに修正（以下は192.168.1.21で設定した例）
+        "RDB_ENDPOINT": "192.168.1.21",
+        "RDB_PORT": "5432",
+        "RDB_DB_NAME": "testdb",
+        "RDB_SSL_MODE": "disable",
+        # ローカルマシンのIPアドレスに修正（以下は192.168.1.2で設定した例）        
+        "DYNAMODB_LOCAL_ENDPOINT": "http://192.168.1.21:8000"         
+    }
+}
+```
+
+* sam localコマンドの実行
+```sh
+sam local start-api --env-vars local-env.json
+
+# Windowsでもmakeをインストールすればmakeでいけます
+make local_startapi 
+```
+
+* 動作確認
+```sh
+curl http://127.0.0.1:3000/hello
+
+curl -X POST -H "Content-Type: application/json" -d '{ "user_name" : "Taro"}' http://127.0.0.1:3000/users
+
+curl http://127.0.0.1:3000/users/(ユーザID)
+
+curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "Buy Milk"}' http://127.0.0.1:3000/todo
+
+curl http://127.0.0.1:3000/todo/(TODO ID)
+```
+
 ## godocの表示
-- godocをインストール
+* godocをインストール
 ```sh
 go install golang.org/x/tools/cmd/godoc@latest     
 ```
 
-- 使い方は、[godoc](https://pkg.go.dev/golang.org/x/tools/cmd/godoc)を参照のこと
+* 使い方は、[godoc](https://pkg.go.dev/golang.org/x/tools/cmd/godoc)を参照のこと
 
-- appフォルダでgodocコマンドを実行
+* appフォルダでgodocコマンドを実行
 ```sh
 cd app
 godoc
 ```
 
-- もしくはappbaseフォルダでgodocコマンドを実行    
+* appbaseフォルダでgodocコマンドを実行    
 ```sh
 cd app
 godoc
 ```
 
-- [http://localhost:6060](http://localhost:6060)へアクセス
+- godoc起動中の状態で、[http://localhost:6060](http://localhost:6060)へアクセス
     - 「example.com/」の「appbase」パッケージ[http://localhost:6060/pkg/example.com/appbase/](http://localhost:6060/pkg/example.com/appbase/)に表示される。
     - 「app」パッケージは、ほぼ全てが「internal」パッケージに配置しているため、デフォルトでは表示されない。m=allをクエリパラメータに指定して、[http://localhost:6060/pkg/app/?m=all](http://localhost:6060/pkg/app/?m=all)にアクセスするとよい。
 

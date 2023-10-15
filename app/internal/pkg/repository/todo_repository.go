@@ -6,12 +6,12 @@ import (
 	"context"
 
 	"example.com/appbase/pkg/apcontext"
+	mydynamodb "example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/id"
+	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 	"github.com/pkg/errors"
 )
 
@@ -24,25 +24,18 @@ type TodoRepository interface {
 }
 
 // NewTodoRepository は、TodoRepositoryを作成します。
-func NewTodoRepository() (TodoRepository, error) {
-	// AWS SDK for Go v2 Migration
-	// https://github.com/aws/aws-sdk-go-v2
-	// https://aws.github.io/aws-sdk-go-v2/docs/migrating/
-	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion(region))
+func NewTodoRepository(log logging.Logger) (TodoRepository, error) {
+	dynamodbClient, err := mydynamodb.CreateDynamoDBClient()
 	if err != nil {
 		return nil, err
 	}
-	// Instrumenting AWS SDK v2
-	// https://github.com/aws/aws-xray-sdk-go
-	awsv2.AWSV2Instrumentor(&cfg.APIOptions)
-	dynamo := dynamodb.NewFromConfig(cfg)
-	return &TodoRepositoryImpl{instance: dynamo}, nil
+	return &TodoRepositoryImpl{dynamodbClient: dynamodbClient, log: log}, nil
 }
 
 // TodoRepositoryImpl は、TodoRepositoryを実装する構造体です。
 type TodoRepositoryImpl struct {
-	instance *dynamodb.Client
+	dynamodbClient *dynamodb.Client
+	log            logging.Logger
 }
 
 func (tr *TodoRepositoryImpl) GetTodo(todoId string) (*entity.Todo, error) {
@@ -59,7 +52,7 @@ func (tr *TodoRepositoryImpl) doGetTodo(todoId string, ctx context.Context) (*en
 	if err != nil {
 		return nil, errors.Wrapf(err, "fail to get key")
 	}
-	result, err := tr.instance.GetItem(ctx, &dynamodb.GetItemInput{
+	result, err := tr.dynamodbClient.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(todoTable),
 		Key:       key,
 	})
@@ -95,7 +88,7 @@ func (tr *TodoRepositoryImpl) doPutTodo(todo *entity.Todo, ctx context.Context) 
 		TableName: aws.String(todoTable),
 	}
 	//Itemの登録（X-Rayトレース）
-	_, err = tr.instance.PutItem(ctx, input)
+	_, err = tr.dynamodbClient.PutItem(ctx, input)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to put item")
 	}

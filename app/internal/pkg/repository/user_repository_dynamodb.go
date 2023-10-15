@@ -6,35 +6,26 @@ import (
 	"context"
 
 	"example.com/appbase/pkg/apcontext"
+	mydynamodb "example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/id"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 	"github.com/pkg/errors"
 )
 
 // NewUserRepositoryForDynamoDB は、DynamoDB保存のためのUserRepository実装を作成します。
 func NewUserRepositoryForDynamoDB() (UserRepository, error) {
-	// AWS SDK for Go v2 Migration
-	// https://github.com/aws/aws-sdk-go-v2
-	// https://aws.github.io/aws-sdk-go-v2/docs/migrating/
-	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion(region))
+	dynamodbClient, err := mydynamodb.CreateDynamoDBClient()
 	if err != nil {
 		return nil, err
 	}
-	// Instrumenting AWS SDK v2
-	// https://github.com/aws/aws-xray-sdk-go
-	awsv2.AWSV2Instrumentor(&cfg.APIOptions)
-	dynamo := dynamodb.NewFromConfig(cfg)
-	return &UserRepositoryImplByDynamoDB{instance: dynamo}, nil
+	return &UserRepositoryImplByDynamoDB{dynamodbClient: dynamodbClient}, nil
 }
 
 // UserRepositoryImplByDynamoDB は、DynamoDB保存のためのUserRepository実装です。
 type UserRepositoryImplByDynamoDB struct {
-	instance *dynamodb.Client
+	dynamodbClient *dynamodb.Client
 }
 
 func (ur *UserRepositoryImplByDynamoDB) GetUser(userId string) (*entity.User, error) {
@@ -51,7 +42,7 @@ func (ur *UserRepositoryImplByDynamoDB) doGetUser(userId string, ctx context.Con
 	if err != nil {
 		return nil, errors.Wrapf(err, "fail to get key")
 	}
-	result, err := ur.instance.GetItem(ctx, &dynamodb.GetItemInput{
+	result, err := ur.dynamodbClient.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(userTable),
 		Key:       key,
 	})
@@ -87,7 +78,7 @@ func (ur *UserRepositoryImplByDynamoDB) doPutUser(user *entity.User, ctx context
 		TableName: aws.String(userTable),
 	}
 	//Itemの登録（X-Rayトレース）
-	_, err = ur.instance.PutItem(ctx, input)
+	_, err = ur.dynamodbClient.PutItem(ctx, input)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to put item")
 	}

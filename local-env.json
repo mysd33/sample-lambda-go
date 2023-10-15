@@ -1,0 +1,11 @@
+{
+    "Parameters": {
+        "RDB_USER": "postgres",
+        "RDB_PASSWORD": "password",
+        "RDB_ENDPOINT": "192.168.1.21",
+        "RDB_PORT": "5432",
+        "RDB_DB_NAME": "testdb",
+        "RDB_SSL_MODE": "disable",
+        "DYNAMODB_LOCAL_ENDPOINT": "http://192.168.1.21:8000/"
+    }
+}

@@ -2,6 +2,7 @@
 .PHONY: build
 .PHONY: fmt
 .PHONY: validate
+.PHONY: local_startapi
 .PHONY: deploy
 .PHONY: deploy_guided
 .PHONY: delete
@@ -27,6 +28,9 @@ unit_test:
 
 validate:
 	sam validate
+
+local_startapi:
+	sam local start-api --env-vars local-env.json	
 
 deploy_guided:
 	sam deploy --guided

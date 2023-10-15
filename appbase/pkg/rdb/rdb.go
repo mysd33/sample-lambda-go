@@ -31,6 +31,8 @@ var (
 	rdbPort = os.Getenv("RDB_PORT")
 	// DB名
 	rdbName = os.Getenv("RDB_DB_NAME")
+	// SSLMode
+	rdbSslMode = os.Getenv("RDB_SSL_MODE")
 )
 
 // RDBConnectは、RDBに接続します。
@@ -39,12 +41,13 @@ func RDBConnect() (*sql.DB, error) {
 	// ただし、ピン留めは短時間のため影響は少ない
 	// X-RayのSQLトレースに対応したDB接続の取得
 	connectStr := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s",
+		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		rdbUser,
 		rdbPassword,
 		rdbEndpoint,
 		rdbPort,
-		rdbName)
+		rdbName,
+		rdbSslMode)
 	db, err := xray.SQLContext("postgres", connectStr)
 
 	/*

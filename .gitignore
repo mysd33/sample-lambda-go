@@ -1,3 +1,5 @@
 .aws-sam/
 *.bkp
 *.dtmp
+
+*.db
