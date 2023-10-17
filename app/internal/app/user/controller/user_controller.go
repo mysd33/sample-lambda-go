@@ -4,6 +4,7 @@ package controller
 import (
 	"app/internal/app/user/service"
 
+	myerrors "example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/rdb"
 	"github.com/gin-gonic/gin"
@@ -11,7 +12,7 @@ import (
 
 // Request は、REST APIで受け取るリクエストデータの構造体です。
 type Request struct {
-	Name string `json:"user_name"`
+	Name string `json:"user_name" binding:"required"`
 }
 
 // UserController は、ユーザ管理業務のContollerインタフェースです。
@@ -47,8 +48,10 @@ func (c *UserControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
 func (c *UserControllerImpl) Regist(ctx *gin.Context) (interface{}, error) {
 	// POSTデータをバインド
 	var request Request
-	ctx.BindJSON(&request)
-	// TODO: 入力チェック
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		// 入力チェックエラーのハンドリング
+		return nil, myerrors.NewValidationError(err)
+	}
 
 	// RDBトランザクション開始してサービスの実行
 	return rdb.ExecuteTransaction(func() (interface{}, error) {

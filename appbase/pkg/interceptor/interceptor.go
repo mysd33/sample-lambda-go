@@ -28,10 +28,11 @@ func New(log logging.Logger) HandlerInterceptor {
 type ControllerFunc func(ctx *gin.Context) (interface{}, error)
 
 // Handle は、Controlerで実行する関数controllerFuncの前後でインタセプタの処理を実行します。
-func (i HandlerInterceptor) Handle(controllerFunc ControllerFunc) func(ctx *gin.Context) {
+func (i HandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.HandlerFunc {
 	var (
-		businessError *myerrors.BusinessError
-		systemError   *myerrors.SystemError
+		validationError *myerrors.ValidationError
+		businessError   *myerrors.BusinessError
+		systemError     *myerrors.SystemError
 	)
 	return func(ctx *gin.Context) {
 		fv := reflect.ValueOf(controllerFunc)
@@ -41,7 +42,9 @@ func (i HandlerInterceptor) Handle(controllerFunc ControllerFunc) func(ctx *gin.
 		result, err := controllerFunc(ctx)
 		// 集約エラーハンドリングによるログ出力
 		if err != nil {
-			if errors.As(err, &businessError) {
+			if errors.As(err, &validationError) {
+				i.log.Debug(validationError.Error())
+			} else if errors.As(err, &businessError) {
 				i.log.Warn(businessError.Error())
 			} else if errors.As(err, &systemError) {
 				i.log.Fatal(systemError.Error())

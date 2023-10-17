@@ -10,19 +10,20 @@ import (
 // ValidationError は、入力エラーの構造体です。
 type ValidationError struct {
 	// TODO:
+	Cause error
 }
 
 // NewValidationError は、ValidationError構造体を作成します。
-func NewValidationError() *ValidationError {
+func NewValidationError(cause error) *ValidationError {
 	return &ValidationError{
-		// TODO:
+		Cause: cause,
 	}
 }
 
 // Error は、エラーを返却します。
 func (e *ValidationError) Error() string {
 	// TODO:
-	return "入力エラー"
+	return fmt.Sprintf("入力エラー:%s", e.Cause.Error())
 }
 
 // BusinessError 業務エラーの構造体です。

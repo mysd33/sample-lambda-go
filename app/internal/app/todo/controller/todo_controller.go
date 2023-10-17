@@ -5,6 +5,7 @@ import (
 	"app/internal/app/todo/service"
 
 	"example.com/appbase/pkg/dynamodb"
+	myerrors "example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 	"github.com/gin-gonic/gin"
 )
@@ -12,7 +13,7 @@ import (
 // Request は、REST APIで受け取るリクエストデータの構造体です。
 type Request struct {
 	// TodoTitle は、Todoのタイトルです。
-	TodoTitle string `json:"todo_title"`
+	TodoTitle string `json:"todo_title" binding:"required"`
 }
 
 // TodoController は、Todo業務のControllerインタフェースです。
@@ -48,8 +49,10 @@ func (c *TodoControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
 func (c *TodoControllerImpl) Regist(ctx *gin.Context) (interface{}, error) {
 	// POSTデータをバインド
 	var request Request
-	ctx.BindJSON(&request)
-	// TODO: 入力チェック
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		// 入力チェックエラーのハンドリング
+		return nil, myerrors.NewValidationError(err)
+	}
 
 	// DynamoDBトランザクション管理してサービスの実行
 	return dynamodb.ExecuteTransaction(func() (interface{}, error) {
