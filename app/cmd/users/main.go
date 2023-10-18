@@ -30,7 +30,7 @@ func init() {
 		panic(err.Error())
 	}
 	// リポジトリの作成（DynamoDBの場合）
-	// userRepository, err := repository.NewUserRepositoryForDynamoDB()
+	// userRepository, err := repository.NewUserRepositoryForDynamoDB(log)
 	// if err != nil {
 	//	log.Fatal("初期化処理エラー:%s", err.Error())
 	//	panic(err.Error())
