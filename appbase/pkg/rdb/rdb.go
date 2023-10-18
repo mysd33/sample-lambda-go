@@ -35,8 +35,34 @@ var (
 	rdbSslMode = os.Getenv("RDB_SSL_MODE")
 )
 
-// RDBConnectは、RDBに接続します。
-func RDBConnect() (*sql.DB, error) {
+// ExecuteTransactionは、Serviceの関数serviceFuncの実行前後で、RDBトランザクションを実行します。
+func ExecuteTransaction(serviceFunc domain.ServiceFunc) (interface{}, error) {
+	// RDBコネクションの確立
+	db, err := rdbConnect()
+	if err != nil {
+		return nil, err
+	}
+	// 終了時にRDBコネクションの切断
+	defer db.Close()
+	// RDBトランザクション開始
+	tx, err := startTransaction(db)
+	if err != nil {
+		return nil, err
+	}
+	// トランザクションをコンテキスト領域に格納
+	Tx = tx
+	// サービスの実行
+	result, err := serviceFunc()
+	// RDBトランザクション終了
+	err = endTransaction(tx, err)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// rdbConnectは、RDBに接続します。
+func rdbConnect() (*sql.DB, error) {
 	// X-Rayを使ったDB接続をすると、プリペアドステートメントを使用していなくても、RDS Proxyでのピン留めが起きてしまう
 	// ただし、ピン留めは短時間のため影響は少ない
 	// X-RayのSQLトレースに対応したDB接続の取得
@@ -66,32 +92,6 @@ func RDBConnect() (*sql.DB, error) {
 	// DBコネクションをコンテキスト領域に格納
 	DB = db
 	return db, nil
-}
-
-// ExecuteTransactionは、Serviceの関数serviceFuncの実行前後で、RDBトランザクションを実行します。
-func ExecuteTransaction(serviceFunc domain.ServiceFunc) (interface{}, error) {
-	// RDBコネクションの確立
-	db, err := RDBConnect()
-	if err != nil {
-		return nil, err
-	}
-	// 終了時にRDBコネクションの切断
-	defer db.Close()
-	// RDBトランザクション開始
-	tx, err := startTransaction(db)
-	if err != nil {
-		return nil, err
-	}
-	// トランザクションをコンテキスト領域に格納
-	Tx = tx
-	// サービスの実行
-	result, err := serviceFunc()
-	// RDBトランザクション終了
-	err = endTransaction(tx, err)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
 }
 
 func startTransaction(db *sql.DB) (*sql.Tx, error) {

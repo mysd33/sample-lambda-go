@@ -57,7 +57,7 @@ Globals:
         - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetTwoId
     Environment:
       Variables:
-        REGION: !Sub ${AWS::Region}
+        AWS_REGION: !Sub ${AWS::Region}
         # For DynamoDB
 #        USERS_TABLE_NAME: !Ref UsersTableName         
         TODO_TABLE_NAME: !Ref TodoTableName

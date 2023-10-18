@@ -3,9 +3,7 @@ package repository
 
 import (
 	"app/internal/pkg/entity"
-	"context"
 
-	"example.com/appbase/pkg/apcontext"
 	mydynamodb "example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/id"
 	"example.com/appbase/pkg/logging"
@@ -25,24 +23,20 @@ type TodoRepository interface {
 
 // NewTodoRepository は、TodoRepositoryを作成します。
 func NewTodoRepository(log logging.Logger) (TodoRepository, error) {
-	dynamodbClient, err := mydynamodb.CreateDynamoDBClient()
+	accessor, err := mydynamodb.NewAccessor(log)
 	if err != nil {
 		return nil, err
 	}
-	return &TodoRepositoryImpl{dynamodbClient: dynamodbClient, log: log}, nil
+	return &TodoRepositoryImpl{accessor: accessor, log: log}, nil
 }
 
 // TodoRepositoryImpl は、TodoRepositoryを実装する構造体です。
 type TodoRepositoryImpl struct {
-	dynamodbClient *dynamodb.Client
-	log            logging.Logger
+	accessor mydynamodb.Accessor
+	log      logging.Logger
 }
 
 func (tr *TodoRepositoryImpl) GetTodo(todoId string) (*entity.Todo, error) {
-	return tr.doGetTodo(todoId, apcontext.Context)
-}
-
-func (tr *TodoRepositoryImpl) doGetTodo(todoId string, ctx context.Context) (*entity.Todo, error) {
 	// AWS SDK for Go v2 Migration
 	// https://docs.aws.amazon.com/ja_jp/code-library/latest/ug/go_2_dynamodb_code_examples.html
 	// https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/gov2/dynamodb
@@ -52,7 +46,7 @@ func (tr *TodoRepositoryImpl) doGetTodo(todoId string, ctx context.Context) (*en
 	if err != nil {
 		return nil, errors.Wrapf(err, "fail to get key")
 	}
-	result, err := tr.dynamodbClient.GetItem(ctx, &dynamodb.GetItemInput{
+	result, err := tr.accessor.GetItemSdk(&dynamodb.GetItemInput{
 		TableName: aws.String(todoTable),
 		Key:       key,
 	})
@@ -67,10 +61,6 @@ func (tr *TodoRepositoryImpl) doGetTodo(todoId string, ctx context.Context) (*en
 }
 
 func (tr *TodoRepositoryImpl) PutTodo(todo *entity.Todo) (*entity.Todo, error) {
-	return tr.doPutTodo(todo, apcontext.Context)
-}
-
-func (tr *TodoRepositoryImpl) doPutTodo(todo *entity.Todo, ctx context.Context) (*entity.Todo, error) {
 	// AWS SDK for Go v2 Migration
 	// https://docs.aws.amazon.com/ja_jp/code-library/latest/ug/go_2_dynamodb_code_examples.html
 	// https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/gov2/dynamodb
@@ -88,7 +78,7 @@ func (tr *TodoRepositoryImpl) doPutTodo(todo *entity.Todo, ctx context.Context) 
 		TableName: aws.String(todoTable),
 	}
 	//Itemの登録（X-Rayトレース）
-	_, err = tr.dynamodbClient.PutItem(ctx, input)
+	_, err = tr.accessor.PutItemSdk(input)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to put item")
 	}
