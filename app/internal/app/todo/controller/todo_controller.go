@@ -5,7 +5,7 @@ import (
 	"app/internal/app/todo/service"
 
 	"example.com/appbase/pkg/dynamodb"
-	myerrors "example.com/appbase/pkg/errors"
+	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 	"github.com/gin-gonic/gin"
 )
@@ -51,7 +51,7 @@ func (c *TodoControllerImpl) Regist(ctx *gin.Context) (interface{}, error) {
 	var request Request
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		// 入力チェックエラーのハンドリング
-		return nil, myerrors.NewValidationError(err)
+		return nil, errors.NewValidationError(err)
 	}
 
 	// DynamoDBトランザクション管理してサービスの実行
