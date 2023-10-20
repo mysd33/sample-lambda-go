@@ -122,18 +122,12 @@ Resources:
       FunctionName: !Ref UsersFunctionName
       CodeUri: app/cmd/users/  
       Events:
-        GetEvent:
+        Event:
           Type: Api
           Properties:            
-            Path: /users/{user_id}
-            Method: GET
+            Path: /users-api/{proxy+}
+            Method: ANY
             RestApiId: !Ref UserApi
-        PostEvent:
-          Type: Api
-          Properties:
-            Path: /users
-            Method: POST
-            RestApiId: !Ref UserApi                           
 # Todo API
   TodoFunction:
     Type: AWS::Serverless::Function
@@ -147,17 +141,11 @@ Resources:
             TableName:
               !Ref TodoTableName                        
       Events:
-        GetEvent:
+        Event:
           Type: Api
           Properties:            
-            Path: /todo/{todo_id}
-            Method: GET
-            RestApiId: !Ref TodoApi
-        PostEvent:
-          Type: Api
-          Properties:
-            Path: /todo
-            Method: POST
+            Path: /todo-api/{proxy+}          
+            Method: ANY
             RestApiId: !Ref TodoApi
 # API Gateway Private REST API
 # HelloWorld 
@@ -192,8 +180,8 @@ Resources:
             "Principal": "*",
             "Action": "execute-api:Invoke",
             "Resource": [
-              !Sub "execute-api:/${Stage}/POST/users",
-              !Sub "execute-api:/${Stage}/GET/users/*",
+              !Sub "execute-api:/${Stage}/POST/users-api/*",
+              !Sub "execute-api:/${Stage}/GET/users-api/*",
             ],
             "Condition": {
               "StringEquals": {
@@ -214,8 +202,8 @@ Resources:
             "Principal": "*",
             "Action": "execute-api:Invoke",
             "Resource": [
-              !Sub "execute-api:/${Stage}/POST/todo",
-              !Sub "execute-api:/${Stage}/GET/todo/*",
+              !Sub "execute-api:/${Stage}/POST/todo-api/*",
+              !Sub "execute-api:/${Stage}/GET/todo-api/*",
             ],
             "Condition": {
               "StringEquals": {
@@ -295,7 +283,7 @@ Outputs:
     Value: !GetAtt HelloWorldFunctionRole.Arn
   UsersAPI:
     Description: "API Gateway endpoint URL for Prod environment"
-    Value: !Sub "https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/users"
+    Value: !Sub "https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/users-api/users"
   UsersFunction:
     Description: "Users Lambda Function ARN"
     Value: !GetAtt UsersFunction.Arn
@@ -307,7 +295,7 @@ Outputs:
     Value: !Ref UsersFunctionDeploymentGroup
   TodoAPI:
     Description: "API Gateway endpoint URL for Prod environment"
-    Value: !Sub "https://${TodoApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/todo"
+    Value: !Sub "https://${TodoApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/todo-api/todo"
   TodoFunction:
     Description: "Todo Lambda Function ARN"
     Value: !GetAtt TodoFunction.Arn

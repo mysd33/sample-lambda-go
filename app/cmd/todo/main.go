@@ -43,8 +43,11 @@ func init() {
 	// ginによるURLマッピング
 	r := gin.Default()
 	// ハンドラインタセプタ経由でコントローラのメソッドを呼び出し
-	r.GET("/todo/:todo_id", interceptor.Handle(todoController.Find))
-	r.POST("/todo", interceptor.Handle(todoController.Regist))
+	v1 := r.Group("/todo-api/v1")
+	{
+		v1.GET("/todo/:todo_id", interceptor.Handle(todoController.Find))
+		v1.POST("/todo", interceptor.Handle(todoController.Regist))
+	}
 	ginLambda = ginadapter.New(r)
 }
 

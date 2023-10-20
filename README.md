@@ -184,7 +184,7 @@ Hello, 18.180.139.158
 * Userサービスでユーザ情報を登録するPOSTのAPI実行例
     * UserサービスはRDB(RDS Proxy経由でAuroraへ)アクセスするLambda/goのサンプルAP
 ```sh
-curl -X POST -H "Content-Type: application/json" -d '{ "user_name" : "Taro"}' https://42b4c7bk9g.execute-api.ap-northeast-1.amazonaws.com/Prod/users
+curl -X POST -H "Content-Type: application/json" -d '{ "user_name" : "Taro"}' https://42b4c7bk9g.execute-api.ap-northeast-1.amazonaws.com/Prod/users-api/v1/users
 
 # 登録結果を返却
 {"user_id":"99bf4d94-f6a4-11ed-85ec-be18af968bc1","user_name":"Taro"}
@@ -192,7 +192,7 @@ curl -X POST -H "Content-Type: application/json" -d '{ "user_name" : "Taro"}' ht
 
 * Userサービスでユーザー情報を取得するGetのAPIの実行例（users/の後にPOSTのAPIで取得したユーザIDを指定）
 ```sh
-curl https://42b4c7bk9g.execute-api.ap-northeast-1.amazonaws.com/Prod/users/99bf4d94-f6a4-11ed-85ec-be18af968bc1
+curl https://42b4c7bk9g.execute-api.ap-northeast-1.amazonaws.com/Prod/users-api/v1/users/99bf4d94-f6a4-11ed-85ec-be18af968bc1
 
 # 対象のユーザ情報をRDBから取得し返却
 {"user_id":"99bf4d94-f6a4-11ed-85ec-be18af968bc1","user_name":"Taro"}
@@ -201,7 +201,7 @@ curl https://42b4c7bk9g.execute-api.ap-northeast-1.amazonaws.com/Prod/users/99bf
 * Todoサービスでやることリストを登録するPOSTのAPI実行例
     * TodoサービスはDynamoDBアクセスするLambda/goのサンプルAP
 ```sh
-curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "ミルクを買う"}' https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/todo
+curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "ミルクを買う"}' https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/todo-api/v1/todo
 
 # 登録結果を返却
 {"todo_id":"04a14ad3-f6a5-11ed-b40f-f2ead45b980a","todo_title":"ミルクを買う"}
@@ -209,7 +209,7 @@ curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "ミルク
 
 * Todoサービスでやること（TODO）を取得するGetのAPI実行例（todo/の後にPOSTのAPIで取得したTodo IDを指定）
 ```sh
-curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/todo/04a14ad3-f6a5-11ed-b40f-f2ead45b980a
+curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/todo-api/v1/todo/04a14ad3-f6a5-11ed-b40f-f2ead45b980a
 
 # 対象のやることをDyanamoDBから取得し返却
 {"todo_id":"04a14ad3-f6a5-11ed-b40f-f2ead45b980a","todo_title":"ミルクを買う"}
@@ -287,13 +287,13 @@ make local_startapi
 ```sh
 curl http://127.0.0.1:3000/hello
 
-curl -X POST -H "Content-Type: application/json" -d '{ "user_name" : "Taro"}' http://127.0.0.1:3000/users
+curl -X POST -H "Content-Type: application/json" -d '{ "user_name" : "Taro"}' http://127.0.0.1:3000/users-api/v1/users
 
-curl http://127.0.0.1:3000/users/(ユーザID)
+curl http://127.0.0.1:3000/users-api/v1/users/(ユーザID)
 
-curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "Buy Milk"}' http://127.0.0.1:3000/todo
+curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "Buy Milk"}' http://127.0.0.1:3000/todo-api/v1/todo
 
-curl http://127.0.0.1:3000/todo/(TODO ID)
+curl http://127.0.0.1:3000/todo-api/v1/todo/(TODO ID)
 ```
 
 ## godocの表示
@@ -344,5 +344,5 @@ godoc
 
 | 機能 | 機能概要と実現方式 | 拡張実装 | 拡張実装の格納パッケージ |
 | ---- | ---- | ---- | ---- |
-| メッセージ管理 | go標準のembededでログ等に出力するメッセージを設定ファイルで一元管理する。 | ○ | 未定 |
+| メッセージ管理 | go標準のembededでログ等に出力するメッセージを設定ファイルで一元管理する。 | ○ | com.example/appbase/pkg/message |
 | API認証・認可| APIGatewayのCognitoオーサライザまたはLambdaオーサライザを利用し、APIの認証、認可を行う。 | ○ | 未定 |

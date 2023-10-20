@@ -47,8 +47,11 @@ func init() {
 	// ginによるURLマッピング定義
 	r := gin.Default()
 	// ハンドラインタセプタ経由でコントローラのメソッドを呼び出し
-	r.GET("/users/:user_id", interceptor.Handle(userController.Find))
-	r.POST("/users", interceptor.Handle(userController.Regist))
+	v1 := r.Group("/users-api/v1")
+	{
+		v1.GET("/users/:user_id", interceptor.Handle(userController.Find))
+		v1.POST("/users", interceptor.Handle(userController.Regist))
+	}
 	ginLambda = ginadapter.New(r)
 }
 
