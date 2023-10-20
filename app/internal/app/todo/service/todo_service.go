@@ -37,8 +37,14 @@ func (ts *TodoServiceImpl) Find(todoId string) (*entity.Todo, error) {
 }
 
 func (ts *TodoServiceImpl) Regist(todoTitle string) (*entity.Todo, error) {
-	//Zapによるログ出力の例
 	ts.log.Info("TodoTitle=%s", todoTitle)
+	// TODO: メッセージIDを使ったログのメソッドの例に修正
+	// ts.log.Info(code.I_EX_0001, todoTitle)
+
+	// 業務エラーの例
+	// if (...) {
+	//   return nil, myerrors.NewBusinessError(nil, code.W_EX_8001, "xxxx")
+	// }
 
 	todo := entity.Todo{}
 	todo.Title = todoTitle

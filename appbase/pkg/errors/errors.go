@@ -5,7 +5,11 @@ package errors
 
 import (
 	"fmt"
+
+	cerrors "github.com/cockroachdb/errors"
 )
+
+type any interface{}
 
 // ValidationError は、入力エラーの構造体です。
 type ValidationError struct {
@@ -29,12 +33,18 @@ func (e *ValidationError) Error() string {
 // BusinessError 業務エラーの構造体です。
 type BusinessError struct {
 	ErrorCode string
+	Args      []any
 	Cause     error
 }
 
 // NewBusinessError は、BusinessError構造体を作成します。
-func NewBusinessError(errorCode string, cause error) *BusinessError {
-	return &BusinessError{ErrorCode: errorCode, Cause: cause}
+func NewBusinessError(errorCode string, args ...any) *BusinessError {
+	return &BusinessError{ErrorCode: errorCode, Args: args}
+}
+
+// NewBusinessError は、原因となるエラー（cause）でラップし、BusinessError構造体を作成します。
+func NewBusinessErrorWithCause(cause error, errorCode string, args ...any) *BusinessError {
+	return &BusinessError{ErrorCode: errorCode, Cause: cerrors.WithStack(cause), Args: args}
 }
 
 // Error は、エラーを返却します。
@@ -50,12 +60,13 @@ func (e *BusinessError) UnWrap() error {
 // SystemError は、システムエラーの構造体
 type SystemError struct {
 	ErrorCode string
+	Args      []any
 	Cause     error
 }
 
 // NewSystemError は、SystemError構造体を作成します。
-func NewSystemError(errorCode string, cause error) *SystemError {
-	return &SystemError{ErrorCode: errorCode, Cause: cause}
+func NewSystemError(cause error, errorCode string, args ...any) *SystemError {
+	return &SystemError{ErrorCode: errorCode, Cause: cerrors.WithStack(cause), Args: args}
 }
 
 // Error は、エラーを返却します。

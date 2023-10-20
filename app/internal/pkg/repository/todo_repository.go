@@ -2,9 +2,11 @@
 package repository
 
 import (
+	"app/internal/pkg/code"
 	"app/internal/pkg/entity"
 
 	mydynamodb "example.com/appbase/pkg/dynamodb"
+	myerrors "example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/id"
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -40,18 +42,20 @@ func (tr *TodoRepositoryImpl) GetTodo(todoId string) (*entity.Todo, error) {
 	// AWS SDK for Go v2 Migration
 	// https://docs.aws.amazon.com/ja_jp/code-library/latest/ug/go_2_dynamodb_code_examples.html
 	// https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/gov2/dynamodb
-	//Itemの取得（X-Rayトレース）
+	//Itemの取得
 	todo := entity.Todo{ID: todoId}
 	key, err := todo.GetKey()
 	if err != nil {
-		return nil, errors.Wrapf(err, "fail to get key")
+		//return nil, errors.Wrapf(err, "fail to get key")
+		return nil, myerrors.NewSystemError(err, code.E_EX_9001)
 	}
 	result, err := tr.accessor.GetItemSdk(&dynamodb.GetItemInput{
 		TableName: aws.String(todoTable),
 		Key:       key,
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get item")
+		//return nil, errors.Wrapf(err, "failed to get item")
+		return nil, myerrors.NewSystemError(err, code.E_EX_9001)
 	}
 	err = attributevalue.UnmarshalMap(result.Item, &todo)
 	if err != nil {
@@ -71,16 +75,18 @@ func (tr *TodoRepositoryImpl) PutTodo(todo *entity.Todo) (*entity.Todo, error) {
 
 	av, err := attributevalue.MarshalMap(todo)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to marshal item")
+		// return nil, errors.Wrapf(err, "failed to marshal item")
+		return nil, myerrors.NewSystemError(err, code.E_EX_9001)
 	}
 	input := &dynamodb.PutItemInput{
 		Item:      av,
 		TableName: aws.String(todoTable),
 	}
-	//Itemの登録（X-Rayトレース）
+	// Itemの登録
 	_, err = tr.accessor.PutItemSdk(input)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to put item")
+		// return nil, errors.Wrapf(err, "failed to put item")
+		return nil, myerrors.NewSystemError(err, code.E_EX_9001)
 	}
 	return todo, nil
 

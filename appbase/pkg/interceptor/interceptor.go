@@ -37,7 +37,11 @@ func (i HandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.HandlerFun
 	return func(ctx *gin.Context) {
 		fv := reflect.ValueOf(controllerFunc)
 		funcName := runtime.FuncForPC(fv.Pointer()).Name()
+
+		// TODO: ログの出力形式の修正
+		// i.log.Info(code.I_FW_0001, funcName)
 		i.log.Info("Controller開始: %s", funcName)
+
 		// Controllerの実行
 		result, err := controllerFunc(ctx)
 		// 集約エラーハンドリングによるログ出力
@@ -45,13 +49,15 @@ func (i HandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.HandlerFun
 			if errors.As(err, &validationError) {
 				i.log.Debug(validationError.Error())
 			} else if errors.As(err, &businessError) {
-				i.log.Warn(businessError.Error())
+				i.log.Warn(businessError.ErrorCode, businessError.Args)
 			} else if errors.As(err, &systemError) {
-				i.log.Fatal(systemError.Error())
+				i.log.Error(systemError.ErrorCode, systemError.Args)
 			} else {
 				i.log.Fatal("予期せぬエラー: %s", err.Error())
 			}
 		} else {
+			// TODO: ログの出力形式の修正
+			// i.log.Info(code.I_FW_0002, funcName)
 			i.log.Info("Controller正常終了: %s", funcName)
 		}
 		api.ReturnResponseBody(ctx, result, err)
