@@ -43,7 +43,7 @@ func (ts *TodoServiceImpl) Regist(todoTitle string) (*entity.Todo, error) {
 
 	// 業務エラーの例
 	// if (...) {
-	//   return nil, myerrors.NewBusinessError(nil, code.W_EX_8001, "xxxx")
+	//   return nil, errors.NewBusinessError(nil, code.W_EX_8001, "xxxx")
 	// }
 
 	todo := entity.Todo{}

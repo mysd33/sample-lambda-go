@@ -6,13 +6,13 @@ import (
 	"app/internal/pkg/entity"
 
 	mydynamodb "example.com/appbase/pkg/dynamodb"
+	"example.com/appbase/pkg/errors"
 	myerrors "example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/id"
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/pkg/errors"
 )
 
 // TodoRepository は、Todoを管理するRepositoryインタフェースです。
@@ -47,7 +47,7 @@ func (tr *TodoRepositoryImpl) GetTodo(todoId string) (*entity.Todo, error) {
 	key, err := todo.GetKey()
 	if err != nil {
 		//return nil, errors.Wrapf(err, "fail to get key")
-		return nil, myerrors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, code.E_EX_9001)
 	}
 	result, err := tr.accessor.GetItemSdk(&dynamodb.GetItemInput{
 		TableName: aws.String(todoTable),
@@ -55,11 +55,12 @@ func (tr *TodoRepositoryImpl) GetTodo(todoId string) (*entity.Todo, error) {
 	})
 	if err != nil {
 		//return nil, errors.Wrapf(err, "failed to get item")
-		return nil, myerrors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, code.E_EX_9001)
 	}
 	err = attributevalue.UnmarshalMap(result.Item, &todo)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to marshal item")
+		//return nil, errors.Wrapf(err, "failed to marshal item")
+		return nil, errors.NewSystemError(err, code.E_EX_9001)
 	}
 	return &todo, nil
 }

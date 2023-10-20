@@ -4,7 +4,7 @@ package controller
 import (
 	"app/internal/app/user/service"
 
-	myerrors "example.com/appbase/pkg/errors"
+	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/rdb"
 	"github.com/gin-gonic/gin"
@@ -50,7 +50,7 @@ func (c *UserControllerImpl) Regist(ctx *gin.Context) (interface{}, error) {
 	var request Request
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		// 入力チェックエラーのハンドリング
-		return nil, myerrors.NewValidationError(err)
+		return nil, errors.NewValidationError(err)
 	}
 
 	// RDBトランザクション開始してサービスの実行
