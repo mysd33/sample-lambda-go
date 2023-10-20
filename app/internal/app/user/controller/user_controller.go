@@ -25,16 +25,16 @@ type UserController interface {
 
 // New は、UserControllerを作成します。
 func New(log logging.Logger, service service.UserService) UserController {
-	return &UserControllerImpl{log: log, service: service}
+	return &userControllerImpl{log: log, service: service}
 }
 
-// UserControllerImpl は、UserControllerを実装する構造体です。
-type UserControllerImpl struct {
+// userControllerImpl は、UserControllerを実装する構造体です。
+type userControllerImpl struct {
 	log     logging.Logger
 	service service.UserService
 }
 
-func (c *UserControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
+func (c *userControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
 	// パスパラメータの取得
 	userId := ctx.Param("user_id")
 	// TODO: 入力チェック
@@ -45,7 +45,7 @@ func (c *UserControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
 	})
 }
 
-func (c *UserControllerImpl) Regist(ctx *gin.Context) (interface{}, error) {
+func (c *userControllerImpl) Regist(ctx *gin.Context) (interface{}, error) {
 	// POSTデータをバインド
 	var request Request
 	if err := ctx.ShouldBindJSON(&request); err != nil {

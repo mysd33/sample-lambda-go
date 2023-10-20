@@ -16,7 +16,7 @@ import (
 
 // NewUserRepositoryForDynamoDB は、DynamoDB保存のためのUserRepository実装を作成します。
 func NewUserRepositoryForDynamoDB(log logging.Logger) (UserRepository, error) {
-	accessor, err := mydynamodb.NewAccessor(log)
+	accessor, err := mydynamodb.NewDynamoDBAccessor(log)
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +25,7 @@ func NewUserRepositoryForDynamoDB(log logging.Logger) (UserRepository, error) {
 
 // UserRepositoryImplByDynamoDB は、DynamoDB保存のためのUserRepository実装です。
 type UserRepositoryImplByDynamoDB struct {
-	accessor mydynamodb.Accessor
+	accessor mydynamodb.DynamoDBAccessor
 	log      logging.Logger
 }
 

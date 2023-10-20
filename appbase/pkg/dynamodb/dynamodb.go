@@ -97,13 +97,13 @@ func endTransaction(err error) (*dynamodb.TransactWriteItemsOutput, error) {
 	})
 }
 
-// NewAccessor は、Acccessorを作成します。
-func NewAccessor(log logging.Logger) (Accessor, error) {
-	return &DynamoDBAccessor{log: log}, nil
+// NewDynamoDBAccessor は、Acccessorを作成します。
+func NewDynamoDBAccessor(log logging.Logger) (DynamoDBAccessor, error) {
+	return &defaultDynamoDBAccessor{log: log}, nil
 }
 
-// Accessor は、AWS SDKを使ったDynamoDBアクセスの実装をラップしカプセル化するインタフェースです。
-type Accessor interface {
+// DynamoDBAccessor は、AWS SDKを使ったDynamoDBアクセスの実装をラップしカプセル化するインタフェースです。
+type DynamoDBAccessor interface {
 	// GetItemSdk は、AWS SDKによるGetItemをラップします。
 	GetItemSdk(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
 	// QuerySdk は、AWS SDKによるQueryをラップします。
@@ -125,22 +125,22 @@ type Accessor interface {
 	AppendTransactWriteItem(item types.TransactWriteItem)
 }
 
-type DynamoDBAccessor struct {
+type defaultDynamoDBAccessor struct {
 	log logging.Logger
 }
 
-// GetItemSdk implements Accessor.
-func (d *DynamoDBAccessor) GetItemSdk(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
+// GetItemSdk implements DynamoDBAccessor.
+func (d *defaultDynamoDBAccessor) GetItemSdk(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
 	return dynamodbClient.GetItem(apcontext.Context, input)
 }
 
-// QuerySdk implements Accessor.
-func (d *DynamoDBAccessor) QuerySdk(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
+// QuerySdk implements DynamoDBAccessor.
+func (d *defaultDynamoDBAccessor) QuerySdk(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
 	return dynamodbClient.Query(apcontext.Context, input)
 }
 
-// QueryPagesSdk implements Accessor.
-func (d *DynamoDBAccessor) QueryPagesSdk(input *dynamodb.QueryInput, fn func(*dynamodb.QueryOutput) bool) error {
+// QueryPagesSdk implements DynamoDBAccessor.
+func (d *defaultDynamoDBAccessor) QueryPagesSdk(input *dynamodb.QueryInput, fn func(*dynamodb.QueryOutput) bool) error {
 	paginator := dynamodb.NewQueryPaginator(dynamodbClient, input)
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(apcontext.Context)
@@ -154,32 +154,32 @@ func (d *DynamoDBAccessor) QueryPagesSdk(input *dynamodb.QueryInput, fn func(*dy
 	return nil
 }
 
-// PutItemSdk implements Accessor.
-func (d *DynamoDBAccessor) PutItemSdk(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
+// PutItemSdk implements DynamoDBAccessor.
+func (d *defaultDynamoDBAccessor) PutItemSdk(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
 	return dynamodbClient.PutItem(apcontext.Context, input)
 }
 
-// UpdateItemSdk implements Accessor.
-func (d *DynamoDBAccessor) UpdateItemSdk(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
+// UpdateItemSdk implements DynamoDBAccessor.
+func (d *defaultDynamoDBAccessor) UpdateItemSdk(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
 	return dynamodbClient.UpdateItem(apcontext.Context, input)
 }
 
-// DeleteItemSdk implements Accessor.
-func (d *DynamoDBAccessor) DeleteItemSdk(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
+// DeleteItemSdk implements DynamoDBAccessor.
+func (d *defaultDynamoDBAccessor) DeleteItemSdk(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
 	return dynamodbClient.DeleteItem(apcontext.Context, input)
 }
 
-// BatchGetItemSdk implements Accessor.
-func (d *DynamoDBAccessor) BatchGetItemSdk(input *dynamodb.BatchGetItemInput) (*dynamodb.BatchGetItemOutput, error) {
+// BatchGetItemSdk implements DynamoDBAccessor.
+func (d *defaultDynamoDBAccessor) BatchGetItemSdk(input *dynamodb.BatchGetItemInput) (*dynamodb.BatchGetItemOutput, error) {
 	return dynamodbClient.BatchGetItem(apcontext.Context, input)
 }
 
-// BatchWriteItemSdk implements Accessor.
-func (d *DynamoDBAccessor) BatchWriteItemSdk(input *dynamodb.BatchWriteItemInput) (*dynamodb.BatchWriteItemOutput, error) {
+// BatchWriteItemSdk implements DynamoDBAccessor.
+func (d *defaultDynamoDBAccessor) BatchWriteItemSdk(input *dynamodb.BatchWriteItemInput) (*dynamodb.BatchWriteItemOutput, error) {
 	return dynamodbClient.BatchWriteItem(apcontext.Context, input)
 }
 
-// AppendTransactWriteItem implements Accessor.
-func (d *DynamoDBAccessor) AppendTransactWriteItem(item types.TransactWriteItem) {
+// AppendTransactWriteItem implements DynamoDBAccessor.
+func (d *defaultDynamoDBAccessor) AppendTransactWriteItem(item types.TransactWriteItem) {
 	transactWriteItems = append(transactWriteItems, item)
 }

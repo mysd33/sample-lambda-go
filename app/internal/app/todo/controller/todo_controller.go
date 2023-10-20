@@ -26,16 +26,16 @@ type TodoController interface {
 
 // New は、TodoControllerを作成します。
 func New(log logging.Logger, service service.TodoService) TodoController {
-	return &TodoControllerImpl{log: log, service: service}
+	return &todoControllerImpl{log: log, service: service}
 }
 
-// TodoControllerImpl は、TodoControllerを実装する構造体です。
-type TodoControllerImpl struct {
+// todoControllerImpl は、TodoControllerを実装する構造体です。
+type todoControllerImpl struct {
 	log     logging.Logger
 	service service.TodoService
 }
 
-func (c *TodoControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
+func (c *todoControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
 	// パスパラメータの取得
 	todoId := ctx.Param("todo_id")
 	// TODO: 入力チェック
@@ -46,7 +46,7 @@ func (c *TodoControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
 	})
 }
 
-func (c *TodoControllerImpl) Regist(ctx *gin.Context) (interface{}, error) {
+func (c *todoControllerImpl) Regist(ctx *gin.Context) (interface{}, error) {
 	// POSTデータをバインド
 	var request Request
 	if err := ctx.ShouldBindJSON(&request); err != nil {

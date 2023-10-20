@@ -22,21 +22,21 @@ func New(log logging.Logger,
 	config *config.Config,
 	repository repository.TodoRepository,
 ) TodoService {
-	return &TodoServiceImpl{log: log, config: config, repository: repository}
+	return &todoServiceImpl{log: log, config: config, repository: repository}
 }
 
-// TodoServiceImpl TodoServiceを実装する構造体です。
-type TodoServiceImpl struct {
+// todoServiceImpl TodoServiceを実装する構造体です。
+type todoServiceImpl struct {
 	log        logging.Logger
 	config     *config.Config
 	repository repository.TodoRepository
 }
 
-func (ts *TodoServiceImpl) Find(todoId string) (*entity.Todo, error) {
+func (ts *todoServiceImpl) Find(todoId string) (*entity.Todo, error) {
 	return ts.repository.GetTodo(todoId)
 }
 
-func (ts *TodoServiceImpl) Regist(todoTitle string) (*entity.Todo, error) {
+func (ts *todoServiceImpl) Regist(todoTitle string) (*entity.Todo, error) {
 	ts.log.Info("TodoTitle=%s", todoTitle)
 	// TODO: メッセージIDを使ったログのメソッドの例に修正
 	// ts.log.Info(code.I_EX_0001, todoTitle)

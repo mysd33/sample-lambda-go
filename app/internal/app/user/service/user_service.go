@@ -22,17 +22,17 @@ func New(log logging.Logger,
 	config *config.Config,
 	repository repository.UserRepository,
 ) UserService {
-	return &UserServiceImpl{log: log, config: config, repository: repository}
+	return &userServiceImpl{log: log, config: config, repository: repository}
 }
 
-// UserServiceImpl は、UserServiceを実装する構造体です。
-type UserServiceImpl struct {
+// userServiceImpl は、UserServiceを実装する構造体です。
+type userServiceImpl struct {
 	log        logging.Logger
 	config     *config.Config
 	repository repository.UserRepository
 }
 
-func (us *UserServiceImpl) Regist(userName string) (*entity.User, error) {
+func (us *userServiceImpl) Regist(userName string) (*entity.User, error) {
 	//TODO: Viperによる設定ファイルの読み込みのとりあえずの確認
 	us.log.Info("hoge.name=%s", us.config.Hoge.Name)
 
@@ -44,6 +44,6 @@ func (us *UserServiceImpl) Regist(userName string) (*entity.User, error) {
 	return us.repository.PutUser(&user)
 }
 
-func (us *UserServiceImpl) Find(userId string) (*entity.User, error) {
+func (us *userServiceImpl) Find(userId string) (*entity.User, error) {
 	return us.repository.GetUser(userId)
 }

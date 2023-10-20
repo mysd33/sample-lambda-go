@@ -7,24 +7,29 @@ type any interface{}
 
 // MessageSource は、メッセージを取得するインタフェースです。
 type MessageSource interface {
-	// GetMessage は、codeに対応し、置換文字列argsを設定したするメッセージを取得します。
-	GetMessage(code string, args ...any) string
+	// GetMessage は、メッセージID（id）に対応し、置換文字列argsを設定したするメッセージを取得します。
+	GetMessage(id string, args ...any) string
 }
 
-// DefaultMessageSource は MessageSourceを実装する構造体です。
-type DefaultMessageSource struct {
+// defaultMessageSource は MessageSourceを実装する構造体です。
+type defaultMessageSource struct {
 	//TODO:
 }
 
 func NewMessageSource() MessageSource {
-	return &DefaultMessageSource{}
+	return &defaultMessageSource{}
 }
 
 // GetMessage implements MessageSource.
-func (*DefaultMessageSource) GetMessage(code string, args ...any) string {
+func (*defaultMessageSource) GetMessage(id string, args ...any) string {
 	//TODO: configs/messages.yamlの定義メッセージIDを取得する実装
 	//TODO: configs/messages_fw.yamlの定義メッセージIDを取得する実装
 	template := ""
+	// idに対応するメッセージが取得できない場合はそのまま出力
+	if template == "" {
+		return fmt.Sprint(id, args)
+	}
+	// 置き換え文字列がない場合
 	if len(args) == 0 {
 		return template
 	}

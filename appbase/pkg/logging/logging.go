@@ -14,62 +14,62 @@ type any interface{}
 
 // Loggerは、ログ出力のインタフェースです
 type Logger interface {
-	// Debugは、デバッグレベルのログを出力します。
+	// Debugは、メッセージのテンプレートtemplate, 置き換え文字列argsに対してfmt.Sprintfしたメッセージでデバッグレベルのログを出力します。
 	Debug(template string, args ...any)
-	// Infoは、情報レベルのログを出力します。
+	// Infoは、メッセージID（code）、置き換え文字列argsに対応するメッセージで、情報レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	Info(code string, args ...any)
-	// Warnは、警告レベルのログを出力します。
+	// Warnは、メッセージID（エラーコードcode）、置き換え文字列argsに対応するメッセージで警告レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	Warn(code string, args ...any)
-	// Errorは、エラーレベルのログを出力します。
+	// Errorは、メッセージID（エラーコードcode）、置き換え文字列argsに対応するメッセージでエラーレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	Error(code string, args ...any)
-	// Fatailは、致命的なエラーレベルのログを出力します。
+	// Fatailは、メッセージID（エラーコードcode）、置き換え文字列argsに対応するメッセージで致命的なエラーレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	Fatal(code string, args ...any)
 }
 
 // NewLogger は、Loggerを作成します。
 func NewLogger() Logger {
 	z, _ := zap.NewProduction()
-	return ZapLogger{log: z.Sugar(), messageSource: message.NewMessageSource()}
+	return &zapLogger{log: z.Sugar(), messageSource: message.NewMessageSource()}
 }
 
-// ZapLoggerは、Zapを使ったLogger実装です。
-type ZapLogger struct {
+// zapLoggerは、Zapを使ったLogger実装です。
+type zapLogger struct {
 	log           *zap.SugaredLogger
 	messageSource message.MessageSource
 }
 
-func (z ZapLogger) Debug(template string, args ...any) {
+func (z *zapLogger) Debug(template string, args ...any) {
 	z.log.Debugf(template, args)
 }
 
-func (z ZapLogger) Info(code string, args ...any) {
+func (z *zapLogger) Info(code string, args ...any) {
 	message := z.messageSource.GetMessage(code, args)
 	if message != "" {
 		z.log.Infof(message)
 	}
-	z.log.Infof(code, args)
+	z.log.Info(code, args)
 }
 
-func (z ZapLogger) Warn(code string, args ...any) {
+func (z *zapLogger) Warn(code string, args ...any) {
 	message := z.messageSource.GetMessage(code, args)
 	if message != "" {
 		z.log.Warnf(message)
 	}
-	z.log.Warnf(code, args)
+	z.log.Warn(code, args)
 }
 
-func (z ZapLogger) Error(code string, args ...any) {
+func (z *zapLogger) Error(code string, args ...any) {
 	message := z.messageSource.GetMessage(code, args)
 	if message != "" {
 		z.log.Errorf(message)
 	}
-	z.log.Errorf(code, args)
+	z.log.Error(code, args)
 }
 
-func (z ZapLogger) Fatal(code string, args ...any) {
+func (z *zapLogger) Fatal(code string, args ...any) {
 	message := z.messageSource.GetMessage(code, args)
 	if message != "" {
 		z.log.Fatalf(message)
 	}
-	z.log.Fatalf(code, args)
+	z.log.Fatal(code, args)
 }
