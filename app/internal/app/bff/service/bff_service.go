@@ -40,9 +40,11 @@ func (bs *bffServiceImpl) Find(userId string, todoId string) (*entity.User, *ent
 	if err != nil {
 		return nil, nil, err
 	}
+	bs.log.Debug("user:%s", user)
 	todo, err := bs.todoRepository.GetTodo(todoId)
 	if err != nil {
 		return nil, nil, err
 	}
+	bs.log.Debug("todo:%s", todo)
 	return user, todo, nil
 }

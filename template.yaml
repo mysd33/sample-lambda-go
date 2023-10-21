@@ -75,7 +75,7 @@ Globals:
           Fn::ImportValue: !Sub ${StackPrefix}-RDSDBName
         RDB_SSL_MODE: "require"            
         TODO_API_BASE_URL: !Sub https://${TodoApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
-        USER_API_BASE_URL: !Sub https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}        
+        USERS_API_BASE_URL: !Sub https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}        
         DYNAMODB_LOCAL_ENDPOINT: ""        
     # Deployment Configurtion           
     AutoPublishAlias: live            

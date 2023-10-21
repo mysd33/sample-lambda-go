@@ -27,16 +27,11 @@ func init() {
 		log.Fatal("初期化処理エラー:%s", err.Error())
 		panic(err.Error())
 	}
+	// TODO: 現状、両方REST API呼び出しにするとローカル実行で失敗しinternal server errorになってしまう
 	// リポジトリの作成
-	//todoRepository, err := repository.NewTodoRepositoryForDynamoDB(log)
-	todoRepository, err := repository.NewTodoRepositoryForRestAPI(log)
-	if err != nil {
-		log.Fatal("初期化処理エラー:%s", err.Error())
-		panic(err.Error())
-	}
-	// TODO: REST APIアクセスのリポジトリに変更
-	// リポジトリの作成
-	userRepository := repository.NewUserRepositoryForRDB()
+	userRepository := repository.NewUserRepositoryForRestAPI(log)
+	todoRepository := repository.NewTodoRepositoryForRestAPI(log)
+
 	// サービスの作成
 	bffService := service.New(log, cfg, userRepository, todoRepository)
 	// コントローラの作成

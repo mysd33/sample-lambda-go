@@ -15,9 +15,8 @@ import (
 )
 
 // NewTodoRepositoryForRestAPI は、REST APIのためのTodoRepository実装を作成します。
-func NewTodoRepositoryForRestAPI(log logging.Logger) (TodoRepository, error) {
-	// TODO:
-	return &todoRepositoryImplByRestAPI{log: log}, nil
+func NewTodoRepositoryForRestAPI(log logging.Logger) TodoRepository {
+	return &todoRepositoryImplByRestAPI{log: log}
 }
 
 type todoRepositoryImplByRestAPI struct {
@@ -25,13 +24,12 @@ type todoRepositoryImplByRestAPI struct {
 }
 
 // GetTodo implements TodoRepository.
-func (r *todoRepositoryImplByRestAPI) GetTodo(todoId string) (*entity.Todo, error) {
-	// TODO: BaseURLを環境変数から取得
-	//baseUrl := "http://host.docker.internal:3000"
+func (tr *todoRepositoryImplByRestAPI) GetTodo(todoId string) (*entity.Todo, error) {
 	baseUrl := os.Getenv("TODO_API_BASE_URL")
 	url := fmt.Sprintf("%s/todo-api/v1/todo/%s", baseUrl, todoId)
-	r.log.Debug("url:%s", url)
+	tr.log.Debug("url:%s", url)
 
+	// TODO: AP基盤機能化
 	response, err := http.Get(url)
 	if err != nil {
 		return nil, errors.NewSystemError(err, code.E_EX_9001)
@@ -41,6 +39,7 @@ func (r *todoRepositoryImplByRestAPI) GetTodo(todoId string) (*entity.Todo, erro
 	if err != nil {
 		return nil, errors.NewSystemError(err, code.E_EX_9001)
 	}
+
 	var todo entity.Todo
 	if err = json.Unmarshal(data, &todo); err != nil {
 		return nil, errors.NewSystemError(err, code.E_EX_9001)
