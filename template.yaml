@@ -73,8 +73,10 @@ Globals:
           Fn::ImportValue: !Sub ${StackPrefix}-RDSClusterEndpointPort
         RDB_DB_NAME:
           Fn::ImportValue: !Sub ${StackPrefix}-RDSDBName
-        RDB_SSL_MODE: "require"
-        DYNAMODB_LOCAL_ENDPOINT: ""
+        RDB_SSL_MODE: "require"            
+        TODO_API_BASE_URL: !Sub https://${TodoApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
+        USER_API_BASE_URL: !Sub https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}        
+        DYNAMODB_LOCAL_ENDPOINT: ""        
     # Deployment Configurtion           
     AutoPublishAlias: live            
     DeploymentPreference:
@@ -169,7 +171,7 @@ Resources:
           Properties:            
             Path: /bff-api/{proxy+}          
             Method: ANY
-            RestApiId: !Ref BffApi            
+            RestApiId: !Ref BffApi   
 # API Gateway Private REST API
 # HelloWorld 
   HelloApi:

@@ -27,13 +27,14 @@ func init() {
 		log.Fatal("初期化処理エラー:%s", err.Error())
 		panic(err.Error())
 	}
-	// TODO: REST APIアクセスのリポジトリに変更
 	// リポジトリの作成
-	todoRepository, err := repository.NewTodoRepositoryForDynamoDB(log)
+	//todoRepository, err := repository.NewTodoRepositoryForDynamoDB(log)
+	todoRepository, err := repository.NewTodoRepositoryForRestAPI(log)
 	if err != nil {
 		log.Fatal("初期化処理エラー:%s", err.Error())
 		panic(err.Error())
 	}
+	// TODO: REST APIアクセスのリポジトリに変更
 	// リポジトリの作成
 	userRepository := repository.NewUserRepositoryForRDB()
 	// サービスの作成

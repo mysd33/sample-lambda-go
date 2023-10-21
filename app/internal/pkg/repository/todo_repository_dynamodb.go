@@ -20,16 +20,16 @@ func NewTodoRepositoryForDynamoDB(log logging.Logger) (TodoRepository, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &todoRepositoryImpl{accessor: accessor, log: log}, nil
+	return &todoRepositoryImplByDynamoDB{accessor: accessor, log: log}, nil
 }
 
-// todoRepositoryImpl は、TodoRepositoryを実装する構造体です。
-type todoRepositoryImpl struct {
+// todoRepositoryImplByDynamoDB は、TodoRepositoryを実装する構造体です。
+type todoRepositoryImplByDynamoDB struct {
 	accessor mydynamodb.DynamoDBAccessor
 	log      logging.Logger
 }
 
-func (tr *todoRepositoryImpl) GetTodo(todoId string) (*entity.Todo, error) {
+func (tr *todoRepositoryImplByDynamoDB) GetTodo(todoId string) (*entity.Todo, error) {
 	// AWS SDK for Go v2 Migration
 	// https://docs.aws.amazon.com/ja_jp/code-library/latest/ug/go_2_dynamodb_code_examples.html
 	// https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/gov2/dynamodb
@@ -56,7 +56,7 @@ func (tr *todoRepositoryImpl) GetTodo(todoId string) (*entity.Todo, error) {
 	return &todo, nil
 }
 
-func (tr *todoRepositoryImpl) PutTodo(todo *entity.Todo) (*entity.Todo, error) {
+func (tr *todoRepositoryImplByDynamoDB) PutTodo(todo *entity.Todo) (*entity.Todo, error) {
 	// AWS SDK for Go v2 Migration
 	// https://docs.aws.amazon.com/ja_jp/code-library/latest/ug/go_2_dynamodb_code_examples.html
 	// https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/gov2/dynamodb

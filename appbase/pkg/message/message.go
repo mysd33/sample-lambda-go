@@ -3,12 +3,10 @@ package message
 
 import "fmt"
 
-type any interface{}
-
 // MessageSource は、メッセージを取得するインタフェースです。
 type MessageSource interface {
 	// GetMessage は、メッセージID（id）に対応し、置換文字列argsを設定したするメッセージを取得します。
-	GetMessage(id string, args ...any) string
+	GetMessage(id string, args ...interface{}) string
 }
 
 // defaultMessageSource は MessageSourceを実装する構造体です。
@@ -21,7 +19,7 @@ func NewMessageSource() MessageSource {
 }
 
 // GetMessage implements MessageSource.
-func (*defaultMessageSource) GetMessage(id string, args ...any) string {
+func (*defaultMessageSource) GetMessage(id string, args ...interface{}) string {
 	//TODO: configs/messages.yamlの定義メッセージIDを取得する実装
 	//TODO: configs/messages_fw.yamlの定義メッセージIDを取得する実装
 	template := ""
@@ -33,5 +31,5 @@ func (*defaultMessageSource) GetMessage(id string, args ...any) string {
 	if len(args) == 0 {
 		return template
 	}
-	return fmt.Sprintf(template, args)
+	return fmt.Sprintf(template, args...)
 }

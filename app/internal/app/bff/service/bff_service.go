@@ -34,6 +34,8 @@ type bffServiceImpl struct {
 
 // Find implements BffService.
 func (bs *bffServiceImpl) Find(userId string, todoId string) (*entity.User, *entity.Todo, error) {
+	bs.log.Debug("userId:%s,todoId:%s", userId, todoId)
+
 	user, err := bs.userRepository.GetUser(userId)
 	if err != nil {
 		return nil, nil, err

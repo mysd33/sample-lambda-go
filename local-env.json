@@ -6,6 +6,8 @@
         "RDB_PORT": "5432",
         "RDB_DB_NAME": "testdb",
         "RDB_SSL_MODE": "disable",
-        "DYNAMODB_LOCAL_ENDPOINT": "http://host.docker.internal:8000/"
+        "TODO_API_BASE_URL": "http://host.docker.internal:3000",
+        "USER_API_BASE_URL": "http://host.docker.internal:3000",
+        "DYNAMODB_LOCAL_ENDPOINT": "http://host.docker.internal:8000"
     }
 }
