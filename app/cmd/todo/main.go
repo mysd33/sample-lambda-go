@@ -28,7 +28,7 @@ func init() {
 		panic(err.Error())
 	}
 	// リポジトリの作成
-	todoRepository, err := repository.NewTodoRepository(log)
+	todoRepository, err := repository.NewTodoRepositoryForDynamoDB(log)
 	if err != nil {
 		log.Fatal("初期化処理エラー:%s", err.Error())
 		panic(err.Error())
