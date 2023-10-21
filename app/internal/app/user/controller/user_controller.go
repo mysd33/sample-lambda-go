@@ -37,7 +37,11 @@ type userControllerImpl struct {
 func (c *userControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
 	// パスパラメータの取得
 	userId := ctx.Param("user_id")
-	// TODO: 入力チェック
+	// 入力チェック
+	if userId == "" {
+		// 入力チェックエラーのハンドリング
+		return nil, errors.NewValidationErrorWithMessage("クエリパラメータuserIdが未指定です")
+	}
 
 	// RDBトランザクション開始してサービスの実行
 	return rdb.ExecuteTransaction(func() (interface{}, error) {

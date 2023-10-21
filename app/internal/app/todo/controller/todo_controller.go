@@ -38,8 +38,11 @@ type todoControllerImpl struct {
 func (c *todoControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
 	// パスパラメータの取得
 	todoId := ctx.Param("todo_id")
-	// TODO: 入力チェック
-
+	// 入力チェック
+	if todoId == "" {
+		// 入力チェックエラーのハンドリング
+		return nil, errors.NewValidationErrorWithMessage("クエリパラメータtodoIdが未指定です")
+	}
 	// DynamoDBトランザクション管理してサービスの実行
 	return dynamodb.ExecuteTransaction(func() (interface{}, error) {
 		return c.service.Find(todoId)

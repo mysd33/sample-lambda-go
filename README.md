@@ -294,6 +294,9 @@ curl http://127.0.0.1:3000/users-api/v1/users/(ユーザID)
 curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "Buy Milk"}' http://127.0.0.1:3000/todo-api/v1/todo
 
 curl http://127.0.0.1:3000/todo-api/v1/todo/(TODO ID)
+
+#curlコマンドの場合は&をエスケープする
+curl http://127.0.0.1:3000/bff-api/v1/todo/?user_id=（ユーザID）\&todo_id=(TODO ID)
 ```
 
 ## godocの表示

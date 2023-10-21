@@ -17,6 +17,7 @@ build:
 	sam build
 	xcopy /I configs .aws-sam\build\UsersFunction\configs	
 	xcopy /I configs .aws-sam\build\TodoFunction\configs
+	xcopy /I configs .aws-sam\build\BffFunction\configs
 
 fmt:
 	cd app & go fmt ./...

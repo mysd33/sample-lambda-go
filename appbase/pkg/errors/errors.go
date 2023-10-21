@@ -24,6 +24,12 @@ func NewValidationError(cause error) *ValidationError {
 	}
 }
 
+func NewValidationErrorWithMessage(format string, args ...any) *ValidationError {
+	return &ValidationError{
+		Cause: cerrors.Errorf(format, args),
+	}
+}
+
 // Error は、エラーを返却します。
 func (e *ValidationError) Error() string {
 	// TODO:

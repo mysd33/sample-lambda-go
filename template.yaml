@@ -36,6 +36,9 @@ Parameters:
   TodoFunctionName:    
     Type: String
     Default: todo-function  
+  BffFunctionName:    
+    Type: String
+    Default: bff-function      
 Conditions:
   TracingEnabled: !Equals [!Ref TracingValue, Active]
 
@@ -113,7 +116,7 @@ Resources:
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
           PARAM1: VALUE
-# User API  
+# User Function
   UsersFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -128,7 +131,7 @@ Resources:
             Path: /users-api/{proxy+}
             Method: ANY
             RestApiId: !Ref UserApi
-# Todo API
+# Todo Function
   TodoFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -147,6 +150,26 @@ Resources:
             Path: /todo-api/{proxy+}          
             Method: ANY
             RestApiId: !Ref TodoApi
+# Bff Function
+  BffFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x    
+    Properties:
+      FunctionName: !Ref BffFunctionName
+      CodeUri: app/cmd/bff/
+      # TODO: 削除
+      Policies: 
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref TodoTableName                        
+      Events:
+        Event:
+          Type: Api
+          Properties:            
+            Path: /bff-api/{proxy+}          
+            Method: ANY
+            RestApiId: !Ref BffApi            
 # API Gateway Private REST API
 # HelloWorld 
   HelloApi:
@@ -210,7 +233,29 @@ Resources:
                 "aws:SourceVpce": { "Fn::ImportValue" : {"Fn::Sub" : "${StackPrefix}-PrivateAPIVPCEndpoint-ID" }}                
               }                        
             }
-          }]        
+          }]    
+# Bff API
+  BffApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: bff-api
+      StageName: !Ref Stage
+      Auth:
+        ResourcePolicy:
+          CustomStatements: [{
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "execute-api:Invoke",
+            "Resource": [
+              !Sub "execute-api:/${Stage}/POST/bff-api/*",
+              !Sub "execute-api:/${Stage}/GET/bff-api/*",
+            ],
+            "Condition": {
+              "StringEquals": {
+                "aws:SourceVpce": { "Fn::ImportValue" : {"Fn::Sub" : "${StackPrefix}-PrivateAPIVPCEndpoint-ID" }}                
+              }                        
+            }
+          }]              
 # IAM Role for API Gateway Account
   APIGatewayRole:
     Type: AWS::IAM::Role
@@ -251,7 +296,12 @@ Resources:
     Properties:
       LogGroupName: !Sub /aws/lambda/${TodoFunctionName}
       RetentionInDays: 7
-      
+  BffFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${BffFunctionName}
+      RetentionInDays: 7
+
 # Application Insights
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
@@ -283,7 +333,7 @@ Outputs:
     Value: !GetAtt HelloWorldFunctionRole.Arn
   UsersAPI:
     Description: "API Gateway endpoint URL for Prod environment"
-    Value: !Sub "https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/users-api/users"
+    Value: !Sub "https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/users-api/v1/users"
   UsersFunction:
     Description: "Users Lambda Function ARN"
     Value: !GetAtt UsersFunction.Arn
@@ -295,7 +345,7 @@ Outputs:
     Value: !Ref UsersFunctionDeploymentGroup
   TodoAPI:
     Description: "API Gateway endpoint URL for Prod environment"
-    Value: !Sub "https://${TodoApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/todo-api/todo"
+    Value: !Sub "https://${TodoApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/todo-api/v1/todo"
   TodoFunction:
     Description: "Todo Lambda Function ARN"
     Value: !GetAtt TodoFunction.Arn
@@ -305,3 +355,15 @@ Outputs:
   TodoFunctionDeploymentGroup:
     Description: "Todo Lambda Function DeploymentGroup ARN"
     Value: !Ref TodoFunctionDeploymentGroup
+  BffAPI:
+    Description: "API Gateway endpoint URL for Prod environment"
+    Value: !Sub "https://${BffApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/bff-api/v1/todo"
+  BffFunction:
+    Description: "Bff Lambda Function ARN"
+    Value: !GetAtt BffFunction.Arn
+  BffFunctionIamRole:
+    Description: "Implicit IAM Role created for Todo function ARN"
+    Value: !GetAtt BffFunctionRole.Arn
+  BffFunctionDeploymentGroup:
+    Description: "Bff Lambda Function DeploymentGroup ARN"
+    Value: !Ref BffFunctionDeploymentGroup    
