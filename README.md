@@ -10,6 +10,12 @@
 
 ![構成イメージ](image/demo.png)
 
+* Lambda間の呼び出しイメージ
+    * サンプルAP上、直接User API、Todo APIサービスを呼ぶこともできるがバックエンドサービス扱い
+    * BFFからバックエンドの各サービスへアクセスできるという呼び出し関係になっている
+
+![呼び出しイメージ](image/demo2.png)
+
 * X-Rayによる可視化
     * API Gateway、Lambdaにおいて、X-Rayによる可視化にも対応している
     * RDB(RDS Aurora)へのアクセス、DynamoDBへのアクセスのトレースにも対応
@@ -213,6 +219,18 @@ curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/todo-api/v
 
 # 対象のやることをDyanamoDBから取得し返却
 {"todo_id":"04a14ad3-f6a5-11ed-b40f-f2ead45b980a","todo_title":"ミルクを買う"}
+```
+
+* BFFサービスのAPI実行例
+    * TODO: 動作確認中
+```sh
+#curlコマンドの場合は&をエスケープする
+curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo/?user_id=（ユーザID）\&todo_id=(TODO ID)
+
+curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo/?user_id=416ad789-6fde-11ee-a3ec-0242ac110004\&todo_id=60d48f8f-6fde-11ee-a60c-0242ac110005
+
+# 対象のユーザ情報とやることを一緒に取得
+{"user":{"user_id":"416ad789-6fde-11ee-a3ec-0242ac110004","user_name":"Taro"},"todo":{"todo_id":"60d48f8f-6fde-11ee-a60c-0242ac110005","todo_title":"ミルクを買う"}}
 ```
 ## 12. SAMのCloudFormationスタック削除
 * VPC内Lambdaが参照するHyperplane ENIの削除に最大20分かかるため、スタックの削除に時間がかかる。
