@@ -8,6 +8,7 @@ import (
 
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/config"
+	"example.com/appbase/pkg/httpclient"
 	"example.com/appbase/pkg/interceptor"
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-lambda-go/events"
@@ -27,10 +28,19 @@ func init() {
 		log.Fatal("初期化処理エラー:%s", err.Error())
 		panic(err.Error())
 	}
-	// TODO: 現状、両方REST API呼び出しにするとローカル実行で失敗しinternal server errorになってしまう
+	// TODO: 現状、両方REST API呼び出しにしてsam local start-api実行で失敗しinternal server errorになってしまう
+	// 以下のaws sam cliのバグを引いている可能性が高い
+	// https://github.com/aws/aws-sam-cli/issues/6033
 	// リポジトリの作成
-	userRepository := repository.NewUserRepositoryForRestAPI(log)
-	todoRepository := repository.NewTodoRepositoryForRestAPI(log)
+	httpClient := httpclient.NewHttpClient(log)
+	userRepository := repository.NewUserRepositoryForRestAPI(httpClient, log)
+	todoRepository := repository.NewTodoRepositoryForRestAPI(httpClient, log)
+	//userRepository := repository.NewUserRepositoryForRDB()
+	//todoRepository, err := repository.NewTodoRepositoryForDynamoDB(log)
+	//if err != nil {
+	//	log.Fatal("初期化処理エラー:%s", err.Error())
+	//	panic(err.Error())
+	//}
 
 	// サービスの作成
 	bffService := service.New(log, cfg, userRepository, todoRepository)

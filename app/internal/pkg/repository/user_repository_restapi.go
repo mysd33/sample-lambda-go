@@ -6,42 +6,35 @@ import (
 	"app/internal/pkg/entity"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 
 	"example.com/appbase/pkg/errors"
+	"example.com/appbase/pkg/httpclient"
 	"example.com/appbase/pkg/logging"
 )
 
 // NewUserRepositoryForRestAPI は、REST APIのためのUserRepository実装を作成します。
-func NewUserRepositoryForRestAPI(log logging.Logger) UserRepository {
-	return &userRepositoryImplByRestAPI{log: log}
+func NewUserRepositoryForRestAPI(httpClient httpclient.HttpClient, log logging.Logger) UserRepository {
+	return &userRepositoryImplByRestAPI{httpClient: httpClient, log: log, baseUrl: os.Getenv("USERS_API_BASE_URL")}
 }
 
 type userRepositoryImplByRestAPI struct {
-	log logging.Logger
+	httpClient httpclient.HttpClient
+	log        logging.Logger
+	baseUrl    string
 }
 
 // GetUser implements UserRepository.
 func (ur *userRepositoryImplByRestAPI) GetUser(userId string) (*entity.User, error) {
-	baseUrl := os.Getenv("USERS_API_BASE_URL")
-	url := fmt.Sprintf("%s/users-api/v1/users/%s", baseUrl, userId)
+	url := fmt.Sprintf("%s/users-api/v1/users/%s", ur.baseUrl, userId)
 	ur.log.Debug("url:%s", url)
 
-	// TODO: AP基盤機能化
-	response, err := http.Get(url)
+	response, err := ur.httpClient.Get(url, nil, nil)
 	if err != nil {
 		return nil, errors.NewSystemError(err, code.E_EX_9001)
 	}
-	defer response.Body.Close()
-	data, err := io.ReadAll(response.Body)
-	if err != nil {
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
-	}
-
 	var user entity.User
-	if err = json.Unmarshal(data, &user); err != nil {
+	if err = json.Unmarshal(response.Body, &user); err != nil {
 		return nil, errors.NewSystemError(err, code.E_EX_9001)
 	}
 	return &user, nil

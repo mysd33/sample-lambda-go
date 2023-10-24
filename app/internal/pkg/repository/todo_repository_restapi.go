@@ -6,42 +6,36 @@ import (
 	"app/internal/pkg/entity"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 
 	"example.com/appbase/pkg/errors"
+	"example.com/appbase/pkg/httpclient"
 	"example.com/appbase/pkg/logging"
 )
 
 // NewTodoRepositoryForRestAPI は、REST APIのためのTodoRepository実装を作成します。
-func NewTodoRepositoryForRestAPI(log logging.Logger) TodoRepository {
-	return &todoRepositoryImplByRestAPI{log: log}
+func NewTodoRepositoryForRestAPI(httpClient httpclient.HttpClient, log logging.Logger) TodoRepository {
+	return &todoRepositoryImplByRestAPI{httpClient: httpClient, log: log, baseUrl: os.Getenv("TODO_API_BASE_URL")}
 }
 
 type todoRepositoryImplByRestAPI struct {
-	log logging.Logger
+	httpClient httpclient.HttpClient
+	log        logging.Logger
+	baseUrl    string
 }
 
 // GetTodo implements TodoRepository.
 func (tr *todoRepositoryImplByRestAPI) GetTodo(todoId string) (*entity.Todo, error) {
-	baseUrl := os.Getenv("TODO_API_BASE_URL")
-	url := fmt.Sprintf("%s/todo-api/v1/todo/%s", baseUrl, todoId)
+	url := fmt.Sprintf("%s/todo-api/v1/todo/%s", tr.baseUrl, todoId)
 	tr.log.Debug("url:%s", url)
 
-	// TODO: AP基盤機能化
-	response, err := http.Get(url)
-	if err != nil {
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
-	}
-	defer response.Body.Close()
-	data, err := io.ReadAll(response.Body)
+	response, err := tr.httpClient.Get(url, nil, nil)
 	if err != nil {
 		return nil, errors.NewSystemError(err, code.E_EX_9001)
 	}
 
 	var todo entity.Todo
-	if err = json.Unmarshal(data, &todo); err != nil {
+	if err = json.Unmarshal(response.Body, &todo); err != nil {
 		return nil, errors.NewSystemError(err, code.E_EX_9001)
 	}
 	return &todo, nil
