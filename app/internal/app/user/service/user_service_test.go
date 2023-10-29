@@ -35,7 +35,7 @@ func TestRegister(t *testing.T) {
 	inputUserName := "fuga"
 	//期待値
 	expectedName := "fuga"
-	log := logging.NewLogger()
+	log, _ := logging.NewLogger()
 	cfg := &config.Config{Hoge: config.Hoge{Name: "hoge"}}
 
 	//Mockへの入力値と戻り値の設定
