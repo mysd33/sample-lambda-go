@@ -13,8 +13,8 @@ import (
 type UserService interface {
 	// Find は、userIdのユーザを照会します。
 	Find(userId string) (*entity.User, error)
-	// Regist は、ユーザ名userNameのユーザを登録します。
-	Regist(userName string) (*entity.User, error)
+	// Register は、ユーザ名userNameのユーザを登録します。
+	Register(userName string) (*entity.User, error)
 }
 
 // New は、UserServiceを作成します。
@@ -32,15 +32,12 @@ type userServiceImpl struct {
 	repository repository.UserRepository
 }
 
-func (us *userServiceImpl) Regist(userName string) (*entity.User, error) {
+func (us *userServiceImpl) Register(userName string) (*entity.User, error) {
 	//TODO: Viperによる設定ファイルの読み込みのとりあえずの確認
-	us.log.Info("hoge.name=%s", us.config.Hoge.Name)
+	us.log.Debug("hoge.name=%s", us.config.Hoge.Name)
+	us.log.Debug("UserName=%s", userName)
 
-	//Zapによるログ出力の例
-	us.log.Info("UserName=%s", userName)
-
-	user := entity.User{}
-	user.Name = userName
+	user := entity.User{Name: userName}
 	return us.repository.PutUser(&user)
 }
 

@@ -21,7 +21,11 @@ var ginLambda *ginadapter.GinLambda
 
 // コードルドスタート時の初期化処理
 func init() {
-	log := logging.NewLogger()
+	log, err := logging.NewLogger()
+	if err != nil {
+		log.Fatal("初期化処理エラー:%s", err.Error())
+		panic(err.Error())
+	}
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal("初期化処理エラー:%s", err.Error())
@@ -46,7 +50,7 @@ func init() {
 	v1 := r.Group("/todo-api/v1")
 	{
 		v1.GET("/todo/:todo_id", interceptor.Handle(todoController.Find))
-		v1.POST("/todo", interceptor.Handle(todoController.Regist))
+		v1.POST("/todo", interceptor.Handle(todoController.Register))
 	}
 	ginLambda = ginadapter.New(r)
 }

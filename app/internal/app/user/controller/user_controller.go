@@ -19,8 +19,8 @@ type Request struct {
 type UserController interface {
 	// Find は、パスパラメータで指定されたuser_idのユーザ情報を照会します。
 	Find(ctx *gin.Context) (interface{}, error)
-	// Regist は、リクエストデータで受け取ったユーザ情報を登録します。
-	Regist(ctx *gin.Context) (interface{}, error)
+	// Register は、リクエストデータで受け取ったユーザ情報を登録します。
+	Register(ctx *gin.Context) (interface{}, error)
 }
 
 // New は、UserControllerを作成します。
@@ -49,7 +49,7 @@ func (c *userControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
 	})
 }
 
-func (c *userControllerImpl) Regist(ctx *gin.Context) (interface{}, error) {
+func (c *userControllerImpl) Register(ctx *gin.Context) (interface{}, error) {
 	// POSTデータをバインド
 	var request Request
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -59,6 +59,6 @@ func (c *userControllerImpl) Regist(ctx *gin.Context) (interface{}, error) {
 
 	// RDBトランザクション開始してサービスの実行
 	return rdb.ExecuteTransaction(func() (interface{}, error) {
-		return c.service.Regist(request.Name)
+		return c.service.Register(request.Name)
 	})
 }

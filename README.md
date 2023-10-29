@@ -224,9 +224,22 @@ curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/todo-api/v
 * BFFサービスのAPI実行例
     * TODO: 動作確認中
 ```sh
-#curlコマンドの場合は&をエスケープする
-curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo/?user_id=（ユーザID）\&todo_id=(TODO ID)
+# Userサービスを利用し、ユーザー情報を登録
+curl -X POST -H "Content-Type: application/json" -d '{ "user_name" : "Taro"}' https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/users
 
+# 登録結果を返却
+{"user_id":"416ad789-6fde-11ee-a3ec-0242ac110004","user_name":"Taro"}
+
+# Todoサービスを利用し、やることを登録
+curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "ミルクを買う"}' https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/users
+
+# 登録結果を返却
+{"todo_id":"60d48f8f-6fde-11ee-a60c-0242ac110005","todo_title":"ミルクを買う"}
+
+# TodoサービスとUseサービスを利用して、対象ユーザと対象のやることを取得し返却
+# curlコマンドの場合は&をエスケープする
+#
+# curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo/?user_id=（ユーザID）\&todo_id=(TODO ID)
 curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo/?user_id=416ad789-6fde-11ee-a3ec-0242ac110004\&todo_id=60d48f8f-6fde-11ee-a60c-0242ac110005
 
 # 対象のユーザ情報とやることを一緒に取得
@@ -291,6 +304,8 @@ docker-compose up
     * ブラウザで[http://localhost:8001/](http://localhost:8001/)にアクセスし「Create Table」ボタンをクリック    
     * 「Table Name」…「todo」、「Hash Attribute Name」…「todo_id」、「Hash Attribute Type」…「String」で作成
 
+    * TODO: NoSQL WorkBenchの場合のtodoテーブルを作成手順も記載
+
 * sam localコマンドを実行
     * local-env.jsonファイルに、上書きする環境変数が記載されている
 
@@ -303,18 +318,26 @@ make local_startapi
 
 * APの動作確認
 ```sh
+# hello-world
 curl http://127.0.0.1:3000/hello
 
+# Userサービス
 curl -X POST -H "Content-Type: application/json" -d '{ "user_name" : "Taro"}' http://127.0.0.1:3000/users-api/v1/users
 
 curl http://127.0.0.1:3000/users-api/v1/users/(ユーザID)
 
+# Todoサービス
 curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "Buy Milk"}' http://127.0.0.1:3000/todo-api/v1/todo
 
 curl http://127.0.0.1:3000/todo-api/v1/todo/(TODO ID)
 
+# BFF
+curl -X POST -H "Content-Type: application/json" -d '{ "user_name" : "Taro"}' http://127.0.0.1:3000/bff-api/v1/users
+
+curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "Buy Milk"}' http://127.0.0.1:3000/bff-api/v1/todo
+
 #curlコマンドの場合は&をエスケープする
-curl http://127.0.0.1:3000/bff-api/v1/todo/?user_id=（ユーザID）\&todo_id=(TODO ID)
+curl http://127.0.0.1:3000/bff-api/v1/todo?user_id=（ユーザID）\&todo_id=(TODO ID)
 ```
 
 ## godocの表示

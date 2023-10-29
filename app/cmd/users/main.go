@@ -23,7 +23,11 @@ var ginLambda *ginadapter.GinLambda
 
 // コードルドスタート時の初期化処理
 func init() {
-	log := logging.NewLogger()
+	log, err := logging.NewLogger()
+	if err != nil {
+		log.Fatal("初期化処理エラー:%s", err.Error())
+		panic(err.Error())
+	}
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal("初期化処理エラー:%s", err.Error())
@@ -50,7 +54,7 @@ func init() {
 	v1 := r.Group("/users-api/v1")
 	{
 		v1.GET("/users/:user_id", interceptor.Handle(userController.Find))
-		v1.POST("/users", interceptor.Handle(userController.Regist))
+		v1.POST("/users", interceptor.Handle(userController.Register))
 	}
 	ginLambda = ginadapter.New(r)
 }

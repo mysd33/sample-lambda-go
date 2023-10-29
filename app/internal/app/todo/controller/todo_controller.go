@@ -20,8 +20,8 @@ type Request struct {
 type TodoController interface {
 	// Find は、パスパラメータで指定されたtodo_idのTodoを照会します。
 	Find(ctx *gin.Context) (interface{}, error)
-	// Regist は、リクエストデータで受け取ったTodoを登録します。
-	Regist(ctx *gin.Context) (interface{}, error)
+	// Register は、リクエストデータで受け取ったTodoを登録します。
+	Register(ctx *gin.Context) (interface{}, error)
 }
 
 // New は、TodoControllerを作成します。
@@ -49,7 +49,7 @@ func (c *todoControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
 	})
 }
 
-func (c *todoControllerImpl) Regist(ctx *gin.Context) (interface{}, error) {
+func (c *todoControllerImpl) Register(ctx *gin.Context) (interface{}, error) {
 	// POSTデータをバインド
 	var request Request
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -59,6 +59,6 @@ func (c *todoControllerImpl) Regist(ctx *gin.Context) (interface{}, error) {
 
 	// DynamoDBトランザクション管理してサービスの実行
 	return dynamodb.ExecuteTransaction(func() (interface{}, error) {
-		return c.service.Regist(request.TodoTitle)
+		return c.service.Register(request.TodoTitle)
 	})
 }

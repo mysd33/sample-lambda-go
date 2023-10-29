@@ -11,8 +11,12 @@ import (
 
 // TodoService は、Bff業務のServiceインタフェースです。
 type BffService interface {
-	// Find は、指定したuserIdとtodoIdに合致するユーザ情報とTodoを照会します。
-	Find(userId string, todoId string) (*entity.User, *entity.Todo, error)
+	// FindTodo は、指定したuserIdとtodoIdに合致するユーザ情報とTodoを照会します。
+	FindTodo(userId string, todoId string) (*entity.User, *entity.Todo, error)
+	// RegisterUser は、リクエストデータで受け取ったユーザ情報を登録します。
+	RegisterUser(userName string) (*entity.User, error)
+	// RegisterTodo は、タイトルtodoTitleのTodoを登録します。
+	RegisterTodo(todoTitle string) (*entity.Todo, error)
 }
 
 // New は、BffServiceを作成します。
@@ -32,8 +36,20 @@ type bffServiceImpl struct {
 	todoRepository repository.TodoRepository
 }
 
-// Find implements BffService.
-func (bs *bffServiceImpl) Find(userId string, todoId string) (*entity.User, *entity.Todo, error) {
+// RegisterUser implements BffService.
+func (bs *bffServiceImpl) RegisterUser(userName string) (*entity.User, error) {
+	user := entity.User{Name: userName}
+	return bs.userRepository.PutUser(&user)
+}
+
+// RegisterTodo implements BffService.
+func (bs *bffServiceImpl) RegisterTodo(todoTitle string) (*entity.Todo, error) {
+	todo := entity.Todo{Title: todoTitle}
+	return bs.todoRepository.PutTodo(&todo)
+}
+
+// FindTodo implements BffService.
+func (bs *bffServiceImpl) FindTodo(userId string, todoId string) (*entity.User, *entity.Todo, error) {
 	bs.log.Debug("userId:%s,todoId:%s", userId, todoId)
 
 	user, err := bs.userRepository.GetUser(userId)

@@ -13,8 +13,8 @@ import (
 type TodoService interface {
 	// Find は、todoIdのTodoを照会します。
 	Find(todoId string) (*entity.Todo, error)
-	// Regist は、タイトルtodoTitleのTodoを登録します。
-	Regist(todoTitle string) (*entity.Todo, error)
+	// Register は、タイトルtodoTitleのTodoを登録します。
+	Register(todoTitle string) (*entity.Todo, error)
 }
 
 // New は、TodoServiceを作成します。
@@ -36,8 +36,8 @@ func (ts *todoServiceImpl) Find(todoId string) (*entity.Todo, error) {
 	return ts.repository.GetTodo(todoId)
 }
 
-func (ts *todoServiceImpl) Regist(todoTitle string) (*entity.Todo, error) {
-	ts.log.Info("TodoTitle=%s", todoTitle)
+func (ts *todoServiceImpl) Register(todoTitle string) (*entity.Todo, error) {
+	ts.log.Debug("TodoTitle=%s", todoTitle)
 	// TODO: メッセージIDを使ったログのメソッドの例に修正
 	// ts.log.Info(code.I_EX_0001, todoTitle)
 
@@ -46,7 +46,7 @@ func (ts *todoServiceImpl) Regist(todoTitle string) (*entity.Todo, error) {
 	//   return nil, errors.NewBusinessError(nil, code.W_EX_8001, "xxxx")
 	// }
 
-	todo := entity.Todo{}
-	todo.Title = todoTitle
+	todo := entity.Todo{Title: todoTitle}
+
 	return ts.repository.PutTodo(&todo)
 }

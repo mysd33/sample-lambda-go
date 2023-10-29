@@ -23,11 +23,15 @@ type Logger interface {
 }
 
 // NewLogger は、Loggerを作成します。
-func NewLogger() Logger {
+func NewLogger() (Logger, error) {
 	// TODO: ログレベルの設定
-	//z, _ := zap.NewProduction()
-	z, _ := zap.NewDevelopment()
-	return &zapLogger{log: z.Sugar(), messageSource: message.NewMessageSource()}
+	//config := zap.NewProductionConfig()
+	config := zap.NewDevelopmentConfig()
+	z, err := config.Build(zap.AddCallerSkip(1))
+	if err != nil {
+		return nil, err
+	}
+	return &zapLogger{log: z.Sugar(), messageSource: message.NewMessageSource()}, nil
 }
 
 // zapLoggerは、Zapを使ったLogger実装です。
@@ -44,6 +48,7 @@ func (z *zapLogger) Info(code string, args ...interface{}) {
 	message := z.messageSource.GetMessage(code, args)
 	if message != "" {
 		z.log.Infof(message)
+		return
 	}
 	z.log.Info(code, args)
 }
@@ -52,6 +57,7 @@ func (z *zapLogger) Warn(code string, args ...interface{}) {
 	message := z.messageSource.GetMessage(code, args)
 	if message != "" {
 		z.log.Warnf(message)
+		return
 	}
 	z.log.Warn(code, args)
 }
@@ -60,6 +66,7 @@ func (z *zapLogger) Error(code string, args ...interface{}) {
 	message := z.messageSource.GetMessage(code, args)
 	if message != "" {
 		z.log.Errorf(message)
+		return
 	}
 	z.log.Error(code, args)
 }
@@ -68,6 +75,7 @@ func (z *zapLogger) Fatal(code string, args ...interface{}) {
 	message := z.messageSource.GetMessage(code, args)
 	if message != "" {
 		z.log.Fatalf(message)
+		return
 	}
 	z.log.Fatal(code, args)
 }

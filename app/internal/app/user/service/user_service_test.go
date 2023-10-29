@@ -30,7 +30,7 @@ func (d *MockUserRepository) PutUser(user *entity.User) (*entity.User, error) {
 	return args.Get(0).(*entity.User), args.Error(1)
 }
 
-func TestRegist(t *testing.T) {
+func TestRegister(t *testing.T) {
 	//入力値
 	inputUserName := "fuga"
 	//期待値
@@ -46,7 +46,7 @@ func TestRegist(t *testing.T) {
 	var repository repository.UserRepository = mock
 	sut := service.New(log, cfg, repository)
 	//テスト対象メソッドの呼び出し
-	actual, _ := sut.Regist(inputUserName)
+	actual, _ := sut.Register(inputUserName)
 	println(actual)
 	//テスト対象メソッドのAssert
 	assert.Equal(t, expectedName, actual.Name)

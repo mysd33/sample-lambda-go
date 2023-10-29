@@ -22,26 +22,20 @@ var ginLambda *ginadapter.GinLambda
 
 // コードルドスタート時の初期化処理
 func init() {
-	log := logging.NewLogger()
+	log, err := logging.NewLogger()
+	if err != nil {
+		log.Fatal("初期化処理エラー:%s", err.Error())
+		panic(err.Error())
+	}
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal("初期化処理エラー:%s", err.Error())
 		panic(err.Error())
 	}
-	// TODO: 現状、両方REST API呼び出しにしてsam local start-api実行で失敗しinternal server errorになってしまう
-	// 以下のaws sam cliのバグを引いている可能性が高い
-	// https://github.com/aws/aws-sam-cli/issues/6033
 	// リポジトリの作成
 	httpClient := httpclient.NewHttpClient(log)
 	userRepository := repository.NewUserRepositoryForRestAPI(httpClient, log)
 	todoRepository := repository.NewTodoRepositoryForRestAPI(httpClient, log)
-	//userRepository := repository.NewUserRepositoryForRDB()
-	//todoRepository, err := repository.NewTodoRepositoryForDynamoDB(log)
-	//if err != nil {
-	//	log.Fatal("初期化処理エラー:%s", err.Error())
-	//	panic(err.Error())
-	//}
-
 	// サービスの作成
 	bffService := service.New(log, cfg, userRepository, todoRepository)
 	// コントローラの作成
@@ -54,7 +48,9 @@ func init() {
 	// ハンドラインタセプタ経由でコントローラのメソッドを呼び出し
 	v1 := r.Group("/bff-api/v1")
 	{
-		v1.GET("/todo", interceptor.Handle(bffController.Find))
+		v1.GET("/todo", interceptor.Handle(bffController.FindTodo))
+		v1.POST("/users", interceptor.Handle(bffController.RegisterUser))
+		v1.POST("/todo", interceptor.Handle(bffController.RegisterTodo))
 	}
 	ginLambda = ginadapter.New(r)
 }
