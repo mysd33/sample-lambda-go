@@ -9,6 +9,7 @@ import (
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/id"
 	"example.com/appbase/pkg/logging"
+	"example.com/appbase/pkg/message"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -35,7 +36,7 @@ func TestRegister(t *testing.T) {
 	inputUserName := "fuga"
 	//期待値
 	expectedName := "fuga"
-	log, _ := logging.NewLogger()
+	log, _ := logging.NewLogger(message.NewMessageSource())
 	cfg := &config.Config{Hoge: config.Hoge{Name: "hoge"}}
 
 	//Mockへの入力値と戻り値の設定

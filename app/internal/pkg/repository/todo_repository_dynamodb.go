@@ -15,12 +15,11 @@ import (
 )
 
 // NewTodoRepositoryForDynamoDB は、TodoRepositoryを作成します。
-func NewTodoRepositoryForDynamoDB(log logging.Logger) (TodoRepository, error) {
-	accessor, err := mydynamodb.NewDynamoDBAccessor(log)
-	if err != nil {
-		return nil, err
+func NewTodoRepositoryForDynamoDB(accessor mydynamodb.DynamoDBAccessor, log logging.Logger) TodoRepository {
+	return &todoRepositoryImplByDynamoDB{
+		accessor: accessor,
+		log:      log,
 	}
-	return &todoRepositoryImplByDynamoDB{accessor: accessor, log: log}, nil
 }
 
 // todoRepositoryImplByDynamoDB は、TodoRepositoryを実装する構造体です。

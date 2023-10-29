@@ -23,7 +23,7 @@ type Logger interface {
 }
 
 // NewLogger は、Loggerを作成します。
-func NewLogger() (Logger, error) {
+func NewLogger(messageSource message.MessageSource) (Logger, error) {
 	// TODO: ログレベルの設定
 	//config := zap.NewProductionConfig()
 	config := zap.NewDevelopmentConfig()
@@ -31,7 +31,7 @@ func NewLogger() (Logger, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &zapLogger{log: z.Sugar(), messageSource: message.NewMessageSource()}, nil
+	return &zapLogger{log: z.Sugar(), messageSource: messageSource}, nil
 }
 
 // zapLoggerは、Zapを使ったLogger実装です。

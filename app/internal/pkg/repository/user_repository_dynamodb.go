@@ -15,12 +15,11 @@ import (
 )
 
 // NewUserRepositoryForDynamoDB は、DynamoDB保存のためのUserRepository実装を作成します。
-func NewUserRepositoryForDynamoDB(log logging.Logger) (UserRepository, error) {
-	accessor, err := mydynamodb.NewDynamoDBAccessor(log)
-	if err != nil {
-		return nil, err
+func NewUserRepositoryForDynamoDB(accessor mydynamodb.DynamoDBAccessor, log logging.Logger) UserRepository {
+	return &UserRepositoryImplByDynamoDB{
+		accessor: accessor,
+		log:      log,
 	}
-	return &UserRepositoryImplByDynamoDB{accessor: accessor, log: log}, nil
 }
 
 // UserRepositoryImplByDynamoDB は、DynamoDB保存のためのUserRepository実装です。
