@@ -60,7 +60,6 @@ Globals:
         - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetTwoId
     Environment:
       Variables:
-        AWS_REGION: !Sub ${AWS::Region}
         # For DynamoDB
 #        USERS_TABLE_NAME: !Ref UsersTableName         
         TODO_TABLE_NAME: !Ref TodoTableName
@@ -356,7 +355,7 @@ Outputs:
     Value: !Ref TodoFunctionDeploymentGroup
   BffAPI:
     Description: "API Gateway endpoint URL for Prod environment"
-    Value: !Sub "https://${BffApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/bff-api/v1/todo"
+    Value: !Sub "https://${BffApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/bff-api/v1/"
   BffFunction:
     Description: "Bff Lambda Function ARN"
     Value: !GetAtt BffFunction.Arn
