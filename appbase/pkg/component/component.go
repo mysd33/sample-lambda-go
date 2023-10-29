@@ -1,4 +1,6 @@
-// component パッケージはフレームワークのコンポーネントのインスタンスを管理するパッケージです。
+/*
+component パッケージはフレームワークのコンポーネントのインスタンスを管理するパッケージです。
+*/
 package component
 
 import (
@@ -19,7 +21,6 @@ type ApplicationContext interface {
 	GetConfig() *config.Config
 	GetDynamoDBAccessor() dynamodb.DynamoDBAccessor
 	GetHttpClient() httpclient.HttpClient
-	// TODO: GetHandler
 	GetInterceptor() handler.HandlerInterceptor
 }
 
@@ -87,7 +88,7 @@ func createMessageSource() message.MessageSource {
 func createLogger(messageSource message.MessageSource) logging.Logger {
 	logger, err := logging.NewLogger(messageSource)
 	if err != nil {
-		// TODO: 初期化エラー
+		// 異常終了
 		log.Fatalf("初期化処理エラー:%s", err.Error())
 	}
 	return logger
@@ -96,7 +97,7 @@ func createLogger(messageSource message.MessageSource) logging.Logger {
 func createConfig() *config.Config {
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		// TODO: 初期化エラー
+		// 異常終了
 		log.Fatalf("初期化処理エラー:%s", err.Error())
 	}
 	return cfg
@@ -105,7 +106,7 @@ func createConfig() *config.Config {
 func createDynamoDBAccessor(logger logging.Logger) dynamodb.DynamoDBAccessor {
 	accessor, err := dynamodb.NewDynamoDBAccessor(logger)
 	if err != nil {
-		// TODO: 初期化エラー
+		// 異常終了
 		log.Fatalf("初期化処理エラー:%s", err.Error())
 	}
 	return accessor
