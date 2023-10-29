@@ -1,7 +1,4 @@
-/*
-interceptorパッケージは、Handlerの処理へ挟みこむInterceptor機能を提供するパッケージです
-*/
-package interceptor
+package handler
 
 import (
 	"errors"
@@ -20,7 +17,7 @@ type HandlerInterceptor struct {
 }
 
 // New は、HandlerInterceptor構造体を作成します。
-func New(log logging.Logger) HandlerInterceptor {
+func NewHandlerInterceptor(log logging.Logger) HandlerInterceptor {
 	return HandlerInterceptor{log: log}
 }
 

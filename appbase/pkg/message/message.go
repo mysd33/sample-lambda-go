@@ -1,4 +1,6 @@
-// message パッケージはメッセージを管理する機能を提供します。
+/*
+message パッケージはメッセージを管理する機能を提供します。
+*/
 package message
 
 import "fmt"

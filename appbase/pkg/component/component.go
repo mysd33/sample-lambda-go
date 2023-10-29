@@ -6,8 +6,8 @@ import (
 
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/dynamodb"
+	"example.com/appbase/pkg/handler"
 	"example.com/appbase/pkg/httpclient"
-	"example.com/appbase/pkg/interceptor"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
 )
@@ -20,7 +20,7 @@ type ApplicationContext interface {
 	GetDynamoDBAccessor() dynamodb.DynamoDBAccessor
 	GetHttpClient() httpclient.HttpClient
 	// TODO: GetHandler
-	GetInterceptor() interceptor.HandlerInterceptor
+	GetInterceptor() handler.HandlerInterceptor
 }
 
 // NewApplicationContext は、デフォルトのApplicationContextを作成します。
@@ -47,7 +47,7 @@ type defaultApplicationContext struct {
 	logger           logging.Logger
 	dynamoDBAccessor dynamodb.DynamoDBAccessor
 	httpClient       httpclient.HttpClient
-	interceptor      interceptor.HandlerInterceptor
+	interceptor      handler.HandlerInterceptor
 }
 
 // GetConfig implements ApplicationContext.
@@ -66,7 +66,7 @@ func (ac *defaultApplicationContext) GetHttpClient() httpclient.HttpClient {
 }
 
 // GetInterceptor implements ApplicationContext.
-func (ac *defaultApplicationContext) GetInterceptor() interceptor.HandlerInterceptor {
+func (ac *defaultApplicationContext) GetInterceptor() handler.HandlerInterceptor {
 	return ac.interceptor
 }
 
@@ -115,6 +115,6 @@ func createHttpClient(logger logging.Logger) httpclient.HttpClient {
 	return httpclient.NewHttpClient(logger)
 }
 
-func createHanderInterceptor(logger logging.Logger) interceptor.HandlerInterceptor {
-	return interceptor.New(logger)
+func createHanderInterceptor(logger logging.Logger) handler.HandlerInterceptor {
+	return handler.NewHandlerInterceptor(logger)
 }

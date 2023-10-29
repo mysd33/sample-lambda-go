@@ -1,3 +1,6 @@
+/*
+httpclient パッケージは、REST APIの呼び出し等のためのHTTPクライアントの機能を提供するパッケージです。
+*/
 package httpclient
 
 import (
@@ -11,6 +14,7 @@ import (
 	"example.com/appbase/pkg/logging"
 )
 
+// HttpClient は、HTTPクライアントのインタフェースです。
 type HttpClient interface {
 	Get(url string, header http.Header, params map[string]string) (*ResponseData, error)
 	Post(url string, header http.Header, bbody []byte) (*ResponseData, error)
@@ -31,17 +35,18 @@ type ResponseData struct {
 	ResponseHeader http.Header
 }
 
-type httpClientImpl struct {
+// defaultHttpClientは、HttpClientインタフェースを実装する構造体です。
+type defaultHttpClient struct {
 	log logging.Logger
 	// TODO:
 }
 
 func NewHttpClient(log logging.Logger) HttpClient {
-	return &httpClientImpl{log: log}
+	return &defaultHttpClient{log: log}
 }
 
 // Get implements HttpClient.
-func (c *httpClientImpl) Get(url string, header http.Header, params map[string]string) (*ResponseData, error) {
+func (c *defaultHttpClient) Get(url string, header http.Header, params map[string]string) (*ResponseData, error) {
 	// TODO: headerの設定
 	// TODO: リトライの実装
 	// TODO: X-Ray対応
@@ -70,7 +75,7 @@ func (c *httpClientImpl) Get(url string, header http.Header, params map[string]s
 }
 
 // Post implements HttpClient.
-func (*httpClientImpl) Post(url string, header http.Header, bbody []byte) (*ResponseData, error) {
+func (c *defaultHttpClient) Post(url string, header http.Header, bbody []byte) (*ResponseData, error) {
 	// TODO: headerの設定
 	// TODO: リトライの実装
 	// TODO: X-Ray対応
