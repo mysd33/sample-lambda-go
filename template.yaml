@@ -73,9 +73,7 @@ Globals:
           Fn::ImportValue: !Sub ${StackPrefix}-RDSClusterEndpointPort
         RDB_DB_NAME:
           Fn::ImportValue: !Sub ${StackPrefix}-RDSDBName
-        RDB_SSL_MODE: "require"            
-        TODO_API_BASE_URL: !Sub https://${TodoApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
-        USERS_API_BASE_URL: !Sub https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}        
+        RDB_SSL_MODE: "require"    
         DYNAMODB_LOCAL_ENDPOINT: ""        
     # Deployment Configurtion           
     AutoPublishAlias: live            
@@ -151,7 +149,7 @@ Resources:
           Properties:            
             Path: /todo-api/{proxy+}          
             Method: ANY
-            RestApiId: !Ref TodoApi
+            RestApiId: !Ref TodoApi   
 # Bff Function
   BffFunction:
     Type: AWS::Serverless::Function
@@ -159,19 +157,18 @@ Resources:
       BuildMethod: go1.x    
     Properties:
       FunctionName: !Ref BffFunctionName
-      CodeUri: app/cmd/bff/
-      # TODO: 削除
-      Policies: 
-        - DynamoDBCrudPolicy:
-            TableName:
-              !Ref TodoTableName                        
+      CodeUri: app/cmd/bff/                      
       Events:
         Event:
           Type: Api
           Properties:            
             Path: /bff-api/{proxy+}          
             Method: ANY
-            RestApiId: !Ref BffApi   
+            RestApiId: !Ref BffApi
+      Environment:
+        Variables:            
+          TODO_API_BASE_URL: !Sub https://${TodoApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
+          USERS_API_BASE_URL: !Sub https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}            
 # API Gateway Private REST API
 # HelloWorld 
   HelloApi:
