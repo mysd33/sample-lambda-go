@@ -9,6 +9,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/aws/aws-xray-sdk-go/xray"
+	"golang.org/x/net/context/ctxhttp"
+
+	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/code"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
@@ -49,12 +53,13 @@ func NewHttpClient(log logging.Logger) HttpClient {
 func (c *defaultHttpClient) Get(url string, header http.Header, params map[string]string) (*ResponseData, error) {
 	// TODO: headerの設定
 	// TODO: リトライの実装
-	// TODO: X-Ray対応
 
-	// Getメソッドの実行
-	response, err := http.Get(url)
+	// Getメソッドの実行（X-Ray対応）
+	response, err := ctxhttp.Get(apcontext.Context, xray.Client(nil), url)
+
 	// TODO: エラーコード
 	if err != nil {
+
 		return nil, errors.NewSystemError(err, code.E_FW_9002)
 	}
 	// TODO: 200以外のレスポンスエラー時の対応
@@ -78,11 +83,11 @@ func (c *defaultHttpClient) Get(url string, header http.Header, params map[strin
 func (c *defaultHttpClient) Post(url string, header http.Header, bbody []byte) (*ResponseData, error) {
 	// TODO: headerの設定
 	// TODO: リトライの実装
-	// TODO: X-Ray対応
 
-	// Postメソッドの実行
+	// Postメソッドの実行（X-Ray対応）
 	// TODO: ContentType固定でよいか？
-	response, err := http.Post(url, "application/json", bytes.NewReader(bbody))
+	response, err := ctxhttp.Post(apcontext.Context, xray.Client(nil), url, "application/json", bytes.NewReader(bbody))
+
 	// TODO: エラーコード
 	if err != nil {
 		return nil, errors.NewSystemError(err, code.E_FW_9002)

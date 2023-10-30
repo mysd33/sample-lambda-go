@@ -22,7 +22,7 @@
 
 ![X-Rayの可視化の例](image/xray-aurora.png)
 ![X-Rayの可視化の例2](image/xray-dynamodb.png)
-
+![X-Rayの可視化の例3](image/xray-bff.png)
 
 * RDS Proxyの利用時の注意（ピン留め）
     * SQLを記載するにあたり、従来はプリペアドステートメントを使用するのが一般的であるが、RDS Proxyを使用する場合には、[ピン留め(Pinning)](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-managing.html#rds-proxy-pinning)という現象が発生してしまう。その間、コネクションが切断されるまで占有されつづけてしまい再利用できず、大量のリクエストを同時に処理する場合にはコネクション枯渇し性能面に影響が出る恐れがある。
@@ -230,7 +230,7 @@ curl -X POST -H "Content-Type: application/json" -d '{ "user_name" : "Taro"}' ht
 {"user_id":"416ad789-6fde-11ee-a3ec-0242ac110004","user_name":"Taro"}
 
 # Todoサービスを利用し、やることを登録
-curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "ミルクを買う"}' https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/users
+curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "ミルクを買う"}' https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo
 
 # 登録結果を返却
 {"todo_id":"60d48f8f-6fde-11ee-a60c-0242ac110005","todo_title":"ミルクを買う"}
