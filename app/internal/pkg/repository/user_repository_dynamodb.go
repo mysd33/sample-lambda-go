@@ -2,8 +2,8 @@
 package repository
 
 import (
-	"app/internal/pkg/code"
 	"app/internal/pkg/entity"
+	"app/internal/pkg/message"
 
 	mydynamodb "example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/errors"
@@ -36,8 +36,8 @@ func (ur *UserRepositoryImplByDynamoDB) GetUser(userId string) (*entity.User, er
 	user := entity.User{ID: userId}
 	key, err := user.GetKey()
 	if err != nil {
-		// return nil, errors.Wrapf(err, "fail to get key")
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		// return nil, errors.Wrapf(err, "failed to get key")
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	result, err := ur.accessor.GetItemSdk(&dynamodb.GetItemInput{
 		TableName: aws.String(userTable),
@@ -45,7 +45,7 @@ func (ur *UserRepositoryImplByDynamoDB) GetUser(userId string) (*entity.User, er
 	})
 	if err != nil {
 		// return nil, errors.Wrapf(err, "failed to get item")
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	if result.Item == nil {
 		return nil, nil
@@ -54,7 +54,7 @@ func (ur *UserRepositoryImplByDynamoDB) GetUser(userId string) (*entity.User, er
 	err = attributevalue.UnmarshalMap(result.Item, &user)
 	if err != nil {
 		// return nil, errors.Wrapf(err, "failed to marshal item")
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	return &user, nil
 }
@@ -67,7 +67,7 @@ func (ur *UserRepositoryImplByDynamoDB) PutUser(user *entity.User) (*entity.User
 	av, err := attributevalue.MarshalMap(user)
 	if err != nil {
 		// return nil, errors.Wrapf(err, "failed to marshal item")
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	input := &dynamodb.PutItemInput{
 		Item:      av,
@@ -77,7 +77,7 @@ func (ur *UserRepositoryImplByDynamoDB) PutUser(user *entity.User) (*entity.User
 	_, err = ur.accessor.PutItemSdk(input)
 	if err != nil {
 		// return nil, errors.Wrapf(err, "failed to put item")
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	return user, nil
 }

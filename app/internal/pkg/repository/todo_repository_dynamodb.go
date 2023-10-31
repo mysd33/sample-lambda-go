@@ -2,8 +2,8 @@
 package repository
 
 import (
-	"app/internal/pkg/code"
 	"app/internal/pkg/entity"
+	"app/internal/pkg/message"
 
 	mydynamodb "example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/errors"
@@ -37,7 +37,7 @@ func (tr *todoRepositoryImplByDynamoDB) GetTodo(todoId string) (*entity.Todo, er
 	key, err := todo.GetKey()
 	if err != nil {
 		//return nil, errors.Wrapf(err, "fail to get key")
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	result, err := tr.accessor.GetItemSdk(&dynamodb.GetItemInput{
 		TableName: aws.String(todoTable),
@@ -45,12 +45,12 @@ func (tr *todoRepositoryImplByDynamoDB) GetTodo(todoId string) (*entity.Todo, er
 	})
 	if err != nil {
 		//return nil, errors.Wrapf(err, "failed to get item")
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	err = attributevalue.UnmarshalMap(result.Item, &todo)
 	if err != nil {
 		//return nil, errors.Wrapf(err, "failed to marshal item")
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	return &todo, nil
 }
@@ -67,7 +67,7 @@ func (tr *todoRepositoryImplByDynamoDB) PutTodo(todo *entity.Todo) (*entity.Todo
 	av, err := attributevalue.MarshalMap(todo)
 	if err != nil {
 		// return nil, errors.Wrapf(err, "failed to marshal item")
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	input := &dynamodb.PutItemInput{
 		Item:      av,
@@ -77,7 +77,7 @@ func (tr *todoRepositoryImplByDynamoDB) PutTodo(todo *entity.Todo) (*entity.Todo
 	_, err = tr.accessor.PutItemSdk(input)
 	if err != nil {
 		// return nil, errors.Wrapf(err, "failed to put item")
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	return todo, nil
 

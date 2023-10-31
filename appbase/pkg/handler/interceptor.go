@@ -8,6 +8,7 @@ import (
 	"example.com/appbase/pkg/api"
 	myerrors "example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
+	"example.com/appbase/pkg/message"
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,9 +36,7 @@ func (i HandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.HandlerFun
 		fv := reflect.ValueOf(controllerFunc)
 		funcName := runtime.FuncForPC(fv.Pointer()).Name()
 
-		// TODO: ログの出力形式の修正
-		// i.log.Info(code.I_FW_0001, funcName)
-		i.log.Info("Controller開始: %s", funcName)
+		i.log.Info(message.I_FW_0001, funcName)
 
 		// Controllerの実行
 		result, err := controllerFunc(ctx)
@@ -53,9 +52,7 @@ func (i HandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.HandlerFun
 				i.log.Fatal("予期せぬエラー: %s", err.Error())
 			}
 		} else {
-			// TODO: ログの出力形式の修正
-			// i.log.Info(code.I_FW_0002, funcName)
-			i.log.Info("Controller正常終了: %s", funcName)
+			i.log.Info(message.I_FW_0002, funcName)
 		}
 		api.ReturnResponseBody(ctx, result, err)
 	}

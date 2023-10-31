@@ -1,9 +1,10 @@
-// code パッケージは、メッセージIDのコードを管理します
-package code
+// messages パッケージは、メッセージIDのコードを管理します
+package message
 
 const (
 	// 情報メッセージID
 	I_EX_0001 = "i.ex.0001"
+
 	// 入力エラーメッセージID（エラーコード）
 	W_EX_5001 = "w.ex.5001"
 	// 業務エラーメッセージID（エラーコード）

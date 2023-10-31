@@ -1,5 +1,5 @@
-// code パッケージは、メッセージIDのコードを管理します
-package code
+// message パッケージは、メッセージIDのコードを管理します
+package message
 
 const (
 	I_FW_0001 = "i.fw.0001"

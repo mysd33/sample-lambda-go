@@ -13,7 +13,8 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 
 	"example.com/appbase/pkg/apcontext"
-	"example.com/appbase/pkg/code"
+	"example.com/appbase/pkg/message"
+
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 )
@@ -60,7 +61,7 @@ func (c *defaultHttpClient) Get(url string, header http.Header, params map[strin
 	// TODO: エラーコード
 	if err != nil {
 
-		return nil, errors.NewSystemError(err, code.E_FW_9002)
+		return nil, errors.NewSystemError(err, message.E_FW_9002)
 	}
 	// TODO: 200以外のレスポンスエラー時の対応
 
@@ -68,7 +69,7 @@ func (c *defaultHttpClient) Get(url string, header http.Header, params map[strin
 	data, err := io.ReadAll(response.Body)
 	// TODO: エラーコード
 	if err != nil {
-		return nil, errors.NewSystemError(err, code.E_FW_9002)
+		return nil, errors.NewSystemError(err, message.E_FW_9002)
 	}
 	return &ResponseData{
 		StatusCode:     response.StatusCode,
@@ -90,7 +91,7 @@ func (c *defaultHttpClient) Post(url string, header http.Header, bbody []byte) (
 
 	// TODO: エラーコード
 	if err != nil {
-		return nil, errors.NewSystemError(err, code.E_FW_9002)
+		return nil, errors.NewSystemError(err, message.E_FW_9002)
 	}
 	// TODO: 200以外のレスポンスエラー時の対応
 
@@ -98,7 +99,7 @@ func (c *defaultHttpClient) Post(url string, header http.Header, bbody []byte) (
 	data, err := io.ReadAll(response.Body)
 	// TODO: エラーコード
 	if err != nil {
-		return nil, errors.NewSystemError(err, code.E_FW_9002)
+		return nil, errors.NewSystemError(err, message.E_FW_9002)
 	}
 
 	return &ResponseData{

@@ -3,10 +3,12 @@ module example.com/appbase
 go 1.20
 
 require (
+	github.com/aws/aws-lambda-go v1.41.0
 	github.com/aws/aws-sdk-go v1.44.114
 	github.com/aws/aws-sdk-go-v2/config v1.19.0
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.22.2
 	github.com/aws/aws-xray-sdk-go v1.8.1
+	github.com/awslabs/aws-lambda-go-api-proxy v0.16.0
 	github.com/cockroachdb/errors v1.11.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/google/uuid v1.3.0
@@ -15,6 +17,9 @@ require (
 	github.com/spf13/viper v1.15.0
 	github.com/teris-io/shortid v0.0.0-20220617161101-71ec9f2aa569
 	go.uber.org/zap v1.24.0
+	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
+	golang.org/x/net v0.17.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -74,12 +79,10 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	google.golang.org/genproto v0.0.0-20230227214838-9b19f0bdc514 // indirect
 	google.golang.org/grpc v1.53.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

@@ -56,11 +56,11 @@ func (bs *bffServiceImpl) FindTodo(userId string, todoId string) (*entity.User, 
 	if err != nil {
 		return nil, nil, err
 	}
-	bs.log.Debug("user:%s", user)
+	bs.log.Debug("user:%+v", user)
 	todo, err := bs.todoRepository.GetTodo(todoId)
 	if err != nil {
 		return nil, nil, err
 	}
-	bs.log.Debug("todo:%s", todo)
+	bs.log.Debug("todo:%+v", todo)
 	return user, todo, nil
 }

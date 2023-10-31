@@ -12,7 +12,7 @@ import (
 type Logger interface {
 	// Debugは、メッセージのテンプレートtemplate, 置き換え文字列argsに対してfmt.Sprintfしたメッセージでデバッグレベルのログを出力します。
 	Debug(template string, args ...interface{})
-	// Infoは、メッセージID（code）、置き換え文字列argsに対応するメッセージで、情報レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
+	// Infoは、メッセージID（messages）、置き換え文字列argsに対応するメッセージで、情報レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	Info(code string, args ...interface{})
 	// Warnは、メッセージID（エラーコードcode）、置き換え文字列argsに対応するメッセージで警告レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	Warn(code string, args ...interface{})
@@ -45,7 +45,7 @@ func (z *zapLogger) Debug(template string, args ...interface{}) {
 }
 
 func (z *zapLogger) Info(code string, args ...interface{}) {
-	message := z.messageSource.GetMessage(code, args)
+	message := z.messageSource.GetMessage(code, args...)
 	if message != "" {
 		z.log.Infof(message)
 		return
@@ -54,7 +54,7 @@ func (z *zapLogger) Info(code string, args ...interface{}) {
 }
 
 func (z *zapLogger) Warn(code string, args ...interface{}) {
-	message := z.messageSource.GetMessage(code, args)
+	message := z.messageSource.GetMessage(code, args...)
 	if message != "" {
 		z.log.Warnf(message)
 		return
@@ -63,7 +63,7 @@ func (z *zapLogger) Warn(code string, args ...interface{}) {
 }
 
 func (z *zapLogger) Error(code string, args ...interface{}) {
-	message := z.messageSource.GetMessage(code, args)
+	message := z.messageSource.GetMessage(code, args...)
 	if message != "" {
 		z.log.Errorf(message)
 		return
@@ -72,7 +72,7 @@ func (z *zapLogger) Error(code string, args ...interface{}) {
 }
 
 func (z *zapLogger) Fatal(code string, args ...interface{}) {
-	message := z.messageSource.GetMessage(code, args)
+	message := z.messageSource.GetMessage(code, args...)
 	if message != "" {
 		z.log.Fatalf(message)
 		return

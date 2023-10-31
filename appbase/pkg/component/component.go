@@ -34,7 +34,7 @@ func NewApplicationContext() ApplicationContext {
 	interceptor := createHanderInterceptor(logger)
 	return &defaultApplicationContext{
 		config:           config,
-		messageSource:    nil,
+		messageSource:    messageSource,
 		logger:           logger,
 		dynamoDBAccessor: dynamodbAccessor,
 		httpClient:       httpclient,
@@ -77,12 +77,17 @@ func (ac *defaultApplicationContext) GetLogger() logging.Logger {
 }
 
 // GetMessageSource implements ApplicationContext.
-func (*defaultApplicationContext) GetMessageSource() message.MessageSource {
-	panic("unimplemented")
+func (ac *defaultApplicationContext) GetMessageSource() message.MessageSource {
+	return ac.messageSource
 }
 
 func createMessageSource() message.MessageSource {
-	return message.NewMessageSource()
+	messageSource, err := message.NewMessageSource()
+	if err != nil {
+		// 異常終了
+		log.Fatalf("初期化処理エラー:%s", err.Error())
+	}
+	return messageSource
 }
 
 func createLogger(messageSource message.MessageSource) logging.Logger {

@@ -3,6 +3,7 @@ package main
 import (
 	"app/internal/app/user/controller"
 	"app/internal/app/user/service"
+	"app/internal/pkg/message"
 	"app/internal/pkg/repository"
 
 	"example.com/appbase/pkg/component"
@@ -12,6 +13,8 @@ import (
 
 // 業務の初期化処理
 func initBiz(ac component.ApplicationContext) *ginadapter.GinLambda {
+	// メッセージの設定
+	ac.GetMessageSource().Add(message.Messages_yaml)
 	// リポジトリの作成（DynamoDBの場合）
 	//userRepository := repository.NewUserRepositoryForDynamoDB(ac)
 	// リポジトリの作成（RDBの場合）

@@ -2,8 +2,8 @@
 package repository
 
 import (
-	"app/internal/pkg/code"
 	"app/internal/pkg/entity"
+	"app/internal/pkg/message"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -31,16 +31,16 @@ func (ur *userRepositoryImplByRestAPI) GetUser(userId string) (*entity.User, err
 	// REST APIの呼び出し
 	response, err := ur.httpClient.Get(url, nil, nil)
 	if err != nil {
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	// レスポンスデータをアンマーシャル
 	var user entity.User
 	if err = json.Unmarshal(response.Body, &user); err != nil {
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	if response.StatusCode != 200 {
 		// TODO: 200以外の処理
-		return nil, errors.NewBusinessError(code.W_EX_8001, "xxxx")
+		return nil, errors.NewBusinessError(message.W_EX_8001, "xxxx")
 	}
 	return &user, nil
 }
@@ -52,21 +52,21 @@ func (ur *userRepositoryImplByRestAPI) PutUser(user *entity.User) (*entity.User,
 	// リクエストデータをアンマーシャル
 	data, err := json.MarshalIndent(user, "", "    ")
 	if err != nil {
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	// REST APIの呼び出し
 	response, err := ur.httpClient.Post(url, nil, data)
 	if err != nil {
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	if response.StatusCode != 200 {
 		// TODO: 200以外の処理
-		return nil, errors.NewBusinessError(code.W_EX_8001, "xxxx")
+		return nil, errors.NewBusinessError(message.W_EX_8001, "xxxx")
 	}
 	// レスポンスデータをアンマーシャル
 	var newUser entity.User
 	if err = json.Unmarshal(response.Body, &newUser); err != nil {
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	return &newUser, nil
 }

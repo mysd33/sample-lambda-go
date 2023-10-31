@@ -3,15 +3,19 @@ package main
 import (
 	"app/internal/app/todo/controller"
 	"app/internal/app/todo/service"
+	"app/internal/pkg/message"
 	"app/internal/pkg/repository"
 
 	"example.com/appbase/pkg/component"
+
 	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
 	"github.com/gin-gonic/gin"
 )
 
 // 業務の初期化処理
 func initBiz(ac component.ApplicationContext) *ginadapter.GinLambda {
+	// メッセージの設定
+	ac.GetMessageSource().Add(message.Messages_yaml)
 	// リポジトリの作成
 	todoRepository := repository.NewTodoRepositoryForDynamoDB(ac.GetDynamoDBAccessor(), ac.GetLogger())
 	// サービスの作成

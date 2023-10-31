@@ -2,8 +2,8 @@
 package repository
 
 import (
-	"app/internal/pkg/code"
 	"app/internal/pkg/entity"
+	"app/internal/pkg/message"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -31,12 +31,12 @@ func (tr *todoRepositoryImplByRestAPI) GetTodo(todoId string) (*entity.Todo, err
 
 	response, err := tr.httpClient.Get(url, nil, nil)
 	if err != nil {
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 
 	var todo entity.Todo
 	if err = json.Unmarshal(response.Body, &todo); err != nil {
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	return &todo, nil
 }
@@ -48,21 +48,21 @@ func (tr *todoRepositoryImplByRestAPI) PutTodo(todo *entity.Todo) (*entity.Todo,
 	// リクエストデータをアンマーシャル
 	data, err := json.MarshalIndent(todo, "", "    ")
 	if err != nil {
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	// REST APIの呼び出し
 	response, err := tr.httpClient.Post(url, nil, data)
 	if err != nil {
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	if response.StatusCode != 200 {
 		// TODO: 200以外の処理
-		return nil, errors.NewBusinessError(code.W_EX_8001, "xxxx")
+		return nil, errors.NewBusinessError(message.W_EX_8001, "xxxx")
 	}
 	// レスポンスデータをアンマーシャル
 	var newTodo entity.Todo
 	if err = json.Unmarshal(response.Body, &newTodo); err != nil {
-		return nil, errors.NewSystemError(err, code.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	return &newTodo, nil
 }
