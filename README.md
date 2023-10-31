@@ -388,6 +388,8 @@ sam local start-api -d 8099 --debugger-path=$GOPATH/bin/linux_amd64 --debug-args
 
 - VSCodeでブレイクポイントを設定、「実行とデバッグ」の▷ボタンを押すと、ブレイクポイントで止まる。
 
+![SAM Localのデバッグ画面](image/sam-local-debug.png)
+
 ## godocの表示
 * godocをインストール
 ```sh
