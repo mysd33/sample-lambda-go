@@ -339,6 +339,55 @@ curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "Buy Milk"
 curl http://127.0.0.1:3000/bff-api/v1/todo?user_id=（ユーザID）\&todo_id=(TODO ID)
 ```
 
+## sam localでのデバッグ実行
+
+> [!WARNING]  
+> [aws-sam-cliのissue](https://github.com/aws/aws-sam-cli/issues/3718)によると、当該サンプルAPが使用する「provided.al2」（カスタムランタイム）でのsam localのデバッグ実行は現状サポートされていないとのこと。  
+> サポートされた時を想定して、ここでは「go1.x」ランタイムの場合に実際に試した手順を参考に記載する。
+
+- [delve](https://github.com/go-delve/delve)といったサードパティのデバッガを使用することで、VSCodeでの sam localのリモートデバッグ実行可能である。
+    - [参考サイト](https://simple-minds-think-alike.moritamorie.com/entry/golang-lambda-vscode-debug)をもとにした手順で実施可能
+
+- delveのインストール
+    - Lambda関数及びdelveが実行されるのはLambdaコンテナ内(Amazon Linux)なので、
+    GOOSに`linux`を指定し、インストール
+
+```sh
+# Windows
+set GOARCH=amd64
+set GOOS=linux
+go install github.com/go-delve/delve/cmd/dlv@latest
+
+# Linux
+GOARCH=amd64 GOOS=linux go install github.com/go-delve/delve/cmd/dlv@latest
+```
+
+- デバッガパス、デバッグポート(この例では8099番)を指定して、sam local start-apiを実行
+    - [AWSのデベロッパーガイド](https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/serverless-sam-cli-using-debugging.html#serverless-sam-cli-running-locally)を参考
+```sh
+sam local start-api -d 8099 --debugger-path=$GOPATH/bin/linux_amd64 --debug-args="-delveAPI=2" --env-vars local-env.json
+```
+
+- VSCodeからアタッチするため、`.vscode/launch.json`を作成
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "delve",
+            "type": "go",
+            "request": "attach",
+            "mode": "remote",
+            "port": 8099,
+            "host": "127.0.0.1"
+        }
+    ]
+}
+```
+- curlコマンドで、確認対象のAPIを呼び出すと、処理が待ち状態で止まった状態になる
+
+- VSCodeでブレイクポイントを設定、「実行とデバッグ」の▷ボタンを押すと、ブレイクポイントで止まる。
+
 ## godocの表示
 * godocをインストール
 ```sh
