@@ -21,9 +21,9 @@ func ReturnResponseBody(ctx *gin.Context, result interface{}, err error) {
 	if err != nil {
 		// TODO: 各エラー内容に応じた応答メッセージの成形
 		if errors.As(err, &validationError) {
-			ctx.JSON(http.StatusBadRequest, errorResponseBody("validationError", validationError.Cause.Error()))
+			ctx.JSON(http.StatusBadRequest, errorResponseBody("validationError", validationError.UnWrap().Error()))
 		} else if errors.As(err, &businessError) {
-			ctx.JSON(http.StatusBadRequest, errorResponseBody(businessError.ErrorCode, businessError.Cause.Error()))
+			ctx.JSON(http.StatusBadRequest, errorResponseBody(businessError.ErrorCode, businessError.UnWrap().Error()))
 		} else if errors.As(err, &systemError) {
 			ctx.JSON(http.StatusInternalServerError, errorResponseBody(systemError.ErrorCode, "システムエラーが発生しました"))
 		} else {
