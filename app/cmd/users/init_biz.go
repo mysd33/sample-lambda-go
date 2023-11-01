@@ -7,12 +7,11 @@ import (
 	"app/internal/pkg/repository"
 
 	"example.com/appbase/pkg/component"
-	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
 	"github.com/gin-gonic/gin"
 )
 
 // 業務の初期化処理
-func initBiz(ac component.ApplicationContext) *ginadapter.GinLambda {
+func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	// メッセージの設定
 	ac.GetMessageSource().Add(message.Messages_yaml)
 	// リポジトリの作成（DynamoDBの場合）
@@ -27,12 +26,10 @@ func initBiz(ac component.ApplicationContext) *ginadapter.GinLambda {
 	interceptor := ac.GetInterceptor()
 
 	// ginによるURLマッピング定義
-	r := gin.Default()
 	// ハンドラインタセプタ経由でコントローラのメソッドを呼び出し
 	v1 := r.Group("/users-api/v1")
 	{
 		v1.GET("/users/:user_id", interceptor.Handle(userController.Find))
 		v1.POST("/users", interceptor.Handle(userController.Register))
 	}
-	return ginadapter.New(r)
 }

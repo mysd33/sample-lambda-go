@@ -6,12 +6,11 @@ import (
 	"app/internal/pkg/repository"
 
 	"example.com/appbase/pkg/component"
-	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
 	"github.com/gin-gonic/gin"
 )
 
 // 業務の初期化処理
-func initBiz(ac component.ApplicationContext) *ginadapter.GinLambda {
+func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	// リポジトリの作成
 	userRepository := repository.NewUserRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger())
 	todoRepository := repository.NewTodoRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger())
@@ -23,7 +22,6 @@ func initBiz(ac component.ApplicationContext) *ginadapter.GinLambda {
 	interceptor := ac.GetInterceptor()
 
 	// ginによるURLマッピング
-	r := gin.Default()
 	// ハンドラインタセプタ経由でコントローラのメソッドを呼び出し
 	v1 := r.Group("/bff-api/v1")
 	{
@@ -31,5 +29,4 @@ func initBiz(ac component.ApplicationContext) *ginadapter.GinLambda {
 		v1.POST("/users", interceptor.Handle(bffController.RegisterUser))
 		v1.POST("/todo", interceptor.Handle(bffController.RegisterTodo))
 	}
-	return ginadapter.New(r)
 }
