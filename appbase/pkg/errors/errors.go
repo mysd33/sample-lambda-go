@@ -67,7 +67,7 @@ func NewBusinessErrorWithCause(cause error, errorCode string, args ...interface{
 
 // Error は、エラーを返却します。
 func (e *BusinessError) Error() string {
-	return fmt.Sprintf("業務エラー[%s]:%+v", e.errorCode, e.cause)
+	return fmt.Sprintf("業務エラー[%s]cause:%+v", e.errorCode, e.cause)
 }
 
 // UnWrap は、原因となるエラーにUnWrapします。
@@ -102,7 +102,7 @@ func NewSystemError(cause error, errorCode string, args ...interface{}) *SystemE
 
 // Error は、エラーを返却します。
 func (e *SystemError) Error() string {
-	return fmt.Sprintf("システムエラー[%s]:%+v", e.errorCode, e.cause)
+	return fmt.Sprintf("システムエラー[%s]cause:%+v", e.errorCode, e.cause)
 }
 
 // UnWrap は、原因となるエラーにUnWrapします。

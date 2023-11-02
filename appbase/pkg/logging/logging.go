@@ -79,8 +79,8 @@ func (z *zapLogger) WarnWithCodableError(err errors.CodableError) {
 	code := err.ErrorCode()
 	args := err.Args()
 	message := z.messageSource.GetMessage(code, args...)
+	// エラーのスタックトレース付きのWarnログ出力
 	if message != "" {
-		// エラースタックトレース付きのWarnログ出力
 		z.log.Warnf("%s:%+v", message, err)
 		return
 	}
@@ -102,8 +102,8 @@ func (z *zapLogger) ErrorWithCodableError(err errors.CodableError) {
 	code := err.ErrorCode()
 	args := err.Args()
 	message := z.messageSource.GetMessage(code, args...)
+	// エラーのスタックトレース付きのErrorログ出力
 	if message != "" {
-		// エラースタックトレース付きのErrorグ出力
 		z.log.Errorf("%s:%+v", message, err)
 		return
 	}
@@ -125,8 +125,8 @@ func (z *zapLogger) FatalWithCodableError(err errors.CodableError) {
 	code := err.ErrorCode()
 	args := err.Args()
 	message := z.messageSource.GetMessage(code, args...)
+	// エラーのスタックトレース付きのFatalログ出力
 	if message != "" {
-		// エラースタックトレース付きのFatalログ出力
 		z.log.Fatal("%s:%+v", message, err)
 		return
 	}
