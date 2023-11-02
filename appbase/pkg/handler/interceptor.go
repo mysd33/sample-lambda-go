@@ -14,12 +14,13 @@ import (
 
 // HandlerInterceptor は、Handlerのインタセプタの構造体です。
 type HandlerInterceptor struct {
-	log logging.Logger
+	log                  logging.Logger
+	apiResponseFormatter api.ApiResponseFormatter
 }
 
 // New は、HandlerInterceptor構造体を作成します。
-func NewHandlerInterceptor(log logging.Logger) HandlerInterceptor {
-	return HandlerInterceptor{log: log}
+func NewHandlerInterceptor(log logging.Logger, apiResponseFormatter api.ApiResponseFormatter) HandlerInterceptor {
+	return HandlerInterceptor{log: log, apiResponseFormatter: apiResponseFormatter}
 }
 
 // ControllerFunc Controlerで実行する関数です。
@@ -45,15 +46,15 @@ func (i HandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.HandlerFun
 			if errors.As(err, &validationError) {
 				i.log.Debug(validationError.Error())
 			} else if errors.As(err, &businessError) {
-				i.log.Warn(businessError.ErrorCode, businessError.Args)
+				i.log.WarnWithCodableError(businessError)
 			} else if errors.As(err, &systemError) {
-				i.log.Error(systemError.ErrorCode, systemError.Args)
+				i.log.ErrorWithCodableError(systemError)
 			} else {
-				i.log.Fatal("予期せぬエラー: %s", err.Error())
+				i.log.FatalWithCodableError(myerrors.NewSystemError(err, message.E_FW_9999))
 			}
 		} else {
 			i.log.Info(message.I_FW_0002, funcName)
 		}
-		api.ReturnResponseBody(ctx, result, err)
+		i.apiResponseFormatter.ReturnResponseBody(ctx, result, err)
 	}
 }

@@ -4,9 +4,12 @@ logging パッケージは、ログ出力に関する機能を提供するパッ
 package logging
 
 import (
+	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/message"
 	"go.uber.org/zap"
 )
+
+// TODO: 全般動作未確認、API検討中
 
 // Loggerは、ログ出力のインタフェースです
 type Logger interface {
@@ -16,10 +19,16 @@ type Logger interface {
 	Info(code string, args ...interface{})
 	// Warnは、メッセージID（エラーコードcode）、置き換え文字列argsに対応するメッセージで警告レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	Warn(code string, args ...interface{})
+	// WarnWithCodableErrorは、エラーが持つメッセージID（エラーコード）、置き換え文字列に対応するメッセージで警告レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
+	WarnWithCodableError(err errors.CodableError)
 	// Errorは、メッセージID（エラーコードcode）、置き換え文字列argsに対応するメッセージでエラーレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	Error(code string, args ...interface{})
+	// ErrorWithCodableErrorは、エラーが持つメッセージID（エラーコード）、置き換え文字列に対応するメッセージでエラーレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
+	ErrorWithCodableError(err errors.CodableError)
 	// Fatailは、メッセージID（エラーコードcode）、置き換え文字列argsに対応するメッセージで致命的なエラーレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	Fatal(code string, args ...interface{})
+	// FatalWithCodableErrorは、エラーが持つメッセージID（エラーコード）、置き換え文字列に対応するメッセージで致命的なレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
+	FatalWithCodableError(err errors.CodableError)
 }
 
 // NewLogger は、Loggerを作成します。
@@ -40,10 +49,12 @@ type zapLogger struct {
 	messageSource message.MessageSource
 }
 
+// Debug implements Logger.
 func (z *zapLogger) Debug(template string, args ...interface{}) {
 	z.log.Debugf(template, args...)
 }
 
+// Info implements Logger.
 func (z *zapLogger) Info(code string, args ...interface{}) {
 	message := z.messageSource.GetMessage(code, args...)
 	if message != "" {
@@ -53,6 +64,7 @@ func (z *zapLogger) Info(code string, args ...interface{}) {
 	z.log.Info(code, args)
 }
 
+// Warn implements Logger.
 func (z *zapLogger) Warn(code string, args ...interface{}) {
 	message := z.messageSource.GetMessage(code, args...)
 	if message != "" {
@@ -62,6 +74,20 @@ func (z *zapLogger) Warn(code string, args ...interface{}) {
 	z.log.Warn(code, args)
 }
 
+// WarnWithCodableError implements Logger.
+func (z *zapLogger) WarnWithCodableError(err errors.CodableError) {
+	code := err.ErrorCode()
+	args := err.Args()
+	message := z.messageSource.GetMessage(code, args...)
+	if message != "" {
+		// エラースタックトレース付きのWarnログ出力
+		z.log.Warnf("%s:%+v", message, err)
+		return
+	}
+	z.log.Warnf("%s:%v:%+v", code, args)
+}
+
+// Error implements Logger.
 func (z *zapLogger) Error(code string, args ...interface{}) {
 	message := z.messageSource.GetMessage(code, args...)
 	if message != "" {
@@ -71,6 +97,20 @@ func (z *zapLogger) Error(code string, args ...interface{}) {
 	z.log.Error(code, args)
 }
 
+// ErrorWithCodableError implements Logger.
+func (z *zapLogger) ErrorWithCodableError(err errors.CodableError) {
+	code := err.ErrorCode()
+	args := err.Args()
+	message := z.messageSource.GetMessage(code, args...)
+	if message != "" {
+		// エラースタックトレース付きのErrorグ出力
+		z.log.Errorf("%s:%+v", message, err)
+		return
+	}
+	z.log.Errorf("%s:%v:%+v", code, args)
+}
+
+// Fatal implements Logger.
 func (z *zapLogger) Fatal(code string, args ...interface{}) {
 	message := z.messageSource.GetMessage(code, args...)
 	if message != "" {
@@ -78,4 +118,17 @@ func (z *zapLogger) Fatal(code string, args ...interface{}) {
 		return
 	}
 	z.log.Fatal(code, args)
+}
+
+// FatalWithCodableError implements Logger.
+func (z *zapLogger) FatalWithCodableError(err errors.CodableError) {
+	code := err.ErrorCode()
+	args := err.Args()
+	message := z.messageSource.GetMessage(code, args...)
+	if message != "" {
+		// エラースタックトレース付きのFatalログ出力
+		z.log.Fatal("%s:%+v", message, err)
+		return
+	}
+	z.log.Fatalf("%s:%v:%+v", code, args)
 }

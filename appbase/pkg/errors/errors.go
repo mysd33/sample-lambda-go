@@ -9,7 +9,12 @@ import (
 	cerrors "github.com/cockroachdb/errors"
 )
 
-type any interface{}
+// CodableErrorは、エラーコード定義付きのエラーインタフェースです。
+type CodableError interface {
+	error
+	ErrorCode() string
+	Args() []interface{}
+}
 
 // ValidationError は、入力エラーの構造体です。
 type ValidationError struct {
@@ -17,14 +22,13 @@ type ValidationError struct {
 	cause error
 }
 
-// NewValidationError は、ValidationError構造体を作成します。
+// NewValidationError は、原因となるエラー（cause）をラップし、ValidationError構造体を作成します。
 func NewValidationError(cause error) *ValidationError {
-	return &ValidationError{
-		cause: cause,
-	}
+	return &ValidationError{cause: cerrors.WithStack(cause)}
 }
 
-func NewValidationErrorWithMessage(format string, args ...any) *ValidationError {
+// NewValidationErrorWithMessage は、メッセージをもとにBusinessError構造体を作成します。
+func NewValidationErrorWithMessage(format string, args ...interface{}) *ValidationError {
 	return &ValidationError{
 		cause: cerrors.Errorf(format, args),
 	}
@@ -44,24 +48,26 @@ func (e *ValidationError) UnWrap() error {
 // BusinessError 業務エラーの構造体です。
 type BusinessError struct {
 	cause     error
-	ErrorCode string
-	Args      []any
+	errorCode string
+	args      []interface{}
 }
 
 // NewBusinessError は、BusinessError構造体を作成します。
-func NewBusinessError(errorCode string, args ...any) *BusinessError {
-	return &BusinessError{ErrorCode: errorCode, Args: args}
+func NewBusinessError(errorCode string, args ...interface{}) *BusinessError {
+	return &BusinessError{errorCode: errorCode, args: args}
 }
 
-// NewBusinessError は、原因となるエラー（cause）でラップし、BusinessError構造体を作成します。
-func NewBusinessErrorWithCause(cause error, errorCode string, args ...any) *BusinessError {
+// NewBusinessError は、原因となるエラー（cause）をラップし、
+// メッセージIDにもなるエラーコード（errorCode）とメッセージの置換文字列(args）を渡し
+// BusinessError構造体を作成します。
+func NewBusinessErrorWithCause(cause error, errorCode string, args ...interface{}) *BusinessError {
 	// causeはスタックトレース付与
-	return &BusinessError{cause: cerrors.WithStack(cause), ErrorCode: errorCode, Args: args}
+	return &BusinessError{cause: cerrors.WithStack(cause), errorCode: errorCode, args: args}
 }
 
 // Error は、エラーを返却します。
 func (e *BusinessError) Error() string {
-	return fmt.Sprintf("業務エラー[%s]:%s", e.ErrorCode, e.cause.Error())
+	return fmt.Sprintf("業務エラー[%s]:%+v", e.errorCode, e.cause)
 }
 
 // UnWrap は、原因となるエラーにUnWrapします。
@@ -69,25 +75,47 @@ func (e *BusinessError) UnWrap() error {
 	return e.cause
 }
 
+// ErrorCode は、エラーコード（メッセージID）を返します。
+func (e *BusinessError) ErrorCode() string {
+	return e.errorCode
+}
+
+// Argsは、エラーメッセージの置換文字列(args）を返します
+func (e *BusinessError) Args() []interface{} {
+	return e.args
+}
+
 // SystemError は、システムエラーの構造体
 type SystemError struct {
 	cause     error
-	ErrorCode string
-	Args      []any
+	errorCode string
+	args      []interface{}
 }
 
-// NewSystemError は、SystemError構造体を作成します。
-func NewSystemError(cause error, errorCode string, args ...any) *SystemError {
+// NewSystemError は、原因となるエラー（cause）をラップし、
+// メッセージIDにもなるエラーコード（errorCode）とメッセージの置換文字列(args）を渡し
+// SystemError構造体を作成します。
+func NewSystemError(cause error, errorCode string, args ...interface{}) *SystemError {
 	// causeはスタックトレース付与
-	return &SystemError{cause: cerrors.WithStack(cause), ErrorCode: errorCode, Args: args}
+	return &SystemError{cause: cerrors.WithStack(cause), errorCode: errorCode, args: args}
 }
 
 // Error は、エラーを返却します。
 func (e *SystemError) Error() string {
-	return fmt.Sprintf("システムエラー[%s]:%s", e.ErrorCode, e.cause.Error())
+	return fmt.Sprintf("システムエラー[%s]:%+v", e.errorCode, e.cause)
 }
 
 // UnWrap は、原因となるエラーにUnWrapします。
 func (e *SystemError) UnWrap() error {
 	return e.cause
+}
+
+// ErrorCode は、エラーコード（メッセージID）を返します。
+func (e *SystemError) ErrorCode() string {
+	return e.errorCode
+}
+
+// Argsは、エラーメッセージの置換文字列(args）を返します
+func (e *SystemError) Args() []interface{} {
+	return e.args
 }

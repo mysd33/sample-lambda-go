@@ -6,6 +6,7 @@ package component
 import (
 	"log"
 
+	"example.com/appbase/pkg/api"
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/handler"
@@ -27,11 +28,12 @@ type ApplicationContext interface {
 // NewApplicationContext は、デフォルトのApplicationContextを作成します。
 func NewApplicationContext() ApplicationContext {
 	messageSource := createMessageSource()
+	apiResponseFormatter := createApiResponseFormatter(messageSource)
 	logger := createLogger(messageSource)
 	config := createConfig()
 	dynamodbAccessor := createDynamoDBAccessor(logger)
 	httpclient := createHttpClient(logger)
-	interceptor := createHanderInterceptor(logger)
+	interceptor := createHanderInterceptor(logger, apiResponseFormatter)
 	return &defaultApplicationContext{
 		config:           config,
 		messageSource:    messageSource,
@@ -90,6 +92,10 @@ func createMessageSource() message.MessageSource {
 	return messageSource
 }
 
+func createApiResponseFormatter(messageSource message.MessageSource) api.ApiResponseFormatter {
+	return api.NewApiResponseFormatter(messageSource)
+}
+
 func createLogger(messageSource message.MessageSource) logging.Logger {
 	logger, err := logging.NewLogger(messageSource)
 	if err != nil {
@@ -121,6 +127,6 @@ func createHttpClient(logger logging.Logger) httpclient.HttpClient {
 	return httpclient.NewHttpClient(logger)
 }
 
-func createHanderInterceptor(logger logging.Logger) handler.HandlerInterceptor {
-	return handler.NewHandlerInterceptor(logger)
+func createHanderInterceptor(logger logging.Logger, apiResponseFormatter api.ApiResponseFormatter) handler.HandlerInterceptor {
+	return handler.NewHandlerInterceptor(logger, apiResponseFormatter)
 }
