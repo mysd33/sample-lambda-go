@@ -35,11 +35,11 @@ func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context, resul
 		systemError     *myerrors.SystemError
 	)
 	if err != nil {
-		// TODO: 各エラー内容に応じた応答メッセージの成形
+		// 各エラー内容に応じた応答メッセージの成形
 		if errors.As(err, &validationError) {
 			ctx.JSON(http.StatusBadRequest, errorResponseBody("validationError", validationError.Error()))
 		} else if errors.As(err, &businessError) {
-			ctx.JSON(http.StatusBadRequest, errorResponseBody(businessError.ErrorCode(), businessError.Error()))
+			ctx.JSON(http.StatusBadRequest, errorResponseBody(businessError.ErrorCode(), f.messageSource.GetMessage(businessError.ErrorCode(), businessError.Args()...)))
 		} else if errors.As(err, &systemError) {
 			ctx.JSON(http.StatusInternalServerError, errorResponseBody(systemError.ErrorCode(), f.messageSource.GetMessage(message.E_FW_9001)))
 		} else {

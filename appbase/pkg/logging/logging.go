@@ -13,22 +13,20 @@ import (
 
 // Loggerは、ログ出力のインタフェースです
 type Logger interface {
-	// Debugは、メッセージのテンプレートtemplate, 置き換え文字列argsに対してfmt.Sprintfしたメッセージでデバッグレベルのログを出力します。
+	// Debug は、メッセージのテンプレートtemplate, 置き換え文字列argsに対してfmt.Sprintfしたメッセージでデバッグレベルのログを出力します。
 	Debug(template string, args ...interface{})
-	// Infoは、メッセージID（messages）、置き換え文字列argsに対応するメッセージで、情報レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
+	// Info は、メッセージID（messages）、置き換え文字列argsに対応するメッセージで、情報レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	Info(code string, args ...interface{})
-	// Warnは、メッセージID（エラーコードcode）、置き換え文字列argsに対応するメッセージで警告レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
+	// Warn は、メッセージID（エラーコードcode）、置き換え文字列argsに対応するメッセージで警告レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	Warn(code string, args ...interface{})
-	// WarnWithCodableErrorは、エラーが持つメッセージID（エラーコード）、置き換え文字列に対応するメッセージで警告レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
+	// WarnWithCodableError は、エラーが持つメッセージID（エラーコード）、置き換え文字列に対応するメッセージで警告レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	WarnWithCodableError(err errors.CodableError)
-	// Errorは、メッセージID（エラーコードcode）、置き換え文字列argsに対応するメッセージでエラーレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
+	// Error は、メッセージID（エラーコードcode）、置き換え文字列argsに対応するメッセージでエラーレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	Error(code string, args ...interface{})
-	// ErrorWithCodableErrorは、エラーが持つメッセージID（エラーコード）、置き換え文字列に対応するメッセージでエラーレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
+	// ErrorWithCodableError は、エラーが持つメッセージID（エラーコード）、置き換え文字列に対応するメッセージでエラーレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	ErrorWithCodableError(err errors.CodableError)
-	// Fatailは、メッセージID（エラーコードcode）、置き換え文字列argsに対応するメッセージで致命的なエラーレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
-	Fatal(code string, args ...interface{})
-	// FatalWithCodableErrorは、エラーが持つメッセージID（エラーコード）、置き換え文字列に対応するメッセージで致命的なレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
-	FatalWithCodableError(err errors.CodableError)
+	// 	ErrorWithUnexpectedError は、予期せぬエラーをログに出力します。
+	ErrorWithUnexpectedError(err error)
 }
 
 // NewLogger は、Loggerを作成します。
@@ -84,7 +82,7 @@ func (z *zapLogger) WarnWithCodableError(err errors.CodableError) {
 		z.log.Warnf("%s:%+v", message, err)
 		return
 	}
-	z.log.Warnf("%s:%v:%+v", code, args)
+	z.log.Warnf("%s:%v:%+v", code, args, err)
 }
 
 // Error implements Logger.
@@ -107,28 +105,11 @@ func (z *zapLogger) ErrorWithCodableError(err errors.CodableError) {
 		z.log.Errorf("%s:%+v", message, err)
 		return
 	}
-	z.log.Errorf("%s:%v:%+v", code, args)
+	z.log.Errorf("%s:%v:%+v", code, args, err)
 }
 
-// Fatal implements Logger.
-func (z *zapLogger) Fatal(code string, args ...interface{}) {
-	message := z.messageSource.GetMessage(code, args...)
-	if message != "" {
-		z.log.Fatalf(message)
-		return
-	}
-	z.log.Fatal(code, args)
-}
-
-// FatalWithCodableError implements Logger.
-func (z *zapLogger) FatalWithCodableError(err errors.CodableError) {
-	code := err.ErrorCode()
-	args := err.Args()
-	message := z.messageSource.GetMessage(code, args...)
-	// エラーのスタックトレース付きのFatalログ出力
-	if message != "" {
-		z.log.Fatal("%s:%+v", message, err)
-		return
-	}
-	z.log.Fatalf("%s:%v:%+v", code, args)
+// Error implements Logger.
+func (z *zapLogger) ErrorWithUnexpectedError(err error) {
+	message := z.messageSource.GetMessage(message.E_FW_9999)
+	z.log.Errorf("%s:%+v", message, err)
 }

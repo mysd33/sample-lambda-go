@@ -204,10 +204,9 @@ func Test_zapLogger_ErrorWithCodableError(t *testing.T) {
 	}
 }
 
-func Test_zapLogger_Fatal(t *testing.T) {
+func Test_zapLogger_ErrorWithUnexpectedError(t *testing.T) {
 	type args struct {
-		code string
-		args []interface{}
+		err error
 	}
 	tests := []struct {
 		name string
@@ -215,49 +214,14 @@ func Test_zapLogger_Fatal(t *testing.T) {
 		args args
 	}{
 		// テストケース
-		{name: "メッセージID取得できた場合",
+		{name: "エラーを受け取り出力する",
 			z:    sut(),
-			args: args{code: "logtest001", args: []interface{}{"aaaa"}},
-		},
-		{name: "メッセージID取得できた場合(置換文字列が多い)",
-			z:    sut(),
-			args: args{code: "logtest001", args: []interface{}{"aaaa", "bbbb"}},
-		},
-		{name: "メッセージID取得できない場合",
-			z:    sut(),
-			args: args{code: "xxxxx", args: []interface{}{"aaaa", "bbbb"}},
+			args: args{err: fmt.Errorf("予期せぬエラーA")},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.z.Fatal(tt.args.code, tt.args.args...)
-		})
-	}
-}
-
-func Test_zapLogger_FatalWithCodableError(t *testing.T) {
-	type args struct {
-		err errors.CodableError
-	}
-	tests := []struct {
-		name string
-		z    *zapLogger
-		args args
-	}{
-		// テストケース
-		{name: "ラップされたシステムエラーを受け取りメッセージID取得できた場合",
-			z:    sut(),
-			args: args{err: errors.NewSystemError(fmt.Errorf("原因のエラー"), "logtest001", "aaaa")},
-		},
-
-		{name: "ラップされたシステムエラーを受け取りメッセージID取得できない場合",
-			z:    sut(),
-			args: args{err: errors.NewSystemError(fmt.Errorf("原因のエラー"), "xxxxx", "aaaa")},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.z.FatalWithCodableError(tt.args.err)
+			tt.z.ErrorWithUnexpectedError(tt.args.err)
 		})
 	}
 }

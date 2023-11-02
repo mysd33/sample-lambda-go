@@ -50,7 +50,7 @@ func (i HandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.HandlerFun
 			} else if errors.As(err, &systemError) {
 				i.log.ErrorWithCodableError(systemError)
 			} else {
-				i.log.FatalWithCodableError(myerrors.NewSystemError(err, message.E_FW_9999))
+				i.log.ErrorWithUnexpectedError(err)
 			}
 		} else {
 			i.log.Info(message.I_FW_0002, funcName)
