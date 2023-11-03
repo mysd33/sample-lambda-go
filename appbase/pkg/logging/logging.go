@@ -4,12 +4,16 @@ logging パッケージは、ログ出力に関する機能を提供するパッ
 package logging
 
 import (
+	"os"
+
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/message"
 	"go.uber.org/zap"
 )
 
-// TODO: 全般動作未確認、API検討中
+const (
+	PROFILE_PRODUCTION = "production"
+)
 
 // Loggerは、ログ出力のインタフェースです
 type Logger interface {
@@ -31,9 +35,14 @@ type Logger interface {
 
 // NewLogger は、Loggerを作成します。
 func NewLogger(messageSource message.MessageSource) (Logger, error) {
-	// TODO: ログレベルの設定
-	//config := zap.NewProductionConfig()
-	config := zap.NewDevelopmentConfig()
+	profile := os.Getenv("LOG_PROFILE")
+	var config zap.Config
+	// プロファイルの切り替え
+	if profile == PROFILE_PRODUCTION {
+		config = zap.NewProductionConfig()
+	} else {
+		config = zap.NewDevelopmentConfig()
+	}
 	z, err := config.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		return nil, err

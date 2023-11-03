@@ -73,7 +73,10 @@ Globals:
         RDB_DB_NAME:
           Fn::ImportValue: !Sub ${StackPrefix}-RDSDBName
         RDB_SSL_MODE: "require"    
-        DYNAMODB_LOCAL_ENDPOINT: ""        
+        DYNAMODB_LOCAL_ENDPOINT: ""
+        #TODO: パラメータ化
+        LOG_PROFILE: "production"
+        #LOG_PROFILE: "develop"        
     # Deployment Configurtion           
     AutoPublishAlias: live            
     DeploymentPreference:
