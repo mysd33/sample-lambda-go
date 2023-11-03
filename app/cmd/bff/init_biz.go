@@ -27,7 +27,7 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	// ハンドラインタセプタの取得
 	interceptor := ac.GetInterceptor()
 
-	// エラー確認用
+	// エラー確認用サービスの作成
 	errorTestService := errservice.New()
 	errorTestContoller := errcontroller.New(ac.GetLogger(), errorTestService)
 

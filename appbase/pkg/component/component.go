@@ -13,6 +13,7 @@ import (
 	"example.com/appbase/pkg/httpclient"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
+	"example.com/appbase/pkg/validator"
 )
 
 // ApplicationContext は、フレームワークのコンポーネントを管理するインタフェースです。
@@ -27,6 +28,7 @@ type ApplicationContext interface {
 
 // NewApplicationContext は、デフォルトのApplicationContextを作成します。
 func NewApplicationContext() ApplicationContext {
+	// 各種AP基盤の構造体を作成
 	messageSource := createMessageSource()
 	apiResponseFormatter := createApiResponseFormatter(messageSource)
 	logger := createLogger(messageSource)
@@ -34,6 +36,10 @@ func NewApplicationContext() ApplicationContext {
 	dynamodbAccessor := createDynamoDBAccessor(logger)
 	httpclient := createHttpClient(logger)
 	interceptor := createHanderInterceptor(logger, apiResponseFormatter)
+
+	// Validatorの日本語化
+	validator.Setup()
+
 	return &defaultApplicationContext{
 		config:           config,
 		messageSource:    messageSource,

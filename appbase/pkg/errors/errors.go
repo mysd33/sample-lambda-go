@@ -4,9 +4,13 @@ erros パッケージは、エラー情報を扱うパッケージです。
 package errors
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 
+	myvalidator "example.com/appbase/pkg/validator"
 	cerrors "github.com/cockroachdb/errors"
+	"github.com/go-playground/validator/v10"
 )
 
 // CodableErrorは、エラーコード定義付きのエラーインタフェースです。
@@ -37,17 +41,18 @@ func NewValidationErrorWithMessage(format string, args ...interface{}) *Validati
 
 // Error は、エラーを返却します。
 func (e *ValidationError) Error() string {
-	// TODO:削除
-	//log.Printf("入力エラーの型:%+v", reflect.TypeOf(errors.Unwrap(e.cause)))
+	//Causeのツリーをたどってgo-playground/validatorのエラーを取得
+	var gPValidationErrors validator.ValidationErrors
+	if errors.As(e.cause, &gPValidationErrors) {
+		if myvalidator.Translator != nil {
+			//TODO: バリデーションエラーメッセージの整形（暫定でそのままJSON文字列）
+			//エラーメッセージの日本語化
+			translated := gPValidationErrors.Translate(myvalidator.Translator)
+			bytes, _ := json.Marshal(translated)
+			return fmt.Sprintf("入力エラー:%s", string(bytes))
+		}
+	}
 
-	// Causeのツリーをたどってgo-playground/validatorのエラーを取得
-	//var gPValidationErrors validator.ValidationErrors
-	//if errors.As(e.cause, &gPValidationErrors) {
-	//	for _, v := range gPValidationErrors {
-	//		field := v.Field()
-	//tag :=
-	//	}
-	//}
 	return fmt.Sprintf("入力エラー:%s", e.cause.Error())
 }
 
