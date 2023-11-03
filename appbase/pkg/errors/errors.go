@@ -143,17 +143,18 @@ func (e *SystemError) Args() []interface{} {
 	return e.args
 }
 
-// CauseがBusinessError、SystemError出ないことを確認
+// CauseがBusinessError、SystemErrorでないことを確認
 func requiredNotBusinessAndSystemError(cause error) {
 	if cause == nil {
 		return
 	}
 	var be *BusinessError
 	var se *SystemError
-	// TODO: causeがBusinessError、SystemErrorの場合は、コーディングミスで二重でラップしてしまっているので異常終了させる？
+	// TODO: causeがBusinessError、SystemErrorの場合は、
+	// コーディングミスで二重でラップしてしまっているので開発中は異常終了させたほうがよい？
 	if errors.As(cause, &be) {
-		log.Fatalf("誤ったエラーのWrapです。%+v", be)
+		log.Printf("誤ってBusinessErrorを二重でラップしています:%+v", be)
 	} else if errors.As(cause, &se) {
-		log.Fatalf("誤ったエラーのWrapです。%+v", se)
+		log.Printf("誤ってSystemErrorを二重でラップしています:%+v", se)
 	}
 }
