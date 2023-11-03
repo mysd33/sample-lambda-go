@@ -79,10 +79,10 @@ func (z *zapLogger) WarnWithCodableError(err errors.CodableError) {
 	message := z.messageSource.GetMessage(code, args...)
 	// エラーのスタックトレース付きのWarnログ出力
 	if message != "" {
-		z.log.Warnf("%s:%+v", message, err)
+		z.log.Warnf("%s, %+v", message, err)
 		return
 	}
-	z.log.Warnf("%s:%v:%+v", code, args, err)
+	z.log.Warnf("%s[%v], %+v", code, args, err)
 }
 
 // Error implements Logger.
@@ -102,14 +102,14 @@ func (z *zapLogger) ErrorWithCodableError(err errors.CodableError) {
 	message := z.messageSource.GetMessage(code, args...)
 	// エラーのスタックトレース付きのErrorログ出力
 	if message != "" {
-		z.log.Errorf("%s:%+v", message, err)
+		z.log.Errorf("%s, %+v", message, err)
 		return
 	}
-	z.log.Errorf("%s:%v:%+v", code, args, err)
+	z.log.Errorf("%s[%v], %+v", code, args, err)
 }
 
 // Error implements Logger.
 func (z *zapLogger) ErrorWithUnexpectedError(err error) {
 	message := z.messageSource.GetMessage(message.E_FW_9999)
-	z.log.Errorf("%s:%+v", message, err)
+	z.log.Errorf("%s, %+v", message, err)
 }

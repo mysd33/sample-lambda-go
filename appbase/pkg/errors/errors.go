@@ -30,13 +30,24 @@ func NewValidationError(cause error) *ValidationError {
 // NewValidationErrorWithMessage は、メッセージをもとにBusinessError構造体を作成します。
 func NewValidationErrorWithMessage(format string, args ...interface{}) *ValidationError {
 	return &ValidationError{
-		cause: cerrors.Errorf(format, args),
+		// cockloachdb/errorのスタックトレース付きのcauseエラー作成
+		cause: cerrors.Errorf(format, args...),
 	}
 }
 
 // Error は、エラーを返却します。
 func (e *ValidationError) Error() string {
-	// TODO:
+	// TODO:削除
+	//log.Printf("入力エラーの型:%+v", reflect.TypeOf(errors.Unwrap(e.cause)))
+
+	// Causeのツリーをたどってgo-playground/validatorのエラーを取得
+	//var gPValidationErrors validator.ValidationErrors
+	//if errors.As(e.cause, &gPValidationErrors) {
+	//	for _, v := range gPValidationErrors {
+	//		field := v.Field()
+	//tag :=
+	//	}
+	//}
 	return fmt.Sprintf("入力エラー:%s", e.cause.Error())
 }
 
@@ -54,7 +65,9 @@ type BusinessError struct {
 
 // NewBusinessError は、BusinessError構造体を作成します。
 func NewBusinessError(errorCode string, args ...interface{}) *BusinessError {
-	return &BusinessError{errorCode: errorCode, args: args}
+	// スタックトレース出力のため、cockloachdb/errorのスタックトレース付きのcauseエラー作成
+	cause := cerrors.Errorf("code:%s, error:%v", errorCode, args)
+	return &BusinessError{cause: cause, errorCode: errorCode, args: args}
 }
 
 // NewBusinessError は、原因となるエラー（cause）をラップし、
@@ -67,7 +80,7 @@ func NewBusinessErrorWithCause(cause error, errorCode string, args ...interface{
 
 // Error は、エラーを返却します。
 func (e *BusinessError) Error() string {
-	return fmt.Sprintf("業務エラー[%s]cause:%+v", e.errorCode, e.cause)
+	return fmt.Sprintf("業務エラー[%s], cause:%+v", e.errorCode, e.cause)
 }
 
 // UnWrap は、原因となるエラーにUnWrapします。
@@ -102,7 +115,7 @@ func NewSystemError(cause error, errorCode string, args ...interface{}) *SystemE
 
 // Error は、エラーを返却します。
 func (e *SystemError) Error() string {
-	return fmt.Sprintf("システムエラー[%s]cause:%+v", e.errorCode, e.cause)
+	return fmt.Sprintf("システムエラー[%s], cause:%+v", e.errorCode, e.cause)
 }
 
 // UnWrap は、原因となるエラーにUnWrapします。

@@ -339,9 +339,12 @@ curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "Buy Milk"
 curl http://127.0.0.1:3000/bff-api/v1/todo?user_id=（ユーザID）\&todo_id=(TODO ID)
 
 # BFF (エラー電文動作確認)
-curl http://127.0.0.1:3000/bff-api/v1/error/business
-curl http://127.0.0.1:3000/bff-api/v1/error/system
-curl http://127.0.0.1:3000/bff-api/v1/error/hogehoge
+curl -X POST http://127.0.0.1:3000/bff-api/v1/error/validation
+curl -X POST -H "Content-Type: application/json" -d '{}' http://127.0.0.1:3000/bff-api/v1/error/validation2
+curl -X POST http://127.0.0.1:3000/bff-api/v1/error/business
+curl -X POST http://127.0.0.1:3000/bff-api/v1/error/business2
+curl -X POST http://127.0.0.1:3000/bff-api/v1/error/system
+curl -X POST http://127.0.0.1:3000/bff-api/v1/error/hogehoge
 
 
 

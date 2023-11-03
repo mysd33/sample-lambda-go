@@ -40,6 +40,6 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 		v1.POST("/todo", interceptor.Handle(bffController.RegisterTodo))
 
 		//エラー確認用
-		v1.GET("/error/:errortype", interceptor.Handle(errorTestContoller.Execute))
+		v1.POST("/error/:errortype", interceptor.Handle(errorTestContoller.Execute))
 	}
 }
