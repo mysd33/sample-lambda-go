@@ -6,7 +6,7 @@ package config
 import (
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/cockroachdb/errors"
 	"github.com/spf13/viper"
 )
 
@@ -32,12 +32,12 @@ func LoadConfig() (*Config, error) {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		return nil, errors.Errorf("設定ファイル読み込みエラー")
+		return nil, errors.Errorf("設定ファイル読み込みエラー:%w", err)
 	}
 	var cfg Config
 	err = viper.Unmarshal(&cfg)
 	if err != nil {
-		return nil, errors.Errorf("設定ファイルアンマーシャルエラー")
+		return nil, errors.Errorf("設定ファイルアンマーシャルエラー:%w", err)
 	}
 	return &cfg, nil
 }

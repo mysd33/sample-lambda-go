@@ -14,6 +14,7 @@ import (
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
 	"example.com/appbase/pkg/validator"
+	"github.com/cockroachdb/errors"
 )
 
 // ApplicationContext は、フレームワークのコンポーネントを管理するインタフェースです。
@@ -93,7 +94,7 @@ func createMessageSource() message.MessageSource {
 	messageSource, err := message.NewMessageSource()
 	if err != nil {
 		// 異常終了
-		log.Fatalf("初期化処理エラー:%s", err.Error())
+		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
 	}
 	return messageSource
 }
@@ -106,7 +107,7 @@ func createLogger(messageSource message.MessageSource) logging.Logger {
 	logger, err := logging.NewLogger(messageSource)
 	if err != nil {
 		// 異常終了
-		log.Fatalf("初期化処理エラー:%s", err.Error())
+		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
 	}
 	return logger
 }
@@ -115,7 +116,7 @@ func createConfig() *config.Config {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		// 異常終了
-		log.Fatalf("初期化処理エラー:%s", err.Error())
+		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
 	}
 	return cfg
 }
@@ -124,7 +125,7 @@ func createDynamoDBAccessor(logger logging.Logger) dynamodb.DynamoDBAccessor {
 	accessor, err := dynamodb.NewDynamoDBAccessor(logger)
 	if err != nil {
 		// 異常終了
-		log.Fatalf("初期化処理エラー:%s", err.Error())
+		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
 	}
 	return accessor
 }

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 
 	myvalidator "example.com/appbase/pkg/validator"
 	cerrors "github.com/cockroachdb/errors"
@@ -79,6 +80,8 @@ func NewBusinessError(errorCode string, args ...interface{}) *BusinessError {
 // メッセージIDにもなるエラーコード（errorCode）とメッセージの置換文字列(args）を渡し
 // BusinessError構造体を作成します。
 func NewBusinessErrorWithCause(cause error, errorCode string, args ...interface{}) *BusinessError {
+	// 誤ったエラーのラップを確認
+	requiredNotBusinessAndSystemError(cause)
 	// causeはスタックトレース付与
 	return &BusinessError{cause: cerrors.WithStack(cause), errorCode: errorCode, args: args}
 }
@@ -114,6 +117,8 @@ type SystemError struct {
 // メッセージIDにもなるエラーコード（errorCode）とメッセージの置換文字列(args）を渡し
 // SystemError構造体を作成します。
 func NewSystemError(cause error, errorCode string, args ...interface{}) *SystemError {
+	// 誤ったエラーのラップを確認
+	requiredNotBusinessAndSystemError(cause)
 	// causeはスタックトレース付与
 	return &SystemError{cause: cerrors.WithStack(cause), errorCode: errorCode, args: args}
 }
@@ -136,4 +141,19 @@ func (e *SystemError) ErrorCode() string {
 // Argsは、エラーメッセージの置換文字列(args）を返します
 func (e *SystemError) Args() []interface{} {
 	return e.args
+}
+
+// CauseがBusinessError、SystemError出ないことを確認
+func requiredNotBusinessAndSystemError(cause error) {
+	if cause == nil {
+		return
+	}
+	var be *BusinessError
+	var se *SystemError
+	// TODO: causeがBusinessError、SystemErrorの場合は、コーディングミスで二重でラップしてしまっているので異常終了させる？
+	if errors.As(cause, &be) {
+		log.Fatalf("誤ったエラーのWrapです。%+v", be)
+	} else if errors.As(cause, &se) {
+		log.Fatalf("誤ったエラーのWrapです。%+v", se)
+	}
 }

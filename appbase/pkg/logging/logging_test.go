@@ -7,6 +7,7 @@ import (
 
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/message"
+	cerrors "github.com/cockroachdb/errors"
 )
 
 //go:embed logging_testmsg.yaml
@@ -191,10 +192,13 @@ func Test_zapLogger_ErrorWithCodableError(t *testing.T) {
 			z:    sut(),
 			args: args{err: errors.NewSystemError(fmt.Errorf("原因のエラー"), "logtest001", "aaaa")},
 		},
-
 		{name: "ラップされたシステムエラーを受け取りメッセージID取得できない場合",
 			z:    sut(),
 			args: args{err: errors.NewSystemError(fmt.Errorf("原因のエラー"), "xxxxx", "aaaa")},
+		},
+		{name: "ラップされたエラーがすでにスタックトレースありの場合",
+			z:    sut(),
+			args: args{err: errors.NewSystemError(cerrors.Errorf("原因のエラー"), "logtest001", "aaaa")},
 		},
 	}
 	for _, tt := range tests {

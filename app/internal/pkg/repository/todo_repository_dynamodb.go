@@ -36,7 +36,6 @@ func (tr *todoRepositoryImplByDynamoDB) GetTodo(todoId string) (*entity.Todo, er
 	todo := entity.Todo{ID: todoId}
 	key, err := todo.GetKey()
 	if err != nil {
-		//return nil, errors.Wrapf(err, "fail to get key")
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	result, err := tr.accessor.GetItemSdk(&dynamodb.GetItemInput{
@@ -44,12 +43,10 @@ func (tr *todoRepositoryImplByDynamoDB) GetTodo(todoId string) (*entity.Todo, er
 		Key:       key,
 	})
 	if err != nil {
-		//return nil, errors.Wrapf(err, "failed to get item")
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	err = attributevalue.UnmarshalMap(result.Item, &todo)
 	if err != nil {
-		//return nil, errors.Wrapf(err, "failed to marshal item")
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	return &todo, nil
@@ -66,7 +63,6 @@ func (tr *todoRepositoryImplByDynamoDB) PutTodo(todo *entity.Todo) (*entity.Todo
 
 	av, err := attributevalue.MarshalMap(todo)
 	if err != nil {
-		// return nil, errors.Wrapf(err, "failed to marshal item")
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	input := &dynamodb.PutItemInput{
@@ -76,7 +72,6 @@ func (tr *todoRepositoryImplByDynamoDB) PutTodo(todo *entity.Todo) (*entity.Todo
 	// Itemの登録
 	_, err = tr.accessor.PutItemSdk(input)
 	if err != nil {
-		// return nil, errors.Wrapf(err, "failed to put item")
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	return todo, nil

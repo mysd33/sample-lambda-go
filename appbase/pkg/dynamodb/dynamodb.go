@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
+	"github.com/cockroachdb/errors"
 )
 
 var (
@@ -55,7 +56,7 @@ func createDynamoDBClient() (*dynamodb.Client, error) {
 	// https://aws.github.io/aws-sdk-go-v2/docs/migrating/
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	// Instrumenting AWS SDK v2
 	// https://github.com/aws/aws-xray-sdk-go
@@ -92,9 +93,13 @@ func endTransaction(err error) (*dynamodb.TransactWriteItemsOutput, error) {
 		return nil, err
 	}
 	// トランザクション実行
-	return dynamodbClient.TransactWriteItems(apcontext.Context, &dynamodb.TransactWriteItemsInput{
+	output, err := dynamodbClient.TransactWriteItems(apcontext.Context, &dynamodb.TransactWriteItemsInput{
 		TransactItems: transactWriteItems,
 	})
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return output, nil
 }
 
 // NewDynamoDBAccessor は、Acccessorを作成します。
@@ -145,7 +150,7 @@ func (d *defaultDynamoDBAccessor) QueryPagesSdk(input *dynamodb.QueryInput, fn f
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(apcontext.Context)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 		if fn(page) {
 			break

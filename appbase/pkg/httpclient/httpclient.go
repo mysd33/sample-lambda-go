@@ -10,12 +10,10 @@ import (
 	"strings"
 
 	"github.com/aws/aws-xray-sdk-go/xray"
+	"github.com/cockroachdb/errors"
 	"golang.org/x/net/context/ctxhttp"
 
 	"example.com/appbase/pkg/apcontext"
-	"example.com/appbase/pkg/message"
-
-	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 )
 
@@ -58,18 +56,16 @@ func (c *defaultHttpClient) Get(url string, header http.Header, params map[strin
 	// Getメソッドの実行（X-Ray対応）
 	response, err := ctxhttp.Get(apcontext.Context, xray.Client(nil), url)
 
-	// TODO: エラーコード
 	if err != nil {
-
-		return nil, errors.NewSystemError(err, message.E_FW_9002)
+		return nil, errors.WithStack(err)
 	}
 	// TODO: 200以外のレスポンスエラー時の対応
 
 	defer response.Body.Close()
 	data, err := io.ReadAll(response.Body)
-	// TODO: エラーコード
+
 	if err != nil {
-		return nil, errors.NewSystemError(err, message.E_FW_9002)
+		return nil, errors.WithStack(err)
 	}
 	return &ResponseData{
 		StatusCode:     response.StatusCode,
@@ -89,17 +85,15 @@ func (c *defaultHttpClient) Post(url string, header http.Header, bbody []byte) (
 	// TODO: ContentType固定でよいか？
 	response, err := ctxhttp.Post(apcontext.Context, xray.Client(nil), url, "application/json", bytes.NewReader(bbody))
 
-	// TODO: エラーコード
 	if err != nil {
-		return nil, errors.NewSystemError(err, message.E_FW_9002)
+		return nil, errors.WithStack(err)
 	}
 	// TODO: 200以外のレスポンスエラー時の対応
 
 	defer response.Body.Close()
 	data, err := io.ReadAll(response.Body)
-	// TODO: エラーコード
 	if err != nil {
-		return nil, errors.NewSystemError(err, message.E_FW_9002)
+		return nil, errors.WithStack(err)
 	}
 
 	return &ResponseData{

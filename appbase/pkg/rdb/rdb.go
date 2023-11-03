@@ -5,13 +5,13 @@ package rdb
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"os"
 
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/domain"
 	"github.com/aws/aws-xray-sdk-go/xray"
+	"github.com/cockroachdb/errors"
 	_ "github.com/lib/pq"
 )
 
@@ -40,14 +40,14 @@ func ExecuteTransaction(serviceFunc domain.ServiceFunc) (interface{}, error) {
 	// RDBコネクションの確立
 	db, err := rdbConnect()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	// 終了時にRDBコネクションの切断
 	defer db.Close()
 	// RDBトランザクション開始
 	tx, err := startTransaction(db)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	// トランザクションをコンテキスト領域に格納
 	Tx = tx
@@ -56,7 +56,7 @@ func ExecuteTransaction(serviceFunc domain.ServiceFunc) (interface{}, error) {
 	// RDBトランザクション終了
 	err = endTransaction(tx, err)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return result, nil
 }
@@ -87,7 +87,7 @@ func rdbConnect() (*sql.DB, error) {
 		db, err := sql.Open("postgres", connectStr)*/
 
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	// DBコネクションをコンテキスト領域に格納
 	DB = db
@@ -98,7 +98,7 @@ func startTransaction(db *sql.DB) (*sql.Tx, error) {
 	// トランザクション開始
 	tx, err := db.BeginTx(apcontext.Context, nil)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return tx, nil
 }
