@@ -72,7 +72,7 @@ type BusinessError struct {
 // NewBusinessError は、BusinessError構造体を作成します。
 func NewBusinessError(errorCode string, args ...interface{}) *BusinessError {
 	// スタックトレース出力のため、cockloachdb/errorのスタックトレース付きのcauseエラー作成
-	cause := cerrors.Errorf("code:%s, error:%v", errorCode, args)
+	cause := cerrors.NewWithDepthf(1, "code:%s, error:%v", errorCode, args)
 	return &BusinessError{cause: cause, errorCode: errorCode, args: args}
 }
 
@@ -83,7 +83,7 @@ func NewBusinessErrorWithCause(cause error, errorCode string, args ...interface{
 	// 誤ったエラーのラップを確認
 	requiredNotBusinessAndSystemError(cause)
 	// causeはスタックトレース付与
-	return &BusinessError{cause: cerrors.WithStack(cause), errorCode: errorCode, args: args}
+	return &BusinessError{cause: cerrors.WithStackDepth(cause, 1), errorCode: errorCode, args: args}
 }
 
 // Error は、エラーを返却します。
@@ -120,7 +120,7 @@ func NewSystemError(cause error, errorCode string, args ...interface{}) *SystemE
 	// 誤ったエラーのラップを確認
 	requiredNotBusinessAndSystemError(cause)
 	// causeはスタックトレース付与
-	return &SystemError{cause: cerrors.WithStack(cause), errorCode: errorCode, args: args}
+	return &SystemError{cause: cerrors.WithStackDepth(cause, 1), errorCode: errorCode, args: args}
 }
 
 // Error は、エラーを返却します。
