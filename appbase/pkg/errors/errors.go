@@ -86,12 +86,17 @@ func NewBusinessErrorWithCause(cause error, errorCode string, args ...interface{
 	return &BusinessError{cause: cerrors.WithStackDepth(cause, 1), errorCode: errorCode, args: args}
 }
 
-// Error は、エラーを返却します。
+// Error は、エラーを返却します。errorインタフェースを実装します。
 func (e *BusinessError) Error() string {
 	return fmt.Sprintf("業務エラー[%s], cause:%+v", e.errorCode, e.cause)
 }
 
+// Format は、%+vを正しく動作させるため、fmt.Formatterのインタフェースを実装します。
+// https://github.com/cockroachdb/errors#Making-v-work-with-your-type
+func (e *BusinessError) Format(s fmt.State, verb rune) { cerrors.FormatError(e, s, verb) }
+
 // Unwrap は、原因となるエラーにUnwrapします。
+// https://github.com/cockroachdb/errors#building-your-own-error-types
 func (e *BusinessError) Unwrap() error {
 	return e.cause
 }
@@ -123,12 +128,17 @@ func NewSystemError(cause error, errorCode string, args ...interface{}) *SystemE
 	return &SystemError{cause: cerrors.WithStackDepth(cause, 1), errorCode: errorCode, args: args}
 }
 
-// Error は、エラーを返却します。
+// Error は、エラーを返却します。errorインタフェースを実装します。
 func (e *SystemError) Error() string {
 	return fmt.Sprintf("システムエラー[%s], cause:%+v", e.errorCode, e.cause)
 }
 
+// Format は、%+vを正しく動作させるため、fmt.Formatterのインタフェースを実装します。
+// https://github.com/cockroachdb/errors#Making-v-work-with-your-type
+func (e *SystemError) Format(s fmt.State, verb rune) { cerrors.FormatError(e, s, verb) }
+
 // Unwrap は、原因となるエラーにUnwrapします。
+// https://github.com/cockroachdb/errors#building-your-own-error-types
 func (e *SystemError) Unwrap() error {
 	return e.cause
 }
