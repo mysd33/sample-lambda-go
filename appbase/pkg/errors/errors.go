@@ -57,8 +57,8 @@ func (e *ValidationError) Error() string {
 	return fmt.Sprintf("入力エラー:%s", e.cause.Error())
 }
 
-// UnWrap は、原因となるエラーにUnWrapします。
-func (e *ValidationError) UnWrap() error {
+// Unwrap は、原因となるエラーにUnwrapします。
+func (e *ValidationError) Unwrap() error {
 	return e.cause
 }
 
@@ -91,8 +91,8 @@ func (e *BusinessError) Error() string {
 	return fmt.Sprintf("業務エラー[%s], cause:%+v", e.errorCode, e.cause)
 }
 
-// UnWrap は、原因となるエラーにUnWrapします。
-func (e *BusinessError) UnWrap() error {
+// Unwrap は、原因となるエラーにUnwrapします。
+func (e *BusinessError) Unwrap() error {
 	return e.cause
 }
 
@@ -128,8 +128,8 @@ func (e *SystemError) Error() string {
 	return fmt.Sprintf("システムエラー[%s], cause:%+v", e.errorCode, e.cause)
 }
 
-// UnWrap は、原因となるエラーにUnWrapします。
-func (e *SystemError) UnWrap() error {
+// Unwrap は、原因となるエラーにUnwrapします。
+func (e *SystemError) Unwrap() error {
 	return e.cause
 }
 
