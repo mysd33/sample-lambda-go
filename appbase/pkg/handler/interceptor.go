@@ -12,22 +12,26 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type HandlerInterceptor interface {
+	Handle(controllerFunc ControllerFunc) gin.HandlerFunc
+}
+
 // HandlerInterceptor は、Handlerのインタセプタの構造体です。
-type HandlerInterceptor struct {
+type defaultHandlerInterceptor struct {
 	log                  logging.Logger
 	apiResponseFormatter api.ApiResponseFormatter
 }
 
-// New は、HandlerInterceptor構造体を作成します。
+// NewHandlerInterceptor は、HandlerInterceptorを作成します。
 func NewHandlerInterceptor(log logging.Logger, apiResponseFormatter api.ApiResponseFormatter) HandlerInterceptor {
-	return HandlerInterceptor{log: log, apiResponseFormatter: apiResponseFormatter}
+	return &defaultHandlerInterceptor{log: log, apiResponseFormatter: apiResponseFormatter}
 }
 
 // ControllerFunc Controlerで実行する関数です。
 type ControllerFunc func(ctx *gin.Context) (interface{}, error)
 
 // Handle は、Controlerで実行する関数controllerFuncの前後でインタセプタの処理を実行します。
-func (i HandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.HandlerFunc {
+func (i *defaultHandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.HandlerFunc {
 	var (
 		validationError *myerrors.ValidationError
 		businessError   *myerrors.BusinessError
