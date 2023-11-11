@@ -8,10 +8,15 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 
 	myvalidator "example.com/appbase/pkg/validator"
 	cerrors "github.com/cockroachdb/errors"
 	"github.com/go-playground/validator/v10"
+)
+
+const (
+	ENV_PRODUCTION = "Prod"
 )
 
 // CodableErrorは、エラーコード定義付きのエラーインタフェースです。
@@ -160,11 +165,20 @@ func requiredNotBusinessAndSystemError(cause error) {
 	}
 	var be *BusinessError
 	var se *SystemError
-	// TODO: causeがBusinessError、SystemErrorの場合は、
-	// コーディングミスで二重でラップしてしまっているので開発中は異常終了させたほうがよい？
+	// causeがBusinessError、SystemErrorの場合は、
+	// コーディングミスで二重でラップしてしまっている判断して、開発中は異常終了させている
+	env := os.Getenv("ENV")
 	if errors.As(cause, &be) {
+		if env == ENV_PRODUCTION {
+			// 異常終了
+			log.Fatalf("誤ってBusinessErrorを二重でラップしています:%+v", be)
+		}
 		log.Printf("誤ってBusinessErrorを二重でラップしています:%+v", be)
 	} else if errors.As(cause, &se) {
+		if env == ENV_PRODUCTION {
+			// 異常終了
+			log.Fatalf("誤ってSystemErrorを二重でラップしています:%+v", se)
+		}
 		log.Printf("誤ってSystemErrorを二重でラップしています:%+v", se)
 	}
 }

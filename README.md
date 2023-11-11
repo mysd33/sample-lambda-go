@@ -381,8 +381,9 @@ curl -X POST http://127.0.0.1:3000/bff-api/v1/error/hogehoge
 * デバッガパス、デバッグポート(この例では8099番)を指定して、sam local start-apiを実行
     * [AWSのデベロッパーガイド](https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/serverless-sam-cli-using-debugging.html#serverless-sam-cli-running-locally)を参考
 
+    * 本サンプルAPのように、SAMテンプレート内にFunctionが複数ある場合は、デバッグできるのは一度に1つの関数のみのためか、--debug-functionオプションでデバッグしたい関数を指定しないとデバッガが動かない
+
         ```sh
-        # SAMテンプレート内にFunctionが複数ある場合は、デバッグできるのは一度に1つの関数のみのためか、--debug-functionオプションでデバッグしたい関数を指定しないとデバッガが動かない
         sam local start-api -d 8099 --debugger-path=%GOPATH%/bin/linux_amd64 --debug-args="-delveAPI=2" --debug-function (template.yamlのLambda関数の論理ID) --env-vars local-env.json
         # 例
         sam local start-api -d 8099 --debugger-path=$GOPATH/bin/linux_amd64 --debug-args="-delveAPI=2" --debug-function HelloWorldFunction --env-vars local-env.json
@@ -398,7 +399,7 @@ curl -X POST http://127.0.0.1:3000/bff-api/v1/error/hogehoge
         make local_startapi_dg_BffFunction
         ```
 
-    * なお、SAMテンプレート内にFunctionが1つの場合は--debug-functionオプションなくてもうまくいく
+    * SAMテンプレート内にFunctionが1つの場合は--debug-functionオプションなくてもうまくいく
 
         ```sh        
         sam local start-api -d 8099 --debugger-path=$GOPATH/bin/linux_amd64 --debug-args="-delveAPI=2" --env-vars local-env.json

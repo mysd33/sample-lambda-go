@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	PROFILE_PRODUCTION = "production"
+	ENV_PRODUCTION = "Prod"
 )
 
 // Loggerは、ログ出力のインタフェースです
@@ -35,10 +35,10 @@ type Logger interface {
 
 // NewLogger は、Loggerを作成します。
 func NewLogger(messageSource message.MessageSource) (Logger, error) {
-	profile := os.Getenv("LOG_PROFILE")
+	env := os.Getenv("ENV")
 	var config zap.Config
 	// プロファイルの切り替え
-	if profile == PROFILE_PRODUCTION {
+	if env == ENV_PRODUCTION {
 		config = zap.NewProductionConfig()
 	} else {
 		config = zap.NewDevelopmentConfig()
