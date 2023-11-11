@@ -33,6 +33,11 @@ validate:
 local_startapi:
 	sam local start-api --env-vars local-env.json	
 
+# support only go1.x runtime 
+local_startapi_dg_%:
+#	sam local start-api -d 8099 --debugger-path=$GOPATH/bin/linux_amd64 --debug-args="-delveAPI=2" --debug-function ${@:local_startapi_dg_%=%} --env-vars local-env.json 
+	sam local start-api -d 8099 --debugger-path=%GOPATH%/bin/linux_amd64 --debug-args="-delveAPI=2" --debug-function ${@:local_startapi_dg_%=%} --env-vars local-env.json
+
 deploy_guided:
 	sam deploy --guided
 

@@ -47,6 +47,7 @@ Globals:
   Function:
     Handler: bootstrap
     Runtime: provided.al2
+#    Runtime: go1.x
     Architectures:
       - x86_64
     Timeout: 5
@@ -106,6 +107,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x
     Properties:
+#      Handler: hello-world
       FunctionName: !Ref HelloWorldFunctionName
       CodeUri: app/cmd/hello-world
       Events:
@@ -124,6 +126,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x    
     Properties:
+#      Handler: users    
       FunctionName: !Ref UsersFunctionName
       CodeUri: app/cmd/users/  
       Events:
@@ -139,6 +142,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x    
     Properties:
+#      Handler: todo    
       FunctionName: !Ref TodoFunctionName
       CodeUri: app/cmd/todo/
       Policies: 
@@ -158,6 +162,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x    
     Properties:
+#      Handler: bff    
       FunctionName: !Ref BffFunctionName
       CodeUri: app/cmd/bff/                      
       Events:

@@ -346,15 +346,22 @@ curl -X POST http://127.0.0.1:3000/bff-api/v1/error/business2
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/system
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/hogehoge
 
-
-
 ```
 
 ## sam localでのデバッグ実行
 
 > [!WARNING]  
 > [aws-sam-cliのissue](https://github.com/aws/aws-sam-cli/issues/3718)によると、当該サンプルAPが使用する「provided.al2」（カスタムランタイム）でのsam localのデバッグ実行は現状サポートされていないとのこと。  
-> サポートされた時を想定して、ここでは「go1.x」ランタイムの場合に実際に試した手順を参考に記載する。
+> サポートされた時を想定して、ここでは「go1.x」ランタイムの場合に実際に試した手順を参考に記載する。 
+>
+> なお、サンプルAPを一時的にgo1.xのランタイムに切り替えるには、template.yamlのRuntimeを「go1.x」に変更、Handlerの値を「bootstrap」から任意のAP名に変更して、クリーン(make clean)して再ビルド(make)すればよい。  
+>
+> Runtimeの修正例:  
+> ![go1.xへのテンプレート変更](image/template_go1x_1.png)
+> 
+> Handlerの修正例（HelloWorldFunctionの場合）：  
+> ![go1.xへのテンプレート変更2](image/template_go1x_2.png)
+
 
 - [delve](https://github.com/go-delve/delve)といったサードパーティのデバッガを使用することで、VSCodeでの sam localのリモートデバッグ実行可能である。
     - [参考サイト](https://simple-minds-think-alike.moritamorie.com/entry/golang-lambda-vscode-debug)をもとにした手順で実施可能
@@ -376,7 +383,28 @@ GOARCH=amd64 GOOS=linux go install github.com/go-delve/delve/cmd/dlv@latest
 - デバッガパス、デバッグポート(この例では8099番)を指定して、sam local start-apiを実行
     - [AWSのデベロッパーガイド](https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/serverless-sam-cli-using-debugging.html#serverless-sam-cli-running-locally)を参考
 ```sh
+# SAMテンプレート内にFunctionが複数ある場合は、デバッグできるのは一度に1つの関数のみのためか、--debug-functionオプションでデバッグしたい関数を指定しないとデバッガが動かない
+sam local start-api -d 8099 --debugger-path=%GOPATH%/bin/linux_amd64 --debug-args="-delveAPI=2" --debug-function (template.yamlのLambda関数の論理ID) --env-vars local-env.json
+# 例
+sam local start-api -d 8099 --debugger-path=$GOPATH/bin/linux_amd64 --debug-args="-delveAPI=2" --debug-function HelloWorldFunction --env-vars local-env.json
+sam local start-api -d 8099 --debugger-path=$GOPATH/bin/linux_amd64 --debug-args="-delveAPI=2" --debug-function UsersFunction --env-vars local-env.json
+sam local start-api -d 8099 --debugger-path=$GOPATH/bin/linux_amd64 --debug-args="-delveAPI=2" --debug-function TodoFunction --env-vars local-env.json
+sam local start-api -d 8099 --debugger-path=$GOPATH/bin/linux_amd64 --debug-args="-delveAPI=2" --debug-function BffFunction --env-vars local-env.json
+
+
+# Windowsでもmakeをインストールすればmakeでいけます
+make local_startapi_dg_HelloWorldFunction
+make local_startapi_dg_UsersFunction
+make local_startapi_dg_TodoFunction
+make local_startapi_dg_BffFunction
+```
+
+```sh
+# なお、SAMテンプレート内にFunctionが1つの場合は--debug-functionオプションなくてもうまくいく
 sam local start-api -d 8099 --debugger-path=$GOPATH/bin/linux_amd64 --debug-args="-delveAPI=2" --env-vars local-env.json
+
+#インストール環境によって、--debugger-pathが異なり、以下の場合がある
+--debugger-path=$GOPATH/bin
 ```
 
 - VSCodeからアタッチするため、`.vscode/launch.json`を作成
