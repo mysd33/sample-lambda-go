@@ -19,7 +19,7 @@ type UserService interface {
 
 // New は、UserServiceを作成します。
 func New(log logging.Logger,
-	config *config.Config,
+	config config.Config,
 	repository repository.UserRepository,
 ) UserService {
 	return &userServiceImpl{log: log, config: config, repository: repository}
@@ -28,13 +28,13 @@ func New(log logging.Logger,
 // userServiceImpl は、UserServiceを実装する構造体です。
 type userServiceImpl struct {
 	log        logging.Logger
-	config     *config.Config
+	config     config.Config
 	repository repository.UserRepository
 }
 
 func (us *userServiceImpl) Register(userName string) (*entity.User, error) {
-	//TODO: Viperによる設定ファイルの読み込みのとりあえずの確認
-	us.log.Debug("hoge.name=%s", us.config.Hoge.Name)
+	//設定の読み込みのとりあえずの確認
+	us.log.Debug("hoge_name=%s", us.config.Get("hoge_name"))
 	us.log.Debug("UserName=%s", userName)
 
 	user := entity.User{Name: userName}

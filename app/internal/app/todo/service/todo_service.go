@@ -20,7 +20,7 @@ type TodoService interface {
 
 // New は、TodoServiceを作成します。
 func New(log logging.Logger,
-	config *config.Config,
+	config config.Config,
 	repository repository.TodoRepository,
 ) TodoService {
 	return &todoServiceImpl{log: log, config: config, repository: repository}
@@ -29,7 +29,7 @@ func New(log logging.Logger,
 // todoServiceImpl TodoServiceを実装する構造体です。
 type todoServiceImpl struct {
 	log        logging.Logger
-	config     *config.Config
+	config     config.Config
 	repository repository.TodoRepository
 }
 

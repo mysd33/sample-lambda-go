@@ -21,7 +21,7 @@ import (
 type ApplicationContext interface {
 	GetMessageSource() message.MessageSource
 	GetLogger() logging.Logger
-	GetConfig() *config.Config
+	GetConfig() config.Config
 	GetDynamoDBAccessor() dynamodb.DynamoDBAccessor
 	GetHttpClient() httpclient.HttpClient
 	GetInterceptor() handler.HandlerInterceptor
@@ -52,7 +52,7 @@ func NewApplicationContext() ApplicationContext {
 }
 
 type defaultApplicationContext struct {
-	config           *config.Config
+	config           config.Config
 	messageSource    message.MessageSource
 	logger           logging.Logger
 	dynamoDBAccessor dynamodb.DynamoDBAccessor
@@ -61,7 +61,7 @@ type defaultApplicationContext struct {
 }
 
 // GetConfig implements ApplicationContext.
-func (ac *defaultApplicationContext) GetConfig() *config.Config {
+func (ac *defaultApplicationContext) GetConfig() config.Config {
 	return ac.config
 }
 
@@ -112,8 +112,8 @@ func createLogger(messageSource message.MessageSource) logging.Logger {
 	return logger
 }
 
-func createConfig() *config.Config {
-	cfg, err := config.LoadConfig()
+func createConfig() config.Config {
+	cfg, err := config.NewConfig()
 	if err != nil {
 		// 異常終了
 		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))

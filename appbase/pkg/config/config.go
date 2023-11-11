@@ -10,18 +10,30 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Config は、設定ファイルの構造体(Viper)です。
-type Config struct {
-	Hoge Hoge `yaml:"hoge"`
+type Config interface {
+	Get(key string) string
 }
 
-// TODO: とりあえずのサンプル設定
-type Hoge struct {
-	Name string `yaml:"name"`
+func NewConfig() (Config, error) {
+	//TODO: Env=Localの場合はviperでconfigファイルからとるようにする
+	//それ以外の場合は、Envに合わせたAppConfigから値をとるように作る
+	return loadViperConfig()
+}
+
+type viperConfig struct {
+	cfg map[string]string
+}
+
+func (c *viperConfig) Get(key string) string {
+	v, found := c.cfg[key]
+	if !found {
+		return ""
+	}
+	return v
 }
 
 // LoadConfig は、設定ファイルをロードします。
-func LoadConfig() (*Config, error) {
+func loadViperConfig() (*viperConfig, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath("configs/")
@@ -34,10 +46,10 @@ func LoadConfig() (*Config, error) {
 	if err != nil {
 		return nil, errors.Errorf("設定ファイル読み込みエラー:%w", err)
 	}
-	var cfg Config
+	var cfg map[string]string
 	err = viper.Unmarshal(&cfg)
 	if err != nil {
 		return nil, errors.Errorf("設定ファイルアンマーシャルエラー:%w", err)
 	}
-	return &cfg, nil
+	return &viperConfig{cfg: cfg}, nil
 }

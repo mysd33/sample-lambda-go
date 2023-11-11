@@ -21,7 +21,7 @@ type BffService interface {
 
 // New は、BffServiceを作成します。
 func New(log logging.Logger,
-	config *config.Config,
+	config config.Config,
 	userRepository repository.UserRepository,
 	todoRepository repository.TodoRepository,
 ) BffService {
@@ -31,7 +31,7 @@ func New(log logging.Logger,
 // todoServiceImpl BffServiceを実装する構造体です。
 type bffServiceImpl struct {
 	log            logging.Logger
-	config         *config.Config
+	config         config.Config
 	userRepository repository.UserRepository
 	todoRepository repository.TodoRepository
 }
