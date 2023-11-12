@@ -94,6 +94,8 @@ Globals:
         ENV: !Ref Stage        
         AppConfigExtensionsURL:
           Fn::ImportValue: !Sub ${StackPrefix}-AppConfigLambdaExtensionURL
+        # TODO: AWS_APPCONFIG_EXTENSION_PREFETCH_LIST
+        #AWS_APPCONFIG_EXTENSION_PREFETCH_LIST: /applications/${ApplicationName}/environments/${EnvironmentName}/configurations/xxxxxx
     # Deployment Configurtion           
     AutoPublishAlias: live            
     DeploymentPreference:
