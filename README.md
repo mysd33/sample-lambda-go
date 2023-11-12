@@ -37,6 +37,12 @@
     * なお、本サンプルAPのようにX-Ray SDKでSQLトレースする場合、[xray.SQLContext関数を利用する](https://docs.aws.amazon.com/ja_jp/xray/latest/devguide/xray-sdk-go-sqlclients.html)際に確立するDBコネクションでピン留めが発生する。
         * xray.SQLContext関数を利用する際に、内部で発行されるSQL（"SELECT version(), current_user, current_database()"）がプリペアドステートメントを使用しているためピン留めが発生する。ピン留めの発生は回避できないとのこと。ただ、CloudWatchのRDS Proxyのログを見ても分かるが、直ちにコネクション切断されるため、ピン留めによる影響は小さいと想定される。（AWSサポート回答より）
 
+* AppConfigによる設定の外部化
+    * [AppConfig](https://docs.aws.amazon.com/ja_jp/appconfig/latest/userguide/what-is-appconfig.html)を使用し、APから外部管理された設定の取得、AppConfig機能を使ったデプロイに対応している。
+    * マネージドなLambdaレイヤにより提供される[AppConfig Agent Lambdaエクステンション](https://docs.aws.amazon.com/ja_jp/appconfig/latest/userguide/appconfig-integration-lambda-extensions.html)を使って、LambdaアプリケーションからAppConfigの設定をキャッシュするととともに、アプリケーションの再デプロイ不要で設定変更を反映することができる。
+    * TODO: APの機能作成中。
+
+
 ## 事前準備
 * ローカル環境に、AWS CLI、AWS SAM CLI、Docker環境が必要
 
@@ -137,8 +143,18 @@ aws cloudformation validate-template --template-body file://cfn-dynamodb.yaml
 aws cloudformation create-stack --stack-name Demo-DynamoDB-Stack --template-body file://cfn-dynamodb.yaml
 ```
 
+## 10. AppConfigの作成
+```sh
+aws cloudformation validate-template --template-body file://cfn-appconfig.yaml
+aws cloudformation create-stack --stack-name Demo-AppConfig-Stack --template-body file://cfn-appconfig.yaml
 
-## 10. AWS SAMでLambda/API Gatewayのデプロイ       
+aws cloudformation validate-template --template-body file://cfn-appconfig-deploy.yaml
+aws cloudformation create-stack --stack-name Demo-AppConfigDeploy-Stack --template-body file://cfn-appconfig-deploy.yaml
+
+```
+
+
+## 11. AWS SAMでLambda/API Gatewayのデプロイ       
 * SAMビルド    
 ```sh
 # トップのフォルダに戻る
@@ -175,7 +191,7 @@ make
 ```
 
 
-## 11. APの実行確認
+## 12. APの実行確認
 * マネージドコンソールから、EC2(Bation)へSystems Manager Session Managerで接続して、curlコマンドで動作確認
     * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
 
@@ -244,7 +260,28 @@ curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v
 # 対象のユーザ情報とやることを一緒に取得
 {"user":{"user_id":"416ad789-6fde-11ee-a3ec-0242ac110004","user_name":"Taro"},"todo":{"todo_id":"60d48f8f-6fde-11ee-a60c-0242ac110005","todo_title":"ミルクを買う"}}
 ```
-## 12. SAMのCloudFormationスタック削除
+
+## 13. AppConfingの設定変更＆デプロイ
+* cfn-appconfig-deploy.yaml内のホスト化された設定の内容を修正
+```yaml
+  AppConfigHostedConfigurationVersion:
+    Type: AWS::AppConfig::HostedConfigurationVersion
+    Properties:
+      …
+      # Contentを修正
+      Content: |
+        hoge_name: foo2
+        fuga_name: gaa2
+```
+
+* 以下のコマンドを実行すると新しいホスト化された設定が、指定したデプロイ戦略に基づき再デプロイされる
+```sh
+aws cloudformation validate-template --template-body file://cfn-appconfig-deploy.yaml
+aws cloudformation update-stack --stack-name Demo-AppConfigDeploy-Stack --template-body file://cfn-appconfig-deploy.yaml
+```
+
+
+## 14. SAMのCloudFormationスタック削除
 * VPC内Lambdaが参照するHyperplane ENIの削除に最大20分かかるため、スタックの削除に時間がかかる。
 ```sh
 sam delete
@@ -252,7 +289,7 @@ sam delete
 make delete
 ```
 
-## 13. その他リソースのCloudFormationスタック削除
+## 15. その他リソースのCloudFormationスタック削除
 ```sh
 aws cloudformation delete-stack --stack-name Demo-Bastion-Stack
 aws cloudformation delete-stack --stack-name Demo-DynamoDB-Stack
@@ -474,8 +511,8 @@ godoc
 | DynamoDBトランザクション管理機能 | オンラインAP制御機能と連携し、サービスクラスの実行前後にDynamoDBのトランザクション開始・終了を機能を提供する。 | ○ | com.example/appbase/pkg/dynamodb |
 | HTTPクライアント| net/htttpを利用しREST APIの呼び出しを汎化したAPIを提供する。 | ○ | com.example/appbase/pkg/httpclient |
 | 分散トレーシング（X-Ray） | AWS X-Rayを利用して、サービス間の分散トレーシング・可視化を実現する。実現には、AWS SAMのtemplate.ymlで設定でAPI GatewayやLambdaのトレースを有効化する。またAWS SDKが提供するメソッドに、Lambdaのハンドラメソッドの引数のContextを引き渡すようにする。Contextは業務AP側で引き継いでメソッドの引数に引き渡さなくてもソフトウェアフレームワーク側で取得できるようにグローバル変数で管理する。 | ○ | com.example/appbase/pkg/apcontext |
-| ロギング | go.uber.org/zapの機能を利用し、プロファイルによって動作環境に応じたログレベルや出力先（ファイルや標準出力）、出力形式（タブ区切りやJSON）に切替可能とする。またメッセージIDをもとにログ出力可能な汎用的なAPIを提供する。 | ○ | com.example/appbase/pkg/logging |
-| プロパティ管理 | spf13/viperの機能を利用し、APから環境依存のパラメータを切り出し、プロファイルによって動作環境に応じたパラメータ値に置き換え可能とする。 | ○ | com.example/appbase/pkg/config |
+| ロギング | go.uber.org/zapの機能を利用し、プロファイル（環境区分）によって動作環境に応じたログレベルや出力先（ファイルや標準出力）、出力形式（タブ区切りやJSON）に切替可能とする。またメッセージIDをもとにログ出力可能な汎用的なAPIを提供する。 | ○ | com.example/appbase/pkg/logging |
+| プロパティ管理 | APから環境依存のパラメータを切り出し、プロファイル（環境区分）によって胃動作環境に応じたパラメータ値に置き換え可能とする。AWS AppConfigおよびAppConfig Agent Lambdaエクステンションを利用してAPの再デプロイせずとも設定変更を反映できる。また、変更が少ない静的な設定値やローカルでのAP実行用に、spf13/viperの機能を利用したyamlによる設定ファイルを読み込み反映する。なお、AppConfigに同等のプロパティがある場合には優先的に羽根井する。 | ○ | com.example/appbase/pkg/config |
 | メッセージ管理 | go標準のembededでログ等に出力するメッセージを設定ファイルで一元管理する。 | ○ | com.example/appbase/pkg/message |
 
 * 以下は、今後追加を検討中。

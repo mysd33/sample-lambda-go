@@ -1,0 +1,98 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AppConfig Template for CloudFormation Demo
+#Metadata: 
+Parameters: 
+  StackPrefix:
+    Description: Stack Resource Name Prefix
+    Type: String
+    Default: Demo
+  ApplicationName:
+    Type: String
+    Default: todo-app
+  Stage:
+    Type: String
+    AllowedValues:
+      - Prod
+      - Staging
+      - Dev      
+    Default: Prod 
+  ConfigurationProfileName:
+    Type: String
+    Default: config
+
+#Mappings: 
+
+#Conditions: 
+
+Resources: 
+  AppConfigApplication:
+    Type: AWS::AppConfig::Application
+    Properties:    
+      Name: !Ref ApplicationName
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-AppConfigApplication
+
+  AppConfigEnv:
+    Type: AWS::AppConfig::Environment
+    Properties:
+      ApplicationId: !Ref AppConfigApplication
+      Name: !Ref Stage
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-AppConfigEnv
+
+  AppConfigProfile:
+    Type: AWS::AppConfig::ConfigurationProfile
+    Properties:
+      ApplicationId: !Ref AppConfigApplication
+      LocationUri: hosted
+      Name: !Ref ConfigurationProfileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-AppConfigProfile
+      Type: AWS.Freeform
+#      Validators: 
+#        - Validators
+
+  AppConfigDeploymentStrategy:
+    Type: AWS::AppConfig::DeploymentStrategy
+    Properties:
+      Name: !Sub ${ApplicationName}-DeploymentStrategy
+#     DeploymentDurationInMinutes: 3        
+      DeploymentDurationInMinutes: 1
+      FinalBakeTimeInMinutes: 4
+#     GrowthFactor: 10
+      GrowthFactor: 50
+      GrowthType: LINEAR
+      ReplicateTo: NONE
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-DeploymentStrategy
+
+Outputs:
+  AppConfigApplicationID:
+    Description: AppConfig Application ID
+    Value: !Ref AppConfigApplication
+    Export: 
+      Name: !Sub ${StackPrefix}-AppConfigApplicationID
+  AppConfigProfileID:
+    Description: AppConfig ConfigurationProfile ID
+    Value: !Ref AppConfigProfile
+    Export: 
+      Name: !Sub ${StackPrefix}-AppConfigProfileID
+  AppConfigEnvID:
+    Description: AppConfig Environment ID
+    Value: !Ref AppConfigEnv
+    Export: 
+      Name: !Sub ${StackPrefix}-AppConfigEnvID
+  AppConfigDeploymentStrategyID:
+    Description: AppConfig DeploymentStrategy ID
+    Value: !Ref AppConfigDeploymentStrategy
+    Export: 
+      Name: !Sub ${StackPrefix}-AppConfigDeploymentStrategyID
+  AppConfigLambdaExtensionURL:
+    Description: AppConfig Lambda Extension Endpoint URL
+    Value: !Sub http://localhost:2772/applications/${ApplicationName}/environments/${Stage}/configurations/${ConfigurationProfileName}    
+    Export: 
+      Name: !Sub ${StackPrefix}-AppConfigLambdaExtensionURL

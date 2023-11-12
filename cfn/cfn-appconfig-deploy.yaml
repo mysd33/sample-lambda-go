@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AppConfig Deployment Template for CloudFormation Demo. Depends on cfn-appconfig.yaml.
+#Metadata: 
+Parameters: 
+  StackPrefix:
+    Description: Stack Resource Name Prefix
+    Type: String
+    Default: Demo
+
+#Mappings: 
+
+#Conditions: 
+
+Resources: 
+  AppConfigHostedConfigurationVersion:
+    Type: AWS::AppConfig::HostedConfigurationVersion
+    Properties:
+      ApplicationId:
+        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigApplicationID
+      ConfigurationProfileId:
+        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigProfileID
+      ContentType: text/plain
+      Content: |
+        hoge_name: foo2
+        fuga_name: gaa2
+#     LatestVersionNumber:
+#     VersionLabel:
+
+  AppConfigDeployment:
+    Type: AWS::AppConfig::Deployment
+    Properties:
+      ApplicationId:
+        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigApplicationID
+      EnvironmentId:
+        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigEnvID
+      ConfigurationProfileId:
+        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigProfileID
+      ConfigurationVersion: !Ref AppConfigHostedConfigurationVersion
+#      DeploymentStrategyId: AppConfig.AllAtOnce
+#      DeploymentStrategyId: AppConfig.Linear50PercentEvery30Seconds
+#      DeploymentStrategyId: AppConfig.Linear20PercentEvery6Minutes
+      DeploymentStrategyId:
+        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigDeploymentStrategyID
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-Deployment
