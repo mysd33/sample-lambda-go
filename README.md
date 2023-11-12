@@ -40,8 +40,6 @@
 * AppConfigによる設定の外部化
     * [AppConfig](https://docs.aws.amazon.com/ja_jp/appconfig/latest/userguide/what-is-appconfig.html)を使用し、APから外部管理された設定の取得、AppConfig機能を使ったデプロイに対応している。
     * マネージドなLambdaレイヤにより提供される[AppConfig Agent Lambdaエクステンション](https://docs.aws.amazon.com/ja_jp/appconfig/latest/userguide/appconfig-integration-lambda-extensions.html)を使って、LambdaアプリケーションからAppConfigの設定をキャッシュするととともに、アプリケーションの再デプロイ不要で設定変更を反映することができる。
-    * TODO: APの機能作成中。
-
 
 ## 事前準備
 * ローカル環境に、AWS CLI、AWS SAM CLI、Docker環境が必要
@@ -74,7 +72,8 @@ aws cloudformation create-stack --stack-name Demo-VPE-Stack --template-body file
 ```
 ## 5. NAT Gatewayの作成とプライベートサブネットのルートテーブル更新
 * VPC内Lambdaからインターネットに接続する場合に必要となる。
-* hello-worldのサンプルAPでは、[https://checkip.amazonaws.com](https://checkip.amazonaws.com)へアクセスしに行くので、これを試す場合には作成が必要となる。
+    * 現状、VPC Endpointに対応していないためVPC内LambdaからのAppConfigへのアクセスに必要。
+    * hello-worldのサンプルAPでは[https://checkip.amazonaws.com](https://checkip.amazonaws.com)へアクセスしに行くため必要。
 
 ```sh
 aws cloudformation validate-template --template-body file://cfn-ngw.yaml
@@ -144,13 +143,16 @@ aws cloudformation create-stack --stack-name Demo-DynamoDB-Stack --template-body
 ```
 
 ## 10. AppConfigの作成
+* AppConfigの基本リソースを作成する。
 ```sh
 aws cloudformation validate-template --template-body file://cfn-appconfig.yaml
 aws cloudformation create-stack --stack-name Demo-AppConfig-Stack --template-body file://cfn-appconfig.yaml
+```
 
+* 設定バージョンの作成と初回デプロイする。
+```sh
 aws cloudformation validate-template --template-body file://cfn-appconfig-deploy.yaml
 aws cloudformation create-stack --stack-name Demo-AppConfigDeploy-Stack --template-body file://cfn-appconfig-deploy.yaml
-
 ```
 
 
@@ -254,8 +256,8 @@ curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "ミルク
 # TodoサービスとUseサービスを利用して、対象ユーザと対象のやることを取得し返却
 # curlコマンドの場合は&をエスケープする
 #
-# curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo/?user_id=（ユーザID）\&todo_id=(TODO ID)
-curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo/?user_id=416ad789-6fde-11ee-a3ec-0242ac110004\&todo_id=60d48f8f-6fde-11ee-a60c-0242ac110005
+# curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo?user_id=（ユーザID）\&todo_id=(TODO ID)
+curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo?user_id=416ad789-6fde-11ee-a3ec-0242ac110004\&todo_id=60d48f8f-6fde-11ee-a60c-0242ac110005
 
 # 対象のユーザ情報とやることを一緒に取得
 {"user":{"user_id":"416ad789-6fde-11ee-a3ec-0242ac110004","user_name":"Taro"},"todo":{"todo_id":"60d48f8f-6fde-11ee-a60c-0242ac110005","todo_title":"ミルクを買う"}}
@@ -280,6 +282,15 @@ aws cloudformation validate-template --template-body file://cfn-appconfig-deploy
 aws cloudformation update-stack --stack-name Demo-AppConfigDeploy-Stack --template-body file://cfn-appconfig-deploy.yaml
 ```
 
+* Userサービスでユーザ情報を登録するPOSTのAPIを呼び出したときの、設定値を出力するCloudWatchのログの変化を確認するとよい。
+* /aws/lambda/user-functionロググループのログ
+```
+#Before hoge_nameがfoo
+{"level":"info","ts":1699780051.3576484,"caller":"service/user_service.go:39","msg":"hoge_name=foo"}
+
+#After hoge_nameがfoo2に変化
+{"level":"info","ts":1699780051.3576484,"caller":"service/user_service.go:39","msg":"hoge_name=foo2"}
+```
 
 ## 14. SAMのCloudFormationスタック削除
 * VPC内Lambdaが参照するHyperplane ENIの削除に最大20分かかるため、スタックの削除に時間がかかる。
@@ -292,6 +303,8 @@ make delete
 ## 15. その他リソースのCloudFormationスタック削除
 ```sh
 aws cloudformation delete-stack --stack-name Demo-Bastion-Stack
+aws cloudformation delete-stack --stack-name Demo-AppConfigDeploy-Stack
+aws cloudformation delete-stack --stack-name Demo-AppConfig-Stack
 aws cloudformation delete-stack --stack-name Demo-DynamoDB-Stack
 aws cloudformation delete-stack --stack-name Demo-RDS-Stack
 aws cloudformation delete-stack --stack-name Demo-NATGW-Stack

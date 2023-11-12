@@ -43,6 +43,18 @@ Parameters:
   BffFunctionName:    
     Type: String
     Default: bff-function      
+
+Mappings:
+  AppConfigExtentionsLayerMap:
+    #Tokyo
+    ap-northeast-1:
+      x86: arn:aws:lambda:ap-northeast-1:980059726660:layer:AWS-AppConfig-Extension:84
+      arm: arn:aws:lambda:ap-northeast-1:980059726660:layer:AWS-AppConfig-Extension-Arm64:37
+    #Osaka
+    ap-northeast-3:
+      x86: arn:aws:lambda:ap-northeast-3:706869817123:layer:AWS-AppConfig-Extension:86
+      arm: arn:aws:lambda:ap-northeast-3:706869817123:layer:AWS-AppConfig-Extension-Arm64:1
+
 Conditions:
   TracingEnabled: !Equals [!Ref TracingValue, Active]
 
@@ -78,13 +90,18 @@ Globals:
         RDB_DB_NAME:
           Fn::ImportValue: !Sub ${StackPrefix}-RDSDBName
         RDB_SSL_MODE: "require"    
-        DYNAMODB_LOCAL_ENDPOINT: ""          
+        DYNAMODB_LOCAL_ENDPOINT: ""        
         ENV: !Ref Stage        
+        AppConfigExtensionsURL:
+          Fn::ImportValue: !Sub ${StackPrefix}-AppConfigLambdaExtensionURL
     # Deployment Configurtion           
     AutoPublishAlias: live            
     DeploymentPreference:
       #Type: Linear10PercentEvery1Minute
       Type: AllAtOnce
+    # AppConfig Extensions Lambda Layer    
+    Layers:
+      - !FindInMap [AppConfigExtentionsLayerMap, !Ref AWS::Region , x86]
   Api:
     OpenApiVersion: 3.0.3      
     EndpointConfiguration:
@@ -112,6 +129,8 @@ Resources:
 #      Handler: hello-world
       FunctionName: !Ref HelloWorldFunctionName
       CodeUri: app/cmd/hello-world
+      Role:
+        Fn::ImportValue: !Sub ${StackPrefix}-LambdaRoleArn      
       Events:
         CatchAll:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -131,6 +150,8 @@ Resources:
 #      Handler: users    
       FunctionName: !Ref UsersFunctionName
       CodeUri: app/cmd/users/  
+      Role:
+        Fn::ImportValue: !Sub ${StackPrefix}-LambdaRoleArn      
       Events:
         Event:
           Type: Api
@@ -147,10 +168,8 @@ Resources:
 #      Handler: todo    
       FunctionName: !Ref TodoFunctionName
       CodeUri: app/cmd/todo/
-      Policies: 
-        - DynamoDBCrudPolicy:
-            TableName:
-              !Ref TodoTableName                        
+      Role:
+        Fn::ImportValue: !Sub ${StackPrefix}-LambdaRoleArn  
       Events:
         Event:
           Type: Api
@@ -166,7 +185,9 @@ Resources:
     Properties:
 #      Handler: bff    
       FunctionName: !Ref BffFunctionName
-      CodeUri: app/cmd/bff/                      
+      CodeUri: app/cmd/bff/             
+      Role:
+        Fn::ImportValue: !Sub ${StackPrefix}-LambdaRoleArn                
       Events:
         Event:
           Type: Api
@@ -336,18 +357,12 @@ Outputs:
   HelloWorldFunction:
     Description: First Lambda Function ARN
     Value: !GetAtt HelloWorldFunction.Arn
-  HelloWorldFunctionIamRole:
-    Description: Implicit IAM Role created for Hello World function
-    Value: !GetAtt HelloWorldFunctionRole.Arn
   UsersAPI:
     Description: "API Gateway endpoint URL for Prod environment"
     Value: !Sub "https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/users-api/v1/users"
   UsersFunction:
     Description: "Users Lambda Function ARN"
     Value: !GetAtt UsersFunction.Arn
-  UsersFunctionIamRole:
-    Description: "Implicit IAM Role created for Users function ARN"
-    Value: !GetAtt UsersFunctionRole.Arn
   UsersFunctionDeploymentGroup:
     Description: "Users Lambda Function DeploymentGroup ARN"
     Value: !Ref UsersFunctionDeploymentGroup
@@ -357,9 +372,6 @@ Outputs:
   TodoFunction:
     Description: "Todo Lambda Function ARN"
     Value: !GetAtt TodoFunction.Arn
-  TodoFunctionIamRole:
-    Description: "Implicit IAM Role created for Todo function ARN"
-    Value: !GetAtt TodoFunctionRole.Arn
   TodoFunctionDeploymentGroup:
     Description: "Todo Lambda Function DeploymentGroup ARN"
     Value: !Ref TodoFunctionDeploymentGroup
@@ -369,9 +381,6 @@ Outputs:
   BffFunction:
     Description: "Bff Lambda Function ARN"
     Value: !GetAtt BffFunction.Arn
-  BffFunctionIamRole:
-    Description: "Implicit IAM Role created for Todo function ARN"
-    Value: !GetAtt BffFunctionRole.Arn
   BffFunctionDeploymentGroup:
     Description: "Bff Lambda Function DeploymentGroup ARN"
     Value: !Ref BffFunctionDeploymentGroup    

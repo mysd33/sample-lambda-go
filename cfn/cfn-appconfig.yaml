@@ -60,10 +60,11 @@ Resources:
     Properties:
       Name: !Sub ${ApplicationName}-DeploymentStrategy
 #     DeploymentDurationInMinutes: 3        
+#      FinalBakeTimeInMinutes: 4
       DeploymentDurationInMinutes: 1
-      FinalBakeTimeInMinutes: 4
-#     GrowthFactor: 10
-      GrowthFactor: 50
+      FinalBakeTimeInMinutes: 1
+#      GrowthFactor: 50
+      GrowthFactor: 10
       GrowthType: LINEAR
       ReplicateTo: NONE
       Tags:

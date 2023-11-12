@@ -3,6 +3,7 @@ package service
 
 import (
 	"app/internal/pkg/entity"
+	"app/internal/pkg/message"
 	"app/internal/pkg/repository"
 
 	"example.com/appbase/pkg/config"
@@ -35,6 +36,8 @@ type userServiceImpl struct {
 func (us *userServiceImpl) Register(userName string) (*entity.User, error) {
 	//設定の読み込みのとりあえずの確認
 	us.log.Debug("hoge_name=%s", us.config.Get("hoge_name"))
+	us.log.Info(message.I_EX_0002, us.config.Get("hoge_name"))
+
 	us.log.Debug("UserName=%s", userName)
 
 	user := entity.User{Name: userName}

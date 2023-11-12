@@ -4,6 +4,7 @@ package message
 const (
 	// 情報メッセージID
 	I_EX_0001 = "i.ex.0001"
+	I_EX_0002 = "i.ex.0002"
 
 	// 入力エラーメッセージID（エラーコード）
 	W_EX_5001 = "w.ex.5001"

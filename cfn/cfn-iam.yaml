@@ -33,7 +33,7 @@ Resources:
         - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
       Tags:
         - Key: Name
-          Value: !Sub ${StackPrefix}-BastionRole      
+          Value: !Sub ${StackPrefix}-BastionRole 
   #IAM Role for RDS Proxy
   RDSProxyRole:
     Type: AWS::IAM::Role
@@ -71,6 +71,77 @@ Resources:
                 kms:ViaService: !Sub secretsmanager.${AWS::Region}.amazonaws.com
       Roles:
         - !Ref RDSProxyRole
+  #IAM Role for Lambda
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole 
+      ManagedPolicyArns:        
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole       
+        - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-LambdaRole
+  LambdaAppConfigPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${StackPrefix}-LambdaAppConfigPolicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - appconfig:GetLatestConfiguration
+              - appconfig:StartConfigurationSession
+            Resource: "*"  
+      Roles:
+        - !Ref LambdaRole                  
+  LambdaDynamoDBPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+        - Action:
+          - dynamodb:BatchGetItem
+          - dynamodb:BatchWriteItem
+          - dynamodb:ConditionCheckItem
+          - dynamodb:PutItem
+          - dynamodb:DescribeTable
+          - dynamodb:DeleteItem
+          - dynamodb:GetItem
+          - dynamodb:Scan
+          - dynamodb:Query
+          - dynamodb:UpdateItem
+          - dynamodb:DescribeLimits
+          - dynamodb:ListTables
+          - dynamodb:CreateTable
+          Effect: Allow
+          Resource:
+          - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*
+          - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*/index/*
+        - Action:
+          - dynamodb:GetShardIterator
+          - dynamodb:Scan
+          - dynamodb:Query
+          - dynamodb:DescribeStream
+          - dynamodb:GetRecords
+          - dynamodb:ListStreams
+          - dynamodb:DescribeLimits
+          Effect: Allow
+          Resource:          
+          - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*/index/*          
+      PolicyName: !Sub ${StackPrefix}-LambdaDynamoDBPolicy
+      Roles:      
+        - !Ref LambdaRole             
 Outputs:
   BastionInstanceProfile:
     Description: BastionInstanceProfile Logical ID
@@ -78,7 +149,13 @@ Outputs:
     Export: 
       Name: !Sub ${StackPrefix}-BastionInstanceProfile
   RDSProxyRoleArn:
-    Description: Information about the value
+    Description: RDSProxy Role Arn
     Value: !GetAtt RDSProxyRole.Arn
     Export: 
       Name: !Sub ${StackPrefix}-RDSProxyRoleArn
+  LambdaRoleArn:
+    Description: Lambda Role Arn
+    Value: !GetAtt LambdaRole.Arn
+    Export: 
+      Name: !Sub ${StackPrefix}-LambdaRoleArn      
+   
