@@ -6,13 +6,10 @@ package logging
 import (
 	"os"
 
+	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/message"
 	"go.uber.org/zap"
-)
-
-const (
-	ENV_PRODUCTION = "Prod"
 )
 
 // Loggerは、ログ出力のインタフェースです
@@ -35,14 +32,15 @@ type Logger interface {
 
 // NewLogger は、Loggerを作成します。
 func NewLogger(messageSource message.MessageSource) (Logger, error) {
-	env := os.Getenv("ENV")
+	env := os.Getenv(constant.ENV_NAME)
 	var config zap.Config
 	// プロファイルの切り替え
-	if env == ENV_PRODUCTION {
+	if env == constant.ENV_PRODUCTION {
 		config = zap.NewProductionConfig()
 	} else {
 		config = zap.NewDevelopmentConfig()
 	}
+	// TODO: ログレベルを環境変数で個別に変更できるようにする
 	z, err := config.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		return nil, err
