@@ -276,15 +276,20 @@ curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v
         fuga_name: gaa2
 ```
 
-* 以下のコマンドを実行すると新しいホスト化された設定が、指定したデプロイ戦略に基づき再デプロイされる
+* 以下のコマンドを実行しAppConfigのスタック更新すると、新しいホスト化された設定が指定したデプロイ戦略に基づき再デプロイされる
 ```sh
+cd cfn
 aws cloudformation validate-template --template-body file://cfn-appconfig-deploy.yaml
 aws cloudformation update-stack --stack-name Demo-AppConfigDeploy-Stack --template-body file://cfn-appconfig-deploy.yaml
 ```
 
+![AppConfigの設定再デプロイ](image/appconfig.png)
+
 * Userサービスでユーザ情報を登録するPOSTのAPIを呼び出したときの、設定値を出力するCloudWatchのログの変化を確認するとよい。
-* /aws/lambda/user-functionロググループのログ
-```
+
+* /aws/lambda/user-functionロググループのログを確認すると変化が分かる
+
+```sh
 #Before hoge_nameがfoo
 {"level":"info","ts":1699780051.3576484,"caller":"service/user_service.go:39","msg":"hoge_name=foo"}
 
