@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"example.com/appbase/pkg/apcontext"
+	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/domain"
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -63,7 +64,7 @@ func createDynamoDBClient() (*dynamodb.Client, error) {
 	awsv2.AWSV2Instrumentor(&cfg.APIOptions)
 	return dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
 		// DynamoDB Local起動先が指定されている場合
-		dynamodbEndpoint := os.Getenv("DYNAMODB_LOCAL_ENDPOINT")
+		dynamodbEndpoint := os.Getenv(constant.DYNAMODB_LOCAL_ENDPOINT_NAME)
 		if dynamodbEndpoint != "" {
 			o.BaseEndpoint = aws.String(dynamodbEndpoint)
 		}

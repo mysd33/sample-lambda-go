@@ -43,3 +43,9 @@ func (c *viperConfig) Get(key string) string {
 	}
 	return v
 }
+
+// Reload implements Config.
+func (c *viperConfig) Reload() error {
+	// 何もしない
+	return nil
+}

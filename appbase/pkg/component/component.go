@@ -36,7 +36,7 @@ func NewApplicationContext() ApplicationContext {
 	config := createConfig()
 	dynamodbAccessor := createDynamoDBAccessor(logger)
 	httpclient := createHttpClient(logger)
-	interceptor := createHanderInterceptor(logger, apiResponseFormatter)
+	interceptor := createHanderInterceptor(config, logger, apiResponseFormatter)
 
 	// Validatorの日本語化
 	validator.Setup()
@@ -134,6 +134,6 @@ func createHttpClient(logger logging.Logger) httpclient.HttpClient {
 	return httpclient.NewHttpClient(logger)
 }
 
-func createHanderInterceptor(logger logging.Logger, apiResponseFormatter api.ApiResponseFormatter) handler.HandlerInterceptor {
-	return handler.NewHandlerInterceptor(logger, apiResponseFormatter)
+func createHanderInterceptor(config config.Config, logger logging.Logger, apiResponseFormatter api.ApiResponseFormatter) handler.HandlerInterceptor {
+	return handler.NewHandlerInterceptor(config, logger, apiResponseFormatter)
 }

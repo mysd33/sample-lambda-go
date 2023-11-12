@@ -77,9 +77,14 @@ Globals:
         - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetTwoId
     Environment:
       Variables:
-        # For DynamoDB
-#        USERS_TABLE_NAME: !Ref UsersTableName         
-        TODO_TABLE_NAME: !Ref TodoTableName
+        # Environment Profile
+        ENV: !Ref Stage              
+        # AppConfig
+        APPCONFIG_EXTENSION_URL:
+          Fn::ImportValue: !Sub ${StackPrefix}-AppConfigLambdaExtensionURL        
+        AWS_APPCONFIG_EXTENSION_PREFETCH_LIST:
+          Fn::ImportValue: !Sub ${StackPrefix}-AppConfigLambdaExtensionPath
+        # TODO: Migrate to AppConfig
         # For RDB
         RDB_USER: !Sub "{{resolve:secretsmanager:${StackPrefix}-RDS-Secrets:SecretString:username}}"
         RDB_PASSWORD: !Sub "{{resolve:secretsmanager:${StackPrefix}-RDS-Secrets:SecretString:password}}"
@@ -90,12 +95,11 @@ Globals:
         RDB_DB_NAME:
           Fn::ImportValue: !Sub ${StackPrefix}-RDSDBName
         RDB_SSL_MODE: "require"    
-        DYNAMODB_LOCAL_ENDPOINT: ""        
-        ENV: !Ref Stage        
-        AppConfigExtensionsURL:
-          Fn::ImportValue: !Sub ${StackPrefix}-AppConfigLambdaExtensionURL
-        # TODO: AWS_APPCONFIG_EXTENSION_PREFETCH_LIST
-        #AWS_APPCONFIG_EXTENSION_PREFETCH_LIST: /applications/${ApplicationName}/environments/${EnvironmentName}/configurations/xxxxxx
+        # For DyanmoDB Local
+        DYNAMODB_LOCAL_ENDPOINT: ""                
+        # For DynamoDB
+#        USERS_TABLE_NAME: !Ref UsersTableName         
+        TODO_TABLE_NAME: !Ref TodoTableName
     # Deployment Configurtion           
     AutoPublishAlias: live            
     DeploymentPreference:

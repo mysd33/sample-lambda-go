@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"example.com/appbase/pkg/api"
+	"example.com/appbase/pkg/config"
 	myerrors "example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
@@ -18,13 +19,14 @@ type HandlerInterceptor interface {
 
 // HandlerInterceptor は、Handlerのインタセプタの構造体です。
 type defaultHandlerInterceptor struct {
+	config               config.Config
 	log                  logging.Logger
 	apiResponseFormatter api.ApiResponseFormatter
 }
 
 // NewHandlerInterceptor は、HandlerInterceptorを作成します。
-func NewHandlerInterceptor(log logging.Logger, apiResponseFormatter api.ApiResponseFormatter) HandlerInterceptor {
-	return &defaultHandlerInterceptor{log: log, apiResponseFormatter: apiResponseFormatter}
+func NewHandlerInterceptor(config config.Config, log logging.Logger, apiResponseFormatter api.ApiResponseFormatter) HandlerInterceptor {
+	return &defaultHandlerInterceptor{config: config, log: log, apiResponseFormatter: apiResponseFormatter}
 }
 
 // ControllerFunc Controlerで実行する関数です。
@@ -40,8 +42,13 @@ func (i *defaultHandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.Ha
 	return func(ctx *gin.Context) {
 		fv := reflect.ValueOf(controllerFunc)
 		funcName := runtime.FuncForPC(fv.Pointer()).Name()
-
 		i.log.Info(message.I_FW_0001, funcName)
+
+		// Configの最新読み込み
+		if err := i.config.Reload(); err != nil {
+			i.apiResponseFormatter.ReturnResponseBody(ctx, nil, err)
+			return
+		}
 
 		// Controllerの実行
 		result, err := controllerFunc(ctx)

@@ -290,10 +290,13 @@ aws cloudformation update-stack --stack-name Demo-AppConfigDeploy-Stack --templa
 * /aws/lambda/user-functionロググループのログを確認すると変化が分かる
 
 ```sh
-#Before hoge_nameがfoo
+#Before: APIを呼び出すと、hoge_nameが「foo」
 {"level":"info","ts":1699780051.3576484,"caller":"service/user_service.go:39","msg":"hoge_name=foo"}
 
-#After hoge_nameがfoo2に変化
+#途中でAgentによりAppConfigのキャッシュが更新される 
+[appconfig agent] 2023/11/12 13:24:04 INFO updated cache data for 'todo-app:Prod:config' in 135.032ms
+
+#After: APIを呼び出すと、hoge_nameが「foo2」に変化
 {"level":"info","ts":1699780051.3576484,"caller":"service/user_service.go:39","msg":"hoge_name=foo2"}
 ```
 

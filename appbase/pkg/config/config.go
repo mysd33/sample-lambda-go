@@ -11,6 +11,7 @@ import (
 
 type Config interface {
 	Get(key string) string
+	Reload() error
 }
 
 func NewConfig() (Config, error) {
@@ -35,6 +36,16 @@ func NewConfig() (Config, error) {
 
 type compositeConfig struct {
 	cfgs []Config
+}
+
+// Reload implements Config.
+func (c *compositeConfig) Reload() error {
+	for _, v := range c.cfgs {
+		if err := v.Reload(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Get implements Config.

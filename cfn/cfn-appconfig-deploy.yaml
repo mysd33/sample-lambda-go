@@ -21,8 +21,8 @@ Resources:
         Fn::ImportValue: !Sub ${StackPrefix}-AppConfigProfileID
       ContentType: text/plain
       Content: |
-        hoge_name: foo2
-        fuga_name: gaa2
+        hoge_name: foo
+        fuga_name: gaa
 #     LatestVersionNumber:
 #     VersionLabel:
 

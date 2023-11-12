@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"example.com/appbase/pkg/apcontext"
+	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/domain"
 	"github.com/aws/aws-xray-sdk-go/xray"
 	"github.com/cockroachdb/errors"
@@ -21,18 +22,18 @@ var (
 	// RDBトランザクション
 	Tx *sql.Tx
 	// RDBに作成したユーザ名
-	rdbUser = os.Getenv("RDB_USER")
+	rdbUser = os.Getenv(constant.RDB_USER_NAME)
 	// TODO: IAM認証でトークン取得による方法（スロットリングによる性能問題の恐れもあるので一旦様子見）
 	// RDBユーザのパスワード
-	rdbPassword = os.Getenv("RDB_PASSWORD")
+	rdbPassword = os.Getenv(constant.RDB_PASSWORD_NAME)
 	// RDS Proxyのエンドポイント
-	rdbEndpoint = os.Getenv("RDB_ENDPOINT")
+	rdbEndpoint = os.Getenv(constant.RDB_ENDPOINT_NAME)
 	// RDS Proxyのポート
-	rdbPort = os.Getenv("RDB_PORT")
+	rdbPort = os.Getenv(constant.RDB_PORT_NAME)
 	// DB名
-	rdbName = os.Getenv("RDB_DB_NAME")
+	rdbName = os.Getenv(constant.RDB_DB_NAME_NAME)
 	// SSLMode
-	rdbSslMode = os.Getenv("RDB_SSL_MODE")
+	rdbSslMode = os.Getenv(constant.RDB_SSL_MODE_NAME)
 )
 
 // ExecuteTransactionは、Serviceの関数serviceFuncの実行前後で、RDBトランザクションを実行します。

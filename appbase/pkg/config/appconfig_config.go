@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 
+	"example.com/appbase/pkg/constant"
 	"github.com/cockroachdb/errors"
 	"gopkg.in/yaml.v3"
 )
@@ -19,9 +20,38 @@ type appConfigConfig struct {
 
 // NewAppConfigConfig は、設定ファイルをロードし、viperConfigを作成します。
 func newAppConfigConfig() (*appConfigConfig, error) {
-	//コールドスタート（init）時のみに、AppConfigから最新取得する実装としている
-	//ウォームスタート時もリアルタイムに最新取得したい場合はHandlerメソッドの最初で取得するようにする必要がある
-	url := os.Getenv("AppConfigExtensionsURL")
+	cfg, err := loadAppConfig()
+	if err != nil {
+		return nil, err
+	}
+	return &appConfigConfig{cfg: cfg}, nil
+}
+
+// Get implements Config.
+func (c *appConfigConfig) Get(key string) string {
+	v, found := c.cfg[key]
+	if !found {
+		return ""
+	}
+	return v
+}
+
+// Reload implements Config.
+func (c *appConfigConfig) Reload() error {
+	//ウォームスタート時もリアルタイムに最新の設定を再取得するよう
+	//Handlerメソッドの最初で取得するようにする実装しているが
+	//init関数のみで各コンポーネント作成時にConfigの値を利用するケースも考えると
+	//設定のバージョン不整合が発生してしまう可能性があるため注意が必要
+	cfg, err := loadAppConfig()
+	if err != nil {
+		return err
+	}
+	c.cfg = cfg
+	return nil
+}
+
+func loadAppConfig() (map[string]string, error) {
+	url := os.Getenv(constant.APPCONFIG_EXTENSION_URL_NAME)
 	// AppConfig Lambda Extensionsのエンドポイントへアクセスして設定データを取得
 	response, err := http.Get(url)
 	if err != nil {
@@ -37,14 +67,5 @@ func newAppConfigConfig() (*appConfigConfig, error) {
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, errors.Errorf("AppConfig読み込みエラー:%w", err)
 	}
-	return &appConfigConfig{cfg: cfg}, nil
-}
-
-// Get implements Config.
-func (c *appConfigConfig) Get(key string) string {
-	v, found := c.cfg[key]
-	if !found {
-		return ""
-	}
-	return v
+	return cfg, nil
 }
