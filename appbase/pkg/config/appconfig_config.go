@@ -29,11 +29,17 @@ func newAppConfigConfig() (*appConfigConfig, error) {
 
 // Get implements Config.
 func (c *appConfigConfig) Get(key string) string {
-	v, found := c.cfg[key]
+	v, found := c.getWithContains(key)
 	if !found {
 		return ""
 	}
 	return v
+}
+
+// getWithContains implements Config.
+func (c *appConfigConfig) getWithContains(key string) (string, bool) {
+	v, found := c.cfg[key]
+	return v, found
 }
 
 // Reload implements Config.

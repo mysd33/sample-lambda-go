@@ -11,6 +11,7 @@ import (
 
 type Config interface {
 	Get(key string) string
+	getWithContains(key string) (string, bool)
 	Reload() error
 }
 
@@ -50,12 +51,20 @@ func (c *compositeConfig) Reload() error {
 
 // Get implements Config.
 func (c *compositeConfig) Get(key string) string {
-	for _, v := range c.cfgs {
-		// 最初に見つかった設定値を返却する
-		value := v.Get(key)
-		if value != "" {
-			return value
-		}
+	value, found := c.getWithContains(key)
+	if found {
+		return value
 	}
 	return ""
+}
+
+// getWithContains implements Config.
+func (c *compositeConfig) getWithContains(key string) (string, bool) {
+	for _, v := range c.cfgs {
+		value, found := v.getWithContains(key)
+		if found {
+			return value, found
+		}
+	}
+	return "", false
 }

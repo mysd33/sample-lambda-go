@@ -37,11 +37,17 @@ func newViperConfig() (*viperConfig, error) {
 
 // Get implements Config.
 func (c *viperConfig) Get(key string) string {
-	v, found := c.cfg[key]
+	v, found := c.getWithContains(key)
 	if !found {
 		return ""
 	}
 	return v
+}
+
+// getWithContains implements Config.
+func (c *viperConfig) getWithContains(key string) (string, bool) {
+	v, found := c.cfg[key]
+	return v, found
 }
 
 // Reload implements Config.
