@@ -442,8 +442,13 @@ curl -X POST http://127.0.0.1:3000/bff-api/v1/error/hogehoge
     * 本サンプルAPのように、SAMテンプレート内にFunctionが複数ある場合は、デバッグできるのは一度に1つの関数のみのためか、--debug-functionオプションでデバッグしたい関数を指定しないとデバッガが動かない
 
         ```sh
-        sam local start-api -d 8099 --debugger-path=%GOPATH%/bin/linux_amd64 --debug-args="-delveAPI=2" --debug-function (template.yamlのLambda関数の論理ID) --env-vars local-env.json
-        # 例
+        # Windows
+        sam local start-api -d 8099 --debugger-path=$GOPATH/bin/linux_amd64 --debug-args="-delveAPI=2" --debug-function (template.yamlのLambda関数の論理ID) --env-vars local-env.json
+
+        # Linux
+        sam local start-api -d 8099 --debugger-path=$HOME/go/bin --debug-args="-delveAPI=2" --debug-function (template.yamlのLambda関数の論理ID) --env-vars local-env.json
+
+        # Windowsの例
         sam local start-api -d 8099 --debugger-path=$GOPATH/bin/linux_amd64 --debug-args="-delveAPI=2" --debug-function HelloWorldFunction --env-vars local-env.json
         sam local start-api -d 8099 --debugger-path=$GOPATH/bin/linux_amd64 --debug-args="-delveAPI=2" --debug-function UsersFunction --env-vars local-env.json
         sam local start-api -d 8099 --debugger-path=$GOPATH/bin/linux_amd64 --debug-args="-delveAPI=2" --debug-function TodoFunction --env-vars local-env.json
@@ -460,10 +465,11 @@ curl -X POST http://127.0.0.1:3000/bff-api/v1/error/hogehoge
     * SAMテンプレート内にFunctionが1つの場合は--debug-functionオプションなくてもうまくいく
 
         ```sh        
+        # Windows
         sam local start-api -d 8099 --debugger-path=$GOPATH/bin/linux_amd64 --debug-args="-delveAPI=2" --env-vars local-env.json
 
-        #インストール環境によって、--debugger-pathが異なり、以下の場合がある
-        --debugger-path=$GOPATH/bin
+        # Linux
+        sam local start-api -d 8099 --debugger-path=$HOME/go/bin --debug-args="-delveAPI=2" --env-vars local-env.json
         ```
 
 * VSCodeからアタッチするため、`.vscode/launch.json`を作成

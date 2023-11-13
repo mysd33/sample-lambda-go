@@ -12,12 +12,17 @@
 clean:
 # for windows
 	rmdir /s /q .aws-sam
+# for Linux
+#	rm -rf .aws-sam
 
 build:
+# for windows	
 	sam build
 	xcopy /I configs .aws-sam\build\UsersFunction\configs	
 	xcopy /I configs .aws-sam\build\TodoFunction\configs
 	xcopy /I configs .aws-sam\build\BffFunction\configs
+# for linux
+# TODO	
 
 fmt:
 	cd app & go fmt ./...
@@ -35,8 +40,10 @@ local_startapi:
 
 # support only go1.x runtime 
 local_startapi_dg_%:
-#	sam local start-api -d 8099 --debugger-path=$GOPATH/bin/linux_amd64 --debug-args="-delveAPI=2" --debug-function ${@:local_startapi_dg_%=%} --env-vars local-env.json 
+# for windows
 	sam local start-api -d 8099 --debugger-path=%GOPATH%/bin/linux_amd64 --debug-args="-delveAPI=2" --debug-function ${@:local_startapi_dg_%=%} --env-vars local-env.json
+# for Linux
+#	sam local start-api -d 8099 --debugger-path=$HOME/go/bin --debug-args="-delveAPI=2" --debug-function ${@:local_startapi_dg_%=%} --env-vars local-env.json 
 
 deploy_guided:
 	sam deploy --guided
