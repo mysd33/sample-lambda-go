@@ -406,9 +406,9 @@ curl -X POST http://127.0.0.1:3000/bff-api/v1/error/hogehoge
 
 ```
 
-## sam localでのデバッグ実行
-- [delve](https://github.com/go-delve/delve)といったサードパーティのデバッガを使用することで、VSCodeでの sam localのリモートデバッグ実行可能である。
-    - [参考サイト](https://simple-minds-think-alike.moritamorie.com/entry/golang-lambda-vscode-debug)をもとにした手順で実施可能
+## sam localでのリモートデバッグ実行
+* [AWSの開発者ガイド](https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/serverless-sam-cli-using-debugging.html#serverless-sam-cli-running-locally)の記載にある通り、[delve](https://github.com/go-delve/delve)といったサードパーティのデバッガを使用することで、VSCodeでの sam localのリモートデバッグ実行可能である。
+    * [参考サイト](https://simple-minds-think-alike.moritamorie.com/entry/golang-lambda-vscode-debug)をもとにした手順で実施可能
 
 > [!WARNING]  
 > [aws-sam-cliのissue](https://github.com/aws/aws-sam-cli/issues/3718)によると、当該サンプルAPが使用する「provided.al2」（カスタムランタイム）でのsam localのデバッグ実行は現状サポートされていないとのこと。  
@@ -472,7 +472,7 @@ curl -X POST http://127.0.0.1:3000/bff-api/v1/error/hogehoge
         sam local start-api -d 8099 --debugger-path=$HOME/go/bin --debug-args="-delveAPI=2" --env-vars local-env.json
         ```
 
-* VSCodeからアタッチするため、`.vscode/launch.json`を作成
+* このサンプルAPでは作成済のものがあるのでそのまま使えばよいが、VSCodeからアタッチするため、`.vscode/launch.json`を作成
 
     ```json
     {
@@ -495,6 +495,13 @@ curl -X POST http://127.0.0.1:3000/bff-api/v1/error/hogehoge
 * VSCodeでブレイクポイントを設定、「実行とデバッグ」の▷ボタンを押すと、ブレイクポイントで止まる。
 
 ![SAM Localのデバッグ画面](image/sam-local-debug.png)
+
+## sam localでの直接デバッグ実行
+
+* [AWSの開発者ガイド](https://docs.aws.amazon.com/ja_jp/toolkit-for-vscode/latest/userguide/debug-apigateway.html)の記載にある通り、AWS Toolkitの機能で、VSCodeでの sam localの直接デバッグ実行することも可能である。
+    * ただし、[AWSの開発者ガイド](https://docs.aws.amazon.com/ja_jp/toolkit-for-vscode/latest/userguide/debug-apigateway.html)の「注記」にある通り、Goは、go1.xランタイムのみサポートしており、当該サンプルAPが使用する「provided.al2」（カスタムランタイム）でのsam localのデバッグ実行は現状サポートされていないとのこと。  
+
+* TODO: 作者のWindows端末環境ではエラーになってしまい動作しない。今後、実施できたら手順を記載する。
 
 ## godocの表示
 * godocをインストール
