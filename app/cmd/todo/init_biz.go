@@ -20,7 +20,7 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	// サービスの作成
 	todoService := service.New(ac.GetLogger(), ac.GetConfig(), todoRepository)
 	// コントローラの作成
-	todoController := controller.New(ac.GetLogger(), todoService)
+	todoController := controller.New(ac.GetLogger(), ac.GetTransactionManager(), todoService)
 	// ハンドラインタセプタの作成
 	interceptor := ac.GetInterceptor()
 

@@ -23,6 +23,7 @@ type ApplicationContext interface {
 	GetLogger() logging.Logger
 	GetConfig() config.Config
 	GetDynamoDBAccessor() dynamodb.DynamoDBAccessor
+	GetTransactionManager() dynamodb.TransactionManager
 	GetHttpClient() httpclient.HttpClient
 	GetInterceptor() handler.HandlerInterceptor
 }
@@ -35,6 +36,7 @@ func NewApplicationContext() ApplicationContext {
 	logger := createLogger(messageSource)
 	config := createConfig()
 	dynamodbAccessor := createDynamoDBAccessor(logger)
+	transactionManager := createTransactionManager(logger, dynamodbAccessor)
 	httpclient := createHttpClient(logger)
 	interceptor := createHanderInterceptor(config, logger, apiResponseFormatter)
 
@@ -42,22 +44,24 @@ func NewApplicationContext() ApplicationContext {
 	validator.Setup()
 
 	return &defaultApplicationContext{
-		config:           config,
-		messageSource:    messageSource,
-		logger:           logger,
-		dynamoDBAccessor: dynamodbAccessor,
-		httpClient:       httpclient,
-		interceptor:      interceptor,
+		config:             config,
+		messageSource:      messageSource,
+		logger:             logger,
+		dynamoDBAccessor:   dynamodbAccessor,
+		transactionManager: transactionManager,
+		httpClient:         httpclient,
+		interceptor:        interceptor,
 	}
 }
 
 type defaultApplicationContext struct {
-	config           config.Config
-	messageSource    message.MessageSource
-	logger           logging.Logger
-	dynamoDBAccessor dynamodb.DynamoDBAccessor
-	httpClient       httpclient.HttpClient
-	interceptor      handler.HandlerInterceptor
+	config             config.Config
+	messageSource      message.MessageSource
+	logger             logging.Logger
+	dynamoDBAccessor   dynamodb.DynamoDBAccessor
+	transactionManager dynamodb.TransactionManager
+	httpClient         httpclient.HttpClient
+	interceptor        handler.HandlerInterceptor
 }
 
 // GetConfig implements ApplicationContext.
@@ -68,6 +72,11 @@ func (ac *defaultApplicationContext) GetConfig() config.Config {
 // GetDynamoDBAccessor implements ApplicationContext.
 func (ac *defaultApplicationContext) GetDynamoDBAccessor() dynamodb.DynamoDBAccessor {
 	return ac.dynamoDBAccessor
+}
+
+// GetTransactionManager implements ApplicationContext.
+func (ac *defaultApplicationContext) GetTransactionManager() dynamodb.TransactionManager {
+	return ac.transactionManager
 }
 
 // GetHttpClient implements ApplicationContext.
@@ -128,6 +137,10 @@ func createDynamoDBAccessor(logger logging.Logger) dynamodb.DynamoDBAccessor {
 		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
 	}
 	return accessor
+}
+
+func createTransactionManager(logger logging.Logger, dynamodbAccessor dynamodb.DynamoDBAccessor) dynamodb.TransactionManager {
+	return dynamodb.NewTransactionManager(logger, dynamodbAccessor)
 }
 
 func createHttpClient(logger logging.Logger) httpclient.HttpClient {

@@ -25,14 +25,18 @@ type TodoController interface {
 }
 
 // New は、TodoControllerを作成します。
-func New(log logging.Logger, service service.TodoService) TodoController {
-	return &todoControllerImpl{log: log, service: service}
+func New(log logging.Logger,
+	transactionManager dynamodb.TransactionManager,
+	service service.TodoService,
+) TodoController {
+	return &todoControllerImpl{log: log, transactionManager: transactionManager, service: service}
 }
 
 // todoControllerImpl は、TodoControllerを実装する構造体です。
 type todoControllerImpl struct {
-	log     logging.Logger
-	service service.TodoService
+	log                logging.Logger
+	transactionManager dynamodb.TransactionManager
+	service            service.TodoService
 }
 
 func (c *todoControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
@@ -44,7 +48,7 @@ func (c *todoControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
 		return nil, errors.NewValidationErrorWithMessage("クエリパラメータtodoIdが未指定です")
 	}
 	// DynamoDBトランザクション管理してサービスの実行
-	return dynamodb.ExecuteTransaction(func() (interface{}, error) {
+	return c.transactionManager.ExecuteTransaction(func() (interface{}, error) {
 		return c.service.Find(todoId)
 	})
 }
@@ -58,7 +62,7 @@ func (c *todoControllerImpl) Register(ctx *gin.Context) (interface{}, error) {
 	}
 
 	// DynamoDBトランザクション管理してサービスの実行
-	return dynamodb.ExecuteTransaction(func() (interface{}, error) {
+	return c.transactionManager.ExecuteTransaction(func() (interface{}, error) {
 		return c.service.Register(request.TodoTitle)
 	})
 }
