@@ -59,11 +59,11 @@ type DynamoDBAccessor interface {
 	BatchGetItemSdk(input *dynamodb.BatchGetItemInput) (*dynamodb.BatchGetItemOutput, error)
 	// BatchWriteItemSdk は、AWS SDKによるBatchWriteItemをラップします。
 	BatchWriteItemSdk(input *dynamodb.BatchWriteItemInput) (*dynamodb.BatchWriteItemOutput, error)
+	// startTransactionは、トランザクションを開始します。
+	startTransaction(transaction transaction)
 	// AppendTransactWriteItemは、トランザクション書き込みしたい場合に対象のTransactWriteItemを追加します。
 	// なお、TransactWriteItemsの実行は、TransactionManagerのExecuteTransaction関数で実行されるdomain.ServiceFunc関数が終了する際にtransactionWriteItemsSDKを実施します。
 	AppendTransactWriteItem(item *types.TransactWriteItem)
-	// startTransactionは、トランザクションを開始します。
-	startTransaction(transactionManager TransactionManager)
 	// transactWriteItemsSDK は、AWS SDKによるTransactWriteItemsをラップします。
 	// なお、TransactWriteItemsの実行は、TransactionManagerが実行するため非公開にしています。
 	transactWriteItemsSDK(items []types.TransactWriteItem) (*dynamodb.TransactWriteItemsOutput, error)
@@ -79,9 +79,9 @@ func NewDynamoDBAccessor(log logging.Logger) (DynamoDBAccessor, error) {
 }
 
 type defaultDynamoDBAccessor struct {
-	log                logging.Logger
-	dynamodbClient     *dynamodb.Client
-	transactionManager TransactionManager
+	log            logging.Logger
+	dynamodbClient *dynamodb.Client
+	transaction    transaction
 }
 
 // GetItemSdk implements DynamoDBAccessor.
@@ -134,14 +134,16 @@ func (d *defaultDynamoDBAccessor) BatchWriteItemSdk(input *dynamodb.BatchWriteIt
 	return d.dynamodbClient.BatchWriteItem(apcontext.Context, input)
 }
 
-// AppendTransactWriteItem implements DynamoDBAccessor.
-func (d *defaultDynamoDBAccessor) AppendTransactWriteItem(item *types.TransactWriteItem) {
-	d.transactionManager.AppendTransactWriteItem(item)
+// startTransaction implements DynamoDBAccessor.
+func (d *defaultDynamoDBAccessor) startTransaction(transaction transaction) {
+	// TODO: 本当はここがスレッド毎にトランザクション管理できるとgoroutineセーフにできるが、現状難しい
+	d.transaction = transaction
 }
 
-// startTransaction implements DynamoDBAccessor.
-func (d *defaultDynamoDBAccessor) startTransaction(transactionManager TransactionManager) {
-	d.transactionManager = transactionManager
+// AppendTransactWriteItem implements DynamoDBAccessor.
+func (d *defaultDynamoDBAccessor) AppendTransactWriteItem(item *types.TransactWriteItem) {
+	// TODO: 本当はここがスレッド毎にトランザクション管理できるとgoroutineセーフにできるが、現状難しい
+	d.transaction.appendTransactWriteItem(item)
 }
 
 // transactWriteItemsSDK implements DynamoDBAccessor.

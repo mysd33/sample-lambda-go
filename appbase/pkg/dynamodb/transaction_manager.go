@@ -13,8 +13,6 @@ import (
 
 // TransactionManager はトランザクションを管理するインタフェースです
 type TransactionManager interface {
-	// AppendTransactWriteItemは、トランザクション書き込みしたい場合に対象のTransactWriteItemを追加します。
-	AppendTransactWriteItem(item *types.TransactWriteItem)
 	// ExecuteTransaction は、Serviceの関数serviceFuncの実行前後でDynamoDBトランザクション実行します。
 	ExecuteTransaction(serviceFunc domain.ServiceFunc) (interface{}, error)
 }
@@ -27,66 +25,90 @@ func NewTransactionManager(log logging.Logger, dynamodbAccessor DynamoDBAccessor
 type defaultTransactionManager struct {
 	log              logging.Logger
 	dynamodbAccessor DynamoDBAccessor
-	// 書き込みトランザクション
-	transactWriteItems []types.TransactWriteItem
-	// TODO: 読み込みトランザクションTransactGetItems
-	// transactGetItems []types.TransactGetItem
-}
-
-// AppendTransactWriteItem implements TransactionManager.
-func (tm *defaultTransactionManager) AppendTransactWriteItem(item *types.TransactWriteItem) {
-	tm.transactWriteItems = append(tm.transactWriteItems, *item)
 }
 
 // ExecuteTransaction implements TransactionManager.
 func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.ServiceFunc) (interface{}, error) {
-	// トランザクションの開始
-	tm.startTransaction()
+	// 新しいトランザクションを作成
+	transction := newTrasaction(tm.log)
+	// トランザクションを開始
+	transction.start(tm.dynamodbAccessor)
 	// サービスの実行
 	result, err := serviceFunc()
 	// DynamoDBのトランザクションを終了
-	_, err = tm.endTransaction(err)
+	_, err = transction.endTransaction(err)
 	if err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-// checkTransactWriteItems は、TransactWriteItemが存在するかを確認します。
-func (tm *defaultTransactionManager) checkTransactWriteItems() bool {
-	return len(tm.transactWriteItems) > 0
+// transactionは トランザクションを表すインタフェースです
+type transaction interface {
+	start(dynamodbAccessor DynamoDBAccessor)
+	// appendTransactWriteItemは、トランザクション書き込みしたい場合に対象のTransactWriteItemを追加します。
+	appendTransactWriteItem(item *types.TransactWriteItem)
+	// checkTransactWriteItems は、TransactWriteItemが存在するかを確認します。
+	checkTransactWriteItems() bool
+	// endTransaction は、エラーがなければ、AWS SDKによるTransactionWriteItemsを実行しトランザクション実行し、エラーがある場合には実行しません。
+	endTransaction(err error) (*dynamodb.TransactWriteItemsOutput, error)
 }
 
-// clearTransactWriteItems() は、TransactWriteItemをクリアします。
-func (tm *defaultTransactionManager) clearTransactWriteItems() {
-	tm.transactWriteItems = nil
+// newTrasactionは 新しいTransactionを作成します。
+func newTrasaction(log logging.Logger) transaction {
+	return &defaultTransaction{log: log}
 }
 
-func (tm *defaultTransactionManager) startTransaction() {
-	tm.log.Debug("トランザクション開始")
-	tm.dynamodbAccessor.startTransaction(tm)
+type defaultTransaction struct {
+	log              logging.Logger
+	dynamodbAccessor DynamoDBAccessor
+	// 書き込みトランザクション
+	transactWriteItems []types.TransactWriteItem
+	// TODO: 読み込みトランザクションTransactGetItems
+	// transactGetItems []types.TransactGetItem
 }
 
-// endTransaction は、エラーがなければ、AWS SDKによるTransactionWriteItemsを実行しトランザクション実行し、エラーがある場合には実行しません。
-// TODO: TransactGetItemsの考慮
-func (tm *defaultTransactionManager) endTransaction(err error) (*dynamodb.TransactWriteItemsOutput, error) {
-	if !tm.checkTransactWriteItems() {
-		tm.log.Debug("トランザクション処理なし")
+// start implements Transaction.
+func (t *defaultTransaction) start(dynamodbAccessor DynamoDBAccessor) {
+	t.log.Debug("トランザクション開始")
+	t.dynamodbAccessor = dynamodbAccessor
+	dynamodbAccessor.startTransaction(t)
+}
+
+// appendTransactWriteItem implements Transaction.
+func (t *defaultTransaction) appendTransactWriteItem(item *types.TransactWriteItem) {
+	t.transactWriteItems = append(t.transactWriteItems, *item)
+}
+
+// checkTransactWriteItems implements Transaction.
+func (t *defaultTransaction) checkTransactWriteItems() bool {
+	return len(t.transactWriteItems) > 0
+}
+
+// endTransaction implements Transaction.
+func (t *defaultTransaction) endTransaction(err error) (*dynamodb.TransactWriteItemsOutput, error) {
+	if !t.checkTransactWriteItems() {
+		t.log.Debug("トランザクション処理なし")
 		return nil, nil
 	}
 	// 処理結果がどんな場合でもTransactWriteItemをクリア
-	defer tm.clearTransactWriteItems()
+	defer t.clearTransactWriteItems()
 	if err != nil {
-		tm.log.Debug("業務処理エラーでトランザクションロールバック")
+		t.log.Debug("業務処理エラーでトランザクションロールバック")
 		// Serviceの処理結果がエラー場合は、トランザクションを実行せず、元のエラーを返却し終了
 		return nil, err
 	}
 	// トランザクション実行
-	output, err := tm.dynamodbAccessor.transactWriteItemsSDK(tm.transactWriteItems)
+	output, err := t.dynamodbAccessor.transactWriteItemsSDK(t.transactWriteItems)
 	if err != nil {
-		tm.log.Debug("トランザクション実行失敗でロールバック")
+		t.log.Debug("トランザクション実行失敗でロールバック")
 		return nil, errors.WithStack(err)
 	}
-	tm.log.Debug("トランザクション終了")
+	t.log.Debug("トランザクション終了")
 	return output, nil
+}
+
+// clearTransactWriteItems() は、TransactWriteItemをクリアします。
+func (t *defaultTransaction) clearTransactWriteItems() {
+	t.transactWriteItems = nil
 }
