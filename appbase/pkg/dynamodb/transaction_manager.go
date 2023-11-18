@@ -89,7 +89,7 @@ func (t *defaultTransaction) checkTransactWriteItems() bool {
 func (t *defaultTransaction) endTransaction(err error) (*dynamodb.TransactWriteItemsOutput, error) {
 	if !t.checkTransactWriteItems() {
 		t.log.Debug("トランザクション処理なし")
-		return nil, nil
+		return nil, err
 	}
 	// 処理結果がどんな場合でもTransactWriteItemをクリア
 	defer t.clearTransactWriteItems()
