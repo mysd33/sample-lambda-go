@@ -2,6 +2,8 @@
 .PHONY: build
 .PHONY: fmt
 .PHONY: validate
+.PHONY: unit_test
+.PHONY: integration_test
 .PHONY: local_startapi
 .PHONY: deploy
 .PHONY: deploy_guided
@@ -28,12 +30,15 @@ fmt:
 	cd app & go fmt ./...
 	cd appbase & go fmt ./...
 
+validate:
+	sam validate
+
 unit_test:
 	cd app & go test -v ./internal/...
 	cd appbase & go test -v ./pkg/...
 
-validate:
-	sam validate
+integration_test:
+	cd app & go test -v ./cmd/...
 
 local_startapi:
 	sam local start-api --env-vars local-env.json	
