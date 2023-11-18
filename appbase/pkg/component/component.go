@@ -54,6 +54,33 @@ func NewApplicationContext() ApplicationContext {
 	}
 }
 
+// TODO: 暫定：テスト用のApplicationContextを作成します。
+func NewApplicationContextForTest() ApplicationContext {
+	// 各種AP基盤の構造体を作成
+	messageSource := createMessageSource()
+	apiResponseFormatter := createApiResponseFormatter(messageSource)
+	logger := createLogger(messageSource)
+	config := createConfig()
+	//dynamodbAccessor := createDynamoDBAccessor(logger)
+	dynamodbAccessor := createDynamoDBAccessorForTest(logger)
+	transactionManager := createTransactionManager(logger, dynamodbAccessor)
+	httpclient := createHttpClient(logger)
+	interceptor := createHanderInterceptor(config, logger, apiResponseFormatter)
+
+	// Validatorの日本語化
+	validator.Setup()
+
+	return &defaultApplicationContext{
+		config:             config,
+		messageSource:      messageSource,
+		logger:             logger,
+		dynamoDBAccessor:   dynamodbAccessor,
+		transactionManager: transactionManager,
+		httpClient:         httpclient,
+		interceptor:        interceptor,
+	}
+}
+
 type defaultApplicationContext struct {
 	config             config.Config
 	messageSource      message.MessageSource
@@ -132,6 +159,16 @@ func createConfig() config.Config {
 
 func createDynamoDBAccessor(logger logging.Logger) dynamodb.DynamoDBAccessor {
 	accessor, err := dynamodb.NewDynamoDBAccessor(logger)
+	if err != nil {
+		// 異常終了
+		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
+	}
+	return accessor
+}
+
+// TODO: 暫定対処
+func createDynamoDBAccessorForTest(logger logging.Logger) dynamodb.DynamoDBAccessor {
+	accessor, err := dynamodb.NewDynamoDBAccessorForTest(logger)
 	if err != nil {
 		// 異常終了
 		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))

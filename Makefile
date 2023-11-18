@@ -38,7 +38,9 @@ unit_test:
 	cd appbase & go test -v ./pkg/...
 
 integration_test:
+	cd dynamodb-local & docker-compose up -d
 	cd app & go test -v ./cmd/...
+	cd dynamodb-local & docker-compose stop
 
 local_startapi:
 	sam local start-api --env-vars local-env.json	

@@ -78,6 +78,29 @@ func NewDynamoDBAccessor(log logging.Logger) (DynamoDBAccessor, error) {
 	return &defaultDynamoDBAccessor{log: log, dynamodbClient: dynamodbClient}, nil
 }
 
+// TODO: 暫定的にテスト用に作成（本来はテスト用の設定情報を読めるConfigの作りに変えないといけない）
+func NewDynamoDBAccessorForTest(log logging.Logger) (DynamoDBAccessor, error) {
+	dynamodbClient, err := createDynamoDBClientForTest()
+	if err != nil {
+		return nil, err
+	}
+	return &defaultDynamoDBAccessor{log: log, dynamodbClient: dynamodbClient}, nil
+}
+
+// TODO: 暫定的にテスト用に作成（本来はテスト用の設定情報を読めるConfigの作りに変えないといけない）
+func createDynamoDBClientForTest() (*dynamodb.Client, error) {
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	awsv2.AWSV2Instrumentor(&cfg.APIOptions)
+	return dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
+		// DynamoDB Local起動を強制的に指定
+		dynamodbEndpoint := "http://host.docker.internal:8000"
+		o.BaseEndpoint = aws.String(dynamodbEndpoint)
+	}), nil
+}
+
 type defaultDynamoDBAccessor struct {
 	log            logging.Logger
 	dynamodbClient *dynamodb.Client

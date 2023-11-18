@@ -17,7 +17,7 @@ type Config interface {
 
 func NewConfig() (Config, error) {
 	var cfgs []Config
-	if os.Getenv(constant.ENV_NAME) != constant.ENV_LOCAL {
+	if os.Getenv(constant.ENV_NAME) != "" && os.Getenv(constant.ENV_NAME) != constant.ENV_LOCAL {
 		//クラウド上での実行（Env=Local以外）では、AppConfigから優先的に設定値を取得する
 		ac, err := newAppConfigConfig()
 		if err != nil {
