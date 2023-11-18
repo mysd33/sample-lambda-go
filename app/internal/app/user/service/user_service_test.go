@@ -38,14 +38,15 @@ func TestRegister(t *testing.T) {
 	expectedName := "fuga"
 	messageSource, _ := message.NewMessageSource()
 	log, _ := logging.NewLogger(messageSource)
-	cfg := &config.Config{Hoge: config.Hoge{Name: "hoge"}}
+	// テスト用のConfigを作成
+	cfg, _ := config.NewTestConfig(map[string]string{"hoge_name": "fuga"})
 
-	//Mockへの入力値と戻り値の設定
-	mock := new(MockUserRepository)
+	//RepsitoryのMockへの入力値と戻り値の設定
+	mockRepository := new(MockUserRepository)
 	mockInputValue := entity.User{Name: inputUserName}
 	mockReturnValue := entity.User{ID: id.GenerateId(), Name: expectedName}
-	mock.On("PutUser", &mockInputValue).Return(&mockReturnValue, nil)
-	var repository repository.UserRepository = mock
+	mockRepository.On("PutUser", &mockInputValue).Return(&mockReturnValue, nil)
+	var repository repository.UserRepository = mockRepository
 	sut := service.New(log, cfg, repository)
 	//テスト対象メソッドの呼び出し
 	actual, _ := sut.Register(inputUserName)
@@ -53,6 +54,6 @@ func TestRegister(t *testing.T) {
 	//テスト対象メソッドのAssert
 	assert.Equal(t, expectedName, actual.Name)
 	//Mockで定義した入力が呼ばれたことのAssert
-	mock.AssertExpectations(t)
+	mockRepository.AssertExpectations(t)
 
 }

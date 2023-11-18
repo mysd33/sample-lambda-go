@@ -16,7 +16,7 @@ type viperConfig struct {
 }
 
 // NewViperConfig は、設定ファイルをロードし、viperConfigを作成します。
-func newViperConfig() (*viperConfig, error) {
+func newViperConfig() (Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath("configs/")

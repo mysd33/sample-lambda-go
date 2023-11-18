@@ -13,13 +13,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// appConfigConfigは、AppConfigによるConfig実装です。
+// appConfigConfigは、AWS AppConfigによるConfig実装です。
 type appConfigConfig struct {
 	cfg map[string]string
 }
 
-// NewAppConfigConfig は、設定ファイルをロードし、viperConfigを作成します。
-func newAppConfigConfig() (*appConfigConfig, error) {
+// NewAppConfigConfig は、AWS AppConfigから設定をロードする、Configを作成します。
+func newAppConfigConfig() (Config, error) {
 	cfg, err := loadAppConfig()
 	if err != nil {
 		return nil, err
