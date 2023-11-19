@@ -21,7 +21,7 @@ type viperConfig struct {
 func newViperConfig() (Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	if os.Getenv(constant.ENV_NAME) == "" || os.Getenv(constant.ENV_NAME) == constant.ENV_LOCAL_TEST {
+	if os.Getenv(constant.ENV_NAME) == constant.ENV_LOCAL_TEST {
 		// 処理テストコード実行の場合のみパスを相対パスに変更
 		viper.AddConfigPath("../../../configs/")
 	} else {

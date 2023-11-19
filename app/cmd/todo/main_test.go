@@ -18,8 +18,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-//TODO: 先にmain.go内のinit関数が動作してしまっている
-
 func TestPostTodo(t *testing.T) {
 	t.Setenv(constant.ENV_NAME, constant.ENV_LOCAL_TEST)
 	env := os.Getenv(constant.ENV_NAME)
