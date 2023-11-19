@@ -5,6 +5,7 @@ import (
 	"app/internal/pkg/entity"
 	"app/internal/pkg/message"
 
+	"example.com/appbase/pkg/config"
 	mydynamodb "example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/id"
@@ -14,11 +15,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
+const (
+	USERS_TABLE_NAME = "USERS_TABLE_NAME"
+)
+
 // NewUserRepositoryForDynamoDB は、DynamoDB保存のためのUserRepository実装を作成します。
-func NewUserRepositoryForDynamoDB(accessor mydynamodb.DynamoDBAccessor, log logging.Logger) UserRepository {
+func NewUserRepositoryForDynamoDB(accessor mydynamodb.DynamoDBAccessor, log logging.Logger, config config.Config) UserRepository {
 	return &UserRepositoryImplByDynamoDB{
 		accessor: accessor,
 		log:      log,
+		config:   config,
 	}
 }
 
@@ -26,6 +32,7 @@ func NewUserRepositoryForDynamoDB(accessor mydynamodb.DynamoDBAccessor, log logg
 type UserRepositoryImplByDynamoDB struct {
 	accessor mydynamodb.DynamoDBAccessor
 	log      logging.Logger
+	config   config.Config
 }
 
 func (ur *UserRepositoryImplByDynamoDB) GetUser(userId string) (*entity.User, error) {
@@ -35,6 +42,8 @@ func (ur *UserRepositoryImplByDynamoDB) GetUser(userId string) (*entity.User, er
 	//Itemの取得（X-Rayトレース）
 	user := entity.User{ID: userId}
 	key, err := user.GetKey()
+
+	userTable := ur.config.Get(USERS_TABLE_NAME)
 	if err != nil {
 		// return nil, errors.Wrapf(err, "failed to get key")
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
@@ -63,7 +72,7 @@ func (ur *UserRepositoryImplByDynamoDB) PutUser(user *entity.User) (*entity.User
 	// ID採番
 	userId := id.GenerateId()
 	user.ID = userId
-
+	userTable := ur.config.Get(USERS_TABLE_NAME)
 	av, err := attributevalue.MarshalMap(user)
 	if err != nil {
 		// return nil, errors.Wrapf(err, "failed to marshal item")

@@ -5,9 +5,9 @@ package dynamodb
 
 import (
 	"context"
-	"os"
 
 	"example.com/appbase/pkg/apcontext"
+	myConfig "example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -19,7 +19,7 @@ import (
 )
 
 // createDynamoDBClient は、DynamoDBClientを作成します。
-func createDynamoDBClient() (*dynamodb.Client, error) {
+func createDynamoDBClient(myCfg myConfig.Config) (*dynamodb.Client, error) {
 	//TODO: カスタムHTTPClientの作成
 
 	// AWS SDK for Go v2 Migration
@@ -34,7 +34,7 @@ func createDynamoDBClient() (*dynamodb.Client, error) {
 	awsv2.AWSV2Instrumentor(&cfg.APIOptions)
 	return dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
 		// DynamoDB Local起動先が指定されている場合
-		dynamodbEndpoint := os.Getenv(constant.DYNAMODB_LOCAL_ENDPOINT_NAME)
+		dynamodbEndpoint := myCfg.Get(constant.DYNAMODB_LOCAL_ENDPOINT_NAME)
 		if dynamodbEndpoint != "" {
 			o.BaseEndpoint = aws.String(dynamodbEndpoint)
 		}
@@ -70,35 +70,12 @@ type DynamoDBAccessor interface {
 }
 
 // NewDynamoDBAccessor は、Acccessorを作成します。
-func NewDynamoDBAccessor(log logging.Logger) (DynamoDBAccessor, error) {
-	dynamodbClient, err := createDynamoDBClient()
+func NewDynamoDBAccessor(log logging.Logger, myCfg myConfig.Config) (DynamoDBAccessor, error) {
+	dynamodbClient, err := createDynamoDBClient(myCfg)
 	if err != nil {
 		return nil, err
 	}
 	return &defaultDynamoDBAccessor{log: log, dynamodbClient: dynamodbClient}, nil
-}
-
-// TODO: 暫定的にテスト用に作成（本来はテスト用の設定情報を読めるConfigの作りに変えないといけない）
-func NewDynamoDBAccessorForTest(log logging.Logger) (DynamoDBAccessor, error) {
-	dynamodbClient, err := createDynamoDBClientForTest()
-	if err != nil {
-		return nil, err
-	}
-	return &defaultDynamoDBAccessor{log: log, dynamodbClient: dynamodbClient}, nil
-}
-
-// TODO: 暫定的にテスト用に作成（本来はテスト用の設定情報を読めるConfigの作りに変えないといけない）
-func createDynamoDBClientForTest() (*dynamodb.Client, error) {
-	cfg, err := config.LoadDefaultConfig(context.TODO())
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	awsv2.AWSV2Instrumentor(&cfg.APIOptions)
-	return dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
-		// DynamoDB Local起動を強制的に指定
-		dynamodbEndpoint := "http://host.docker.internal:8000"
-		o.BaseEndpoint = aws.String(dynamodbEndpoint)
-	}), nil
 }
 
 type defaultDynamoDBAccessor struct {

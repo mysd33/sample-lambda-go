@@ -35,35 +35,8 @@ func NewApplicationContext() ApplicationContext {
 	apiResponseFormatter := createApiResponseFormatter(messageSource)
 	logger := createLogger(messageSource)
 	config := createConfig()
-	dynamodbAccessor := createDynamoDBAccessor(logger)
-	transactionManager := createTransactionManager(logger, dynamodbAccessor)
-	httpclient := createHttpClient(logger)
-	interceptor := createHanderInterceptor(config, logger, apiResponseFormatter)
-
-	// Validatorの日本語化
-	validator.Setup()
-
-	return &defaultApplicationContext{
-		config:             config,
-		messageSource:      messageSource,
-		logger:             logger,
-		dynamoDBAccessor:   dynamodbAccessor,
-		transactionManager: transactionManager,
-		httpClient:         httpclient,
-		interceptor:        interceptor,
-	}
-}
-
-// TODO: 暫定：テスト用のApplicationContextを作成します。
-func NewApplicationContextForTest() ApplicationContext {
-	// 各種AP基盤の構造体を作成
-	messageSource := createMessageSource()
-	apiResponseFormatter := createApiResponseFormatter(messageSource)
-	logger := createLogger(messageSource)
-	config := createConfig()
-	//dynamodbAccessor := createDynamoDBAccessor(logger)
-	dynamodbAccessor := createDynamoDBAccessorForTest(logger)
-	transactionManager := createTransactionManager(logger, dynamodbAccessor)
+	dynamodbAccessor := createDynamoDBAccessor(logger, config)
+	transactionManager := createDynamoDBTransactionManager(logger, dynamodbAccessor)
 	httpclient := createHttpClient(logger)
 	interceptor := createHanderInterceptor(config, logger, apiResponseFormatter)
 
@@ -157,8 +130,8 @@ func createConfig() config.Config {
 	return cfg
 }
 
-func createDynamoDBAccessor(logger logging.Logger) dynamodb.DynamoDBAccessor {
-	accessor, err := dynamodb.NewDynamoDBAccessor(logger)
+func createDynamoDBAccessor(logger logging.Logger, config config.Config) dynamodb.DynamoDBAccessor {
+	accessor, err := dynamodb.NewDynamoDBAccessor(logger, config)
 	if err != nil {
 		// 異常終了
 		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
@@ -166,17 +139,7 @@ func createDynamoDBAccessor(logger logging.Logger) dynamodb.DynamoDBAccessor {
 	return accessor
 }
 
-// TODO: 暫定対処
-func createDynamoDBAccessorForTest(logger logging.Logger) dynamodb.DynamoDBAccessor {
-	accessor, err := dynamodb.NewDynamoDBAccessorForTest(logger)
-	if err != nil {
-		// 異常終了
-		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
-	}
-	return accessor
-}
-
-func createTransactionManager(logger logging.Logger, dynamodbAccessor dynamodb.DynamoDBAccessor) dynamodb.TransactionManager {
+func createDynamoDBTransactionManager(logger logging.Logger, dynamodbAccessor dynamodb.DynamoDBAccessor) dynamodb.TransactionManager {
 	return dynamodb.NewTransactionManager(logger, dynamodbAccessor)
 }
 

@@ -5,6 +5,7 @@ import (
 	"app/internal/pkg/entity"
 	"app/internal/pkg/message"
 
+	"example.com/appbase/pkg/config"
 	mydynamodb "example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/id"
@@ -14,11 +15,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
+const (
+	TODO_TABLE_NAME = "TODO_TABLE_NAME"
+)
+
 // NewTodoRepositoryForDynamoDB は、TodoRepositoryを作成します。
-func NewTodoRepositoryForDynamoDB(accessor mydynamodb.DynamoDBAccessor, log logging.Logger) TodoRepository {
+func NewTodoRepositoryForDynamoDB(accessor mydynamodb.DynamoDBAccessor, log logging.Logger, config config.Config) TodoRepository {
 	return &todoRepositoryImplByDynamoDB{
 		accessor: accessor,
 		log:      log,
+		config:   config,
 	}
 }
 
@@ -26,6 +32,7 @@ func NewTodoRepositoryForDynamoDB(accessor mydynamodb.DynamoDBAccessor, log logg
 type todoRepositoryImplByDynamoDB struct {
 	accessor mydynamodb.DynamoDBAccessor
 	log      logging.Logger
+	config   config.Config
 }
 
 func (tr *todoRepositoryImplByDynamoDB) GetTodo(todoId string) (*entity.Todo, error) {
@@ -35,6 +42,7 @@ func (tr *todoRepositoryImplByDynamoDB) GetTodo(todoId string) (*entity.Todo, er
 	//Itemの取得
 	todo := entity.Todo{ID: todoId}
 	key, err := todo.GetKey()
+	todoTable := tr.config.Get(TODO_TABLE_NAME)
 	if err != nil {
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
@@ -60,7 +68,7 @@ func (tr *todoRepositoryImplByDynamoDB) PutTodo(todo *entity.Todo) (*entity.Todo
 	//ID採番
 	todoId := id.GenerateId()
 	todo.ID = todoId
-
+	todoTable := tr.config.Get(TODO_TABLE_NAME)
 	av, err := attributevalue.MarshalMap(todo)
 	if err != nil {
 		return nil, errors.NewSystemError(err, message.E_EX_9001)

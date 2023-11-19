@@ -16,11 +16,14 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// TODO: 構造体にしてDI可能にするための対応
 var (
 	// DBコネクション
 	DB *sql.DB
 	// RDBトランザクション
 	Tx *sql.Tx
+
+	// TODO: プロパティ管理機能から取得する対応
 	// RDBに作成したユーザ名
 	rdbUser = os.Getenv(constant.RDB_USER_NAME)
 	// TODO: IAM認証でトークン取得による方法（スロットリングによる性能問題の恐れもあるので一旦様子見）

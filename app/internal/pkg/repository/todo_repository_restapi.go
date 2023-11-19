@@ -6,27 +6,32 @@ import (
 	"app/internal/pkg/message"
 	"encoding/json"
 	"fmt"
-	"os"
 
+	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/httpclient"
 	"example.com/appbase/pkg/logging"
 )
 
+const (
+	TODO_API_BASE_URL = "TODO_API_BASE_URL"
+)
+
 // NewTodoRepositoryForRestAPI は、REST APIのためのTodoRepository実装を作成します。
-func NewTodoRepositoryForRestAPI(httpClient httpclient.HttpClient, log logging.Logger) TodoRepository {
-	return &todoRepositoryImplByRestAPI{httpClient: httpClient, log: log, baseUrl: os.Getenv("TODO_API_BASE_URL")}
+func NewTodoRepositoryForRestAPI(httpClient httpclient.HttpClient, log logging.Logger, config config.Config) TodoRepository {
+	return &todoRepositoryImplByRestAPI{httpClient: httpClient, log: log, config: config}
 }
 
 type todoRepositoryImplByRestAPI struct {
 	httpClient httpclient.HttpClient
 	log        logging.Logger
-	baseUrl    string
+	config     config.Config
 }
 
 // GetTodo implements TodoRepository.
 func (tr *todoRepositoryImplByRestAPI) GetTodo(todoId string) (*entity.Todo, error) {
-	url := fmt.Sprintf("%s/todo-api/v1/todo/%s", tr.baseUrl, todoId)
+	baseUrl := tr.config.Get(TODO_API_BASE_URL)
+	url := fmt.Sprintf("%s/todo-api/v1/todo/%s", baseUrl, todoId)
 	tr.log.Debug("url:%s", url)
 
 	response, err := tr.httpClient.Get(url, nil, nil)
@@ -43,7 +48,8 @@ func (tr *todoRepositoryImplByRestAPI) GetTodo(todoId string) (*entity.Todo, err
 
 // PutTodo implements TodoRepository.
 func (tr *todoRepositoryImplByRestAPI) PutTodo(todo *entity.Todo) (*entity.Todo, error) {
-	url := fmt.Sprintf("%s/todo-api/v1/todo", tr.baseUrl)
+	baseUrl := tr.config.Get(TODO_API_BASE_URL)
+	url := fmt.Sprintf("%s/todo-api/v1/todo", baseUrl)
 	tr.log.Debug("url:%s", url)
 	// リクエストデータをアンマーシャル
 	data, err := json.MarshalIndent(todo, "", "    ")

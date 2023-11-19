@@ -18,8 +18,8 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	// メッセージの設定
 	ac.GetMessageSource().Add(message.Messages_yaml)
 	// リポジトリの作成
-	userRepository := repository.NewUserRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger())
-	todoRepository := repository.NewTodoRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger())
+	userRepository := repository.NewUserRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger(), ac.GetConfig())
+	todoRepository := repository.NewTodoRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger(), ac.GetConfig())
 	// サービスの作成
 	bffService := service.New(ac.GetLogger(), ac.GetConfig(), userRepository, todoRepository)
 	// コントローラの作成

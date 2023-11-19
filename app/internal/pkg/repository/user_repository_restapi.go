@@ -6,27 +6,32 @@ import (
 	"app/internal/pkg/message"
 	"encoding/json"
 	"fmt"
-	"os"
 
+	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/httpclient"
 	"example.com/appbase/pkg/logging"
 )
 
+const (
+	USERS_API_BASE_URL = "USERS_API_BASE_URL"
+)
+
 // NewUserRepositoryForRestAPI は、REST APIのためのUserRepository実装を作成します。
-func NewUserRepositoryForRestAPI(httpClient httpclient.HttpClient, log logging.Logger) UserRepository {
-	return &userRepositoryImplByRestAPI{httpClient: httpClient, log: log, baseUrl: os.Getenv("USERS_API_BASE_URL")}
+func NewUserRepositoryForRestAPI(httpClient httpclient.HttpClient, log logging.Logger, config config.Config) UserRepository {
+	return &userRepositoryImplByRestAPI{httpClient: httpClient, log: log, config: config}
 }
 
 type userRepositoryImplByRestAPI struct {
 	httpClient httpclient.HttpClient
 	log        logging.Logger
-	baseUrl    string
+	config     config.Config
 }
 
 // GetUser implements UserRepository.
 func (ur *userRepositoryImplByRestAPI) GetUser(userId string) (*entity.User, error) {
-	url := fmt.Sprintf("%s/users-api/v1/users/%s", ur.baseUrl, userId)
+	baseUrl := ur.config.Get(USERS_API_BASE_URL)
+	url := fmt.Sprintf("%s/users-api/v1/users/%s", baseUrl, userId)
 	ur.log.Debug("url:%s", url)
 	// REST APIの呼び出し
 	response, err := ur.httpClient.Get(url, nil, nil)
@@ -47,7 +52,8 @@ func (ur *userRepositoryImplByRestAPI) GetUser(userId string) (*entity.User, err
 
 // PutUser implements UserRepository.
 func (ur *userRepositoryImplByRestAPI) PutUser(user *entity.User) (*entity.User, error) {
-	url := fmt.Sprintf("%s/users-api/v1/users", ur.baseUrl)
+	baseUrl := ur.config.Get(USERS_API_BASE_URL)
+	url := fmt.Sprintf("%s/users-api/v1/users", baseUrl)
 	ur.log.Debug("url:%s", url)
 	// リクエストデータをアンマーシャル
 	data, err := json.MarshalIndent(user, "", "    ")

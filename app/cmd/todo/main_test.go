@@ -6,25 +6,31 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/component"
+	"example.com/appbase/pkg/constant"
 	"github.com/aws/aws-xray-sdk-go/xray"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
 
+//TODO: 先にmain.go内のinit関数が動作してしまっている
+
 func TestPostTodo(t *testing.T) {
+	t.Setenv(constant.ENV_NAME, constant.ENV_LOCAL_TEST)
+	env := os.Getenv(constant.ENV_NAME)
+	println("env:" + env)
+
 	//  テスト用にX-Rayのセグメント開始
 	ctx, seg := xray.BeginSegment(context.Background(), "main_test")
 	apcontext.Context = ctx
 	defer seg.Close(nil)
 
-	// TODO: 暫定対処　テスト用のApplicationContextの作成
-	ac := component.NewApplicationContextForTest()
-	// 業務の初期化処理実行
+	ac := component.NewApplicationContext()
 	r := gin.Default()
 	initBiz(ac, r)
 
@@ -40,5 +46,7 @@ func TestPostTodo(t *testing.T) {
 		json.Unmarshal(w.Body.Bytes(), &actual)
 		assert.NotEqual(t, "", actual.ID)
 		assert.Equal(t, "Buy Milk", actual.Title)
+
+		//TODO: DBの状態確認
 	})
 }

@@ -4,8 +4,10 @@ config パッケージは、設定ファイルを管理するパッケージで�
 package config
 
 import (
+	"os"
 	"strings"
 
+	"example.com/appbase/pkg/constant"
 	"github.com/cockroachdb/errors"
 	"github.com/spf13/viper"
 )
@@ -19,7 +21,12 @@ type viperConfig struct {
 func newViperConfig() (Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("configs/")
+	if os.Getenv(constant.ENV_NAME) == "" || os.Getenv(constant.ENV_NAME) == constant.ENV_LOCAL_TEST {
+		// 処理テストコード実行の場合のみパスを相対パスに変更
+		viper.AddConfigPath("../../../configs/")
+	} else {
+		viper.AddConfigPath("configs/")
+	}
 	// 環境変数がすでに指定されてる場合はそちらを優先させる
 	viper.AutomaticEnv()
 	// データ構造をキャメルケースに切り替える用の設定
@@ -46,7 +53,8 @@ func (c *viperConfig) Get(key string) string {
 
 // getWithContains implements Config.
 func (c *viperConfig) getWithContains(key string) (string, bool) {
-	v, found := c.cfg[key]
+	// Viperは大文字小文字を区別しないのでkeyを一旦小文字にして検索している
+	v, found := c.cfg[strings.ToLower(key)]
 	return v, found
 }
 
