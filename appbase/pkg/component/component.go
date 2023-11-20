@@ -13,6 +13,7 @@ import (
 	"example.com/appbase/pkg/httpclient"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
+	"example.com/appbase/pkg/rdb"
 	"example.com/appbase/pkg/validator"
 	"github.com/cockroachdb/errors"
 )
@@ -23,7 +24,9 @@ type ApplicationContext interface {
 	GetLogger() logging.Logger
 	GetConfig() config.Config
 	GetDynamoDBAccessor() dynamodb.DynamoDBAccessor
-	GetTransactionManager() dynamodb.TransactionManager
+	GetDynamoDBTransactionManager() dynamodb.TransactionManager
+	GetRDBAccessor() rdb.RDBAccessor
+	GetRDBTransactionManager() rdb.TransactionManager
 	GetHttpClient() httpclient.HttpClient
 	GetInterceptor() handler.HandlerInterceptor
 }
@@ -36,7 +39,9 @@ func NewApplicationContext() ApplicationContext {
 	logger := createLogger(messageSource)
 	config := createConfig()
 	dynamodbAccessor := createDynamoDBAccessor(logger, config)
-	transactionManager := createDynamoDBTransactionManager(logger, dynamodbAccessor)
+	dynamoDBTransactionManager := createDynamoDBTransactionManager(logger, dynamodbAccessor)
+	rdbAccessor := createRDBAccessor()
+	rdbTransactionManager := rdb.NewTransactionManager(logger, config, rdbAccessor)
 	httpclient := createHttpClient(logger)
 	interceptor := createHanderInterceptor(config, logger, apiResponseFormatter)
 
@@ -44,24 +49,28 @@ func NewApplicationContext() ApplicationContext {
 	validator.Setup()
 
 	return &defaultApplicationContext{
-		config:             config,
-		messageSource:      messageSource,
-		logger:             logger,
-		dynamoDBAccessor:   dynamodbAccessor,
-		transactionManager: transactionManager,
-		httpClient:         httpclient,
-		interceptor:        interceptor,
+		config:                     config,
+		messageSource:              messageSource,
+		logger:                     logger,
+		dynamoDBAccessor:           dynamodbAccessor,
+		dynamoDBTransactionManager: dynamoDBTransactionManager,
+		rdbAccessor:                rdbAccessor,
+		rdbTransactionManager:      rdbTransactionManager,
+		httpClient:                 httpclient,
+		interceptor:                interceptor,
 	}
 }
 
 type defaultApplicationContext struct {
-	config             config.Config
-	messageSource      message.MessageSource
-	logger             logging.Logger
-	dynamoDBAccessor   dynamodb.DynamoDBAccessor
-	transactionManager dynamodb.TransactionManager
-	httpClient         httpclient.HttpClient
-	interceptor        handler.HandlerInterceptor
+	config                     config.Config
+	messageSource              message.MessageSource
+	logger                     logging.Logger
+	dynamoDBAccessor           dynamodb.DynamoDBAccessor
+	dynamoDBTransactionManager dynamodb.TransactionManager
+	rdbAccessor                rdb.RDBAccessor
+	rdbTransactionManager      rdb.TransactionManager
+	httpClient                 httpclient.HttpClient
+	interceptor                handler.HandlerInterceptor
 }
 
 // GetConfig implements ApplicationContext.
@@ -74,9 +83,19 @@ func (ac *defaultApplicationContext) GetDynamoDBAccessor() dynamodb.DynamoDBAcce
 	return ac.dynamoDBAccessor
 }
 
-// GetTransactionManager implements ApplicationContext.
-func (ac *defaultApplicationContext) GetTransactionManager() dynamodb.TransactionManager {
-	return ac.transactionManager
+// GetDynamoDBTransactionManager implements ApplicationContext.
+func (ac *defaultApplicationContext) GetDynamoDBTransactionManager() dynamodb.TransactionManager {
+	return ac.dynamoDBTransactionManager
+}
+
+// GetRDBAccessor implements ApplicationContext.
+func (ac *defaultApplicationContext) GetRDBAccessor() rdb.RDBAccessor {
+	return ac.rdbAccessor
+}
+
+// GetRDBTransactionManager implements ApplicationContext.
+func (ac *defaultApplicationContext) GetRDBTransactionManager() rdb.TransactionManager {
+	return ac.rdbTransactionManager
 }
 
 // GetHttpClient implements ApplicationContext.
@@ -141,6 +160,10 @@ func createDynamoDBAccessor(logger logging.Logger, config config.Config) dynamod
 
 func createDynamoDBTransactionManager(logger logging.Logger, dynamodbAccessor dynamodb.DynamoDBAccessor) dynamodb.TransactionManager {
 	return dynamodb.NewTransactionManager(logger, dynamodbAccessor)
+}
+
+func createRDBAccessor() rdb.RDBAccessor {
+	return rdb.NewRDBAccessor()
 }
 
 func createHttpClient(logger logging.Logger) httpclient.HttpClient {

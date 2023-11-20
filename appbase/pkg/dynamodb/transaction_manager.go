@@ -36,7 +36,7 @@ func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.Servi
 	// サービスの実行
 	result, err := serviceFunc()
 	// DynamoDBのトランザクションを終了
-	_, err = transction.endTransaction(err)
+	_, err = transction.end(err)
 	if err != nil {
 		return nil, err
 	}
@@ -45,13 +45,14 @@ func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.Servi
 
 // transactionは トランザクションを表すインタフェースです
 type transaction interface {
+	// start は、トランザクションを開始します。
 	start(dynamodbAccessor DynamoDBAccessor)
 	// appendTransactWriteItemは、トランザクション書き込みしたい場合に対象のTransactWriteItemを追加します。
 	appendTransactWriteItem(item *types.TransactWriteItem)
 	// checkTransactWriteItems は、TransactWriteItemが存在するかを確認します。
 	checkTransactWriteItems() bool
-	// endTransaction は、エラーがなければ、AWS SDKによるTransactionWriteItemsを実行しトランザクション実行し、エラーがある場合には実行しません。
-	endTransaction(err error) (*dynamodb.TransactWriteItemsOutput, error)
+	// end は、エラーがなければ、AWS SDKによるTransactionWriteItemsを実行しトランザクション実行し、エラーがある場合には実行しません。
+	end(err error) (*dynamodb.TransactWriteItemsOutput, error)
 }
 
 // newTrasactionは 新しいTransactionを作成します。
@@ -59,6 +60,7 @@ func newTrasaction(log logging.Logger) transaction {
 	return &defaultTransaction{log: log}
 }
 
+// defaultTransactionは、transactionを実装する構造体です。
 type defaultTransaction struct {
 	log              logging.Logger
 	dynamodbAccessor DynamoDBAccessor
@@ -86,7 +88,7 @@ func (t *defaultTransaction) checkTransactWriteItems() bool {
 }
 
 // endTransaction implements Transaction.
-func (t *defaultTransaction) endTransaction(err error) (*dynamodb.TransactWriteItemsOutput, error) {
+func (t *defaultTransaction) end(err error) (*dynamodb.TransactWriteItemsOutput, error) {
 	if !t.checkTransactWriteItems() {
 		t.log.Debug("トランザクション処理なし")
 		return nil, err

@@ -17,11 +17,13 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	// リポジトリの作成（DynamoDBの場合）
 	//userRepository := repository.NewUserRepositoryForDynamoDB(ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig())
 	// リポジトリの作成（RDBの場合）
-	userRepository := repository.NewUserRepositoryForRDB()
+	userRepository := repository.NewUserRepositoryForRDB(ac.GetRDBAccessor(), ac.GetLogger())
 	// サービスの作成
 	userService := service.New(ac.GetLogger(), ac.GetConfig(), userRepository)
 	// コントローラの作成
-	userController := controller.New(ac.GetLogger(), userService)
+	//userController := controller.New(ac.GetLogger(), ac.GetDynamoDBTransactionManager(), userService)
+	userController := controller.New(ac.GetLogger(), ac.GetRDBTransactionManager(), userService)
+
 	// ハンドラインタセプタの取得
 	interceptor := ac.GetInterceptor()
 

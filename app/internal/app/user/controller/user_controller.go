@@ -24,14 +24,15 @@ type UserController interface {
 }
 
 // New は、UserControllerを作成します。
-func New(log logging.Logger, service service.UserService) UserController {
-	return &userControllerImpl{log: log, service: service}
+func New(log logging.Logger, transactionManager rdb.TransactionManager, service service.UserService) UserController {
+	return &userControllerImpl{log: log, service: service, transactionManager: transactionManager}
 }
 
 // userControllerImpl は、UserControllerを実装する構造体です。
 type userControllerImpl struct {
-	log     logging.Logger
-	service service.UserService
+	log                logging.Logger
+	service            service.UserService
+	transactionManager rdb.TransactionManager
 }
 
 func (c *userControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
@@ -44,7 +45,7 @@ func (c *userControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
 	}
 
 	// RDBトランザクション開始してサービスの実行
-	return rdb.ExecuteTransaction(func() (interface{}, error) {
+	return c.transactionManager.ExecuteTransaction(func() (interface{}, error) {
 		return c.service.Find(userId)
 	})
 }
@@ -58,7 +59,7 @@ func (c *userControllerImpl) Register(ctx *gin.Context) (interface{}, error) {
 	}
 
 	// RDBトランザクション開始してサービスの実行
-	return rdb.ExecuteTransaction(func() (interface{}, error) {
+	return c.transactionManager.ExecuteTransaction(func() (interface{}, error) {
 		return c.service.Register(request.Name)
 	})
 }

@@ -7,21 +7,24 @@ import (
 
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/id"
+	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/rdb"
 	"github.com/lib/pq"
 )
 
 // NewUserRepositoryForRDB は、RDB保存のためのUserRepository実装を作成します。
-func NewUserRepositoryForRDB() UserRepository {
-	return &UserRepositoryImplByRDB{}
+func NewUserRepositoryForRDB(accessor rdb.RDBAccessor, log logging.Logger) UserRepository {
+	return &UserRepositoryImplByRDB{accessor: accessor, log: log}
 }
 
 // UserRepositoryImplByRDB は、RDB保存のためのUserRepository実装です。
 type UserRepositoryImplByRDB struct {
+	accessor rdb.RDBAccessor
+	log      logging.Logger
 }
 
 func (ur *UserRepositoryImplByRDB) GetUser(userId string) (*entity.User, error) {
-	tx := rdb.Tx
+	tx := ur.accessor.GetTransaction()
 	ctx := apcontext.Context
 	var user entity.User
 	//プリペアードステートメントによる例
@@ -47,7 +50,7 @@ func (ur *UserRepositoryImplByRDB) PutUser(user *entity.User) (*entity.User, err
 	userId := id.GenerateId()
 	user.ID = userId
 
-	tx := rdb.Tx
+	tx := ur.accessor.GetTransaction()
 	ctx := apcontext.Context
 	//プリペアードステートメントによる例
 	//X-RayのSQLトレース対応にも対応
