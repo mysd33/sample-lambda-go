@@ -67,6 +67,8 @@ type DynamoDBAccessor interface {
 	// transactWriteItemsSDK は、AWS SDKによるTransactWriteItemsをラップします。
 	// なお、TransactWriteItemsの実行は、TransactionManagerが実行するため非公開にしています。
 	transactWriteItemsSDK(items []types.TransactWriteItem) (*dynamodb.TransactWriteItemsOutput, error)
+	// endTransactionは、トランザクションを終了します。
+	endTransaction()
 }
 
 // NewDynamoDBAccessor は、Acccessorを作成します。
@@ -151,4 +153,9 @@ func (d *defaultDynamoDBAccessor) transactWriteItemsSDK(items []types.TransactWr
 	return d.dynamodbClient.TransactWriteItems(apcontext.Context, &dynamodb.TransactWriteItemsInput{
 		TransactItems: items,
 	})
+}
+
+// endTransaction implements DynamoDBAccessor.
+func (d *defaultDynamoDBAccessor) endTransaction() {
+	d.transaction = nil
 }

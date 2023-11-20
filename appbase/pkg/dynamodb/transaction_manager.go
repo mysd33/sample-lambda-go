@@ -93,8 +93,8 @@ func (t *defaultTransaction) end(err error) (*dynamodb.TransactWriteItemsOutput,
 		t.log.Debug("トランザクション処理なし")
 		return nil, err
 	}
-	// 処理結果がどんな場合でもTransactWriteItemをクリア
-	defer t.clearTransactWriteItems()
+	// 処理結果がどんな場合でもDynamoDBAccessorのトランザクションを開放
+	defer t.dynamodbAccessor.endTransaction()
 	if err != nil {
 		t.log.Debug("業務処理エラーでトランザクションロールバック")
 		// Serviceの処理結果がエラー場合は、トランザクションを実行せず、元のエラーを返却し終了
@@ -108,9 +108,4 @@ func (t *defaultTransaction) end(err error) (*dynamodb.TransactWriteItemsOutput,
 	}
 	t.log.Debug("トランザクション終了")
 	return output, nil
-}
-
-// clearTransactWriteItems() は、TransactWriteItemをクリアします。
-func (t *defaultTransaction) clearTransactWriteItems() {
-	t.transactWriteItems = nil
 }
