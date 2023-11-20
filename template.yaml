@@ -61,9 +61,9 @@ Conditions:
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-#    Handler: bootstrap
-#    Runtime: provided.al2
-    Runtime: go1.x
+    Handler: bootstrap
+    Runtime: provided.al2
+#    Runtime: go1.x
     Architectures:
       - x86_64
     Timeout: 5
@@ -133,7 +133,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x
     Properties:
-      Handler: hello-world
+#      Handler: hello-world
       FunctionName: !Ref HelloWorldFunctionName
       CodeUri: app/cmd/hello-world
       Role:
@@ -154,7 +154,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x    
     Properties:
-      Handler: users    
+#      Handler: users    
       FunctionName: !Ref UsersFunctionName
       CodeUri: app/cmd/users/  
       Role:
@@ -172,7 +172,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x    
     Properties:
-      Handler: todo    
+#      Handler: todo    
       FunctionName: !Ref TodoFunctionName
       CodeUri: app/cmd/todo/
       Role:
@@ -190,7 +190,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x    
     Properties:
-      Handler: bff    
+#      Handler: bff    
       FunctionName: !Ref BffFunctionName
       CodeUri: app/cmd/bff/             
       Role:
