@@ -1,7 +1,9 @@
 .PHONY: clean
-.PHONY: build
 .PHONY: fmt
+.PHONY: lint
+.PHONY: vet
 .PHONY: validate
+.PHONY: build
 .PHONY: unit_test
 .PHONY: integration_test
 .PHONY: local_startapi
@@ -13,11 +15,30 @@
 
 clean:
 # for windows
-	rmdir /s /q .aws-sam
+	if exist ".aws-sam" (	\
+		rmdir /s /q .aws-sam	\
+	)
 # for Linux
 #	rm -rf .aws-sam
 
-build:
+fmt:
+	cd app & go fmt ./...
+	cd appbase & go fmt ./...
+
+lint:
+	cd app & staticcheck ./...
+	cd appbase & staticcheck ./...
+	
+vet:
+	cd app & go vet ./...	
+	cd appbase & go vet ./...
+	cd app & shadow ./...
+	cd appbase & shadow ./...
+
+validate:
+	sam validate
+
+build: clean
 # for windows	
 	sam build
 	xcopy /I configs .aws-sam\build\UsersFunction\configs	
@@ -25,13 +46,6 @@ build:
 	xcopy /I configs .aws-sam\build\BffFunction\configs
 # for linux
 # TODO	
-
-fmt:
-	cd app & go fmt ./...
-	cd appbase & go fmt ./...
-
-validate:
-	sam validate
 
 unit_test:
 	cd app & go test -v ./internal/...

@@ -188,7 +188,6 @@ rmdir /s /q .aws-sam
 sam build
 
 # Windowsでもmakeをインストールすればmakeでいけます
-make clean
 make
 ```
 
