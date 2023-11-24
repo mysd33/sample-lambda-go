@@ -100,7 +100,6 @@ Globals:
         # For DynamoDB
 #        USERS_TABLE_NAME: !Ref UsersTableName         
         TODO_TABLE_NAME: !Ref TodoTableName
-        HOGE_NAME: "foo"
     # Deployment Configurtion           
     AutoPublishAlias: live            
     DeploymentPreference:

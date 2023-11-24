@@ -164,7 +164,11 @@ cd ..
 
 # ビルド
 sam build
-# Windowsでもmakeをインストールすればmakeでいけます
+xcopy /I /S configs .aws-sam\build\UsersFunction\configs	
+xcopy /I /S configs .aws-sam\build\TodoFunction\configs
+xcopy /I /S configs .aws-sam\build\BffFunction\configs
+
+# Windowsでもmakeをインストールすればmakeだけでいけます
 make
 ```
 
@@ -174,6 +178,9 @@ make
 rmdir /s /q .aws-sam
 # ビルド
 sam build
+xcopy /I /S configs .aws-sam\build\UsersFunction\configs	
+xcopy /I /S configs .aws-sam\build\TodoFunction\configs
+xcopy /I /S configs .aws-sam\build\BffFunction\configs
 
 # Windowsでもmakeをインストールすればmakeだけでいけます
 make

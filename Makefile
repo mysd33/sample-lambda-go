@@ -41,9 +41,9 @@ validate:
 build: clean
 # for windows	
 	sam build
-	xcopy /I configs .aws-sam\build\UsersFunction\configs	
-	xcopy /I configs .aws-sam\build\TodoFunction\configs
-	xcopy /I configs .aws-sam\build\BffFunction\configs
+	xcopy /I /S configs .aws-sam\build\UsersFunction\configs	
+	xcopy /I /S configs .aws-sam\build\TodoFunction\configs
+	xcopy /I /S configs .aws-sam\build\BffFunction\configs
 # for linux
 # TODO	
 

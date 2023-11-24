@@ -4,6 +4,7 @@ config パッケージは、設定ファイルを管理するパッケージで�
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -22,16 +23,19 @@ type viperConfig struct {
 func newViperConfig() (Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	if os.Getenv(constant.ENV_NAME) == constant.ENV_LOCAL_TEST {
+	env := os.Getenv(constant.ENV_NAME)
+	if env == constant.ENV_LOCAL_TEST {
 		// 処理テストコード実行の場合のみパスを相対パスに変更
-		viper.AddConfigPath("../../../configs/")
+		// 環境ごとのConfigを読み取る
+		viper.AddConfigPath(fmt.Sprintf("../../../configs/%s/", strings.ToLower(env)))
 	} else {
-		viper.AddConfigPath("configs/")
+		// 環境ごとのConfigを読み取る
+		viper.AddConfigPath(fmt.Sprintf("configs/%s/", strings.ToLower(env)))
 	}
 	// 環境変数がすでに指定されてる場合はそちらを優先させる
 	viper.AutomaticEnv()
-	// データ構造をキャメルケースに切り替える用の設定
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	// 環境変数の値が空列の場合も優先して扱う
+	viper.AllowEmptyEnv(true)
 
 	if err := viper.ReadInConfig(); err != nil {
 		return nil, errors.Errorf("設定ファイル読み込みエラー:%w", err)

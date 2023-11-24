@@ -1,4 +1,4 @@
-hoge_name: "fuga"
+hoge_name: "fuga-localtest"
 TODO_TABLE_NAME: "todo"
 #USERS_TABLE_NAME: "users"
 RDB_USER: "postgres"
