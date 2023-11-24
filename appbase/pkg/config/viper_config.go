@@ -5,18 +5,17 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
 	"example.com/appbase/pkg/constant"
 	"github.com/cockroachdb/errors"
+	"github.com/spf13/cast"
 	"github.com/spf13/viper"
 )
 
 // viperConfigは、spf13/viperによるConfig実装です。
 type viperConfig struct {
-	cfg map[string]string
 }
 
 // NewViperConfig は、設定ファイルをロードし、viperConfigを作成します。
@@ -40,13 +39,7 @@ func newViperConfig() (Config, error) {
 	if err := viper.ReadInConfig(); err != nil {
 		return nil, errors.Errorf("設定ファイル読み込みエラー:%w", err)
 	}
-	var cfg map[string]string
-	if err := viper.Unmarshal(&cfg); err != nil {
-		return nil, errors.Errorf("設定ファイルアンマーシャルエラー:%w", err)
-	}
-	//TODO: 暫定のログ出力コード
-	log.Printf("viper setting %v", cfg)
-	return &viperConfig{cfg: cfg}, nil
+	return &viperConfig{}, nil
 }
 
 // Get implements Config.
@@ -60,9 +53,11 @@ func (c *viperConfig) Get(key string) string {
 
 // getWithContains implements Config.
 func (c *viperConfig) getWithContains(key string) (string, bool) {
-	// Viperは大文字小文字を区別しないのでkeyを一旦小文字にして検索している
-	v, found := c.cfg[strings.ToLower(key)]
-	return v, found
+	v := viper.Get(key)
+	if v == nil {
+		return "", false
+	}
+	return cast.ToString(v), true
 }
 
 // Reload implements Config.
