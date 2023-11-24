@@ -6,6 +6,7 @@ package logging
 import (
 	"os"
 
+	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/message"
@@ -31,16 +32,24 @@ type Logger interface {
 }
 
 // NewLogger は、Loggerを作成します。
-func NewLogger(messageSource message.MessageSource) (Logger, error) {
+func NewLogger(messageSource message.MessageSource, mycfg config.Config) (Logger, error) {
 	env := os.Getenv(constant.ENV_NAME)
 	var config zap.Config
 	// プロファイルの切り替え
-	if env == constant.ENV_PRODUCTION {
+	if env == constant.ENV_PRODUCTION || env == constant.ENV_STAGING {
 		config = zap.NewProductionConfig()
 	} else {
 		config = zap.NewDevelopmentConfig()
 	}
-	// TODO: ログレベルを環境変数で個別に変更できるようにする
+	// 個別にログレベルが設定されている場合はログレベル上書き
+	level := mycfg.Get(constant.LOG_LEVEL_NAME)
+	if level != "" {
+		al, err := zap.ParseAtomicLevel(level)
+		if err == nil {
+			config.Level = al
+		}
+	}
+
 	z, err := config.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		return nil, err

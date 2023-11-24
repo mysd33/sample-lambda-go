@@ -23,8 +23,9 @@ Resources:
       Content: |
         hoge_name: foo
         fuga_name: gaa
-#     LatestVersionNumber:
-#     VersionLabel:
+        TODO_TABLE_NAME: todo
+#        USERS_TABLE_NAME: users         
+#        LOG_LEVEL: DEBUG
 
   AppConfigDeployment:
     Type: AWS::AppConfig::Deployment

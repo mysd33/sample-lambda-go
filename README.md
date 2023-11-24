@@ -337,6 +337,8 @@ aws logs delete-log-group --log-group-name /aws/lambda/bff-function
 aws logs delete-log-group --log-group-name /aws/lambda/todo-function
 aws logs delete-log-group --log-group-name /aws/lambda/user-function
 aws logs delete-log-group --log-group-name /aws/apigateway/welcome
+aws logs delete-log-group --log-group-name /aws/rds/proxy/demo-rds-proxy
+aws logs delete-log-group --log-group-name /aws/rds/cluster/aurora-postgresql-cluster/postgresql
 
 aws logs describe-log-groups --log-group-name-prefix API-Gateway-Execution-Logs --query logGroups[*].logGroupName
 aws logs delete-log-group --log-group-name（返却された各ロググループ名）

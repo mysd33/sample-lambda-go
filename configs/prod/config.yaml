@@ -1,1 +1,4 @@
 hoge_name: "fuga-prod"
+#TODO_TABLE_NAME: "todo"
+#USERS_TABLE_NAME: "users"
+#LOG_LEVEL: DEBUG

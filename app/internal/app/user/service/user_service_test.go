@@ -37,9 +37,9 @@ func TestRegister(t *testing.T) {
 	//期待値
 	expectedName := "fuga"
 	messageSource, _ := message.NewMessageSource()
-	log, _ := logging.NewLogger(messageSource)
 	// テスト用のConfigを作成
-	cfg, _ := config.NewTestConfig(map[string]string{"hoge_name": "fuga"})
+	cfg := config.NewTestConfig(map[string]string{"hoge_name": "fuga"})
+	log, _ := logging.NewLogger(messageSource, cfg)
 
 	//RepsitoryのMockへの入力値と戻り値の設定
 	mockRepository := new(MockUserRepository)

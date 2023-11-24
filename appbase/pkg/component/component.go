@@ -34,10 +34,10 @@ type ApplicationContext interface {
 // NewApplicationContext は、デフォルトのApplicationContextを作成します。
 func NewApplicationContext() ApplicationContext {
 	// 各種AP基盤の構造体を作成
+	config := createConfig()
 	messageSource := createMessageSource()
 	apiResponseFormatter := createApiResponseFormatter(messageSource)
-	logger := createLogger(messageSource)
-	config := createConfig()
+	logger := createLogger(messageSource, config)
 	dynamodbAccessor := createDynamoDBAccessor(logger, config)
 	dynamoDBTransactionManager := createDynamoDBTransactionManager(logger, dynamodbAccessor)
 	rdbAccessor := createRDBAccessor()
@@ -131,8 +131,8 @@ func createApiResponseFormatter(messageSource message.MessageSource) api.ApiResp
 	return api.NewApiResponseFormatter(messageSource)
 }
 
-func createLogger(messageSource message.MessageSource) logging.Logger {
-	logger, err := logging.NewLogger(messageSource)
+func createLogger(messageSource message.MessageSource, config config.Config) logging.Logger {
+	logger, err := logging.NewLogger(messageSource, config)
 	if err != nil {
 		// 異常終了
 		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))

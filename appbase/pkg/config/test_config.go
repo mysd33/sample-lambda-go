@@ -8,8 +8,8 @@ type testConfig struct {
 }
 
 // NewTestConfig は、テスト用Configを作成します。
-func NewTestConfig(cfg map[string]string) (Config, error) {
-	return &testConfig{cfg: cfg}, nil
+func NewTestConfig(cfg map[string]string) Config {
+	return &testConfig{cfg: cfg}
 }
 
 func (c *testConfig) Get(key string) string {

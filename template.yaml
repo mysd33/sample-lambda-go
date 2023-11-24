@@ -10,12 +10,6 @@ Parameters:
     Description: Stack Resource Name Prefix
     Type: String
     Default: Demo
-#  UsersTableName:
-#    Type: String
-#    Default: users    
-  TodoTableName:
-    Type: String
-    Default: todo
   TracingValue:
     Type: String
     Default: Active
@@ -94,12 +88,7 @@ Globals:
           Fn::ImportValue: !Sub ${StackPrefix}-RDSClusterEndpointPort
         RDB_DB_NAME:
           Fn::ImportValue: !Sub ${StackPrefix}-RDSDBName
-        RDB_SSL_MODE: "require"    
-        # For DyanmoDB Local
-        DYNAMODB_LOCAL_ENDPOINT: ""                
-        # For DynamoDB
-#        USERS_TABLE_NAME: !Ref UsersTableName         
-        TODO_TABLE_NAME: !Ref TodoTableName
+        RDB_SSL_MODE: "require"
     # Deployment Configurtion           
     AutoPublishAlias: live            
     DeploymentPreference:

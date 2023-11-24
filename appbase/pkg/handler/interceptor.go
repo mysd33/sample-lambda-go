@@ -2,11 +2,13 @@ package handler
 
 import (
 	"errors"
+	"os"
 	"reflect"
 	"runtime"
 
 	"example.com/appbase/pkg/api"
 	"example.com/appbase/pkg/config"
+	"example.com/appbase/pkg/constant"
 	myerrors "example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
@@ -26,6 +28,11 @@ type defaultHandlerInterceptor struct {
 
 // NewHandlerInterceptor は、HandlerInterceptorを作成します。
 func NewHandlerInterceptor(config config.Config, log logging.Logger, apiResponseFormatter api.ApiResponseFormatter) HandlerInterceptor {
+	env := os.Getenv(constant.ENV_NAME)
+	if env == constant.ENV_PRODUCTION || env == constant.ENV_STAGING {
+		// ginのモードを本番モードに設定
+		gin.SetMode(gin.ReleaseMode)
+	}
 	return &defaultHandlerInterceptor{config: config, log: log, apiResponseFormatter: apiResponseFormatter}
 }
 
