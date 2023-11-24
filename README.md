@@ -329,6 +329,19 @@ aws cloudformation delete-stack --stack-name Demo-VPC-Stack
 aws cloudformation delete-stack --stack-name Demo-IAM-Stack 
 ```
 
+## 16. CloudWatch Logsのロググループ削除
+* マネージドコンソールからCloudWatchのロググループを削除する。
+    * 特に、/aws/lambda/bff-function、/aws/lambda/todo-function、/aws/lambda/user-functionは、次回スタック作成時にエラーになってしまうので削除する。本来は、sam delete時にスタックとともに当該ロググループが削除されるはずだが、AppConfigのLambda拡張機能の導入により、Lambda拡張機能終了時のログが残ってしまうようになってしまったため、明示的な削除が必要となっている。
+```
+aws logs delete-log-group --log-group-name /aws/lambda/bff-function
+aws logs delete-log-group --log-group-name /aws/lambda/todo-function
+aws logs delete-log-group --log-group-name /aws/lambda/user-function
+aws logs delete-log-group --log-group-name /aws/apigateway/welcome
+
+aws logs describe-log-groups --log-group-name-prefix API-Gateway-Execution-Logs --query logGroups[*].logGroupName
+aws logs delete-log-group --log-group-name（返却された各ロググループ名）
+```
+
 ## ローカルでの実行確認
 * 前述の手順の通り、AWS上でLambda等をデプロイしなくてもsam localコマンドを使ってローカル実行確認も可能である
 
@@ -344,11 +357,11 @@ postgres> CREATE DATABASE testdb;
 # testdbに切替
 postgres> \c testdb
 #ユーザテーブル作成
-tesdb> CREATE TABLE IF NOT EXISTS m_user (user_id VARCHAR(50) PRIMARY KEY, user_name VARCHAR(50));
+testdb> CREATE TABLE IF NOT EXISTS m_user (user_id VARCHAR(50) PRIMARY KEY, user_name VARCHAR(50));
 #ユーザテーブルの作成を確認
-tesdb> \dt
+testdb> \dt
 #切断
-tesdb> \q
+testdb> \q
 ```
 
 * DynamoDB LocalのDockerコンテナを起動
