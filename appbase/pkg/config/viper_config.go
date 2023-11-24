@@ -5,10 +5,9 @@ package config
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
-	"example.com/appbase/pkg/constant"
+	"example.com/appbase/pkg/env"
 	"github.com/cockroachdb/errors"
 	"github.com/spf13/cast"
 	"github.com/spf13/viper"
@@ -22,14 +21,13 @@ type viperConfig struct {
 func newViperConfig() (Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	env := os.Getenv(constant.ENV_NAME)
-	if env == constant.ENV_LOCAL_TEST {
-		// 処理テストコード実行の場合のみパスを相対パスに変更
+	if env.IsLocalTest() {
+		// テストコード実行の場合のみパスを相対パスに変更
 		// 環境ごとのConfigを読み取る
-		viper.AddConfigPath(fmt.Sprintf("../../../configs/%s/", strings.ToLower(env)))
+		viper.AddConfigPath(fmt.Sprintf("../../../configs/%s/", strings.ToLower(env.GetEnv())))
 	} else {
 		// 環境ごとのConfigを読み取る
-		viper.AddConfigPath(fmt.Sprintf("configs/%s/", strings.ToLower(env)))
+		viper.AddConfigPath(fmt.Sprintf("configs/%s/", strings.ToLower(env.GetEnv())))
 	}
 	// 環境変数がすでに指定されてる場合はそちらを優先させる
 	viper.AutomaticEnv()

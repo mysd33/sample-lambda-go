@@ -24,9 +24,9 @@ Resources:
         hoge_name: foo
         fuga_name: gaa
         TODO_TABLE_NAME: todo
-#        USERS_TABLE_NAME: users         
+        GIN_DEBUG: true        
 #        LOG_LEVEL: DEBUG
-
+#        USERS_TABLE_NAME: users
   AppConfigDeployment:
     Type: AWS::AppConfig::Deployment
     Properties:

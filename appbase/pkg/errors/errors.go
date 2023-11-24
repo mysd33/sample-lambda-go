@@ -8,9 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 
-	"example.com/appbase/pkg/constant"
+	"example.com/appbase/pkg/env"
 	myvalidator "example.com/appbase/pkg/validator"
 	cerrors "github.com/cockroachdb/errors"
 	"github.com/go-playground/validator/v10"
@@ -164,15 +163,14 @@ func requiredNotBusinessAndSystemError(cause error) {
 	var se *SystemError
 	// causeがBusinessError、SystemErrorの場合は、
 	// コーディングミスで二重でラップしてしまっている判断して、開発中は異常終了させている
-	env := os.Getenv(constant.ENV_NAME)
 	if errors.As(cause, &be) {
-		if env == constant.ENV_PRODUCTION {
+		if env.IsProd() {
 			// 異常終了
 			log.Fatalf("誤ってBusinessErrorを二重でラップしています:%+v", be)
 		}
 		log.Printf("誤ってBusinessErrorを二重でラップしています:%+v", be)
 	} else if errors.As(cause, &se) {
-		if env == constant.ENV_PRODUCTION {
+		if env.IsProd() {
 			// 異常終了
 			log.Fatalf("誤ってSystemErrorを二重でラップしています:%+v", se)
 		}

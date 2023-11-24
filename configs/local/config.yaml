@@ -2,4 +2,4 @@ hoge_name: "fuga-local"
 TODO_TABLE_NAME: "todo"
 #USERS_TABLE_NAME: "users"
 DYNAMODB_LOCAL_ENDPOINT: "http://host.docker.internal:8000"
-LOG_LEVEL: INFO
+#LOG_LEVEL: INFO

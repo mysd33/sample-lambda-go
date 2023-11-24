@@ -4,10 +4,9 @@ logging パッケージは、ログ出力に関する機能を提供するパッ
 package logging
 
 import (
-	"os"
-
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/constant"
+	"example.com/appbase/pkg/env"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/message"
 	"go.uber.org/zap"
@@ -33,10 +32,9 @@ type Logger interface {
 
 // NewLogger は、Loggerを作成します。
 func NewLogger(messageSource message.MessageSource, mycfg config.Config) (Logger, error) {
-	env := os.Getenv(constant.ENV_NAME)
 	var config zap.Config
-	// プロファイルの切り替え
-	if env == constant.ENV_PRODUCTION || env == constant.ENV_STAGING {
+	if env.IsStragingOrProd() {
+		// 本番相当の場合
 		config = zap.NewProductionConfig()
 	} else {
 		config = zap.NewDevelopmentConfig()

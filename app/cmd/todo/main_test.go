@@ -6,22 +6,20 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/component"
-	"example.com/appbase/pkg/constant"
+	"example.com/appbase/pkg/env"
 	"github.com/aws/aws-xray-sdk-go/xray"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestPostTodo(t *testing.T) {
-	t.Setenv(constant.ENV_NAME, constant.ENV_LOCAL_TEST)
-	env := os.Getenv(constant.ENV_NAME)
-	println("env:" + env)
+	// テスト実行用に動作環境名を環境変数に設定
+	env.SetTestEnv(t)
 
 	//  テスト用にX-Rayのセグメント開始
 	ctx, seg := xray.BeginSegment(context.Background(), "main_test")
