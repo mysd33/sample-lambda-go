@@ -5,6 +5,7 @@ package dynamodb
 
 import (
 	"context"
+	"os"
 
 	"example.com/appbase/pkg/apcontext"
 	myConfig "example.com/appbase/pkg/config"
@@ -33,7 +34,11 @@ func createDynamoDBClient(myCfg myConfig.Config) (*dynamodb.Client, error) {
 	// https://github.com/aws/aws-xray-sdk-go
 	awsv2.AWSV2Instrumentor(&cfg.APIOptions)
 	return dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
-		// DynamoDB Local起動先が指定されている場合
+		env := os.Getenv(constant.ENV_NAME)
+		if env != constant.ENV_LOCAL && env != constant.ENV_LOCAL_TEST {
+			return
+		}
+		// ローカル実行の場合で、DynamoDB Local起動先が指定されている場合
 		dynamodbEndpoint := myCfg.Get(constant.DYNAMODB_LOCAL_ENDPOINT_NAME)
 		if dynamodbEndpoint != "" {
 			o.BaseEndpoint = aws.String(dynamodbEndpoint)

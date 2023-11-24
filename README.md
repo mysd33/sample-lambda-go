@@ -161,8 +161,21 @@ aws cloudformation create-stack --stack-name Demo-AppConfigDeploy-Stack --templa
 ```sh
 # トップのフォルダに戻る
 cd ..
+
+# ビルド
 sam build
 # Windowsでもmakeをインストールすればmakeでいけます
+make
+```
+
+* （参考）修正後再度ビルドするとき
+```sh
+# .aws-sam配下のビルド資材を削除
+rmdir /s /q .aws-sam
+# ビルド
+sam build
+
+# Windowsでもmakeをインストールすればmakeだけでいけます
 make
 ```
 
@@ -176,19 +189,7 @@ make deploy_guided
 # 2回目以降は
 sam deploy
 # Windowsでもmakeをインストールすればmakeでいけます
-
 make deploy
-```
-
-* （参考）再度ビルドするとき
-```sh
-# .aws-sam配下のビルド資材を削除
-rmdir /s /q .aws-sam
-# ビルド
-sam build
-
-# Windowsでもmakeをインストールすればmakeでいけます
-make
 ```
 
 
@@ -498,7 +499,6 @@ curl -X POST http://127.0.0.1:3000/bff-api/v1/error/hogehoge
 ## sam localでの直接デバッグ実行
 
 * [AWSの開発者ガイド](https://docs.aws.amazon.com/ja_jp/toolkit-for-vscode/latest/userguide/debug-apigateway.html)の記載にある通り、AWS Toolkitの機能で、VSCodeでの sam localの直接デバッグ実行することも可能である。
-    * ただし、[AWSの開発者ガイド](https://docs.aws.amazon.com/ja_jp/toolkit-for-vscode/latest/userguide/debug-apigateway.html)の「注記」にある通り、Goは、go1.xランタイムのみサポートしており、当該サンプルAPが使用する「provided.al2」（カスタムランタイム）でのsam localのデバッグ実行は現状サポートされていないとのこと。  
 
 * TODO: 作者のWindows端末環境ではエラーになってしまい動作しない。今後、実施できたら手順を記載する。
 

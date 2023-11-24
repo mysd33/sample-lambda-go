@@ -96,9 +96,10 @@ Outputs:
     Description: AppConfig Lambda Extension Endpoint URL
     Value: !Sub /applications/${ApplicationName}/environments/${Stage}/configurations/${ConfigurationProfileName}
     Export: 
-      Name: !Sub ${StackPrefix}-AppConfigLambdaExtensionPath
+      Name: !Sub ${StackPrefix}-AppConfigLambdaExtension${Stage}Path
   AppConfigLambdaExtensionURL:
+  
     Description: AppConfig Lambda Extension Endpoint URL
     Value: !Sub http://localhost:2772/applications/${ApplicationName}/environments/${Stage}/configurations/${ConfigurationProfileName}    
     Export: 
-      Name: !Sub ${StackPrefix}-AppConfigLambdaExtensionURL
+      Name: !Sub ${StackPrefix}-AppConfigLambdaExtension${Stage}URL

@@ -62,7 +62,7 @@ Conditions:
 Globals:
   Function:
     Handler: bootstrap
-    Runtime: provided.al2
+    Runtime: provided.al2023
 #    Runtime: go1.x
     Architectures:
       - x86_64
@@ -81,9 +81,9 @@ Globals:
         ENV: !Ref Stage              
         # AppConfig
         APPCONFIG_EXTENSION_URL:
-          Fn::ImportValue: !Sub ${StackPrefix}-AppConfigLambdaExtensionURL        
+          Fn::ImportValue: !Sub ${StackPrefix}-AppConfigLambdaExtension${Stage}URL        
         AWS_APPCONFIG_EXTENSION_PREFETCH_LIST:
-          Fn::ImportValue: !Sub ${StackPrefix}-AppConfigLambdaExtensionPath
+          Fn::ImportValue: !Sub ${StackPrefix}-AppConfigLambdaExtension${Stage}Path
         # TODO: Migrate to AppConfig? or Keep on OS Environment Viper Config?
         # For RDB
         RDB_USER: !Sub "{{resolve:secretsmanager:${StackPrefix}-RDS-Secrets:SecretString:username}}"

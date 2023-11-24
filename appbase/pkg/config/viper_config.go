@@ -4,6 +4,7 @@ config パッケージは、設定ファイルを管理するパッケージで�
 package config
 
 import (
+	"log"
 	"os"
 	"strings"
 
@@ -39,6 +40,8 @@ func newViperConfig() (Config, error) {
 	if err := viper.Unmarshal(&cfg); err != nil {
 		return nil, errors.Errorf("設定ファイルアンマーシャルエラー:%w", err)
 	}
+	//TODO: 暫定のログ出力コード
+	log.Printf("viper setting %v", cfg)
 	return &viperConfig{cfg: cfg}, nil
 }
 
