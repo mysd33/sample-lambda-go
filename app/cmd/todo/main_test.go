@@ -12,8 +12,8 @@ import (
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/component"
 	"example.com/appbase/pkg/env"
+	"example.com/appbase/pkg/handler"
 	"github.com/aws/aws-xray-sdk-go/xray"
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +27,7 @@ func TestPostTodo(t *testing.T) {
 	defer seg.Close(nil)
 
 	ac := component.NewApplicationContext()
-	r := gin.Default()
+	r := handler.GetDefaultGinEngine()
 	initBiz(ac, r)
 
 	t.Run("Postのテスト", func(t *testing.T) {
