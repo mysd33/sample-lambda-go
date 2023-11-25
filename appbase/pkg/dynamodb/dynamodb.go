@@ -76,7 +76,7 @@ type DynamoDBAccessor interface {
 func NewDynamoDBAccessor(log logging.Logger, myCfg myConfig.Config) (DynamoDBAccessor, error) {
 	dynamodbClient, err := createDynamoDBClient(myCfg)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return &defaultDynamoDBAccessor{log: log, dynamodbClient: dynamodbClient}, nil
 }
@@ -93,10 +93,13 @@ func (d *defaultDynamoDBAccessor) GetItemSdk(input *dynamodb.GetItemInput) (*dyn
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
 	output, err := d.dynamodbClient.GetItem(apcontext.Context, input)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 	if output.ConsumedCapacity != nil {
 		d.log.Debug("GetItem[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
 	}
-	return output, err
+	return output, nil
 }
 
 // QuerySdk implements DynamoDBAccessor.
@@ -105,10 +108,13 @@ func (d *defaultDynamoDBAccessor) QuerySdk(input *dynamodb.QueryInput) (*dynamod
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
 	output, err := d.dynamodbClient.Query(apcontext.Context, input)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 	if output.ConsumedCapacity != nil {
 		d.log.Debug("Query[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
 	}
-	return output, err
+	return output, nil
 }
 
 // QueryPagesSdk implements DynamoDBAccessor.
@@ -118,6 +124,9 @@ func (d *defaultDynamoDBAccessor) QueryPagesSdk(input *dynamodb.QueryInput, fn f
 		page, err := paginator.NextPage(apcontext.Context)
 		if err != nil {
 			return errors.WithStack(err)
+		}
+		if page.ConsumedCapacity != nil {
+			d.log.Debug("Query[%s]消費キャパシティユニット:%f", *page.ConsumedCapacity.TableName, *page.ConsumedCapacity.CapacityUnits)
 		}
 		if fn(page) {
 			break
@@ -132,10 +141,13 @@ func (d *defaultDynamoDBAccessor) PutItemSdk(input *dynamodb.PutItemInput) (*dyn
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
 	output, err := d.dynamodbClient.PutItem(apcontext.Context, input)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 	if output.ConsumedCapacity != nil {
 		d.log.Debug("PutItem[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
 	}
-	return output, err
+	return output, nil
 
 }
 
@@ -145,10 +157,13 @@ func (d *defaultDynamoDBAccessor) UpdateItemSdk(input *dynamodb.UpdateItemInput)
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
 	output, err := d.dynamodbClient.UpdateItem(apcontext.Context, input)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 	if output.ConsumedCapacity != nil {
 		d.log.Debug("UpdateItem[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
 	}
-	return output, err
+	return output, nil
 }
 
 // DeleteItemSdk implements DynamoDBAccessor.
@@ -157,10 +172,13 @@ func (d *defaultDynamoDBAccessor) DeleteItemSdk(input *dynamodb.DeleteItemInput)
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
 	output, err := d.dynamodbClient.DeleteItem(apcontext.Context, input)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 	if output.ConsumedCapacity != nil {
 		d.log.Debug("DeleteItem[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
 	}
-	return output, err
+	return output, nil
 }
 
 // BatchGetItemSdk implements DynamoDBAccessor.
@@ -169,10 +187,13 @@ func (d *defaultDynamoDBAccessor) BatchGetItemSdk(input *dynamodb.BatchGetItemIn
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
 	output, err := d.dynamodbClient.BatchGetItem(apcontext.Context, input)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 	for i, v := range output.ConsumedCapacity {
 		d.log.Debug("BatchGetItem(%d)[%s]消費キャパシティユニット:%f", i, *v.TableName, *v.CapacityUnits)
 	}
-	return output, err
+	return output, nil
 }
 
 // BatchWriteItemSdk implements DynamoDBAccessor.
@@ -181,10 +202,13 @@ func (d *defaultDynamoDBAccessor) BatchWriteItemSdk(input *dynamodb.BatchWriteIt
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
 	output, err := d.dynamodbClient.BatchWriteItem(apcontext.Context, input)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 	for i, v := range output.ConsumedCapacity {
 		d.log.Debug("BatchWriteItem(%d)[%s]消費キャパシティユニット:%f", i, *v.TableName, *v.CapacityUnits)
 	}
-	return output, err
+	return output, nil
 }
 
 // startTransaction implements DynamoDBAccessor.
@@ -207,10 +231,13 @@ func (d *defaultDynamoDBAccessor) transactWriteItemsSDK(items []types.TransactWr
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
 	output, err := d.dynamodbClient.TransactWriteItems(apcontext.Context, input)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 	for i, v := range output.ConsumedCapacity {
 		d.log.Debug("TransactWriteItems(%d)[%s]消費キャパシティユニット:%f", i, *v.TableName, *v.CapacityUnits)
 	}
-	return output, err
+	return output, nil
 }
 
 // endTransaction implements DynamoDBAccessor.
