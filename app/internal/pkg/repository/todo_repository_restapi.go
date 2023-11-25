@@ -72,3 +72,8 @@ func (tr *todoRepositoryImplByRestAPI) PutTodo(todo *entity.Todo) (*entity.Todo,
 	}
 	return &newTodo, nil
 }
+
+// PutTodoTx implements TodoRepository.
+func (*todoRepositoryImplByRestAPI) PutTodoTx(todo *entity.Todo) (*entity.Todo, error) {
+	panic("unimplemented")
+}

@@ -4,6 +4,7 @@ package controller
 import (
 	"app/internal/app/todo/service"
 
+	"example.com/appbase/pkg/domain"
 	"example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
@@ -60,9 +61,21 @@ func (c *todoControllerImpl) Register(ctx *gin.Context) (interface{}, error) {
 		// 入力チェックエラーのハンドリング
 		return nil, errors.NewValidationError(err)
 	}
+	// クエリパラメータの取得
+	transaction := ctx.Query("tx")
+	var serviceFunc domain.ServiceFunc
+
+	if transaction != "" {
+		serviceFunc = func() (interface{}, error) {
+			// トランザクション指定あり
+			return c.service.RegisterTx(request.TodoTitle)
+		}
+	} else {
+		serviceFunc = func() (interface{}, error) {
+			return c.service.Register(request.TodoTitle)
+		}
+	}
 
 	// DynamoDBトランザクション管理してサービスの実行
-	return c.transactionManager.ExecuteTransaction(func() (interface{}, error) {
-		return c.service.Register(request.TodoTitle)
-	})
+	return c.transactionManager.ExecuteTransaction(serviceFunc)
 }

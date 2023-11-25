@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 const (
@@ -39,7 +40,8 @@ func (tr *todoRepositoryImplByDynamoDB) GetTodo(todoId string) (*entity.Todo, er
 	// AWS SDK for Go v2 Migration
 	// https://docs.aws.amazon.com/ja_jp/code-library/latest/ug/go_2_dynamodb_code_examples.html
 	// https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/gov2/dynamodb
-	//Itemの取得
+
+	// Itemの取得
 	todo := entity.Todo{ID: todoId}
 	key, err := todo.GetKey()
 	todoTable := tr.config.Get(TODO_TABLE_NAME)
@@ -65,7 +67,7 @@ func (tr *todoRepositoryImplByDynamoDB) PutTodo(todo *entity.Todo) (*entity.Todo
 	// https://docs.aws.amazon.com/ja_jp/code-library/latest/ug/go_2_dynamodb_code_examples.html
 	// https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/gov2/dynamodb
 
-	//ID採番
+	// ID採番
 	todoId := id.GenerateId()
 	todo.ID = todoId
 	todoTable := tr.config.Get(TODO_TABLE_NAME)
@@ -84,4 +86,25 @@ func (tr *todoRepositoryImplByDynamoDB) PutTodo(todo *entity.Todo) (*entity.Todo
 	}
 	return todo, nil
 
+}
+
+// PutTodoTx implements TodoRepository.
+func (tr *todoRepositoryImplByDynamoDB) PutTodoTx(todo *entity.Todo) (*entity.Todo, error) {
+	// ID採番
+	todoId := id.GenerateId()
+	todo.ID = todoId
+	todoTable := tr.config.Get(TODO_TABLE_NAME)
+	av, err := attributevalue.MarshalMap(todo)
+	if err != nil {
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
+	}
+	put := &types.Put{
+		Item:      av,
+		TableName: aws.String(todoTable),
+	}
+	// TransactWriteItemの追加
+	input := &types.TransactWriteItem{Put: put}
+	tr.accessor.AppendTransactWriteItem(input)
+
+	return todo, nil
 }

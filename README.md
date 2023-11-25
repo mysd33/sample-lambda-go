@@ -232,7 +232,10 @@ curl https://42b4c7bk9g.execute-api.ap-northeast-1.amazonaws.com/Prod/users-api/
 * Todoサービスでやることリストを登録するPOSTのAPI実行例
     * TodoサービスはDynamoDBアクセスするLambda/goのサンプルAP
 ```sh
+# DynamoDBトランザクションなし
 curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "ミルクを買う"}' https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/todo-api/v1/todo
+# DynamoDBトランザクションあり
+curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "ミルクを買う"}' https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/todo-api/v1/todo?tx=true
 
 # 登録結果を返却
 {"todo_id":"04a14ad3-f6a5-11ed-b40f-f2ead45b980a","todo_title":"ミルクを買う"}
@@ -407,6 +410,8 @@ curl http://127.0.0.1:3000/users-api/v1/users/(ユーザID)
 
 # Todoサービス
 curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "Buy Milk"}' http://127.0.0.1:3000/todo-api/v1/todo
+
+curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "Buy Milk"}' http://127.0.0.1:3000/todo-api/v1/todo?tx=true
 
 curl http://127.0.0.1:3000/todo-api/v1/todo/(TODO ID)
 

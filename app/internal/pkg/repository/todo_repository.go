@@ -11,4 +11,6 @@ type TodoRepository interface {
 	GetTodo(todoId string) (*entity.Todo, error)
 	// PutTodo は、指定されたTodoを登録します。
 	PutTodo(todo *entity.Todo) (*entity.Todo, error)
+	// PutTodoTx は、指定されたTodoをトランザクションを使って登録します。
+	PutTodoTx(todo *entity.Todo) (*entity.Todo, error)
 }

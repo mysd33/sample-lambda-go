@@ -9,6 +9,7 @@ import (
 	"example.com/appbase/pkg/apcontext"
 	myConfig "example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/constant"
+	"example.com/appbase/pkg/env"
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -88,12 +89,26 @@ type defaultDynamoDBAccessor struct {
 
 // GetItemSdk implements DynamoDBAccessor.
 func (d *defaultDynamoDBAccessor) GetItemSdk(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
-	return d.dynamodbClient.GetItem(apcontext.Context, input)
+	if !env.IsStragingOrProd() {
+		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
+	}
+	output, err := d.dynamodbClient.GetItem(apcontext.Context, input)
+	if output.ConsumedCapacity != nil {
+		d.log.Debug("GetItem[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
+	}
+	return output, err
 }
 
 // QuerySdk implements DynamoDBAccessor.
 func (d *defaultDynamoDBAccessor) QuerySdk(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
-	return d.dynamodbClient.Query(apcontext.Context, input)
+	if !env.IsStragingOrProd() {
+		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
+	}
+	output, err := d.dynamodbClient.Query(apcontext.Context, input)
+	if output.ConsumedCapacity != nil {
+		d.log.Debug("Query[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
+	}
+	return output, err
 }
 
 // QueryPagesSdk implements DynamoDBAccessor.
@@ -113,27 +128,63 @@ func (d *defaultDynamoDBAccessor) QueryPagesSdk(input *dynamodb.QueryInput, fn f
 
 // PutItemSdk implements DynamoDBAccessor.
 func (d *defaultDynamoDBAccessor) PutItemSdk(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
-	return d.dynamodbClient.PutItem(apcontext.Context, input)
+	if !env.IsStragingOrProd() {
+		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
+	}
+	output, err := d.dynamodbClient.PutItem(apcontext.Context, input)
+	if output.ConsumedCapacity != nil {
+		d.log.Debug("PutItem[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
+	}
+	return output, err
+
 }
 
 // UpdateItemSdk implements DynamoDBAccessor.
 func (d *defaultDynamoDBAccessor) UpdateItemSdk(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
-	return d.dynamodbClient.UpdateItem(apcontext.Context, input)
+	if !env.IsStragingOrProd() {
+		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
+	}
+	output, err := d.dynamodbClient.UpdateItem(apcontext.Context, input)
+	if output.ConsumedCapacity != nil {
+		d.log.Debug("UpdateItem[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
+	}
+	return output, err
 }
 
 // DeleteItemSdk implements DynamoDBAccessor.
 func (d *defaultDynamoDBAccessor) DeleteItemSdk(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
-	return d.dynamodbClient.DeleteItem(apcontext.Context, input)
+	if !env.IsStragingOrProd() {
+		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
+	}
+	output, err := d.dynamodbClient.DeleteItem(apcontext.Context, input)
+	if output.ConsumedCapacity != nil {
+		d.log.Debug("DeleteItem[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
+	}
+	return output, err
 }
 
 // BatchGetItemSdk implements DynamoDBAccessor.
 func (d *defaultDynamoDBAccessor) BatchGetItemSdk(input *dynamodb.BatchGetItemInput) (*dynamodb.BatchGetItemOutput, error) {
-	return d.dynamodbClient.BatchGetItem(apcontext.Context, input)
+	if !env.IsStragingOrProd() {
+		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
+	}
+	output, err := d.dynamodbClient.BatchGetItem(apcontext.Context, input)
+	for i, v := range output.ConsumedCapacity {
+		d.log.Debug("BatchGetItem(%d)[%s]消費キャパシティユニット:%f", i, *v.TableName, *v.CapacityUnits)
+	}
+	return output, err
 }
 
 // BatchWriteItemSdk implements DynamoDBAccessor.
 func (d *defaultDynamoDBAccessor) BatchWriteItemSdk(input *dynamodb.BatchWriteItemInput) (*dynamodb.BatchWriteItemOutput, error) {
-	return d.dynamodbClient.BatchWriteItem(apcontext.Context, input)
+	if !env.IsStragingOrProd() {
+		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
+	}
+	output, err := d.dynamodbClient.BatchWriteItem(apcontext.Context, input)
+	for i, v := range output.ConsumedCapacity {
+		d.log.Debug("BatchWriteItem(%d)[%s]消費キャパシティユニット:%f", i, *v.TableName, *v.CapacityUnits)
+	}
+	return output, err
 }
 
 // startTransaction implements DynamoDBAccessor.
@@ -145,14 +196,21 @@ func (d *defaultDynamoDBAccessor) startTransaction(transaction transaction) {
 // AppendTransactWriteItem implements DynamoDBAccessor.
 func (d *defaultDynamoDBAccessor) AppendTransactWriteItem(item *types.TransactWriteItem) {
 	// TODO: 本当はここがスレッド毎にトランザクション管理できるとgoroutineセーフにできるが、現状難しい
+	d.log.Debug("AppendTransactWriteItem")
 	d.transaction.appendTransactWriteItem(item)
 }
 
 // transactWriteItemsSDK implements DynamoDBAccessor.
 func (d *defaultDynamoDBAccessor) transactWriteItemsSDK(items []types.TransactWriteItem) (*dynamodb.TransactWriteItemsOutput, error) {
-	return d.dynamodbClient.TransactWriteItems(apcontext.Context, &dynamodb.TransactWriteItemsInput{
-		TransactItems: items,
-	})
+	input := &dynamodb.TransactWriteItemsInput{TransactItems: items}
+	if !env.IsStragingOrProd() {
+		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
+	}
+	output, err := d.dynamodbClient.TransactWriteItems(apcontext.Context, input)
+	for i, v := range output.ConsumedCapacity {
+		d.log.Debug("TransactWriteItems(%d)[%s]消費キャパシティユニット:%f", i, *v.TableName, *v.CapacityUnits)
+	}
+	return output, err
 }
 
 // endTransaction implements DynamoDBAccessor.

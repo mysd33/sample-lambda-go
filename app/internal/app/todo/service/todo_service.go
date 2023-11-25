@@ -16,6 +16,9 @@ type TodoService interface {
 	Find(todoId string) (*entity.Todo, error)
 	// Register は、タイトルtodoTitleのTodoを登録します。
 	Register(todoTitle string) (*entity.Todo, error)
+	// RegisterTx は、タイトルtodoTitleのTodoをトランザクションを使って登録します。
+	// DynamoDBトランザクションを使った動作確認用に定義したもの
+	RegisterTx(todoTitle string) (*entity.Todo, error)
 }
 
 // New は、TodoServiceを作成します。
@@ -33,10 +36,12 @@ type todoServiceImpl struct {
 	repository repository.TodoRepository
 }
 
+// Find implements TodoService.
 func (ts *todoServiceImpl) Find(todoId string) (*entity.Todo, error) {
 	return ts.repository.GetTodo(todoId)
 }
 
+// Register implements TodoService.
 func (ts *todoServiceImpl) Register(todoTitle string) (*entity.Todo, error) {
 	// デバッグログの例
 	ts.log.Debug("TodoTitle=%s", todoTitle)
@@ -51,4 +56,10 @@ func (ts *todoServiceImpl) Register(todoTitle string) (*entity.Todo, error) {
 	todo := entity.Todo{Title: todoTitle}
 
 	return ts.repository.PutTodo(&todo)
+}
+
+// RegisterTx implements TodoService.
+func (ts *todoServiceImpl) RegisterTx(todoTitle string) (*entity.Todo, error) {
+	todo := entity.Todo{Title: todoTitle}
+	return ts.repository.PutTodoTx(&todo)
 }
