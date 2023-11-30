@@ -15,15 +15,15 @@ import (
 // Loggerは、ログ出力のインタフェースです
 type Logger interface {
 	// Debug は、メッセージのテンプレートtemplate, 置き換え文字列argsに対してfmt.Sprintfしたメッセージでデバッグレベルのログを出力します。
-	Debug(template string, args ...interface{})
+	Debug(template string, args ...any)
 	// Info は、メッセージID（messages）、置き換え文字列argsに対応するメッセージで、情報レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
-	Info(code string, args ...interface{})
+	Info(code string, args ...any)
 	// Warn は、メッセージID（エラーコードcode）、置き換え文字列argsに対応するメッセージで警告レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
-	Warn(code string, args ...interface{})
+	Warn(code string, args ...any)
 	// WarnWithCodableError は、エラーが持つメッセージID（エラーコード）、置き換え文字列に対応するメッセージで警告レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	WarnWithCodableError(err errors.CodableError)
 	// Error は、メッセージID（エラーコードcode）、置き換え文字列argsに対応するメッセージでエラーレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
-	Error(code string, args ...interface{})
+	Error(code string, args ...any)
 	// ErrorWithCodableError は、エラーが持つメッセージID（エラーコード）、置き換え文字列に対応するメッセージでエラーレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	ErrorWithCodableError(err errors.CodableError)
 	// 	ErrorWithUnexpectedError は、予期せぬエラーをログに出力します。
@@ -62,12 +62,12 @@ type zapLogger struct {
 }
 
 // Debug implements Logger.
-func (z *zapLogger) Debug(template string, args ...interface{}) {
+func (z *zapLogger) Debug(template string, args ...any) {
 	z.log.Debugf(template, args...)
 }
 
 // Info implements Logger.
-func (z *zapLogger) Info(code string, args ...interface{}) {
+func (z *zapLogger) Info(code string, args ...any) {
 	message := z.messageSource.GetMessage(code, args...)
 	if message != "" {
 		z.log.Infof(message)
@@ -77,7 +77,7 @@ func (z *zapLogger) Info(code string, args ...interface{}) {
 }
 
 // Warn implements Logger.
-func (z *zapLogger) Warn(code string, args ...interface{}) {
+func (z *zapLogger) Warn(code string, args ...any) {
 	message := z.messageSource.GetMessage(code, args...)
 	if message != "" {
 		z.log.Warnf(message)
@@ -100,7 +100,7 @@ func (z *zapLogger) WarnWithCodableError(err errors.CodableError) {
 }
 
 // Error implements Logger.
-func (z *zapLogger) Error(code string, args ...interface{}) {
+func (z *zapLogger) Error(code string, args ...any) {
 	message := z.messageSource.GetMessage(code, args...)
 	if message != "" {
 		z.log.Errorf(message)

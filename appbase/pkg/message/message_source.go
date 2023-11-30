@@ -6,8 +6,7 @@ package message
 import (
 	_ "embed"
 	"fmt"
-
-	"golang.org/x/exp/maps"
+	"maps"
 
 	"gopkg.in/yaml.v3"
 )
@@ -20,7 +19,7 @@ var (
 // MessageSource は、メッセージを取得するインタフェースです。
 type MessageSource interface {
 	// GetMessage は、メッセージID（id）に対応し、置換文字列argsを設定したするメッセージを取得します。
-	GetMessage(id string, args ...interface{}) string
+	GetMessage(id string, args ...any) string
 	// Add は業務APのメッセージのyaml定義(messages_yml)を、MessageSourceに追加します。
 	Add(messages_yaml []byte) error
 }
@@ -53,7 +52,7 @@ func (ms *defaultMessageSource) Add(messages_yaml []byte) error {
 }
 
 // GetMessage implements MessageSource.
-func (ms *defaultMessageSource) GetMessage(id string, args ...interface{}) string {
+func (ms *defaultMessageSource) GetMessage(id string, args ...any) string {
 	// メッセージIDに対するメッセージ（のテンプレート）を取得
 	template := ""
 	if val, ok := ms.messages[id]; ok {

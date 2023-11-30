@@ -37,7 +37,7 @@ func NewHandlerInterceptor(config config.Config, log logging.Logger, apiResponse
 }
 
 // ControllerFunc Controlerで実行する関数です。
-type ControllerFunc func(ctx *gin.Context) (interface{}, error)
+type ControllerFunc func(ctx *gin.Context) (any, error)
 
 // Handle は、Controlerで実行する関数controllerFuncの前後でインタセプタの処理を実行します。
 func (i *defaultHandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.HandlerFunc {

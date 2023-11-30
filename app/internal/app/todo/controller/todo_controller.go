@@ -20,9 +20,9 @@ type Request struct {
 // TodoController は、Todo業務のControllerインタフェースです。
 type TodoController interface {
 	// Find は、パスパラメータで指定されたtodo_idのTodoを照会します。
-	Find(ctx *gin.Context) (interface{}, error)
+	Find(ctx *gin.Context) (any, error)
 	// Register は、リクエストデータで受け取ったTodoを登録します。
-	Register(ctx *gin.Context) (interface{}, error)
+	Register(ctx *gin.Context) (any, error)
 }
 
 // New は、TodoControllerを作成します。
@@ -40,7 +40,7 @@ type todoControllerImpl struct {
 	service            service.TodoService
 }
 
-func (c *todoControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
+func (c *todoControllerImpl) Find(ctx *gin.Context) (any, error) {
 	// パスパラメータの取得
 	todoId := ctx.Param("todo_id")
 	// 入力チェック
@@ -49,12 +49,12 @@ func (c *todoControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
 		return nil, errors.NewValidationErrorWithMessage("クエリパラメータtodoIdが未指定です")
 	}
 	// DynamoDBトランザクション管理してサービスの実行
-	return c.transactionManager.ExecuteTransaction(func() (interface{}, error) {
+	return c.transactionManager.ExecuteTransaction(func() (any, error) {
 		return c.service.Find(todoId)
 	})
 }
 
-func (c *todoControllerImpl) Register(ctx *gin.Context) (interface{}, error) {
+func (c *todoControllerImpl) Register(ctx *gin.Context) (any, error) {
 	// POSTデータをバインド
 	var request Request
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -66,12 +66,12 @@ func (c *todoControllerImpl) Register(ctx *gin.Context) (interface{}, error) {
 	var serviceFunc domain.ServiceFunc
 
 	if transaction != "" {
-		serviceFunc = func() (interface{}, error) {
+		serviceFunc = func() (any, error) {
 			// トランザクション指定あり
 			return c.service.RegisterTx(request.TodoTitle)
 		}
 	} else {
-		serviceFunc = func() (interface{}, error) {
+		serviceFunc = func() (any, error) {
 			return c.service.Register(request.TodoTitle)
 		}
 	}

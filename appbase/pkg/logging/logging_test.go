@@ -28,7 +28,7 @@ func Test_zapLogger_Debug(t *testing.T) {
 
 	type args struct {
 		template string
-		args     []interface{}
+		args     []any
 	}
 	tests := []struct {
 		name string
@@ -41,10 +41,10 @@ func Test_zapLogger_Debug(t *testing.T) {
 			args: args{template: "デバッグログ"}},
 		{name: "置換文字列ありのテスト",
 			z:    sut(),
-			args: args{template: "デバッグログ:%s,%s", args: []interface{}{"hoge", "fuga"}}},
+			args: args{template: "デバッグログ:%s,%s", args: []any{"hoge", "fuga"}}},
 		{name: "置き換え文字列誤りのテスト",
 			z:    sut(),
-			args: args{template: "デバッグログ", args: []interface{}{"hoge", "fuga"}}},
+			args: args{template: "デバッグログ", args: []any{"hoge", "fuga"}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -56,7 +56,7 @@ func Test_zapLogger_Debug(t *testing.T) {
 func Test_zapLogger_Info(t *testing.T) {
 	type args struct {
 		code string
-		args []interface{}
+		args []any
 	}
 	tests := []struct {
 		name string
@@ -66,15 +66,15 @@ func Test_zapLogger_Info(t *testing.T) {
 		// テストケース
 		{name: "メッセージID取得できた場合",
 			z:    sut(),
-			args: args{code: "logtest001", args: []interface{}{"aaaa"}},
+			args: args{code: "logtest001", args: []any{"aaaa"}},
 		},
 		{name: "メッセージID取得できた場合(置換文字列が多い)",
 			z:    sut(),
-			args: args{code: "logtest001", args: []interface{}{"aaaa", "bbbb"}},
+			args: args{code: "logtest001", args: []any{"aaaa", "bbbb"}},
 		},
 		{name: "メッセージID取得できない場合",
 			z:    sut(),
-			args: args{code: "xxxxx", args: []interface{}{"aaaa", "bbbb"}},
+			args: args{code: "xxxxx", args: []any{"aaaa", "bbbb"}},
 		},
 	}
 	for _, tt := range tests {
@@ -87,7 +87,7 @@ func Test_zapLogger_Info(t *testing.T) {
 func Test_zapLogger_Warn(t *testing.T) {
 	type args struct {
 		code string
-		args []interface{}
+		args []any
 	}
 	tests := []struct {
 		name string
@@ -97,15 +97,15 @@ func Test_zapLogger_Warn(t *testing.T) {
 		// テストケース
 		{name: "メッセージID取得できた場合",
 			z:    sut(),
-			args: args{code: "logtest001", args: []interface{}{"aaaa"}},
+			args: args{code: "logtest001", args: []any{"aaaa"}},
 		},
 		{name: "メッセージID取得できた場合(置換文字列が多い)",
 			z:    sut(),
-			args: args{code: "logtest001", args: []interface{}{"aaaa", "bbbb"}},
+			args: args{code: "logtest001", args: []any{"aaaa", "bbbb"}},
 		},
 		{name: "メッセージID取得できない場合",
 			z:    sut(),
-			args: args{code: "xxxxx", args: []interface{}{"aaaa", "bbbb"}},
+			args: args{code: "xxxxx", args: []any{"aaaa", "bbbb"}},
 		},
 	}
 	for _, tt := range tests {
@@ -152,7 +152,7 @@ func Test_zapLogger_WarnWithCodableError(t *testing.T) {
 func Test_zapLogger_Error(t *testing.T) {
 	type args struct {
 		code string
-		args []interface{}
+		args []any
 	}
 	tests := []struct {
 		name string
@@ -162,15 +162,15 @@ func Test_zapLogger_Error(t *testing.T) {
 		// テストケース
 		{name: "メッセージID取得できた場合",
 			z:    sut(),
-			args: args{code: "logtest001", args: []interface{}{"aaaa"}},
+			args: args{code: "logtest001", args: []any{"aaaa"}},
 		},
 		{name: "メッセージID取得できた場合(置換文字列が多い)",
 			z:    sut(),
-			args: args{code: "logtest001", args: []interface{}{"aaaa", "bbbb"}},
+			args: args{code: "logtest001", args: []any{"aaaa", "bbbb"}},
 		},
 		{name: "メッセージID取得できない場合",
 			z:    sut(),
-			args: args{code: "xxxxx", args: []interface{}{"aaaa", "bbbb"}},
+			args: args{code: "xxxxx", args: []any{"aaaa", "bbbb"}},
 		},
 	}
 	for _, tt := range tests {

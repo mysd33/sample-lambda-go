@@ -30,11 +30,11 @@ type ResponseFindTodo struct {
 // BffController は、Bff業務のControllerインタフェースです。
 type BffController interface {
 	// FindTodo は、クエリパラメータで指定されたtodo_idとuser_idのTodoを照会します。
-	FindTodo(ctx *gin.Context) (interface{}, error)
+	FindTodo(ctx *gin.Context) (any, error)
 	// RegisterUser は、リクエストデータで受け取ったユーザ情報を登録します。
-	RegisterUser(ctx *gin.Context) (interface{}, error)
+	RegisterUser(ctx *gin.Context) (any, error)
 	// RegisterTodo は、リクエストデータで受け取ったTodoを登録します。
-	RegisterTodo(ctx *gin.Context) (interface{}, error)
+	RegisterTodo(ctx *gin.Context) (any, error)
 }
 
 // New は、BffControllerを作成します。
@@ -49,7 +49,7 @@ type bffControllerImpl struct {
 }
 
 // RegisterUser implements BffController.
-func (c *bffControllerImpl) RegisterUser(ctx *gin.Context) (interface{}, error) {
+func (c *bffControllerImpl) RegisterUser(ctx *gin.Context) (any, error) {
 	// POSTデータをバインド
 	var request RequestRegisterUser
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -62,7 +62,7 @@ func (c *bffControllerImpl) RegisterUser(ctx *gin.Context) (interface{}, error) 
 }
 
 // RegisterTodo implements BffController.
-func (c *bffControllerImpl) RegisterTodo(ctx *gin.Context) (interface{}, error) {
+func (c *bffControllerImpl) RegisterTodo(ctx *gin.Context) (any, error) {
 	// POSTデータをバインド
 	var request RequestRegisterTodo
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -75,7 +75,7 @@ func (c *bffControllerImpl) RegisterTodo(ctx *gin.Context) (interface{}, error) 
 }
 
 // FindTodo implements BffController.
-func (c *bffControllerImpl) FindTodo(ctx *gin.Context) (interface{}, error) {
+func (c *bffControllerImpl) FindTodo(ctx *gin.Context) (any, error) {
 	// クエリパラメータの取得
 	userId := ctx.Query("user_id")
 	// 入力チェック

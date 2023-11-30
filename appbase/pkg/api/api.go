@@ -15,7 +15,7 @@ import (
 // ApiResponseFormatterは、レスポンスデータを作成するインタフェース
 type ApiResponseFormatter interface {
 	// ReturnResponseBody は、処理結果resultまたはエラーerrに対応するレスポンスボディを返却します。
-	ReturnResponseBody(ctx *gin.Context, result interface{}, err error)
+	ReturnResponseBody(ctx *gin.Context, result any, err error)
 }
 
 // NewApiResponseFormatter は、ApiResponseFormatterを作成します。
@@ -28,7 +28,7 @@ type defaultApiResponseFormatter struct {
 }
 
 // ReturnResponseBody implements ApiResponseFormatter.
-func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context, result interface{}, err error) {
+func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context, result any, err error) {
 	var (
 		validationError *myerrors.ValidationError
 		businessError   *myerrors.BusinessError

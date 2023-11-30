@@ -14,7 +14,7 @@ import (
 // TransactionManager はトランザクションを管理するインタフェースです
 type TransactionManager interface {
 	// ExecuteTransaction は、Serviceの関数serviceFuncの実行前後でDynamoDBトランザクション実行します。
-	ExecuteTransaction(serviceFunc domain.ServiceFunc) (interface{}, error)
+	ExecuteTransaction(serviceFunc domain.ServiceFunc) (any, error)
 }
 
 // NewTransactionManager は、TransactionManagerを作成します
@@ -28,7 +28,7 @@ type defaultTransactionManager struct {
 }
 
 // ExecuteTransaction implements TransactionManager.
-func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.ServiceFunc) (interface{}, error) {
+func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.ServiceFunc) (any, error) {
 	// 新しいトランザクションを作成
 	transction := newTrasaction(tm.log)
 	// トランザクションを開始

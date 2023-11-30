@@ -19,7 +19,7 @@ import (
 type CodableError interface {
 	error
 	ErrorCode() string
-	Args() []interface{}
+	Args() []any
 }
 
 // ValidationError は、入力エラーの構造体です。
@@ -34,7 +34,7 @@ func NewValidationError(cause error) *ValidationError {
 }
 
 // NewValidationErrorWithMessage は、メッセージをもとにBusinessError構造体を作成します。
-func NewValidationErrorWithMessage(format string, args ...interface{}) *ValidationError {
+func NewValidationErrorWithMessage(format string, args ...any) *ValidationError {
 	return &ValidationError{
 		// cockloachdb/errorのスタックトレース付きのcauseエラー作成
 		cause: cerrors.Errorf(format, args...),
@@ -67,11 +67,11 @@ func (e *ValidationError) Unwrap() error {
 type BusinessError struct {
 	cause     error
 	errorCode string
-	args      []interface{}
+	args      []any
 }
 
 // NewBusinessError は、BusinessError構造体を作成します。
-func NewBusinessError(errorCode string, args ...interface{}) *BusinessError {
+func NewBusinessError(errorCode string, args ...any) *BusinessError {
 	// スタックトレース出力のため、cockloachdb/errorのスタックトレース付きのcauseエラー作成
 	cause := cerrors.NewWithDepthf(1, "code:%s, error:%v", errorCode, args)
 	return &BusinessError{cause: cause, errorCode: errorCode, args: args}
@@ -80,7 +80,7 @@ func NewBusinessError(errorCode string, args ...interface{}) *BusinessError {
 // NewBusinessError は、原因となるエラー（cause）をラップし、
 // メッセージIDにもなるエラーコード（errorCode）とメッセージの置換文字列(args）を渡し
 // BusinessError構造体を作成します。
-func NewBusinessErrorWithCause(cause error, errorCode string, args ...interface{}) *BusinessError {
+func NewBusinessErrorWithCause(cause error, errorCode string, args ...any) *BusinessError {
 	// 誤ったエラーのラップを確認
 	requiredNotBusinessAndSystemError(cause)
 	// causeはスタックトレース付与
@@ -108,7 +108,7 @@ func (e *BusinessError) ErrorCode() string {
 }
 
 // Argsは、エラーメッセージの置換文字列(args）を返します
-func (e *BusinessError) Args() []interface{} {
+func (e *BusinessError) Args() []any {
 	return e.args
 }
 
@@ -116,13 +116,13 @@ func (e *BusinessError) Args() []interface{} {
 type SystemError struct {
 	cause     error
 	errorCode string
-	args      []interface{}
+	args      []any
 }
 
 // NewSystemError は、原因となるエラー（cause）をラップし、
 // メッセージIDにもなるエラーコード（errorCode）とメッセージの置換文字列(args）を渡し
 // SystemError構造体を作成します。
-func NewSystemError(cause error, errorCode string, args ...interface{}) *SystemError {
+func NewSystemError(cause error, errorCode string, args ...any) *SystemError {
 	// 誤ったエラーのラップを確認
 	requiredNotBusinessAndSystemError(cause)
 	// causeはスタックトレース付与
@@ -150,7 +150,7 @@ func (e *SystemError) ErrorCode() string {
 }
 
 // Argsは、エラーメッセージの置換文字列(args）を返します
-func (e *SystemError) Args() []interface{} {
+func (e *SystemError) Args() []any {
 	return e.args
 }
 

@@ -18,9 +18,9 @@ type Request struct {
 // UserController は、ユーザ管理業務のContollerインタフェースです。
 type UserController interface {
 	// Find は、パスパラメータで指定されたuser_idのユーザ情報を照会します。
-	Find(ctx *gin.Context) (interface{}, error)
+	Find(ctx *gin.Context) (any, error)
 	// Register は、リクエストデータで受け取ったユーザ情報を登録します。
-	Register(ctx *gin.Context) (interface{}, error)
+	Register(ctx *gin.Context) (any, error)
 }
 
 // New は、UserControllerを作成します。
@@ -35,7 +35,7 @@ type userControllerImpl struct {
 	transactionManager rdb.TransactionManager
 }
 
-func (c *userControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
+func (c *userControllerImpl) Find(ctx *gin.Context) (any, error) {
 	// パスパラメータの取得
 	userId := ctx.Param("user_id")
 	// 入力チェック
@@ -45,12 +45,12 @@ func (c *userControllerImpl) Find(ctx *gin.Context) (interface{}, error) {
 	}
 
 	// RDBトランザクション開始してサービスの実行
-	return c.transactionManager.ExecuteTransaction(func() (interface{}, error) {
+	return c.transactionManager.ExecuteTransaction(func() (any, error) {
 		return c.service.Find(userId)
 	})
 }
 
-func (c *userControllerImpl) Register(ctx *gin.Context) (interface{}, error) {
+func (c *userControllerImpl) Register(ctx *gin.Context) (any, error) {
 	// POSTデータをバインド
 	var request Request
 	if err := ctx.ShouldBindJSON(&request); err != nil {
@@ -59,7 +59,7 @@ func (c *userControllerImpl) Register(ctx *gin.Context) (interface{}, error) {
 	}
 
 	// RDBトランザクション開始してサービスの実行
-	return c.transactionManager.ExecuteTransaction(func() (interface{}, error) {
+	return c.transactionManager.ExecuteTransaction(func() (any, error) {
 		return c.service.Register(request.Name)
 	})
 }

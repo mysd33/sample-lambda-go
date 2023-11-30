@@ -16,7 +16,7 @@ type Request struct {
 
 // ErrorController は、エラーをテストするためのControllerインタフェースです。
 type ErrorTestController interface {
-	Execute(ctx *gin.Context) (interface{}, error)
+	Execute(ctx *gin.Context) (any, error)
 }
 
 // New は、ErrorControllerを作成します。
@@ -31,7 +31,7 @@ type errorTestControllerImpl struct {
 }
 
 // Execute implements ErrorTestController.
-func (c *errorTestControllerImpl) Execute(ctx *gin.Context) (interface{}, error) {
+func (c *errorTestControllerImpl) Execute(ctx *gin.Context) (any, error) {
 	errorType := ctx.Param("errortype")
 
 	if errorType == "validation" {
