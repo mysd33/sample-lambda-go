@@ -388,13 +388,30 @@ docker-compose up
 
     * TODO: NoSQL WorkBenchの場合のtodoテーブルを作成手順も記載
 
-* sam localコマンドを実行
-    * local-env.jsonファイルに、上書きする環境変数が記載されている
+* [Elastic MQ](https://github.com/softwaremill/elasticmq)（SQL Local実行）のコンテナを起動
 
 ```sh
+cd ..
+cd elasticmq
+# Windowsの場合
+docker run --name elasticmq -p 9324:9324 -p 9325:9325 -v %cd%\custom.conf:/opt/elasticmq.conf softwaremill/elasticmq-native
+
+# Linuxの場合
+docker run --name elasticmq -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq-native
+```
+
+* ブラウザで、[http://localhost:9325](http://localhost:9325)にアクセスするとキューの状態が確認できる
+    * SampleQueueと、SampleQueue-DLQというキューが作成されていることが分かる
+
+* sam localコマンドを実行
+    * local-env.jsonファイルに記載されてた、環境変数で上書きして実行
+
+```sh
+cd ..
 sam local start-api --env-vars local-env.json
 
 # Windowsでもmakeをインストールすればmakeでいけます
+
 make local_startapi 
 ```
 
