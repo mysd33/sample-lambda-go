@@ -38,7 +38,7 @@ type todoServiceImpl struct {
 
 // Find implements TodoService.
 func (ts *todoServiceImpl) Find(todoId string) (*entity.Todo, error) {
-	return ts.repository.GetTodo(todoId)
+	return ts.repository.FindOne(todoId)
 }
 
 // Register implements TodoService.
@@ -55,11 +55,11 @@ func (ts *todoServiceImpl) Register(todoTitle string) (*entity.Todo, error) {
 
 	todo := entity.Todo{Title: todoTitle}
 
-	return ts.repository.PutTodo(&todo)
+	return ts.repository.CreateOne(&todo)
 }
 
 // RegisterTx implements TodoService.
 func (ts *todoServiceImpl) RegisterTx(todoTitle string) (*entity.Todo, error) {
 	todo := entity.Todo{Title: todoTitle}
-	return ts.repository.PutTodoTx(&todo)
+	return ts.repository.CreateOneTx(&todo)
 }

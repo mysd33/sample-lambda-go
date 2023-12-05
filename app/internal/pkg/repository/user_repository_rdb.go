@@ -23,7 +23,7 @@ type UserRepositoryImplByRDB struct {
 	log      logging.Logger
 }
 
-func (ur *UserRepositoryImplByRDB) GetUser(userId string) (*entity.User, error) {
+func (ur *UserRepositoryImplByRDB) FindOne(userId string) (*entity.User, error) {
 	tx := ur.accessor.GetTransaction()
 	ctx := apcontext.Context
 	var user entity.User
@@ -45,7 +45,7 @@ func (ur *UserRepositoryImplByRDB) GetUser(userId string) (*entity.User, error) 
 	return &user, nil
 }
 
-func (ur *UserRepositoryImplByRDB) PutUser(user *entity.User) (*entity.User, error) {
+func (ur *UserRepositoryImplByRDB) CreateOne(user *entity.User) (*entity.User, error) {
 	//ID採番
 	userId := id.GenerateId()
 	user.ID = userId

@@ -19,13 +19,13 @@ type MockUserRepository struct {
 	mock.Mock
 }
 
-func (d *MockUserRepository) GetUser(userId string) (*entity.User, error) {
+func (d *MockUserRepository) FindOne(userId string) (*entity.User, error) {
 	//インタフェースメソッド実装時、Mock.Calledメソッド呼び出し
 	args := d.Called(userId)
 	return args.Get(0).(*entity.User), args.Error(1)
 }
 
-func (d *MockUserRepository) PutUser(user *entity.User) (*entity.User, error) {
+func (d *MockUserRepository) CreateOne(user *entity.User) (*entity.User, error) {
 	//インタフェースメソッド実装時、Mock.Calledメソッド呼び出し
 	args := d.Called(user)
 	return args.Get(0).(*entity.User), args.Error(1)
@@ -45,7 +45,7 @@ func TestRegister(t *testing.T) {
 	mockRepository := new(MockUserRepository)
 	mockInputValue := entity.User{Name: inputUserName}
 	mockReturnValue := entity.User{ID: id.GenerateId(), Name: expectedName}
-	mockRepository.On("PutUser", &mockInputValue).Return(&mockReturnValue, nil)
+	mockRepository.On("CreateOne", &mockInputValue).Return(&mockReturnValue, nil)
 	var repository repository.UserRepository = mockRepository
 	sut := service.New(log, cfg, repository)
 	//テスト対象メソッドの呼び出し

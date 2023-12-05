@@ -28,8 +28,8 @@ type userRepositoryImplByRestAPI struct {
 	config     config.Config
 }
 
-// GetUser implements UserRepository.
-func (ur *userRepositoryImplByRestAPI) GetUser(userId string) (*entity.User, error) {
+// FindOne implements UserRepository.
+func (ur *userRepositoryImplByRestAPI) FindOne(userId string) (*entity.User, error) {
 	baseUrl := ur.config.Get(USERS_API_BASE_URL)
 	url := fmt.Sprintf("%s/users-api/v1/users/%s", baseUrl, userId)
 	ur.log.Debug("url:%s", url)
@@ -50,8 +50,8 @@ func (ur *userRepositoryImplByRestAPI) GetUser(userId string) (*entity.User, err
 	return &user, nil
 }
 
-// PutUser implements UserRepository.
-func (ur *userRepositoryImplByRestAPI) PutUser(user *entity.User) (*entity.User, error) {
+// CreateOne implements UserRepository.
+func (ur *userRepositoryImplByRestAPI) CreateOne(user *entity.User) (*entity.User, error) {
 	baseUrl := ur.config.Get(USERS_API_BASE_URL)
 	url := fmt.Sprintf("%s/users-api/v1/users", baseUrl)
 	ur.log.Debug("url:%s", url)

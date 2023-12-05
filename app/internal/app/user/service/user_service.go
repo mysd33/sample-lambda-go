@@ -41,9 +41,9 @@ func (us *userServiceImpl) Register(userName string) (*entity.User, error) {
 	us.log.Debug("UserName=%s", userName)
 
 	user := entity.User{Name: userName}
-	return us.repository.PutUser(&user)
+	return us.repository.CreateOne(&user)
 }
 
 func (us *userServiceImpl) Find(userId string) (*entity.User, error) {
-	return us.repository.GetUser(userId)
+	return us.repository.FindOne(userId)
 }

@@ -36,7 +36,7 @@ type todoRepositoryImplByDynamoDB struct {
 	config   config.Config
 }
 
-func (tr *todoRepositoryImplByDynamoDB) GetTodo(todoId string) (*entity.Todo, error) {
+func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, error) {
 	// AWS SDK for Go v2 Migration
 	// https://docs.aws.amazon.com/ja_jp/code-library/latest/ug/go_2_dynamodb_code_examples.html
 	// https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/gov2/dynamodb
@@ -62,7 +62,7 @@ func (tr *todoRepositoryImplByDynamoDB) GetTodo(todoId string) (*entity.Todo, er
 	return &todo, nil
 }
 
-func (tr *todoRepositoryImplByDynamoDB) PutTodo(todo *entity.Todo) (*entity.Todo, error) {
+func (tr *todoRepositoryImplByDynamoDB) CreateOne(todo *entity.Todo) (*entity.Todo, error) {
 	// AWS SDK for Go v2 Migration
 	// https://docs.aws.amazon.com/ja_jp/code-library/latest/ug/go_2_dynamodb_code_examples.html
 	// https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/gov2/dynamodb
@@ -88,8 +88,8 @@ func (tr *todoRepositoryImplByDynamoDB) PutTodo(todo *entity.Todo) (*entity.Todo
 
 }
 
-// PutTodoTx implements TodoRepository.
-func (tr *todoRepositoryImplByDynamoDB) PutTodoTx(todo *entity.Todo) (*entity.Todo, error) {
+// CreateOneTx implements TodoRepository.
+func (tr *todoRepositoryImplByDynamoDB) CreateOneTx(todo *entity.Todo) (*entity.Todo, error) {
 	// ID採番
 	todoId := id.GenerateId()
 	todo.ID = todoId

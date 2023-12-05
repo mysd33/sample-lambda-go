@@ -35,7 +35,7 @@ type UserRepositoryImplByDynamoDB struct {
 	config   config.Config
 }
 
-func (ur *UserRepositoryImplByDynamoDB) GetUser(userId string) (*entity.User, error) {
+func (ur *UserRepositoryImplByDynamoDB) FindOne(userId string) (*entity.User, error) {
 	// AWS SDK for Go v2 Migration
 	// https://docs.aws.amazon.com/ja_jp/code-library/latest/ug/go_2_dynamodb_code_examples.html
 	// https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/gov2/dynamodb
@@ -68,7 +68,7 @@ func (ur *UserRepositoryImplByDynamoDB) GetUser(userId string) (*entity.User, er
 	return &user, nil
 }
 
-func (ur *UserRepositoryImplByDynamoDB) PutUser(user *entity.User) (*entity.User, error) {
+func (ur *UserRepositoryImplByDynamoDB) CreateOne(user *entity.User) (*entity.User, error) {
 	// ID採番
 	userId := id.GenerateId()
 	user.ID = userId

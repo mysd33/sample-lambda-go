@@ -28,8 +28,8 @@ type todoRepositoryImplByRestAPI struct {
 	config     config.Config
 }
 
-// GetTodo implements TodoRepository.
-func (tr *todoRepositoryImplByRestAPI) GetTodo(todoId string) (*entity.Todo, error) {
+// FindOne implements TodoRepository.
+func (tr *todoRepositoryImplByRestAPI) FindOne(todoId string) (*entity.Todo, error) {
 	baseUrl := tr.config.Get(TODO_API_BASE_URL)
 	url := fmt.Sprintf("%s/todo-api/v1/todo/%s", baseUrl, todoId)
 	tr.log.Debug("url:%s", url)
@@ -46,8 +46,8 @@ func (tr *todoRepositoryImplByRestAPI) GetTodo(todoId string) (*entity.Todo, err
 	return &todo, nil
 }
 
-// PutTodo implements TodoRepository.
-func (tr *todoRepositoryImplByRestAPI) PutTodo(todo *entity.Todo) (*entity.Todo, error) {
+// CreateOne implements TodoRepository.
+func (tr *todoRepositoryImplByRestAPI) CreateOne(todo *entity.Todo) (*entity.Todo, error) {
 	baseUrl := tr.config.Get(TODO_API_BASE_URL)
 	url := fmt.Sprintf("%s/todo-api/v1/todo", baseUrl)
 	tr.log.Debug("url:%s", url)
@@ -73,7 +73,7 @@ func (tr *todoRepositoryImplByRestAPI) PutTodo(todo *entity.Todo) (*entity.Todo,
 	return &newTodo, nil
 }
 
-// PutTodoTx implements TodoRepository.
-func (*todoRepositoryImplByRestAPI) PutTodoTx(todo *entity.Todo) (*entity.Todo, error) {
+// CreateOneTx implements TodoRepository.
+func (*todoRepositoryImplByRestAPI) CreateOneTx(todo *entity.Todo) (*entity.Todo, error) {
 	panic("unimplemented")
 }

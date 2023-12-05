@@ -7,8 +7,8 @@ import (
 
 // UserRepository は、ユーザを管理するRepositoryインタフェースです。
 type UserRepository interface {
-	// GetUser は、userIdが一致するユーザを取得します。
-	GetUser(userId string) (*entity.User, error)
-	// PutUser は、指定されたユーザを登録します。
-	PutUser(user *entity.User) (*entity.User, error)
+	// FindOne は、userIdが一致するユーザを取得します。
+	FindOne(userId string) (*entity.User, error)
+	// CreateOne は、指定されたユーザを登録します。
+	CreateOne(user *entity.User) (*entity.User, error)
 }
