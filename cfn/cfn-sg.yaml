@@ -45,7 +45,23 @@ Resources:
           #CidrIp: !FindInMap [CidrConfig, !Ref EnvironmentType, VPC]
       Tags:
         - Key: Name
-          Value: !Sub ${StackPrefix}-PrivateAPI-SG          
+          Value: !Sub ${StackPrefix}-PrivateAPI-SG
+# Security Group for VPC Endpoint  
+  VPCEndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId:
+        Fn::ImportValue: !Sub ${StackPrefix}-VPC-ID
+      GroupDescription: Access from VPC Private Subnet Resources
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp:
+            Fn::ImportValue: !Sub ${StackPrefix}-VPC-CIDR
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-VPE-SG          
 # Security Group of Lambda
   LambdaSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -114,6 +130,11 @@ Outputs:
     Value:  !Ref PrivateAPISecurityGroup
     Export: 
       Name: !Sub ${StackPrefix}-PrivateAPISecurityGroup-ID
+  VPCEndpointSecurityGroupID:
+    Description: VPCEndpointSecurityGroup ID
+    Value:  !Ref VPCEndpointSecurityGroup
+    Export: 
+      Name: !Sub ${StackPrefix}-VPCEndpointSecurityGroup-ID      
   RDSProxySecurityGroupID:
     Description: RDSProxySecurityGroup ID
     Value:  !Ref RDSProxySecurityGroup

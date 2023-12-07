@@ -5,12 +5,14 @@ import (
 	"app/internal/app/bff/service"
 	"app/internal/pkg/message"
 	"app/internal/pkg/repository"
+	"log"
 
 	errcontroller "app/internal/app/errortest/controller"
 	errservice "app/internal/app/errortest/service"
 
 	"example.com/appbase/pkg/component"
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 )
 
 // 業務の初期化処理
@@ -20,8 +22,13 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	// リポジトリの作成
 	userRepository := repository.NewUserRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger(), ac.GetConfig())
 	todoRepository := repository.NewTodoRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger(), ac.GetConfig())
+	jobRepository, err := repository.NewJobRepository()
+	if err != nil {
+		// 異常終了
+		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
+	}
 	// サービスの作成
-	bffService := service.New(ac.GetLogger(), ac.GetConfig(), userRepository, todoRepository)
+	bffService := service.New(ac.GetLogger(), ac.GetConfig(), userRepository, todoRepository, jobRepository)
 	// コントローラの作成
 	bffController := controller.New(ac.GetLogger(), bffService)
 	// ハンドラインタセプタの取得
@@ -38,6 +45,7 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 		v1.GET("/todo", interceptor.Handle(bffController.FindTodo))
 		v1.POST("/users", interceptor.Handle(bffController.RegisterUser))
 		v1.POST("/todo", interceptor.Handle(bffController.RegisterTodo))
+		v1.POST("/todo-async", interceptor.Handle(bffController.RegisterTodosAsync))
 
 		//エラー確認用
 		v1.POST("/error/:errortype", interceptor.Handle(errorTestContoller.Execute))

@@ -23,6 +23,22 @@ Resources:
         Fn::ImportValue: !Sub ${StackPrefix}-VPC-ID
       RouteTableIds:
         - Fn::ImportValue: !Sub ${StackPrefix}-PrivateRouteTableId
+
+# SQS VPC Endpoint
+  SQSVPCEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:      
+      VpcEndpointType: Interface
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.sqs
+      SubnetIds:
+        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetOneId
+        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetTwoId
+      VpcId: 
+        Fn::ImportValue: !Sub ${StackPrefix}-VPC-ID          
+      SecurityGroupIds: 
+        - Fn::ImportValue: !Sub ${StackPrefix}-VPCEndpointSecurityGroup-ID                      
+      PrivateDnsEnabled: true
+
 # VPC Endpoint for API Gateway
   PrivateAPIVPCEndpoint:
     Type: AWS::EC2::VPCEndpoint

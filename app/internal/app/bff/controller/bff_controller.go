@@ -27,6 +27,10 @@ type ResponseFindTodo struct {
 	Todo *entity.Todo `json:"todo"`
 }
 
+type RequestRegisterTodoAsync struct {
+	Result string `json:"result"`
+}
+
 // BffController は、Bff業務のControllerインタフェースです。
 type BffController interface {
 	// FindTodo は、クエリパラメータで指定されたtodo_idとuser_idのTodoを照会します。
@@ -35,6 +39,8 @@ type BffController interface {
 	RegisterUser(ctx *gin.Context) (any, error)
 	// RegisterTodo は、リクエストデータで受け取ったTodoを登録します。
 	RegisterTodo(ctx *gin.Context) (any, error)
+	// RegisterTodoAsync は、リクエストデータで受け取ったTodoのリストを非同期で登録します。
+	RegisterTodosAsync(ctx *gin.Context) (any, error)
 }
 
 // New は、BffControllerを作成します。
@@ -46,6 +52,29 @@ func New(log logging.Logger, service service.BffService) BffController {
 type bffControllerImpl struct {
 	log     logging.Logger
 	service service.BffService
+}
+
+// FindTodo implements BffController.
+func (c *bffControllerImpl) FindTodo(ctx *gin.Context) (any, error) {
+	// クエリパラメータの取得
+	userId := ctx.Query("user_id")
+	// 入力チェック
+	if userId == "" {
+		// 入力チェックエラーのハンドリング
+		return nil, errors.NewValidationErrorWithMessage("クエリパラメータuserIdが未指定です")
+	}
+	todoId := ctx.Query("todo_id")
+	if todoId == "" {
+		// 入力チェックエラーのハンドリング
+		return nil, errors.NewValidationErrorWithMessage("クエリパラメータtodoIdが未指定です")
+	}
+	// サービスの実行（DynamoDBトランザクション管理なし）
+	user, todo, err := c.service.FindTodo(userId, todoId)
+	if err != nil {
+		return nil, err
+	}
+	return &ResponseFindTodo{User: user, Todo: todo}, nil
+
 }
 
 // RegisterUser implements BffController.
@@ -74,25 +103,12 @@ func (c *bffControllerImpl) RegisterTodo(ctx *gin.Context) (any, error) {
 	return c.service.RegisterTodo(request.TodoTitle)
 }
 
-// FindTodo implements BffController.
-func (c *bffControllerImpl) FindTodo(ctx *gin.Context) (any, error) {
-	// クエリパラメータの取得
-	userId := ctx.Query("user_id")
-	// 入力チェック
-	if userId == "" {
-		// 入力チェックエラーのハンドリング
-		return nil, errors.NewValidationErrorWithMessage("クエリパラメータuserIdが未指定です")
-	}
-	todoId := ctx.Query("todo_id")
-	if todoId == "" {
-		// 入力チェックエラーのハンドリング
-		return nil, errors.NewValidationErrorWithMessage("クエリパラメータtodoIdが未指定です")
-	}
-	// サービスの実行（DynamoDBトランザクション管理なし）
-	user, todo, err := c.service.FindTodo(userId, todoId)
+// RegisterTodosAsync implements BffController.
+func (c *bffControllerImpl) RegisterTodosAsync(ctx *gin.Context) (any, error) {
+	// TODO: 入力情報の受付
+	err := c.service.RegisterAsync([]string{"dummy1", "dummy2"})
 	if err != nil {
 		return nil, err
 	}
-	return &ResponseFindTodo{User: user, Todo: todo}, nil
-
+	return &RequestRegisterTodoAsync{Result: "ok"}, nil
 }

@@ -1,11 +1,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: >
+Description: |
   todo-app
-
   Sample SAM Template for todo-app
-
-Parameters:      
+Parameters:
   StackPrefix:
     Description: Stack Resource Name Prefix
     Type: String
@@ -18,26 +16,28 @@ Parameters:
     AllowedValues:
       - Prod
       - Staging
-      - Dev      
+      - Dev
     Default: Prod
   MemorySize:
     Type: Number
     MinValue: 128
     MaxValue: 10240
-    Default: 128 
+    Default: 128
   HelloWorldFunctionName:
     Type: String
-    Default: hello-world      
+    Default: hello-world
   UsersFunctionName:
     Type: String
     Default: user-function
-  TodoFunctionName:    
+  TodoFunctionName:
     Type: String
-    Default: todo-function  
-  BffFunctionName:    
+    Default: todo-function
+  BffFunctionName:
     Type: String
-    Default: bff-function      
-
+    Default: bff-function
+  TodoDelayedFunctionName:
+    Type: String
+    Default: todo-delayed-function
 Mappings:
   AppConfigExtentionsLayerMap:
     #Tokyo
@@ -48,11 +48,10 @@ Mappings:
     ap-northeast-3:
       x86: arn:aws:lambda:ap-northeast-3:706869817123:layer:AWS-AppConfig-Extension:86
       arm: arn:aws:lambda:ap-northeast-3:706869817123:layer:AWS-AppConfig-Extension-Arm64:1
-
 Conditions:
-  TracingEnabled: !Equals [!Ref TracingValue, Active]
-
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+  TracingEnabled: !Equals
+    - !Ref TracingValue
+    - Active
 Globals:
   Function:
     Handler: bootstrap
@@ -71,8 +70,8 @@ Globals:
         - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetTwoId
     Environment:
       Variables:
-        # Environment Profile
-        ENV: !Ref Stage              
+        # Environment Profile      
+        ENV: !Ref Stage
         # AppConfig
         APPCONFIG_EXTENSION_URL:
           Fn::ImportValue: !Sub ${StackPrefix}-AppConfigLambdaExtension${Stage}URL        
@@ -80,17 +79,17 @@ Globals:
           Fn::ImportValue: !Sub ${StackPrefix}-AppConfigLambdaExtension${Stage}Path
         # TODO: Migrate to AppConfig? or Keep on OS Environment Viper Config?
         # For RDB
-        RDB_USER: !Sub "{{resolve:secretsmanager:${StackPrefix}-RDS-Secrets:SecretString:username}}"
-        RDB_PASSWORD: !Sub "{{resolve:secretsmanager:${StackPrefix}-RDS-Secrets:SecretString:password}}"
+        RDB_USER: !Sub '{{resolve:secretsmanager:${StackPrefix}-RDS-Secrets:SecretString:username}}'
+        RDB_PASSWORD: !Sub '{{resolve:secretsmanager:${StackPrefix}-RDS-Secrets:SecretString:password}}'
         RDB_ENDPOINT:
           Fn::ImportValue: !Sub ${StackPrefix}-RDSProxyEndpoint
         RDB_PORT:
           Fn::ImportValue: !Sub ${StackPrefix}-RDSClusterEndpointPort
         RDB_DB_NAME:
           Fn::ImportValue: !Sub ${StackPrefix}-RDSDBName
-        RDB_SSL_MODE: "require"
-    # Deployment Configurtion           
-    AutoPublishAlias: live            
+        RDB_SSL_MODE: require
+    # Deployment Configurtion
+    AutoPublishAlias: live
     DeploymentPreference:
       #Type: Linear10PercentEvery1Minute
       Type: AllAtOnce
@@ -98,7 +97,7 @@ Globals:
     Layers:
       - !FindInMap [AppConfigExtentionsLayerMap, !Ref AWS::Region , x86]
   Api:
-    OpenApiVersion: 3.0.3      
+    OpenApiVersion: 3.0.3
     EndpointConfiguration:
       Type: PRIVATE
       VPCEndpointIds:
@@ -106,18 +105,17 @@ Globals:
     TracingEnabled: !If [TracingEnabled , true, false]
     MethodSettings:
       - DataTraceEnabled: true
-        LoggingLevel: 'ERROR'
-        ResourcePath: '/*'
-        HttpMethod: '*'   
+        LoggingLevel: ERROR
+        ResourcePath: /*
+        HttpMethod: '*'
     AccessLogSetting:
       Format: '{ "requestId":"$context.requestId", "extendedRequestId":"$context.extendedRequestId", "ip": "$context.identity.sourceIp", "caller":"$context.identity.caller", "user":"$context.identity.user", "requestTime":"$context.requestTime", "httpMethod":"$context.httpMethod", "resourcePath":"$context.resourcePath", "status":"$context.status", "protocol":"$context.protocol", "responseLength":"$context.responseLength", "integrationLatency":"$context.integration.latency", "responseLatency":"$context.responseLatency" }'
       DestinationArn: !GetAtt ApiGwAccessLogGroup.Arn
-           
 Resources:
   HelloWorldFunction:
 # Lambda Function
 # HelloWorld 
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function
     Metadata:
       BuildMethod: go1.x
     Properties:
@@ -128,19 +126,19 @@ Resources:
         Fn::ImportValue: !Sub ${StackPrefix}-LambdaRoleArn      
       Events:
         CatchAll:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api
           Properties:
             Path: /hello
             Method: GET
             RestApiId: !Ref HelloApi
-      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+      Environment:
         Variables:
           PARAM1: VALUE
 # User Function
   UsersFunction:
     Type: AWS::Serverless::Function
     Metadata:
-      BuildMethod: go1.x    
+      BuildMethod: go1.x
     Properties:
 #      Handler: users    
       FunctionName: !Ref UsersFunctionName
@@ -150,7 +148,7 @@ Resources:
       Events:
         Event:
           Type: Api
-          Properties:            
+          Properties:
             Path: /users-api/{proxy+}
             Method: ANY
             RestApiId: !Ref UserApi
@@ -158,7 +156,7 @@ Resources:
   TodoFunction:
     Type: AWS::Serverless::Function
     Metadata:
-      BuildMethod: go1.x    
+      BuildMethod: go1.x
     Properties:
 #      Handler: todo    
       FunctionName: !Ref TodoFunctionName
@@ -168,53 +166,68 @@ Resources:
       Events:
         Event:
           Type: Api
-          Properties:            
-            Path: /todo-api/{proxy+}          
+          Properties:
+            Path: /todo-api/{proxy+}
             Method: ANY
             RestApiId: !Ref TodoApi   
 # Bff Function
   BffFunction:
     Type: AWS::Serverless::Function
     Metadata:
-      BuildMethod: go1.x    
+      BuildMethod: go1.x
     Properties:
 #      Handler: bff    
       FunctionName: !Ref BffFunctionName
-      CodeUri: app/cmd/bff/             
-      Role:
-        Fn::ImportValue: !Sub ${StackPrefix}-LambdaRoleArn                
+      CodeUri: app/cmd/bff/
+      Role: !ImportValue
+        Fn::Sub: ${StackPrefix}-LambdaRoleArn
       Events:
         Event:
           Type: Api
-          Properties:            
-            Path: /bff-api/{proxy+}          
+          Properties:
+            Path: /bff-api/{proxy+}
             Method: ANY
             RestApiId: !Ref BffApi
       Environment:
-        Variables:            
+        Variables:
           TODO_API_BASE_URL: !Sub https://${TodoApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
-          USERS_API_BASE_URL: !Sub https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}            
+          USERS_API_BASE_URL: !Sub https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
+  TodoDelayedFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      FunctionName: !Ref TodoDelayedFunctionName
+      CodeUri: app/cmd/todo-delayed/
+      Role: !ImportValue
+        Fn::Sub: ${StackPrefix}-LambdaRoleArn
+      Events:
+        Event:
+          Type: SQS
+          Properties:
+            Queue: !ImportValue
+              Fn::Sub: ${StackPrefix}-SQSQueueArn
+            FunctionResponseTypes:
+              - ReportBatchItemFailures
 # API Gateway Private REST API
 # HelloWorld 
   HelloApi:
     Type: AWS::Serverless::Api
     Properties:
       Name: hello-world-api
-      StageName: !Ref Stage  
+      StageName: !Ref Stage
       Auth:
         ResourcePolicy:
-          CustomStatements: [{
-            "Effect": "Allow",
-            "Principal": "*",
-            "Action": "execute-api:Invoke",
-            "Resource": !Sub "execute-api:/${Stage}/GET/hello",
-            "Condition": {
-              "StringEquals": {
-                "aws:SourceVpce": { "Fn::ImportValue" : {"Fn::Sub" : "${StackPrefix}-PrivateAPIVPCEndpoint-ID" }}
-              }                        
-            }
-          }]
-# User API          
+          CustomStatements:
+            - Effect: Allow
+              Principal: '*'
+              Action: execute-api:Invoke
+              Resource: !Sub execute-api:/${Stage}/GET/hello
+              Condition:
+                StringEquals:
+                  aws:SourceVpce: !ImportValue
+                    Fn::Sub: ${StackPrefix}-PrivateAPIVPCEndpoint-ID
+# User API 
   UserApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -222,20 +235,17 @@ Resources:
       StageName: !Ref Stage
       Auth:
         ResourcePolicy:
-          CustomStatements: [{
-            "Effect": "Allow",
-            "Principal": "*",
-            "Action": "execute-api:Invoke",
-            "Resource": [
-              !Sub "execute-api:/${Stage}/POST/users-api/*",
-              !Sub "execute-api:/${Stage}/GET/users-api/*",
-            ],
-            "Condition": {
-              "StringEquals": {
-                "aws:SourceVpce": { "Fn::ImportValue" : {"Fn::Sub" : "${StackPrefix}-PrivateAPIVPCEndpoint-ID" }}                
-              }                        
-            }
-          }]
+          CustomStatements:
+            - Effect: Allow
+              Principal: '*'
+              Action: execute-api:Invoke
+              Resource:
+                - !Sub execute-api:/${Stage}/POST/users-api/*
+                - !Sub execute-api:/${Stage}/GET/users-api/*
+              Condition:
+                StringEquals:
+                  aws:SourceVpce: !ImportValue
+                    Fn::Sub: ${StackPrefix}-PrivateAPIVPCEndpoint-ID
 # Todo API
   TodoApi:
     Type: AWS::Serverless::Api
@@ -244,20 +254,17 @@ Resources:
       StageName: !Ref Stage
       Auth:
         ResourcePolicy:
-          CustomStatements: [{
-            "Effect": "Allow",
-            "Principal": "*",
-            "Action": "execute-api:Invoke",
-            "Resource": [
-              !Sub "execute-api:/${Stage}/POST/todo-api/*",
-              !Sub "execute-api:/${Stage}/GET/todo-api/*",
-            ],
-            "Condition": {
-              "StringEquals": {
-                "aws:SourceVpce": { "Fn::ImportValue" : {"Fn::Sub" : "${StackPrefix}-PrivateAPIVPCEndpoint-ID" }}                
-              }                        
-            }
-          }]    
+          CustomStatements:
+            - Effect: Allow
+              Principal: '*'
+              Action: execute-api:Invoke
+              Resource:
+                - !Sub execute-api:/${Stage}/POST/todo-api/*
+                - !Sub execute-api:/${Stage}/GET/todo-api/*
+              Condition:
+                StringEquals:
+                  aws:SourceVpce: !ImportValue
+                    Fn::Sub: ${StackPrefix}-PrivateAPIVPCEndpoint-ID
 # Bff API
   BffApi:
     Type: AWS::Serverless::Api
@@ -266,33 +273,30 @@ Resources:
       StageName: !Ref Stage
       Auth:
         ResourcePolicy:
-          CustomStatements: [{
-            "Effect": "Allow",
-            "Principal": "*",
-            "Action": "execute-api:Invoke",
-            "Resource": [
-              !Sub "execute-api:/${Stage}/POST/bff-api/*",
-              !Sub "execute-api:/${Stage}/GET/bff-api/*",
-            ],
-            "Condition": {
-              "StringEquals": {
-                "aws:SourceVpce": { "Fn::ImportValue" : {"Fn::Sub" : "${StackPrefix}-PrivateAPIVPCEndpoint-ID" }}                
-              }                        
-            }
-          }]              
+          CustomStatements:
+            - Effect: Allow
+              Principal: '*'
+              Action: execute-api:Invoke
+              Resource:
+                - !Sub execute-api:/${Stage}/POST/bff-api/*
+                - !Sub execute-api:/${Stage}/GET/bff-api/*
+              Condition:
+                StringEquals:
+                  aws:SourceVpce: !ImportValue
+                    Fn::Sub: ${StackPrefix}-PrivateAPIVPCEndpoint-ID
 # IAM Role for API Gateway Account
   APIGatewayRole:
     Type: AWS::IAM::Role
-    Properties:      
+    Properties:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
           - Action: sts:AssumeRole
             Effect: Allow
             Principal:
-              Service: apigateway.amazonaws.com      
+              Service: apigateway.amazonaws.com
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs 
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
 # API Gateway Account Config
   ApiGwAccountConfig:
     Type: AWS::ApiGateway::Account
@@ -314,7 +318,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /aws/lambda/${UsersFunctionName}
-      RetentionInDays: 7      
+      RetentionInDays: 7
   TodoFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -325,57 +329,57 @@ Resources:
     Properties:
       LogGroupName: !Sub /aws/lambda/${BffFunctionName}
       RetentionInDays: 7
-
+  TodoDelayedFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${TodoDelayedFunctionName}
+      RetentionInDays: 7
 # Application Insights
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
     Properties:
-      Name:
-        Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
+      Name: !Sub ApplicationInsights-SAM-${AWS::StackName}
       ResourceQuery:
         Type: CLOUDFORMATION_STACK_1_0
   ApplicationInsightsMonitoring:
     Type: AWS::ApplicationInsights::Application
     Properties:
-      ResourceGroupName:
-        Ref: ApplicationResourceGroup
+      ResourceGroupName: !Ref ApplicationResourceGroup
       AutoConfigurationEnabled: 'true'
-
 Outputs:
-  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   HelloWorldAPI:
     Description: API Gateway endpoint URL for Prod environment for First Function
-    #Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello"
-    Value: !Sub "https://${HelloApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/hello"
+    Value: !Sub https://${HelloApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/hello
   HelloWorldFunction:
     Description: First Lambda Function ARN
     Value: !GetAtt HelloWorldFunction.Arn
   UsersAPI:
-    Description: "API Gateway endpoint URL for Prod environment"
-    Value: !Sub "https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/users-api/v1/users"
+    Description: API Gateway endpoint URL for Prod environment
+    Value: !Sub https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/users-api/v1/users
   UsersFunction:
-    Description: "Users Lambda Function ARN"
+    Description: Users Lambda Function ARN
     Value: !GetAtt UsersFunction.Arn
   UsersFunctionDeploymentGroup:
-    Description: "Users Lambda Function DeploymentGroup ARN"
+    Description: Users Lambda Function DeploymentGroup ARN
     Value: !Ref UsersFunctionDeploymentGroup
   TodoAPI:
-    Description: "API Gateway endpoint URL for Prod environment"
-    Value: !Sub "https://${TodoApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/todo-api/v1/todo"
+    Description: API Gateway endpoint URL for Prod environment
+    Value: !Sub https://${TodoApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/todo-api/v1/todo
   TodoFunction:
-    Description: "Todo Lambda Function ARN"
+    Description: Todo Lambda Function ARN
     Value: !GetAtt TodoFunction.Arn
   TodoFunctionDeploymentGroup:
-    Description: "Todo Lambda Function DeploymentGroup ARN"
+    Description: Todo Lambda Function DeploymentGroup ARN
     Value: !Ref TodoFunctionDeploymentGroup
   BffAPI:
-    Description: "API Gateway endpoint URL for Prod environment"
-    Value: !Sub "https://${BffApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/bff-api/v1/"
+    Description: API Gateway endpoint URL for Prod environment
+    Value: !Sub https://${BffApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/bff-api/v1/
   BffFunction:
-    Description: "Bff Lambda Function ARN"
+    Description: Bff Lambda Function ARN
     Value: !GetAtt BffFunction.Arn
   BffFunctionDeploymentGroup:
-    Description: "Bff Lambda Function DeploymentGroup ARN"
-    Value: !Ref BffFunctionDeploymentGroup    
+    Description: Bff Lambda Function DeploymentGroup ARN
+    Value: !Ref BffFunctionDeploymentGroup
+  TodoDelayedFunction:
+    Description: Todo Delayed Lambda Function ARN
+    Value: !GetAtt TodoDelayedFunction.Arn

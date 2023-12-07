@@ -142,7 +142,13 @@ aws cloudformation validate-template --template-body file://cfn-dynamodb.yaml
 aws cloudformation create-stack --stack-name Demo-DynamoDB-Stack --template-body file://cfn-dynamodb.yaml
 ```
 
-## 10. AppConfigの作成
+## 10. SQSの作成
+```sh
+aws cloudformation validate-template --template-body file://cfn-sqs.yaml
+aws cloudformation create-stack --stack-name Demo-SQS-Stack --template-body file://cfn-sqs.yaml
+```
+
+## 11. AppConfigの作成
 * AppConfigの基本リソースを作成する。
 ```sh
 aws cloudformation validate-template --template-body file://cfn-appconfig.yaml
@@ -156,7 +162,7 @@ aws cloudformation create-stack --stack-name Demo-AppConfigDeploy-Stack --templa
 ```
 
 
-## 11. AWS SAMでLambda/API Gatewayのデプロイ       
+## 12. AWS SAMでLambda/API Gatewayのデプロイ       
 * SAMビルド    
 ```sh
 # トップのフォルダに戻る
@@ -200,7 +206,7 @@ make deploy
 ```
 
 
-## 12. APの実行確認
+## 13. APの実行確認
 * マネージドコンソールから、EC2(Bation)へSystems Manager Session Managerで接続して、curlコマンドで動作確認
     * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
 
@@ -273,7 +279,21 @@ curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v
 {"user":{"user_id":"416ad789-6fde-11ee-a3ec-0242ac110004","user_name":"Taro"},"todo":{"todo_id":"60d48f8f-6fde-11ee-a60c-0242ac110005","todo_title":"ミルクを買う"}}
 ```
 
-## 13. AppConfingの設定変更＆デプロイ
+* ディレード処理の実行例
+    * TODO: Bffからのキューへのメッセージ送信ができるまでの暫定手順
+
+```sh
+# キューのURL確認
+aws sqs list-queues
+# メッセージ送信
+aws sqs send-message --queue-url "（キューのURL）" --message-body "hello world"
+
+# BFFからの非同期実行依頼
+curl -X POST https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo-async
+
+```
+
+## 14. AppConfingの設定変更＆デプロイ
 * cfn-appconfig-deploy.yaml内のホスト化された設定の内容を修正
 ```yaml
   AppConfigHostedConfigurationVersion:
@@ -310,7 +330,7 @@ aws cloudformation update-stack --stack-name Demo-AppConfigDeploy-Stack --templa
 {"level":"info","ts":1699780051.3576484,"caller":"service/user_service.go:39","msg":"hoge_name=foo2"}
 ```
 
-## 14. SAMのCloudFormationスタック削除
+## 15. SAMのCloudFormationスタック削除
 * VPC内Lambdaが参照するHyperplane ENIの削除に最大20分かかるため、スタックの削除に時間がかかる。
 ```sh
 sam delete
@@ -318,7 +338,7 @@ sam delete
 make delete
 ```
 
-## 15. その他リソースのCloudFormationスタック削除
+## 16. その他リソースのCloudFormationスタック削除
 ```sh
 aws cloudformation delete-stack --stack-name Demo-Bastion-Stack
 aws cloudformation delete-stack --stack-name Demo-AppConfigDeploy-Stack
@@ -332,7 +352,7 @@ aws cloudformation delete-stack --stack-name Demo-VPC-Stack
 aws cloudformation delete-stack --stack-name Demo-IAM-Stack 
 ```
 
-## 16. CloudWatch Logsのロググループ削除
+## 17. CloudWatch Logsのロググループ削除
 * マネージドコンソールからCloudWatchのロググループを削除する。
     * 特に、/aws/lambda/bff-function、/aws/lambda/todo-function、/aws/lambda/user-functionは、次回スタック作成時にエラーになってしまうので削除する。本来は、sam delete時にスタックとともに当該ロググループが削除されるはずだが、AppConfigのLambda拡張機能の導入により、Lambda拡張機能終了時のログが残ってしまうようになってしまったため、明示的な削除が必要となっている。
 ```
@@ -403,7 +423,7 @@ docker run --name elasticmq -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/
 * ブラウザで、[http://localhost:9325](http://localhost:9325)にアクセスするとキューの状態が確認できる
     * SampleQueueと、SampleQueue-DLQというキューが作成されていることが分かる
 
-* sam localコマンドを実行
+* sam local start-apiコマンドを実行
     * local-env.jsonファイルに記載されてた、環境変数で上書きして実行
 
 ```sh
@@ -448,7 +468,23 @@ curl -X POST http://127.0.0.1:3000/bff-api/v1/error/business2
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/system
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/hogehoge
 
+#TODO: 実装
+curl -X POST http://127.0.0.1:3000/bff-api/v1/error/panic
 ```
+
+* ディレードのはsam local invokeコマンドを実行し確認
+    * local-env.jsonファイルに記載されてた、環境変数で上書きして実行
+
+```sh
+cd ..
+sam local invoke --env-vars local-env.json --event events\event-sqs.json TodoDelayedFunction
+
+# Windowsでもmakeをインストールすればmakeでいけます
+
+#TODO: 実装
+make local_invoke 
+```
+
 
 ## sam localでのリモートデバッグ実行
 * [AWSの開発者ガイド](https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/serverless-sam-cli-using-debugging.html#serverless-sam-cli-running-locally)の記載にある通り、[delve](https://github.com/go-delve/delve)といったサードパーティのデバッガを使用することで、VSCodeでの sam localのリモートデバッグ実行可能である。

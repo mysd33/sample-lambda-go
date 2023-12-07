@@ -141,7 +141,24 @@ Resources:
           - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*/index/*          
       PolicyName: !Sub ${StackPrefix}-LambdaDynamoDBPolicy
       Roles:      
-        - !Ref LambdaRole             
+        - !Ref LambdaRole  
+  LambdaSQSAccessPolicy:  
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+        - Action:          
+          - sqs:SendMessage
+          - sqs:ReceiveMessage
+          - sqs:DeleteMessage
+          - sqs:GetQueueAttributes
+          - sqs:GetQueueUrl
+          Effect: Allow
+          Resource:
+          - !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:*
+      PolicyName: !Sub ${StackPrefix}-SQSPolicy
+      Roles:
+        - !Ref LambdaRole
 Outputs:
   BastionInstanceProfile:
     Description: BastionInstanceProfile Logical ID

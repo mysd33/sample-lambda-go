@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description:  SQS Template for CloudFormation Demo.
+#Metadata: 
+
+Parameters: 
+  StackPrefix:
+    Description: Stack Resource Name Prefix
+    Type: String
+    Default: Demo 
+  QueueName:
+    Description: Queue Name
+    Type: String
+    Default: SampleQueue
+  DeadLetterQueueName:
+    Description: Dead Letter Queue Name
+    Type: String
+    Default: SampleDLQueue
+
+#Mappings: 
+
+#Conditions: 
+
+Resources: 
+  SourceQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Ref QueueName
+      RedrivePolicy:       
+        deadLetterTargetArn:
+          !GetAtt DeadLetterQueue.Arn
+        maxReceiveCount: 3          
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-Queue
+  DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Ref DeadLetterQueueName
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-DLQueue          
+Outputs:
+  SourceQueueName:
+    Description: Source Queue Name
+    Value: !Ref QueueName
+    Export:
+      Name: !Sub ${StackPrefix}-SQSQueueName
+  SourceQueueURL: 
+    Description: URL of Source Queue
+    Value: !Ref SourceQueue
+  SourceQueueARN: 
+    Description: ARN of Queue
+    Value: !GetAtt SourceQueue.Arn
+    Export:
+      Name: !Sub ${StackPrefix}-SQSQueueArn
+  DeadLetterQueueURL: 
+    Description: URL of DeadLetter Queue
+    Value: !Ref DeadLetterQueue
+  DeadLetterQueueARN: 
+    Description: ARN of DeadLetter Queue
+    Value: !GetAtt DeadLetterQueue.Arn    
