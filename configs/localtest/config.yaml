@@ -10,4 +10,5 @@ RDB_SSL_MODE: "disable"
 TODO_API_BASE_URL: "http://host.docker.internal:3000"
 USERS_API_BASE_URL: "http://host.docker.internal:3000"
 DYNAMODB_LOCAL_ENDPOINT: "http://host.docker.internal:8000"
+SQS_LOCAL_ENDPOINT: "http://host.docker.internal:9324"
 #LOG_LEVEL: INFO

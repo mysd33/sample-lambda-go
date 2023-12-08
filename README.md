@@ -463,6 +463,11 @@ curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "Buy Milk"
 #curlコマンドの場合は&をエスケープする
 curl http://127.0.0.1:3000/bff-api/v1/todo?user_id=（ユーザID）\&todo_id=(TODO ID)
 
+# BFF (ディレード処理実行依頼)
+curl -X POST http://127.0.0.1:3000/bff-api/v1/todo-async
+# Elastic MQから実行依頼したメッセージを取得し確認
+aws sqs receive-message --queue-url http://localhost:9324/000000000000/SampleQueue --endpoint-url http://localhost:9324
+
 # BFF (エラー電文動作確認)
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/validation
 curl -X POST -H "Content-Type: application/json" -d '{}' http://127.0.0.1:3000/bff-api/v1/error/validation2
@@ -475,7 +480,7 @@ curl -X POST http://127.0.0.1:3000/bff-api/v1/error/hogehoge
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/panic
 ```
 
-* ディレードのはsam local invokeコマンドを実行し確認
+* ディレードの非同期部分の処理はsam local invokeコマンドを実行し確認
     * local-env.jsonファイルに記載されてた、環境変数で上書きして実行
 
 ```sh

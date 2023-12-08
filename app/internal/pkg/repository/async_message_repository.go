@@ -5,6 +5,8 @@ import (
 	"context"
 
 	"example.com/appbase/pkg/apcontext"
+	myConfig "example.com/appbase/pkg/config"
+	"example.com/appbase/pkg/constant"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
@@ -12,13 +14,13 @@ import (
 	"github.com/cockroachdb/errors"
 )
 
-type JobRepository interface {
+type AsyncMessageRepository interface {
 	// TODO: シグニチャは今後構造体に変更
 	// メッセージを送信する
 	Send(message string) error
 }
 
-func NewJobRepository() (JobRepository, error) {
+func NewAsyncMessageRepository(myCfg myConfig.Config) (AsyncMessageRepository, error) {
 	// TODO: Configからキュー名取得する
 	queueName := "SampleQueue"
 
@@ -29,27 +31,32 @@ func NewJobRepository() (JobRepository, error) {
 		return nil, errors.WithStack(err)
 	}
 	awsv2.AWSV2Instrumentor(&cfg.APIOptions)
-	// TODO:　ローカル実行の考慮
-	sqlClient := sqs.NewFromConfig(cfg)
+	sqlClient := sqs.NewFromConfig(cfg, func(o *sqs.Options) {
+		// ローカル実行のためDynamoDB Local起動先が指定されている場合
+		sqsEndpoint := myCfg.Get(constant.SQS_LOCAL_ENDPOINT_NAME)
+		if sqsEndpoint != "" {
+			o.BaseEndpoint = aws.String(sqsEndpoint)
+		}
+	})
 	queueUrlOutput, err := sqlClient.GetQueueUrl(context.TODO(), &sqs.GetQueueUrlInput{
 		QueueName: aws.String(queueName),
 	})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	return &defaultJobRepository{
+	return &defaultAsyncMessageRepository{
 		queueUrl:  *queueUrlOutput.QueueUrl,
 		sqsClient: sqlClient,
 	}, nil
 }
 
-type defaultJobRepository struct {
+type defaultAsyncMessageRepository struct {
 	queueUrl  string
 	sqsClient *sqs.Client
 }
 
-// Send implements JobRepository.
-func (jr *defaultJobRepository) Send(message string) error {
+// Send implements AsyncMessageRepository.
+func (jr *defaultAsyncMessageRepository) Send(message string) error {
 	// TODO: フレームワークに切り出す
 	// TODO: オブジェクトで受け取ってjson化してから送信する処理に変更
 

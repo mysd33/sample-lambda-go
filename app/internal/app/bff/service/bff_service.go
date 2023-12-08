@@ -26,24 +26,24 @@ func New(log logging.Logger,
 	config config.Config,
 	userRepository repository.UserRepository,
 	todoRepository repository.TodoRepository,
-	jobRepository repository.JobRepository,
+	asyncMessageRepository repository.AsyncMessageRepository,
 ) BffService {
 	return &bffServiceImpl{
-		log:            log,
-		config:         config,
-		userRepository: userRepository,
-		todoRepository: todoRepository,
-		jobRepository:  jobRepository,
+		log:                    log,
+		config:                 config,
+		userRepository:         userRepository,
+		todoRepository:         todoRepository,
+		asyncMessageRepository: asyncMessageRepository,
 	}
 }
 
 // todoServiceImpl BffServiceを実装する構造体です。
 type bffServiceImpl struct {
-	log            logging.Logger
-	config         config.Config
-	userRepository repository.UserRepository
-	todoRepository repository.TodoRepository
-	jobRepository  repository.JobRepository
+	log                    logging.Logger
+	config                 config.Config
+	userRepository         repository.UserRepository
+	todoRepository         repository.TodoRepository
+	asyncMessageRepository repository.AsyncMessageRepository
 }
 
 // RegisterUser implements BffService.
@@ -79,7 +79,7 @@ func (bs *bffServiceImpl) FindTodo(userId string, todoId string) (*entity.User, 
 func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string) error {
 	//TODO: todoTitlesを受け渡す処理
 
-	bs.jobRepository.Send("dummy")
+	bs.asyncMessageRepository.Send("dummy")
 
 	return nil
 }

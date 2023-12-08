@@ -22,13 +22,13 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	// リポジトリの作成
 	userRepository := repository.NewUserRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger(), ac.GetConfig())
 	todoRepository := repository.NewTodoRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger(), ac.GetConfig())
-	jobRepository, err := repository.NewJobRepository()
+	asyncMessageRepository, err := repository.NewAsyncMessageRepository(ac.GetConfig())
 	if err != nil {
 		// 異常終了
 		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
 	}
 	// サービスの作成
-	bffService := service.New(ac.GetLogger(), ac.GetConfig(), userRepository, todoRepository, jobRepository)
+	bffService := service.New(ac.GetLogger(), ac.GetConfig(), userRepository, todoRepository, asyncMessageRepository)
 	// コントローラの作成
 	bffController := controller.New(ac.GetLogger(), bffService)
 	// ハンドラインタセプタの取得
