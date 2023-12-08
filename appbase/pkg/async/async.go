@@ -57,6 +57,8 @@ type defaultSQSAccessor struct {
 	queueUrl  string
 }
 
+// TODO: DBとのデータ整合性を担保
+
 // SendMessageSdk implements SQSAccessor.
 func (sa *defaultSQSAccessor) SendMessageSdk(input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
 	// TODO: Ouputの利用

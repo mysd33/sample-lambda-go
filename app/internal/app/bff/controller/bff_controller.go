@@ -110,5 +110,6 @@ func (c *bffControllerImpl) RegisterTodosAsync(ctx *gin.Context) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	// TODO: トランザクション管理して実行
 	return &RequestRegisterTodoAsync{Result: "ok"}, nil
 }
