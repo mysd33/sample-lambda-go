@@ -10,6 +10,7 @@ import (
 	errcontroller "app/internal/app/errortest/controller"
 	errservice "app/internal/app/errortest/service"
 
+	"example.com/appbase/pkg/async"
 	"example.com/appbase/pkg/component"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -22,11 +23,18 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	// リポジトリの作成
 	userRepository := repository.NewUserRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger(), ac.GetConfig())
 	todoRepository := repository.NewTodoRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger(), ac.GetConfig())
-	asyncMessageRepository, err := repository.NewAsyncMessageRepository(ac.GetConfig())
+	// Configからキュー名を取得する
+	queueName := ac.GetConfig().Get("SampleQueueName")
+	if queueName == "" {
+		queueName = "SampleQueue"
+	}
+	// TODO: applicationContext経由でSQSAccessorのインスタンス取得するようにする
+	sampleQueueSQSAccessor, err := async.NewSQSAccessor(ac.GetConfig(), queueName)
 	if err != nil {
 		// 異常終了
 		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
 	}
+	asyncMessageRepository := repository.NewAsyncMessageRepository(sampleQueueSQSAccessor)
 	// サービスの作成
 	bffService := service.New(ac.GetLogger(), ac.GetConfig(), userRepository, todoRepository, asyncMessageRepository)
 	// コントローラの作成
