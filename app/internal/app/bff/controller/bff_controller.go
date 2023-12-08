@@ -106,7 +106,7 @@ func (c *bffControllerImpl) RegisterTodo(ctx *gin.Context) (any, error) {
 // RegisterTodosAsync implements BffController.
 func (c *bffControllerImpl) RegisterTodosAsync(ctx *gin.Context) (any, error) {
 	// TODO: 入力情報の受付
-	err := c.service.RegisterAsync([]string{"dummy1", "dummy2"})
+	err := c.service.RegisterTodosAsync([]string{"dummy1", "dummy2"})
 	if err != nil {
 		return nil, err
 	}

@@ -30,7 +30,10 @@ func New(log logging.Logger,
 	transactionManager dynamodb.TransactionManager,
 	service service.TodoService,
 ) TodoController {
-	return &todoControllerImpl{log: log, transactionManager: transactionManager, service: service}
+	return &todoControllerImpl{log: log,
+		transactionManager: transactionManager,
+		service:            service,
+	}
 }
 
 // todoControllerImpl は、TodoControllerを実装する構造体です。

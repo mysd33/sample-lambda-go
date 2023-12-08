@@ -6,7 +6,9 @@
 .PHONY: build
 .PHONY: unit_test
 .PHONY: integration_test
+.PHONY: local_invoke_%
 .PHONY: local_startapi
+.PHONY: local_startapi_dg_%
 .PHONY: deploy
 .PHONY: deploy_guided
 .PHONY: delete
@@ -41,9 +43,10 @@ validate:
 build: clean
 # for windows	
 	sam build
-	xcopy /I /S configs .aws-sam\build\UsersFunction\configs	
-	xcopy /I /S configs .aws-sam\build\TodoFunction\configs
 	xcopy /I /S configs .aws-sam\build\BffFunction\configs
+	xcopy /I /S configs .aws-sam\build\UsersFunction\configs	
+	xcopy /I /S configs .aws-sam\build\TodoFunction\configs	
+	xcopy /I /S configs .aws-sam\build\TodoAsyncFunction\configs
 # for linux
 # TODO	
 
@@ -55,6 +58,9 @@ integration_test:
 	cd dynamodb-local & docker-compose up -d
 	cd app & go test -v ./cmd/...
 	cd dynamodb-local & docker-compose stop
+
+local_invoke_%:
+	sam local invoke --env-vars local-env.json --event events\event-sqs.json ${@:local_invoke_%=%}
 
 local_startapi:
 	sam local start-api --env-vars local-env.json	

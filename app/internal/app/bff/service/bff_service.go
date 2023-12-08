@@ -17,8 +17,8 @@ type BffService interface {
 	RegisterUser(userName string) (*entity.User, error)
 	// RegisterTodo は、タイトルtodoTitleのTodoを登録します。
 	RegisterTodo(todoTitle string) (*entity.Todo, error)
-	// RegisterAsync は、タイトルのリストtodoTitlesのTodoを非同期で登録します。
-	RegisterAsync(todoTitles []string) error
+	// RegisterTodosAsync は、タイトルのリストtodoTitlesのTodoを非同期で登録します。
+	RegisterTodosAsync(todoTitles []string) error
 }
 
 // New は、BffServiceを作成します。
@@ -75,8 +75,8 @@ func (bs *bffServiceImpl) FindTodo(userId string, todoId string) (*entity.User, 
 	return user, todo, nil
 }
 
-// RegisterAsync implements TodoService.
-func (bs *bffServiceImpl) RegisterAsync(todoTitles []string) error {
+// RegisterTodosAsync implements TodoService.
+func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string) error {
 	//TODO: todoTitlesを受け渡す処理
 
 	bs.jobRepository.Send("dummy")

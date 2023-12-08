@@ -35,9 +35,9 @@ Parameters:
   BffFunctionName:
     Type: String
     Default: bff-function
-  TodoDelayedFunctionName:
+  TodoAsyncFunctionName:
     Type: String
-    Default: todo-delayed-function
+    Default: todo-async-function
 Mappings:
   AppConfigExtentionsLayerMap:
     #Tokyo
@@ -192,13 +192,13 @@ Resources:
         Variables:
           TODO_API_BASE_URL: !Sub https://${TodoApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
           USERS_API_BASE_URL: !Sub https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
-  TodoDelayedFunction:
+  TodoAsyncFunction:
     Type: AWS::Serverless::Function
     Metadata:
       BuildMethod: go1.x
     Properties:
-      FunctionName: !Ref TodoDelayedFunctionName
-      CodeUri: app/cmd/todo-delayed/
+      FunctionName: !Ref TodoAsyncFunctionName
+      CodeUri: app/cmd/todo-async/
       Role: !ImportValue
         Fn::Sub: ${StackPrefix}-LambdaRoleArn
       Events:
@@ -329,10 +329,10 @@ Resources:
     Properties:
       LogGroupName: !Sub /aws/lambda/${BffFunctionName}
       RetentionInDays: 7
-  TodoDelayedFunctionLogGroup:
+  TodoAsyncFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/lambda/${TodoDelayedFunctionName}
+      LogGroupName: !Sub /aws/lambda/${TodoAsyncFunctionName}
       RetentionInDays: 7
 # Application Insights
   ApplicationResourceGroup:
@@ -380,6 +380,6 @@ Outputs:
   BffFunctionDeploymentGroup:
     Description: Bff Lambda Function DeploymentGroup ARN
     Value: !Ref BffFunctionDeploymentGroup
-  TodoDelayedFunction:
-    Description: Todo Delayed Lambda Function ARN
-    Value: !GetAtt TodoDelayedFunction.Arn
+  TodoAsyncFunction:
+    Description: Todo Async Lambda Function ARN
+    Value: !GetAtt TodoAsyncFunction.Arn
