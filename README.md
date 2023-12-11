@@ -475,8 +475,6 @@ curl -X POST http://127.0.0.1:3000/bff-api/v1/error/business
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/business2
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/system
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/hogehoge
-
-#TODO: 実装
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/panic
 ```
 

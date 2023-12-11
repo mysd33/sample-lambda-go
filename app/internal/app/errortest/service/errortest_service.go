@@ -38,6 +38,8 @@ func (*errorTestServiceImpl) Execute(errorType string) error {
 		//システムエラー
 		cause := fmt.Errorf("原因のエラーB")
 		return errors.NewSystemError(cause, message.E_EX_9002, "foo")
+	case "panic":
+		panic("パニック発生")
 	default:
 		//予期せぬエラー（実際には、AP側でのSystemErrorのラップし忘れ）
 		//スタックトレースなし

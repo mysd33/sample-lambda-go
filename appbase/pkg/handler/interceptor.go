@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"runtime"
 
@@ -45,13 +46,22 @@ func NewHandlerInterceptor(config config.Config, log logging.Logger, apiResponse
 // Handle は、Controlerで実行する関数controllerFuncの前後でインタセプタの処理を実行します。
 func (i *defaultHandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		defer func() {
+			if v := recover(); v != nil {
+				err := fmt.Errorf("recover from: %+v", v)
+				i.logError(err)
+				// TODO: レスポンス作成を上位のMiddlewareコンポーネントで実施するよう修正
+				i.apiResponseFormatter.ReturnResponseBody(ctx, nil, err)
+			}
+		}()
+
 		fv := reflect.ValueOf(controllerFunc)
 		funcName := runtime.FuncForPC(fv.Pointer()).Name()
 		i.log.Info(message.I_FW_0001, funcName)
 
 		// Configの最新読み込み
 		if err := i.config.Reload(); err != nil {
-			//TODO: レスポンス作成を上位のMiddlewareコンポーネントで実施するよう修正
+			// TODO: レスポンス作成を上位のMiddlewareコンポーネントで実施するよう修正
 			i.apiResponseFormatter.ReturnResponseBody(ctx, nil, err)
 			return
 		}
@@ -64,31 +74,38 @@ func (i *defaultHandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.Ha
 		} else {
 			i.log.Info(message.I_FW_0002, funcName)
 		}
-		//TODO: レスポンス作成を上位のMiddlewareコンポーネントで実施するよう修正
+		// TODO: レスポンス作成を上位のMiddlewareコンポーネントで実施するよう修正
 		i.apiResponseFormatter.ReturnResponseBody(ctx, result, err)
 	}
 }
 
 // HandleAsync implements HandlerInterceptor.
 func (i *defaultHandlerInterceptor) HandleAsync(asyncControllerFunc AsyncControllerFunc) AsyncControllerFunc {
-	return func(sqsMessage events.SQSMessage) error {
+	return func(sqsMessage events.SQSMessage) (err error) {
+		defer func() {
+			if v := recover(); v != nil {
+				err = fmt.Errorf("recover from: %+v", v)
+				i.logError(err)
+			}
+		}()
+
 		fv := reflect.ValueOf(asyncControllerFunc)
 		funcName := runtime.FuncForPC(fv.Pointer()).Name()
 		i.log.Info(message.I_FW_0001, funcName)
 
 		// Configの最新読み込み
-		if err := i.config.Reload(); err != nil {
-			return err
+		if err = i.config.Reload(); err != nil {
+			return
 		}
 		// Controllerの実行
-		err := asyncControllerFunc(sqsMessage)
+		err = asyncControllerFunc(sqsMessage)
 		// 集約エラーハンドリングによるログ出力
 		if err != nil {
 			i.logError(err)
-		} else {
-			i.log.Info(message.I_FW_0002, funcName)
+			return
 		}
-		return nil
+		i.log.Info(message.I_FW_0002, funcName)
+		return
 	}
 }
 
