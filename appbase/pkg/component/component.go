@@ -30,6 +30,7 @@ type ApplicationContext interface {
 	GetHttpClient() httpclient.HttpClient
 	GetInterceptor() handler.HandlerInterceptor
 	GetAPILambdaHandler() *handler.APILambdaHandler
+	GetAsyncLambdaHandler() *handler.AsyncLambdaHandler
 }
 
 // NewApplicationContext は、デフォルトのApplicationContextを作成します。
@@ -46,6 +47,7 @@ func NewApplicationContext() ApplicationContext {
 	httpclient := createHttpClient(logger)
 	interceptor := createHanderInterceptor(config, logger)
 	apiLambdaHandler := createAPILambdaHandler(config, logger, apiResponseFormatter)
+	asyncLambdaHandler := createAsyncLambdaHandler(config, logger)
 
 	// Validatorの日本語化
 	validator.Setup()
@@ -61,6 +63,7 @@ func NewApplicationContext() ApplicationContext {
 		httpClient:                 httpclient,
 		interceptor:                interceptor,
 		apiLambdaHandler:           apiLambdaHandler,
+		asyncLambdaHandler:         asyncLambdaHandler,
 	}
 }
 
@@ -75,6 +78,7 @@ type defaultApplicationContext struct {
 	httpClient                 httpclient.HttpClient
 	interceptor                handler.HandlerInterceptor
 	apiLambdaHandler           *handler.APILambdaHandler
+	asyncLambdaHandler         *handler.AsyncLambdaHandler
 }
 
 // GetConfig implements ApplicationContext.
@@ -125,6 +129,11 @@ func (ac *defaultApplicationContext) GetMessageSource() message.MessageSource {
 // GetAPILambdaHandler implements ApplicationContext.
 func (ac *defaultApplicationContext) GetAPILambdaHandler() *handler.APILambdaHandler {
 	return ac.apiLambdaHandler
+}
+
+// GetAsyncLambdaHandler implements ApplicationContext.
+func (ac *defaultApplicationContext) GetAsyncLambdaHandler() *handler.AsyncLambdaHandler {
+	return ac.asyncLambdaHandler
 }
 
 func createMessageSource() message.MessageSource {
@@ -185,4 +194,8 @@ func createHanderInterceptor(config config.Config, logger logging.Logger) handle
 
 func createAPILambdaHandler(config config.Config, logger logging.Logger, apiResponseFormatter api.ApiResponseFormatter) *handler.APILambdaHandler {
 	return handler.NewAPILambdaHandler(config, logger, apiResponseFormatter)
+}
+
+func createAsyncLambdaHandler(config config.Config, logger logging.Logger) *handler.AsyncLambdaHandler {
+	return handler.NewAsyncLambdaHandler(config, logger)
 }

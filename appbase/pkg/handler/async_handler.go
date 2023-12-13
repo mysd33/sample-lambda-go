@@ -6,24 +6,37 @@ package handler
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"example.com/appbase/pkg/apcontext"
+	"example.com/appbase/pkg/config"
+	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-lambda-go/events"
 )
 
 // SQSTriggeredLambdaHandlerFuncは、SQSトリガのLambdaのハンドラメソッドを表す関数です。
 type SQSTriggeredLambdaHandlerFunc func(ctx context.Context, event events.SQSEvent) (events.SQSEventResponse, error)
 
-// TODO: 構造体化する
-func AsyncLambdaHandler(asyncControllerFunc AsyncControllerFunc) SQSTriggeredLambdaHandlerFunc {
+type AsyncLambdaHandler struct {
+	config config.Config
+	log    logging.Logger
+}
+
+func NewAsyncLambdaHandler(config config.Config,
+	log logging.Logger) *AsyncLambdaHandler {
+	return &AsyncLambdaHandler{
+		config: config,
+		log:    log,
+	}
+}
+
+func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQSTriggeredLambdaHandlerFunc {
 	return func(ctx context.Context, event events.SQSEvent) (response events.SQSEventResponse, err error) {
 		// 非同期処理の場合
 		defer func() {
 			if v := recover(); v != nil {
 				err = fmt.Errorf("recover from: %+v", v)
 				//TODO: フレームワークのロギング機能に置き換え
-				log.Printf("%+v", err)
+				h.log.ErrorWithUnexpectedError(err)
 			}
 		}()
 		// ctxをコンテキスト領域に格納
