@@ -15,7 +15,7 @@ import (
 // ApiResponseFormatterは、レスポンスデータを作成するインタフェース
 type ApiResponseFormatter interface {
 	// ReturnResponseBody は、処理結果resultまたはエラーerrに対応するレスポンスボディを返却します。
-	ReturnResponseBody(ctx *gin.Context, result any, err error)
+	ReturnResponseBody(ctx *gin.Context)
 }
 
 // NewApiResponseFormatter は、ApiResponseFormatterを作成します。
@@ -28,13 +28,19 @@ type defaultApiResponseFormatter struct {
 }
 
 // ReturnResponseBody implements ApiResponseFormatter.
-func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context, result any, err error) {
+func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context) {
 	var (
 		validationError *myerrors.ValidationError
 		businessError   *myerrors.BusinessError
 		systemError     *myerrors.SystemError
 	)
-	if err != nil {
+	errs := ctx.Errors
+
+	if len(errs) > 0 {
+		//TODO: エラーが複数の場合の処理
+		err := errs[0]
+		//TODO: ErrorTypeの判定やGin側でのエラーのハンドリングが必要？
+
 		// 各エラー内容に応じた応答メッセージの成形
 		if errors.As(err, &validationError) {
 			ctx.JSON(http.StatusBadRequest, errorResponseBody("validationError", validationError.Error()))
@@ -46,10 +52,16 @@ func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context, resul
 			ctx.JSON(http.StatusInternalServerError, errorResponseBody(message.E_FW_9999, f.messageSource.GetMessage(message.E_FW_9999)))
 		}
 	} else {
-		ctx.JSON(http.StatusOK, result)
+		//TODO: 定数化
+		result, ok := ctx.Get("result")
+		if ok {
+			ctx.JSON(http.StatusOK, result)
+		}
+		//TODO: resultがない場合
 	}
 }
 
 func errorResponseBody(label string, detail string) gin.H {
+	//TODO: 要件に応じてエラーレスポンスの形式を修正する。
 	return gin.H{"code": label, "detail": detail}
 }

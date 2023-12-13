@@ -2,11 +2,9 @@ package handler
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"runtime"
 
-	"example.com/appbase/pkg/api"
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/env"
@@ -28,84 +26,69 @@ type HandlerInterceptor interface {
 
 // HandlerInterceptor は、Handlerのインタセプタの構造体です。
 type defaultHandlerInterceptor struct {
-	config               config.Config
-	log                  logging.Logger
-	apiResponseFormatter api.ApiResponseFormatter
+	config config.Config
+	log    logging.Logger
 }
 
 // NewHandlerInterceptor は、HandlerInterceptorを作成します。
-func NewHandlerInterceptor(config config.Config, log logging.Logger, apiResponseFormatter api.ApiResponseFormatter) HandlerInterceptor {
+func NewHandlerInterceptor(config config.Config, log logging.Logger) HandlerInterceptor {
 	ginDebugMode := config.Get(constant.GIN_DEBUG_NAME)
 	if env.IsStragingOrProd() && ginDebugMode != "true" {
 		// 本番相当の動作環境の場合、ginのモードを本番モードに設定
 		gin.SetMode(gin.ReleaseMode)
 	}
-	return &defaultHandlerInterceptor{config: config, log: log, apiResponseFormatter: apiResponseFormatter}
+	return &defaultHandlerInterceptor{config: config, log: log}
 }
 
 // Handle は、Controlerで実行する関数controllerFuncの前後でインタセプタの処理を実行します。
 func (i *defaultHandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		defer func() {
-			if v := recover(); v != nil {
-				err := fmt.Errorf("recover from: %+v", v)
-				i.logError(err)
-				// TODO: レスポンス作成を上位のMiddlewareコンポーネントで実施するよう修正
-				i.apiResponseFormatter.ReturnResponseBody(ctx, nil, err)
-			}
-		}()
-
 		fv := reflect.ValueOf(controllerFunc)
 		funcName := runtime.FuncForPC(fv.Pointer()).Name()
 		i.log.Info(message.I_FW_0001, funcName)
-
 		// Configの最新読み込み
 		if err := i.config.Reload(); err != nil {
-			// TODO: レスポンス作成を上位のMiddlewareコンポーネントで実施するよう修正
-			i.apiResponseFormatter.ReturnResponseBody(ctx, nil, err)
+			// エラーをContextに格納
+			ctx.Error(err)
 			return
 		}
-
 		// Controllerの実行
 		result, err := controllerFunc(ctx)
 		// 集約エラーハンドリングによるログ出力
 		if err != nil {
 			i.logError(err)
-		} else {
-			i.log.Info(message.I_FW_0002, funcName)
+			// エラーをContextに格納
+			ctx.Error(err)
+			return
 		}
-		// TODO: レスポンス作成を上位のMiddlewareコンポーネントで実施するよう修正
-		i.apiResponseFormatter.ReturnResponseBody(ctx, result, err)
+
+		// 処理結果をContextに格納
+		// TODO: 定数化
+		ctx.Set("result", result)
+		i.log.Info(message.I_FW_0002, funcName)
 	}
 }
 
 // HandleAsync implements HandlerInterceptor.
 func (i *defaultHandlerInterceptor) HandleAsync(asyncControllerFunc AsyncControllerFunc) AsyncControllerFunc {
-	return func(sqsMessage events.SQSMessage) (err error) {
-		defer func() {
-			if v := recover(); v != nil {
-				err = fmt.Errorf("recover from: %+v", v)
-				i.logError(err)
-			}
-		}()
-
+	return func(sqsMessage events.SQSMessage) error {
 		fv := reflect.ValueOf(asyncControllerFunc)
 		funcName := runtime.FuncForPC(fv.Pointer()).Name()
 		i.log.Info(message.I_FW_0001, funcName)
 
 		// Configの最新読み込み
-		if err = i.config.Reload(); err != nil {
-			return
+		if err := i.config.Reload(); err != nil {
+			return err
 		}
 		// Controllerの実行
-		err = asyncControllerFunc(sqsMessage)
+		err := asyncControllerFunc(sqsMessage)
 		// 集約エラーハンドリングによるログ出力
 		if err != nil {
 			i.logError(err)
-			return
+			return err
 		}
 		i.log.Info(message.I_FW_0002, funcName)
-		return
+		return nil
 	}
 }
 

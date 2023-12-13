@@ -11,6 +11,7 @@ import (
 
 // ginadapter.GinLambdaをグローバルスコープで宣言
 var ginLambda *ginadapter.GinLambda
+var apiLambdaHandler *handler.APILambdaHandler
 
 // コードルドスタート時の初期化処理
 func init() {
@@ -18,17 +19,18 @@ func init() {
 	if testing.Testing() {
 		return
 	}
+
 	// ApplicationContextの作成
 	ac := component.NewApplicationContext()
 	// 業務の初期化処理実行
-	r := handler.GetDefaultGinEngine()
+	apiLambdaHandler = ac.GetAPILambdaHandler()
+	r := apiLambdaHandler.GetDefaultGinEngine()
 	initBiz(ac, r)
-	ginadapter.New(r)
 	ginLambda = ginadapter.New(r)
 }
 
 // Main関数
 func main() {
 	// API用Lambdaハンドラ関数で開始
-	lambda.Start(handler.ApiLambdaHandler(ginLambda))
+	lambda.Start(apiLambdaHandler.Handle(ginLambda))
 }

@@ -450,7 +450,7 @@ curl http://127.0.0.1:3000/users-api/v1/users/(ユーザID)
 
 # Todoサービス
 curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "Buy Milk"}' http://127.0.0.1:3000/todo-api/v1/todo
-
+# トランザクション実施による登録の場合
 curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "Buy Milk"}' http://127.0.0.1:3000/todo-api/v1/todo?tx=true
 
 curl http://127.0.0.1:3000/todo-api/v1/todo/(TODO ID)
@@ -465,6 +465,9 @@ curl http://127.0.0.1:3000/bff-api/v1/todo?user_id=（ユーザID）\&todo_id=(T
 
 # BFF (ディレード処理実行依頼)
 curl -X POST http://127.0.0.1:3000/bff-api/v1/todo-async
+# FIFOキューの場合
+curl -X POST http://127.0.0.1:3000/bff-api/v1/todo-async?fifo=true
+
 # Elastic MQから実行依頼したメッセージを取得し確認
 aws sqs receive-message --queue-url http://localhost:9324/000000000000/SampleQueue --endpoint-url http://localhost:9324
 
@@ -476,6 +479,10 @@ curl -X POST http://127.0.0.1:3000/bff-api/v1/error/business2
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/system
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/hogehoge
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/panic
+# BFF (存在しないパス動作確認）
+curl -X POST http://127.0.0.1:3000/bff-api/v1/xxx
+# BFF (存在しないメソッド動作確認）
+curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
 ```
 
 * ディレードの非同期部分の処理はsam local invokeコマンドを実行し確認

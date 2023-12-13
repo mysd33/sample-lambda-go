@@ -29,6 +29,7 @@ type ApplicationContext interface {
 	GetRDBTransactionManager() rdb.TransactionManager
 	GetHttpClient() httpclient.HttpClient
 	GetInterceptor() handler.HandlerInterceptor
+	GetAPILambdaHandler() *handler.APILambdaHandler
 }
 
 // NewApplicationContext は、デフォルトのApplicationContextを作成します。
@@ -43,7 +44,8 @@ func NewApplicationContext() ApplicationContext {
 	rdbAccessor := createRDBAccessor()
 	rdbTransactionManager := rdb.NewTransactionManager(logger, config, rdbAccessor)
 	httpclient := createHttpClient(logger)
-	interceptor := createHanderInterceptor(config, logger, apiResponseFormatter)
+	interceptor := createHanderInterceptor(config, logger)
+	apiLambdaHandler := createAPILambdaHandler(config, logger, apiResponseFormatter)
 
 	// Validatorの日本語化
 	validator.Setup()
@@ -58,6 +60,7 @@ func NewApplicationContext() ApplicationContext {
 		rdbTransactionManager:      rdbTransactionManager,
 		httpClient:                 httpclient,
 		interceptor:                interceptor,
+		apiLambdaHandler:           apiLambdaHandler,
 	}
 }
 
@@ -71,6 +74,7 @@ type defaultApplicationContext struct {
 	rdbTransactionManager      rdb.TransactionManager
 	httpClient                 httpclient.HttpClient
 	interceptor                handler.HandlerInterceptor
+	apiLambdaHandler           *handler.APILambdaHandler
 }
 
 // GetConfig implements ApplicationContext.
@@ -116,6 +120,11 @@ func (ac *defaultApplicationContext) GetLogger() logging.Logger {
 // GetMessageSource implements ApplicationContext.
 func (ac *defaultApplicationContext) GetMessageSource() message.MessageSource {
 	return ac.messageSource
+}
+
+// GetAPILambdaHandler implements ApplicationContext.
+func (ac *defaultApplicationContext) GetAPILambdaHandler() *handler.APILambdaHandler {
+	return ac.apiLambdaHandler
 }
 
 func createMessageSource() message.MessageSource {
@@ -170,6 +179,10 @@ func createHttpClient(logger logging.Logger) httpclient.HttpClient {
 	return httpclient.NewHttpClient(logger)
 }
 
-func createHanderInterceptor(config config.Config, logger logging.Logger, apiResponseFormatter api.ApiResponseFormatter) handler.HandlerInterceptor {
-	return handler.NewHandlerInterceptor(config, logger, apiResponseFormatter)
+func createHanderInterceptor(config config.Config, logger logging.Logger) handler.HandlerInterceptor {
+	return handler.NewHandlerInterceptor(config, logger)
+}
+
+func createAPILambdaHandler(config config.Config, logger logging.Logger, apiResponseFormatter api.ApiResponseFormatter) *handler.APILambdaHandler {
+	return handler.NewAPILambdaHandler(config, logger, apiResponseFormatter)
 }
