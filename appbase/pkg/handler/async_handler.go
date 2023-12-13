@@ -13,14 +13,16 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 )
 
-// SQSTriggeredLambdaHandlerFuncは、SQSトリガのLambdaのハンドラメソッドを表す関数です。
+// SQSTriggeredLambdaHandlerFuncは、SQSトリガのLambdaのハンドラを表す関数です。
 type SQSTriggeredLambdaHandlerFunc func(ctx context.Context, event events.SQSEvent) (events.SQSEventResponse, error)
 
+// AsyncLambdaHandler は、SQSトリガの非同期処理のLambdaのハンドラを管理する構造体です。
 type AsyncLambdaHandler struct {
 	config config.Config
 	log    logging.Logger
 }
 
+// NewAsyncLambdaHandler は、AsyncLambdaHandlerを作成します。
 func NewAsyncLambdaHandler(config config.Config,
 	log logging.Logger) *AsyncLambdaHandler {
 	return &AsyncLambdaHandler{
@@ -29,13 +31,13 @@ func NewAsyncLambdaHandler(config config.Config,
 	}
 }
 
+// Handleは、SQSトリガのLambdaのハンドラを実行します。
 func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQSTriggeredLambdaHandlerFunc {
 	return func(ctx context.Context, event events.SQSEvent) (response events.SQSEventResponse, err error) {
 		// 非同期処理の場合
 		defer func() {
 			if v := recover(); v != nil {
 				err = fmt.Errorf("recover from: %+v", v)
-				//TODO: フレームワークのロギング機能に置き換え
 				h.log.ErrorWithUnexpectedError(err)
 			}
 		}()

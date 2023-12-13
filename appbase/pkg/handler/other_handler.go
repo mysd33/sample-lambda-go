@@ -7,7 +7,7 @@ import (
 	"context"
 )
 
-// SimpleLambdaHandlerFunc は、その他のトリガのLambdaのハンドラメソッドを表す関数です。
+// SimpleLambdaHandlerFunc は、その他のトリガのLambdaのハンドラを表す関数です。
 type SimpleLambdaHandlerFunc func(ctx context.Context) error
 
 // TODO:他のトリガのLambdaHandlerFuncの実装

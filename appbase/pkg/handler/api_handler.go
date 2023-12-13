@@ -16,15 +16,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// APITriggeredLambdaHandlerFuncは、APIGatewayトリガのLambdaのハンドラメソッドを表す関数です。
+// APITriggeredLambdaHandlerFunc は、APIGatewayトリガのLambdaのハンドラを表す関数です。
 type APITriggeredLambdaHandlerFunc func(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error)
 
+// APILambdaHandler は、APIGatewayトリガのLambdaのハンドラを管理する構造体です。
 type APILambdaHandler struct {
 	config               config.Config
 	log                  logging.Logger
 	apiResponseFormatter api.ApiResponseFormatter
 }
 
+// NewAPILambdaHandler は、APILambdaHandlerを作成します。
 func NewAPILambdaHandler(config config.Config,
 	log logging.Logger,
 	apiResponseFormatter api.ApiResponseFormatter) *APILambdaHandler {
@@ -67,10 +69,11 @@ func (h *APILambdaHandler) GetDefaultGinEngine() *gin.Engine {
 	return engine
 }
 
+// Handleは、APIGatewayトリガのLambdaのハンドラを実行します。
 func (h *APILambdaHandler) Handle(ginLambda *ginadapter.GinLambda) APITriggeredLambdaHandlerFunc {
 	// Handleは、APIGatewayトリガーのLambdaHandlerFuncです。
 	return func(ctx context.Context, request events.APIGatewayProxyRequest) (response events.APIGatewayProxyResponse, err error) {
-		// 非同期処理の場合
+		// パニックのリカバリ処理
 		defer func() {
 			if v := recover(); v != nil {
 				err = fmt.Errorf("recover from: %+v", v)
