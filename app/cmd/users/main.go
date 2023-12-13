@@ -9,9 +9,7 @@ import (
 	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
 )
 
-// ginadapter.GinLambdaをグローバルスコープで宣言
-var ginLambda *ginadapter.GinLambda
-var apiLambdaHandler *handler.APILambdaHandler
+var lambdaHandler handler.APITriggeredLambdaHandlerFunc
 
 // コードルドスタート時の初期化処理
 func init() {
@@ -22,15 +20,18 @@ func init() {
 
 	// ApplicationContextの作成
 	ac := component.NewApplicationContext()
-	// 業務の初期化処理実行
-	apiLambdaHandler = ac.GetAPILambdaHandler()
+	// Ginのエンジンを作成
+	apiLambdaHandler := ac.GetAPILambdaHandler()
 	r := apiLambdaHandler.GetDefaultGinEngine()
+	// 業務の初期化処理実行
 	initBiz(ac, r)
-	ginLambda = ginadapter.New(r)
+	// ハンドラ関数の作成
+	ginLambda := ginadapter.New(r)
+	lambdaHandler = apiLambdaHandler.Handle(ginLambda)
 }
 
 // Main関数
 func main() {
 	// API用Lambdaハンドラ関数で開始
-	lambda.Start(apiLambdaHandler.Handle(ginLambda))
+	lambda.Start(lambdaHandler)
 }
