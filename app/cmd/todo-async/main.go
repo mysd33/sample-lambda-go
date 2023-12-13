@@ -8,9 +8,8 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-// 非同期処理用のControllerの関数をグローバル変数定義
-var asyncLambdaHandler *handler.AsyncLambdaHandler
-var asyncControllerFunc handler.AsyncControllerFunc
+// 非同期処理用のHandler関数をグローバル変数定義
+var lambdaHandler handler.SQSTriggeredLambdaHandlerFunc
 
 // コードルドスタート時の初期化処理
 func init() {
@@ -20,11 +19,13 @@ func init() {
 	}
 	// ApplicationContextの作成
 	ac := component.NewApplicationContext()
-	asyncLambdaHandler = ac.GetAsyncLambdaHandler()
+	asyncLambdaHandler := ac.GetAsyncLambdaHandler()
 	// 業務の初期化処理実行
-	asyncControllerFunc = initBiz(ac)
+	asyncControllerFunc := initBiz(ac)
+	// ハンドラ関数の作成
+	lambdaHandler = asyncLambdaHandler.Handle(asyncControllerFunc)
 }
 
 func main() {
-	lambda.Start(asyncLambdaHandler.Handle(asyncControllerFunc))
+	lambda.Start(lambdaHandler)
 }
