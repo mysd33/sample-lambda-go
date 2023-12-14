@@ -46,7 +46,7 @@ func NewApplicationContext() ApplicationContext {
 	rdbTransactionManager := rdb.NewTransactionManager(logger, config, rdbAccessor)
 	httpclient := createHttpClient(logger)
 	interceptor := createHanderInterceptor(config, logger)
-	apiLambdaHandler := createAPILambdaHandler(config, logger, apiResponseFormatter)
+	apiLambdaHandler := createAPILambdaHandler(config, logger, messageSource, apiResponseFormatter)
 	asyncLambdaHandler := createAsyncLambdaHandler(config, logger)
 
 	// Validatorの日本語化
@@ -192,8 +192,8 @@ func createHanderInterceptor(config config.Config, logger logging.Logger) handle
 	return handler.NewHandlerInterceptor(config, logger)
 }
 
-func createAPILambdaHandler(config config.Config, logger logging.Logger, apiResponseFormatter api.ApiResponseFormatter) *handler.APILambdaHandler {
-	return handler.NewAPILambdaHandler(config, logger, apiResponseFormatter)
+func createAPILambdaHandler(config config.Config, logger logging.Logger, messageSource message.MessageSource, apiResponseFormatter api.ApiResponseFormatter) *handler.APILambdaHandler {
+	return handler.NewAPILambdaHandler(config, logger, messageSource, apiResponseFormatter)
 }
 
 func createAsyncLambdaHandler(config config.Config, logger logging.Logger) *handler.AsyncLambdaHandler {

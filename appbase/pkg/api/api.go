@@ -43,13 +43,13 @@ func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context) {
 
 		// 各エラー内容に応じた応答メッセージの成形
 		if errors.As(err, &validationError) {
-			ctx.JSON(http.StatusBadRequest, errorResponseBody("validationError", validationError.Error()))
+			ctx.JSON(http.StatusBadRequest, ErrorResponseBody("validationError", validationError.Error()))
 		} else if errors.As(err, &businessError) {
-			ctx.JSON(http.StatusBadRequest, errorResponseBody(businessError.ErrorCode(), f.messageSource.GetMessage(businessError.ErrorCode(), businessError.Args()...)))
+			ctx.JSON(http.StatusBadRequest, ErrorResponseBody(businessError.ErrorCode(), f.messageSource.GetMessage(businessError.ErrorCode(), businessError.Args()...)))
 		} else if errors.As(err, &systemError) {
-			ctx.JSON(http.StatusInternalServerError, errorResponseBody(systemError.ErrorCode(), f.messageSource.GetMessage(message.E_FW_9001)))
+			ctx.JSON(http.StatusInternalServerError, ErrorResponseBody(systemError.ErrorCode(), f.messageSource.GetMessage(message.E_FW_9001)))
 		} else {
-			ctx.JSON(http.StatusInternalServerError, errorResponseBody(message.E_FW_9999, f.messageSource.GetMessage(message.E_FW_9999)))
+			ctx.JSON(http.StatusInternalServerError, ErrorResponseBody(message.E_FW_9999, f.messageSource.GetMessage(message.E_FW_9999)))
 		}
 	} else {
 		//TODO: 定数化
@@ -61,7 +61,7 @@ func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context) {
 	}
 }
 
-func errorResponseBody(label string, detail string) gin.H {
+func ErrorResponseBody(label string, detail string) gin.H {
 	//TODO: 要件に応じてエラーレスポンスの形式を修正する。
 	return gin.H{"code": label, "detail": detail}
 }

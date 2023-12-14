@@ -39,6 +39,8 @@ func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQS
 			if v := recover(); v != nil {
 				err = fmt.Errorf("recover from: %+v", v)
 				h.log.ErrorWithUnexpectedError(err)
+				// 全てのメッセージを失敗扱いにする
+				response.BatchItemFailures = append(response.BatchItemFailures, events.SQSBatchItemFailure{ItemIdentifier: ""})
 			}
 		}()
 		// ctxをコンテキスト領域に格納
