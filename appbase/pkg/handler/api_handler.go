@@ -78,6 +78,9 @@ func (h *APILambdaHandler) Handle(ginLambda *ginadapter.GinLambda) APITriggeredL
 			if v := recover(); v != nil {
 				err = fmt.Errorf("recover from: %+v", v)
 				h.log.ErrorWithUnexpectedError(err)
+
+				// TODO: エラーレスポンス
+				// response = TODO
 			}
 		}()
 		// ctxをコンテキスト領域に格納
