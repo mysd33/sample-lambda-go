@@ -6,6 +6,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/api"
@@ -62,13 +63,13 @@ func (h *APILambdaHandler) GetDefaultGinEngine() *gin.Engine {
 	// 404エラー
 	engine.NoRoute(func(ctx *gin.Context) {
 		h.log.Debug("404エラー")
-		ctx.JSON(404, api.ErrorResponseBody("NOT_FOUND", fmt.Sprintf("%s is not found", ctx.Request.URL.Path)))
+		ctx.JSON(http.StatusNotFound, api.ErrorResponseBody("NOT_FOUND", fmt.Sprintf("%s is not found", ctx.Request.URL.Path)))
 	})
 	// 405エラー
 	engine.HandleMethodNotAllowed = true
 	engine.NoMethod(func(ctx *gin.Context) {
 		h.log.Debug("405エラー")
-		ctx.JSON(405, api.ErrorResponseBody("METHOD_NOT_ALLOWED", fmt.Sprintf("%s Method %s is not allowed", ctx.Request.Method, ctx.Request.URL.Path)))
+		ctx.JSON(http.StatusMethodNotAllowed, api.ErrorResponseBody("METHOD_NOT_ALLOWED", fmt.Sprintf("%s Method %s is not allowed", ctx.Request.Method, ctx.Request.URL.Path)))
 	})
 	return engine
 }
@@ -105,7 +106,7 @@ func (h *APILambdaHandler) Handle(ginLambda *ginadapter.GinLambda) APITriggeredL
 // TODO: エラーレスポンスの形式
 func (h *APILambdaHandler) createErrorResponse() events.APIGatewayProxyResponse {
 	return events.APIGatewayProxyResponse{
-		StatusCode: 500,
+		StatusCode: http.StatusInternalServerError,
 		Body:       fmt.Sprintf("{\"code\": %s, \"detail\": %s}", message.E_FW_9999, h.messageSource.GetMessage(message.E_FW_9999)),
 	}
 }
