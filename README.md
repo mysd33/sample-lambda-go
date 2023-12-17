@@ -359,6 +359,7 @@ aws logs delete-log-group --log-group-name /aws/lambda/bff-function
 aws logs delete-log-group --log-group-name /aws/lambda/todo-function
 aws logs delete-log-group --log-group-name /aws/lambda/user-function
 aws logs delete-log-group --log-group-name /aws/lambda/todo-async-function
+aws logs delete-log-group --log-group-name /aws/lambda/todo-async-fifo-function
 aws logs delete-log-group --log-group-name /aws/apigateway/welcome
 aws logs delete-log-group --log-group-name /aws/rds/proxy/demo-rds-proxy
 aws logs delete-log-group --log-group-name /aws/rds/cluster/aurora-postgresql-cluster/postgresql
