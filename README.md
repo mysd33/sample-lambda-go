@@ -465,11 +465,13 @@ curl http://127.0.0.1:3000/bff-api/v1/todo?user_id=（ユーザID）\&todo_id=(T
 
 # BFF (ディレード処理実行依頼)
 curl -X POST http://127.0.0.1:3000/bff-api/v1/todo-async
-# FIFOキューの場合
-curl -X POST http://127.0.0.1:3000/bff-api/v1/todo-async?fifo=true
-
 # Elastic MQから実行依頼したメッセージを取得し確認
 aws sqs receive-message --queue-url http://localhost:9324/000000000000/SampleQueue --endpoint-url http://localhost:9324
+# FIFOキューの場合 TODO: 作成中
+curl -X POST http://127.0.0.1:3000/bff-api/v1/todo-async?fifo=true
+# Elastic MQから実行依頼したメッセージを取得し確認 TODO: 作成中
+aws sqs receive-message --queue-url http://localhost:9324/000000000000/SampleFIFOQueue --endpoint-url http://localhost:9324
+
 
 # BFF (エラー電文動作確認)
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/validation

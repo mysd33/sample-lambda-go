@@ -7,28 +7,35 @@ Parameters:
     Description: Stack Resource Name Prefix
     Type: String
     Default: Demo 
-  QueueName:
-    Description: Queue Name
+  StandardSourceQueueName:
+    Description: Standard Source Queue Name
     Type: String
     Default: SampleQueue
   DeadLetterQueueName:
     Description: Dead Letter Queue Name
     Type: String
     Default: SampleDLQueue
+  FifoQueueName:
+    Description: FIFO Queue Name
+    Type: String
+    Default: SampleFIFOQueue.fifo
 
 #Mappings: 
 
 #Conditions: 
 
 Resources: 
-  SourceQueue:
+  StandardSourceQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: !Ref QueueName
+      QueueName: !Ref StandardSourceQueueName
+      DelaySeconds: 5
       RedrivePolicy:       
         deadLetterTargetArn:
           !GetAtt DeadLetterQueue.Arn
         maxReceiveCount: 3          
+      ReceiveMessageWaitTimeSeconds: 20
+      VisibilityTimeout: 30
       Tags:
         - Key: Name
           Value: !Sub ${StackPrefix}-Queue
@@ -38,19 +45,33 @@ Resources:
       QueueName: !Ref DeadLetterQueueName
       Tags:
         - Key: Name
-          Value: !Sub ${StackPrefix}-DLQueue          
+          Value: !Sub ${StackPrefix}-DLQueue   
+  FIFOQueue:  
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Ref FifoQueueName
+      DelaySeconds: 5      
+      ReceiveMessageWaitTimeSeconds: 20      
+      VisibilityTimeout: 30
+      FifoQueue:  true
+      ContentBasedDeduplication: true
+      DeduplicationScope: messageGroup
+      FifoThroughputLimit: perMessageGroupId
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-FIFOQueue
 Outputs:
-  SourceQueueName:
-    Description: Source Queue Name
-    Value: !Ref QueueName
+  StandardSourceQueueName:
+    Description: Standard Source Queue Name
+    Value: !Ref StandardSourceQueueName
     Export:
       Name: !Sub ${StackPrefix}-SQSQueueName
-  SourceQueueURL: 
-    Description: URL of Source Queue
-    Value: !Ref SourceQueue
-  SourceQueueARN: 
-    Description: ARN of Queue
-    Value: !GetAtt SourceQueue.Arn
+  StandardSourceQueueURL: 
+    Description: URL of Standard Source Queue
+    Value: !Ref StandardSourceQueue
+  StandardSourceQueueARN: 
+    Description: ARN of Standard Source Queue
+    Value: !GetAtt StandardSourceQueue.Arn
     Export:
       Name: !Sub ${StackPrefix}-SQSQueueArn
   DeadLetterQueueURL: 
