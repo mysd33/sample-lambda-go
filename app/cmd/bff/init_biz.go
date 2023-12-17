@@ -34,11 +34,21 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 		// 異常終了
 		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
 	}
-	asyncMessageRepository := repository.NewAsyncMessageRepository(sampleQueueSQSAccessor)
+	fifoQueueName := ac.GetConfig().Get("SampleFIFOQueueName")
+	if fifoQueueName == "" {
+		fifoQueueName = "SampleFIFOQueue.fifo"
+	}
+	// TODO: applicationContext経由でSQSAccessorのインスタンス取得するようにする
+	sampleFIFOQueueSQSAccessor, err := async.NewSQSAccessor(ac.GetConfig(), fifoQueueName)
+	if err != nil {
+		// 異常終了
+		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
+	}
+	asyncMessageRepository := repository.NewAsyncMessageRepository(sampleQueueSQSAccessor, sampleFIFOQueueSQSAccessor)
 	// サービスの作成
 	bffService := service.New(ac.GetLogger(), ac.GetConfig(), userRepository, todoRepository, asyncMessageRepository)
 	// コントローラの作成
-	bffController := controller.New(ac.GetLogger(), bffService)
+	bffController := controller.New(ac.GetLogger(), ac.GetDynamoDBTransactionManager(), bffService)
 	// ハンドラインタセプタの取得
 	interceptor := ac.GetInterceptor()
 

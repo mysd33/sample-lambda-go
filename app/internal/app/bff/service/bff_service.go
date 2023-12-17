@@ -6,6 +6,7 @@ import (
 	"app/internal/pkg/repository"
 
 	"example.com/appbase/pkg/config"
+	"example.com/appbase/pkg/id"
 	"example.com/appbase/pkg/logging"
 )
 
@@ -17,8 +18,10 @@ type BffService interface {
 	RegisterUser(userName string) (*entity.User, error)
 	// RegisterTodo は、タイトルtodoTitleのTodoを登録します。
 	RegisterTodo(todoTitle string) (*entity.Todo, error)
-	// RegisterTodosAsync は、タイトルのリストtodoTitlesのTodoを非同期で登録します。
+	// RegisterTodosAsync は、（標準キューで）タイトルのリストtodoTitlesのTodoを非同期で登録します。
 	RegisterTodosAsync(todoTitles []string) error
+	// RegisterTodosAsyncByFIFO は、FIFOキューでタイトルのリストtodoTitlesのTodoを非同期で登録します。
+	RegisterTodosAsyncByFIFO(todoTitles []string) error
 }
 
 // New は、BffServiceを作成します。
@@ -78,8 +81,16 @@ func (bs *bffServiceImpl) FindTodo(userId string, todoId string) (*entity.User, 
 // RegisterTodosAsync implements TodoService.
 func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string) error {
 	//TODO: todoTitlesを受け渡す処理
-
 	bs.asyncMessageRepository.Send("dummy")
-
 	return nil
+}
+
+// RegisterTodosAsyncByFIFO implements BffService.
+func (bs *bffServiceImpl) RegisterTodosAsyncByFIFO(todoTitles []string) error {
+	// メッセージグループID
+	msgGroupId := id.GenerateId()
+	//TODO: todoTitlesを受け渡す処理
+	bs.asyncMessageRepository.SendToFIFOQueue("dummy2", msgGroupId)
+	return nil
+
 }

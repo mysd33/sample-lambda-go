@@ -5,6 +5,7 @@ import (
 	"app/internal/app/bff/service"
 	"app/internal/pkg/entity"
 
+	"example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 	"github.com/gin-gonic/gin"
@@ -44,14 +45,15 @@ type BffController interface {
 }
 
 // New は、BffControllerを作成します。
-func New(log logging.Logger, service service.BffService) BffController {
-	return &bffControllerImpl{log: log, service: service}
+func New(log logging.Logger, transactionManager dynamodb.TransactionManager, service service.BffService) BffController {
+	return &bffControllerImpl{log: log, transactionManager: transactionManager, service: service}
 }
 
 // bffControllerImpl は、BffControllerを実装する構造体です。
 type bffControllerImpl struct {
-	log     logging.Logger
-	service service.BffService
+	log                logging.Logger
+	transactionManager dynamodb.TransactionManager
+	service            service.BffService
 }
 
 // FindTodo implements BffController.
@@ -106,10 +108,21 @@ func (c *bffControllerImpl) RegisterTodo(ctx *gin.Context) (any, error) {
 // RegisterTodosAsync implements BffController.
 func (c *bffControllerImpl) RegisterTodosAsync(ctx *gin.Context) (any, error) {
 	// TODO: 入力情報の受付
-	err := c.service.RegisterTodosAsync([]string{"dummy1", "dummy2"})
+	todoTitles := []string{"dummy1", "dummy2"}
+	// クエリパラメータfifoの取得
+	fifo := ctx.Query("fifo")
+	c.log.Debug("fifo=%s", fifo)
+	var err error
+	if fifo != "" {
+		// TODO: トランザクション管理して実行
+		err = c.service.RegisterTodosAsyncByFIFO(todoTitles)
+	} else {
+		// TODO: トランザクション管理して実行
+		err = c.service.RegisterTodosAsync(todoTitles)
+	}
 	if err != nil {
 		return nil, err
 	}
-	// TODO: トランザクション管理して実行
+
 	return &RequestRegisterTodoAsync{Result: "ok"}, nil
 }

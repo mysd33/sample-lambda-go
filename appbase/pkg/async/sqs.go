@@ -57,12 +57,15 @@ type defaultSQSAccessor struct {
 	queueUrl  string
 }
 
-// TODO: DBとのデータ整合性を担保
-
 // SendMessageSdk implements SQSAccessor.
 func (sa *defaultSQSAccessor) SendMessageSdk(input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
-	// TODO: Ouputの利用
+	// QueueのURLの追加
 	input.QueueUrl = &sa.queueUrl
+
+	// TODO: DBとのデータ整合性を担保
+	// TODO: 直接メッセージ送信せず、DynamoDBによるトランザクション管理（AppendTransactWriteItem）を実施し
+	// トランザクションスコープを抜けるときに送信するように実装を変更
+
 	output, err := sa.sqsClient.SendMessage(apcontext.Context, input)
 	if err != nil {
 		return nil, errors.WithStack(err)
