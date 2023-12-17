@@ -38,6 +38,9 @@ Parameters:
   TodoAsyncFunctionName:
     Type: String
     Default: todo-async-function
+  TodoAsyncFifoFunctionName:
+    Type: String
+    Default: todo-async-fifo-function    
 Mappings:
   AppConfigExtentionsLayerMap:
     #Tokyo
@@ -209,6 +212,23 @@ Resources:
               Fn::Sub: ${StackPrefix}-SQSQueueArn
             FunctionResponseTypes:
               - ReportBatchItemFailures
+  TodoAsyncFifoFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      FunctionName: !Ref TodoAsyncFifoFunctionName
+      CodeUri: app/cmd/todo-async/
+      Role: !ImportValue
+        Fn::Sub: ${StackPrefix}-LambdaRoleArn
+      Events:
+        Event:
+          Type: SQS
+          Properties:
+            Queue: !ImportValue
+              Fn::Sub: ${StackPrefix}-SQSFifoQueueArn
+            FunctionResponseTypes:
+              - ReportBatchItemFailures              
 # API Gateway Private REST API
 # HelloWorld 
   HelloApi:
@@ -334,6 +354,11 @@ Resources:
     Properties:
       LogGroupName: !Sub /aws/lambda/${TodoAsyncFunctionName}
       RetentionInDays: 7
+  TodoAsyncFifoFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${TodoAsyncFifoFunctionName}
+      RetentionInDays: 7      
 # Application Insights
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group

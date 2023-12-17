@@ -46,7 +46,7 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${StackPrefix}-DLQueue   
-  FIFOQueue:  
+  FifoQueue:  
     Type: AWS::SQS::Queue
     Properties:
       QueueName: !Ref FifoQueueName
@@ -80,3 +80,16 @@ Outputs:
   DeadLetterQueueARN: 
     Description: ARN of DeadLetter Queue
     Value: !GetAtt DeadLetterQueue.Arn    
+  FifoQueueName:
+    Description: FIFO Queue Name
+    Value: !Ref FifoQueueName
+    Export:
+      Name: !Sub ${StackPrefix}-SQSFifoQueueName
+  FifoQueueURL: 
+    Description: URL of Standard Source Queue
+    Value: !Ref FifoQueue
+  FifoQueueARN: 
+    Description: ARN of Standard Source Queue
+    Value: !GetAtt FifoQueue.Arn
+    Export:
+      Name: !Sub ${StackPrefix}-SQSFifoQueueArn    

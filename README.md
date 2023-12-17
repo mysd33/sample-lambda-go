@@ -284,13 +284,10 @@ curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v
     * TODO: Bffからのキューへのメッセージ送信ができるまでの暫定手順
 
 ```sh
-# キューのURL確認
-aws sqs list-queues
-# メッセージ送信
-aws sqs send-message --queue-url "（キューのURL）" --message-body "hello world"
-
-# BFFからの非同期実行依頼
+# BFFからの非同期実行依頼（標準キュー）
 curl -X POST https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo-async
+# BFFからの非同期実行依頼（FIFOキュー）
+curl -X POST https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo-async?fifo=true
 
 ```
 

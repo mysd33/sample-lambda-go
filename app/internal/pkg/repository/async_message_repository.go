@@ -18,16 +18,18 @@ type AsyncMessageRepository interface {
 	SendToFIFOQueue(msg string, msgGroupId string) error
 }
 
-func NewAsyncMessageRepository(sqsAccessor async.SQSAccessor, sqsFIFOAccessor async.SQSAccessor) AsyncMessageRepository {
+func NewAsyncMessageRepository(sqsAccessor async.SQSAccessor, stadardQueueName string, fifoQueueName string) AsyncMessageRepository {
 	return &defaultAsyncMessageRepository{
-		sqsAccessor:     sqsAccessor,
-		sqsFIFOAccessor: sqsFIFOAccessor,
+		sqsAccessor:        sqsAccessor,
+		starndardQueueName: stadardQueueName,
+		fifoQueueName:      fifoQueueName,
 	}
 }
 
 type defaultAsyncMessageRepository struct {
-	sqsAccessor     async.SQSAccessor
-	sqsFIFOAccessor async.SQSAccessor
+	sqsAccessor        async.SQSAccessor
+	starndardQueueName string
+	fifoQueueName      string
 }
 
 // Send implements AsyncMessageRepository.
@@ -37,7 +39,7 @@ func (r *defaultAsyncMessageRepository) Send(msg string) error {
 		MessageBody: aws.String(msg),
 	}
 	// TODO: Outputの扱い
-	_, err := r.sqsAccessor.SendMessageSdk(input)
+	_, err := r.sqsAccessor.SendMessageSdk(r.starndardQueueName, input)
 	if err != nil {
 		return errors.NewSystemError(err, message.E_EX_9001)
 	}
@@ -56,7 +58,7 @@ func (r *defaultAsyncMessageRepository) SendToFIFOQueue(msg string, msgGroupId s
 		MessageDeduplicationId: aws.String(msgDeduplicationId),
 	}
 	// TODO: Outputの扱い
-	_, err := r.sqsFIFOAccessor.SendMessageSdk(input)
+	_, err := r.sqsAccessor.SendMessageSdk(r.fifoQueueName, input)
 	if err != nil {
 		return errors.NewSystemError(err, message.E_EX_9001)
 	}

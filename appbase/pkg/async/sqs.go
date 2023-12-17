@@ -9,6 +9,7 @@ import (
 	"example.com/appbase/pkg/apcontext"
 	myConfig "example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/constant"
+	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
@@ -21,10 +22,10 @@ import (
 // SQSAccessor は、AWS SDKを使ったSQSアクセスの実装をラップしカプセル化するインタフェースです。
 type SQSAccessor interface {
 	// SendMessageSdk は、AWS SDKによるSendMessageをラップします。
-	SendMessageSdk(input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error)
+	SendMessageSdk(queueName string, input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error)
 }
 
-func NewSQSAccessor(myCfg myConfig.Config, queueName string) (SQSAccessor, error) {
+func NewSQSAccessor(log logging.Logger, myCfg myConfig.Config) (SQSAccessor, error) {
 	// TODO: カスタムHTTPClientの作成
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
@@ -38,29 +39,30 @@ func NewSQSAccessor(myCfg myConfig.Config, queueName string) (SQSAccessor, error
 			o.BaseEndpoint = aws.String(sqsEndpoint)
 		}
 	})
-	queueUrlOutput, err := sqlClient.GetQueueUrl(context.TODO(), &sqs.GetQueueUrlInput{
-		QueueName: aws.String(queueName),
-	})
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
 	return &defaultSQSAccessor{
 		config:    myCfg,
+		log:       log,
 		sqsClient: sqlClient,
-		queueUrl:  *queueUrlOutput.QueueUrl,
 	}, nil
 }
 
 type defaultSQSAccessor struct {
 	config    myConfig.Config
+	log       logging.Logger
 	sqsClient *sqs.Client
-	queueUrl  string
 }
 
 // SendMessageSdk implements SQSAccessor.
-func (sa *defaultSQSAccessor) SendMessageSdk(input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
-	// QueueのURLの追加
-	input.QueueUrl = &sa.queueUrl
+func (sa *defaultSQSAccessor) SendMessageSdk(queueName string, input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
+	// QueueのURLの取得・設定
+	queueUrlOutput, err := sa.sqsClient.GetQueueUrl(apcontext.Context, &sqs.GetQueueUrlInput{
+		QueueName: aws.String(queueName),
+	})
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	sa.log.Debug("QueueURL=%s", *queueUrlOutput.QueueUrl)
+	input.QueueUrl = queueUrlOutput.QueueUrl
 
 	// TODO: DBとのデータ整合性を担保
 	// TODO: 直接メッセージ送信せず、DynamoDBによるトランザクション管理（AppendTransactWriteItem）を実施し

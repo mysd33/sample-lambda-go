@@ -47,6 +47,7 @@ build: clean
 	xcopy /I /S configs .aws-sam\build\UsersFunction\configs	
 	xcopy /I /S configs .aws-sam\build\TodoFunction\configs	
 	xcopy /I /S configs .aws-sam\build\TodoAsyncFunction\configs
+	xcopy /I /S configs .aws-sam\build\TodoAsyncFifoFunction\configs
 # for linux
 # TODO	
 

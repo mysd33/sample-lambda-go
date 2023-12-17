@@ -5,15 +5,12 @@ import (
 	"app/internal/app/bff/service"
 	"app/internal/pkg/message"
 	"app/internal/pkg/repository"
-	"log"
 
 	errcontroller "app/internal/app/errortest/controller"
 	errservice "app/internal/app/errortest/service"
 
-	"example.com/appbase/pkg/async"
 	"example.com/appbase/pkg/component"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 )
 
 // 業務の初期化処理
@@ -24,27 +21,15 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	userRepository := repository.NewUserRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger(), ac.GetConfig())
 	todoRepository := repository.NewTodoRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger(), ac.GetConfig())
 	// Configからキュー名を取得する
-	queueName := ac.GetConfig().Get("SampleQueueName")
-	if queueName == "" {
-		queueName = "SampleQueue"
+	sampleQueueName := ac.GetConfig().Get("SampleQueueName")
+	if sampleQueueName == "" {
+		sampleQueueName = "SampleQueue"
 	}
-	// TODO: applicationContext経由でSQSAccessorのインスタンス取得するようにする
-	sampleQueueSQSAccessor, err := async.NewSQSAccessor(ac.GetConfig(), queueName)
-	if err != nil {
-		// 異常終了
-		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
+	sampleFifoQueueName := ac.GetConfig().Get("SampleFIFOQueueName")
+	if sampleFifoQueueName == "" {
+		sampleFifoQueueName = "SampleFIFOQueue.fifo"
 	}
-	fifoQueueName := ac.GetConfig().Get("SampleFIFOQueueName")
-	if fifoQueueName == "" {
-		fifoQueueName = "SampleFIFOQueue.fifo"
-	}
-	// TODO: applicationContext経由でSQSAccessorのインスタンス取得するようにする
-	sampleFIFOQueueSQSAccessor, err := async.NewSQSAccessor(ac.GetConfig(), fifoQueueName)
-	if err != nil {
-		// 異常終了
-		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
-	}
-	asyncMessageRepository := repository.NewAsyncMessageRepository(sampleQueueSQSAccessor, sampleFIFOQueueSQSAccessor)
+	asyncMessageRepository := repository.NewAsyncMessageRepository(ac.GetSQSAccessor(), sampleQueueName, sampleFifoQueueName)
 	// サービスの作成
 	bffService := service.New(ac.GetLogger(), ac.GetConfig(), userRepository, todoRepository, asyncMessageRepository)
 	// コントローラの作成
