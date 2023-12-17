@@ -18,12 +18,15 @@
 
 * X-Rayによる可視化
     * API Gateway、Lambdaにおいて、X-Rayによる可視化にも対応している
-    * RDB(RDS Aurora)、DynamoDBへのアクセス、REST APIの呼び出しのトレースにも対応
-
-![X-Rayの可視化の例](image/xray-aurora.png)
-![X-Rayの可視化の例2](image/xray-dynamodb.png)
-![X-Rayの可視化の例3](image/xray-bff.png)
-![X-Rayの可視化の例4](image/xray-sqs-delayed.png)
+    * RDB(RDS Aurora)、DynamoDBへのアクセス、REST API、SQSの呼び出しのトレースにも対応
+    * RDB(Aurora)アクセスの可視化の例
+        ![X-Rayの可視化の例](image/xray-aurora.png)
+    * DynamoDBアクセスの可視化の例
+        ![X-Rayの可視化の例2](image/xray-dynamodb.png)
+    * REST APIの呼び出しの可視化の例
+        ![X-Rayの可視化の例3](image/xray-bff.png)
+    * SQS呼び出しの可視化の例
+        ![X-Rayの可視化の例4](image/xray-sqs-delayed.png)
 
 * RDS Proxyの利用時の注意（ピン留め）
     * SQLを記載するにあたり、従来はプリペアドステートメントを使用するのが一般的であるが、RDS Proxyを使用する場合には、[ピン留め(Pinning)](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-managing.html#rds-proxy-pinning)という現象が発生してしまう。その間、コネクションが切断されるまで占有されつづけてしまい再利用できず、大量のリクエストを同時に処理する場合にはコネクション枯渇し性能面に影響が出る恐れがある。
