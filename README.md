@@ -16,6 +16,10 @@
 
 ![呼び出しイメージ](image/demo2.png)
 
+* AppConfigによる設定の外部化
+    * [AppConfig](https://docs.aws.amazon.com/ja_jp/appconfig/latest/userguide/what-is-appconfig.html)を使用し、APから外部管理された設定の取得、AppConfig機能を使ったデプロイに対応している。
+    * マネージドなLambdaレイヤにより提供される[AppConfig Agent Lambdaエクステンション](https://docs.aws.amazon.com/ja_jp/appconfig/latest/userguide/appconfig-integration-lambda-extensions.html)を使って、LambdaアプリケーションからAppConfigの設定をキャッシュするととともに、アプリケーションの再デプロイ不要で設定変更を反映することができる。
+
 * X-Rayによる可視化
     * API Gateway、Lambdaにおいて、X-Rayによる可視化にも対応している
     * RDB(RDS Aurora)、DynamoDBへのアクセス、REST API、SQSの呼び出しのトレースにも対応
@@ -40,10 +44,6 @@
 
     * なお、本サンプルAPのようにX-Ray SDKでSQLトレースする場合、[xray.SQLContext関数を利用する](https://docs.aws.amazon.com/ja_jp/xray/latest/devguide/xray-sdk-go-sqlclients.html)際に確立するDBコネクションでピン留めが発生する。
         * xray.SQLContext関数を利用する際に、内部で発行されるSQL（"SELECT version(), current_user, current_database()"）がプリペアドステートメントを使用しているためピン留めが発生する。ピン留めの発生は回避できないとのこと。ただ、CloudWatchのRDS Proxyのログを見ても分かるが、直ちにコネクション切断されるため、ピン留めによる影響は小さいと想定される。（AWSサポート回答より）
-
-* AppConfigによる設定の外部化
-    * [AppConfig](https://docs.aws.amazon.com/ja_jp/appconfig/latest/userguide/what-is-appconfig.html)を使用し、APから外部管理された設定の取得、AppConfig機能を使ったデプロイに対応している。
-    * マネージドなLambdaレイヤにより提供される[AppConfig Agent Lambdaエクステンション](https://docs.aws.amazon.com/ja_jp/appconfig/latest/userguide/appconfig-integration-lambda-extensions.html)を使って、LambdaアプリケーションからAppConfigの設定をキャッシュするととともに、アプリケーションの再デプロイ不要で設定変更を反映することができる。
 
 ## 事前準備
 * ローカル環境に、AWS CLI、AWS SAM CLI、Docker環境が必要
@@ -174,9 +174,11 @@ cd ..
 
 # ビルド
 sam build
-xcopy /I /S configs .aws-sam\build\UsersFunction\configs	
-xcopy /I /S configs .aws-sam\build\TodoFunction\configs
 xcopy /I /S configs .aws-sam\build\BffFunction\configs
+xcopy /I /S configs .aws-sam\build\UsersFunction\configs	
+xcopy /I /S configs .aws-sam\build\TodoFunction\configs	
+xcopy /I /S configs .aws-sam\build\TodoAsyncFunction\configs
+xcopy /I /S configs .aws-sam\build\TodoAsyncFifoFunction\configs
 
 # Windowsでもmakeをインストールすればmakeだけでいけます
 make
@@ -188,9 +190,11 @@ make
 rmdir /s /q .aws-sam
 # ビルド
 sam build
-xcopy /I /S configs .aws-sam\build\UsersFunction\configs	
-xcopy /I /S configs .aws-sam\build\TodoFunction\configs
 xcopy /I /S configs .aws-sam\build\BffFunction\configs
+xcopy /I /S configs .aws-sam\build\UsersFunction\configs	
+xcopy /I /S configs .aws-sam\build\TodoFunction\configs	
+xcopy /I /S configs .aws-sam\build\TodoAsyncFunction\configs
+xcopy /I /S configs .aws-sam\build\TodoAsyncFifoFunction\configs
 
 # Windowsでもmakeをインストールすればmakeだけでいけます
 make
