@@ -473,9 +473,9 @@ curl -X POST http://127.0.0.1:3000/bff-api/v1/todo-async
 # Elastic MQから実行依頼したメッセージを取得し確認
 aws sqs receive-message --queue-url http://localhost:9324/000000000000/SampleQueue --endpoint-url http://localhost:9324
 aws sqs delete-message --queue-url http://localhost:9324/000000000000/SampleQueue --endpoint-url http://localhost:9324 --receipt-handle (ReceiptHandleの値)
-# FIFOキューの場合 TODO: 作成中
+# FIFOキューの場合
 curl -X POST http://127.0.0.1:3000/bff-api/v1/todo-async?fifo=true
-# Elastic MQから実行依頼したメッセージを取得し確認 TODO: 作成中
+# Elastic MQから実行依頼したメッセージを取得し確認
 aws sqs receive-message --queue-url http://localhost:9324/000000000000/SampleFIFOQueue.fifo --endpoint-url http://localhost:9324
 aws sqs delete-message --queue-url http://localhost:9324/000000000000/SampleFIFOQueue.fifo --endpoint-url http://localhost:9324 --receipt-handle (ReceiptHandleの値)
 
