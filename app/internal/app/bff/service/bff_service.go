@@ -29,6 +29,7 @@ func New(log logging.Logger,
 	config config.Config,
 	userRepository repository.UserRepository,
 	todoRepository repository.TodoRepository,
+	dummyRepository repository.DummyRepository,
 	asyncMessageRepository repository.AsyncMessageRepository,
 ) BffService {
 	return &bffServiceImpl{
@@ -36,6 +37,7 @@ func New(log logging.Logger,
 		config:                 config,
 		userRepository:         userRepository,
 		todoRepository:         todoRepository,
+		dummyRepository:        dummyRepository,
 		asyncMessageRepository: asyncMessageRepository,
 	}
 }
@@ -46,6 +48,7 @@ type bffServiceImpl struct {
 	config                 config.Config
 	userRepository         repository.UserRepository
 	todoRepository         repository.TodoRepository
+	dummyRepository        repository.DummyRepository
 	asyncMessageRepository repository.AsyncMessageRepository
 }
 
@@ -80,6 +83,9 @@ func (bs *bffServiceImpl) FindTodo(userId string, todoId string) (*entity.User, 
 
 // RegisterTodosAsync implements TodoService.
 func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string) error {
+	// ダミーのDB登録処理
+	bs.dummyRepository.CreateOneTx(&entity.Dummy{Value: "dummy"})
+
 	//TODO: todoTitlesを受け渡す処理
 	bs.asyncMessageRepository.Send("dummy")
 	return nil
@@ -87,6 +93,9 @@ func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string) error {
 
 // RegisterTodosAsyncByFIFO implements BffService.
 func (bs *bffServiceImpl) RegisterTodosAsyncByFIFO(todoTitles []string) error {
+	// ダミーのDB登録処理
+	bs.dummyRepository.CreateOneTx(&entity.Dummy{Value: "dummy"})
+
 	// メッセージグループID
 	msgGroupId := id.GenerateId()
 	//TODO: todoTitlesを受け渡す処理
