@@ -5,6 +5,7 @@ import (
 	"app/internal/app/bff/service"
 	"app/internal/pkg/entity"
 
+	"example.com/appbase/pkg/domain"
 	"example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
@@ -112,14 +113,18 @@ func (c *bffControllerImpl) RegisterTodosAsync(ctx *gin.Context) (any, error) {
 	// クエリパラメータfifoの取得
 	fifo := ctx.Query("fifo")
 	c.log.Debug("fifo=%s", fifo)
-	var err error
+	var serviceFunc domain.ServiceFunc
 	if fifo != "" {
-		// TODO: トランザクション管理して実行
-		err = c.service.RegisterTodosAsyncByFIFO(todoTitles)
+		serviceFunc = func() (any, error) {
+			return nil, c.service.RegisterTodosAsync(todoTitles)
+		}
 	} else {
-		// TODO: トランザクション管理して実行
-		err = c.service.RegisterTodosAsync(todoTitles)
+		serviceFunc = func() (any, error) {
+			return nil, c.service.RegisterTodosAsyncByFIFO(todoTitles)
+		}
 	}
+	// トランザクション管理してサービス実行
+	_, err := c.transactionManager.ExecuteTransaction(serviceFunc)
 	if err != nil {
 		return nil, err
 	}
