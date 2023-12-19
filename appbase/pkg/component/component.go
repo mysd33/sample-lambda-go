@@ -41,8 +41,8 @@ func NewApplicationContext() ApplicationContext {
 	messageSource := createMessageSource()
 	apiResponseFormatter := createApiResponseFormatter(messageSource)
 	logger := createLogger(messageSource, config)
-	sqsAccessor := createSQSAccessor(logger, config)
-	dynamodbAccessor := createDynamoDBAccessor(logger, config)
+	sqsAccessor := createTransactionalSQSAccessor(logger, config)
+	dynamodbAccessor := createTransactionalDynamoDBAccessor(logger, config)
 	dynamoDBTransactionManager := createDynamoDBTransactionManager(logger, dynamodbAccessor, sqsAccessor)
 	rdbAccessor := createRDBAccessor()
 	rdbTransactionManager := rdb.NewTransactionManager(logger, config, rdbAccessor)
@@ -176,8 +176,17 @@ func createConfig() config.Config {
 	return cfg
 }
 
-func createDynamoDBAccessor(logger logging.Logger, config config.Config) transaction.TransactionalDynamoDBAccessor {
-	accessor, err := transaction.NewDynamoDBAccessor(logger, config)
+func createTransactionalDynamoDBAccessor(logger logging.Logger, config config.Config) transaction.TransactionalDynamoDBAccessor {
+	accessor, err := transaction.NewTransactionalDynamoDBAccessor(logger, config)
+	if err != nil {
+		// 異常終了
+		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
+	}
+	return accessor
+}
+
+func createTransactionalSQSAccessor(logger logging.Logger, config config.Config) transaction.TransactionalSQSAccessor {
+	accessor, err := transaction.NewTransactionalSQSAccessor(logger, config)
 	if err != nil {
 		// 異常終了
 		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
@@ -189,15 +198,6 @@ func createDynamoDBTransactionManager(logger logging.Logger,
 	dynamodbAccessor transaction.TransactionalDynamoDBAccessor,
 	sqsAccessor transaction.TransactionalSQSAccessor) transaction.TransactionManager {
 	return transaction.NewTransactionManager(logger, dynamodbAccessor, sqsAccessor)
-}
-
-func createSQSAccessor(logger logging.Logger, config config.Config) transaction.TransactionalSQSAccessor {
-	accessor, err := transaction.NewSQSAccessor(logger, config)
-	if err != nil {
-		// 異常終了
-		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
-	}
-	return accessor
 }
 
 func createRDBAccessor() rdb.RDBAccessor {

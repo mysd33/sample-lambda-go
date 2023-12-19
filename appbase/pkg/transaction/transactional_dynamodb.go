@@ -14,25 +14,23 @@ import (
 	"github.com/cockroachdb/errors"
 )
 
-// TODO: Mock化しやすいよう全て公開メソッド化する
-
 // TransactionalDynamoDBAccessorは、トランザクション管理可能なDynamoDBアクセス用インタフェースです。
 type TransactionalDynamoDBAccessor interface {
 	myDynamoDB.DynamoDBAccessor
-	// startTransaction は、トランザクションを開始します。
-	startTransaction(transaction transaction)
+	// StartTransaction は、トランザクションを開始します。
+	StartTransaction(transaction Transaction)
 	// AppendTransactWriteItem は、トランザクション書き込みしたい場合に対象のTransactWriteItemを追加します。
 	// なお、TransactWriteItemsの実行は、TransactionManagerのExecuteTransaction関数で実行されるdomain.ServiceFunc関数が終了する際にtransactionWriteItemsSDKを実施します。
 	AppendTransactWriteItem(item *types.TransactWriteItem)
-	// transactWriteItemsSDK は、AWS SDKによるTransactWriteItemsをラップします。
+	// TransactWriteItemsSDK は、AWS SDKによるTransactWriteItemsをラップします。
 	// なお、TransactWriteItemsの実行は、TransactionManagerが実行するため非公開にしています。
-	transactWriteItemsSDK(items []types.TransactWriteItem) (*dynamodb.TransactWriteItemsOutput, error)
-	// endTransactionは、トランザクションを終了します。
-	endTransaction()
+	TransactWriteItemsSDK(items []types.TransactWriteItem) (*dynamodb.TransactWriteItemsOutput, error)
+	// EndTransactionは、トランザクションを終了します。
+	EndTransaction()
 }
 
-// NewDynamoDBAccessor は、TransactionalDynamoDBAccessorを作成します。
-func NewDynamoDBAccessor(log logging.Logger, myCfg myConfig.Config) (TransactionalDynamoDBAccessor, error) {
+// NewTransactionalDynamoDBAccessor は、TransactionalDynamoDBAccessorを作成します。
+func NewTransactionalDynamoDBAccessor(log logging.Logger, myCfg myConfig.Config) (TransactionalDynamoDBAccessor, error) {
 	dynamodbClient, err := myDynamoDB.CreateDynamoDBClient(myCfg)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -43,7 +41,7 @@ func NewDynamoDBAccessor(log logging.Logger, myCfg myConfig.Config) (Transaction
 type defaultDynamoDBAccessor struct {
 	log            logging.Logger
 	dynamodbClient *dynamodb.Client
-	transaction    transaction
+	transaction    Transaction
 }
 
 // GetItemSdk implements DynamoDBAccessor.
@@ -170,8 +168,8 @@ func (d *defaultDynamoDBAccessor) BatchWriteItemSdk(input *dynamodb.BatchWriteIt
 	return output, nil
 }
 
-// startTransaction implements DynamoDBAccessor.
-func (d *defaultDynamoDBAccessor) startTransaction(transaction transaction) {
+// StartTransaction implements DynamoDBAccessor.
+func (d *defaultDynamoDBAccessor) StartTransaction(transaction Transaction) {
 	// TODO: 本当はここがスレッド毎にトランザクション管理できるとgoroutineセーフにできるが、現状難しい
 	d.transaction = transaction
 }
@@ -180,11 +178,11 @@ func (d *defaultDynamoDBAccessor) startTransaction(transaction transaction) {
 func (d *defaultDynamoDBAccessor) AppendTransactWriteItem(item *types.TransactWriteItem) {
 	// TODO: 本当はここがスレッド毎にトランザクション管理できるとgoroutineセーフにできるが、現状難しい
 	d.log.Debug("AppendTransactWriteItem")
-	d.transaction.appendTransactWriteItem(item)
+	d.transaction.AppendTransactWriteItem(item)
 }
 
-// transactWriteItemsSDK implements DynamoDBAccessor.
-func (d *defaultDynamoDBAccessor) transactWriteItemsSDK(items []types.TransactWriteItem) (*dynamodb.TransactWriteItemsOutput, error) {
+// TransactWriteItemsSDK implements DynamoDBAccessor.
+func (d *defaultDynamoDBAccessor) TransactWriteItemsSDK(items []types.TransactWriteItem) (*dynamodb.TransactWriteItemsOutput, error) {
 	input := &dynamodb.TransactWriteItemsInput{TransactItems: items}
 	if !env.IsStragingOrProd() {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
@@ -199,7 +197,7 @@ func (d *defaultDynamoDBAccessor) transactWriteItemsSDK(items []types.TransactWr
 	return output, nil
 }
 
-// endTransaction implements DynamoDBAccessor.
-func (d *defaultDynamoDBAccessor) endTransaction() {
+// EndTransaction implements DynamoDBAccessor.
+func (d *defaultDynamoDBAccessor) EndTransaction() {
 	d.transaction = nil
 }

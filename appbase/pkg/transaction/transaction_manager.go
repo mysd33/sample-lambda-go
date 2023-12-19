@@ -38,35 +38,33 @@ func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.Servi
 	// 新しいトランザクションを作成
 	transction := newTrasaction(tm.log)
 	// トランザクションを開始
-	transction.start(tm.dynamodbAccessor, tm.sqsAccessor)
+	transction.Start(tm.dynamodbAccessor, tm.sqsAccessor)
 	// サービスの実行
 	result, err := serviceFunc()
 	// DynamoDBのトランザクションを終了
-	_, err = transction.end(err)
+	_, err = transction.End(err)
 	if err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-// TODO: Mock化しやすいよう全て公開インタフェース化する
-
-// transactionは トランザクションを表すインタフェースです
-type transaction interface {
-	// start は、トランザクションを開始します。
-	start(dynamodbAccessor TransactionalDynamoDBAccessor, sqsAccessor TransactionalSQSAccessor)
-	// appendTransactWriteItemは、DBへトランザクション書き込みしたい場合に対象のTransactWriteItemを追加します。
-	appendTransactWriteItem(item *types.TransactWriteItem)
-	// appendTransactMessageは、SQSへトランザクション管理してメッセージ送信したい場合に対象のMessageを追加します。
-	appendTransactMessage(message *Message)
-	// checkTransactWriteItems は、TransactWriteItemが存在するかを確認します。
-	checkTransactWriteItems() bool
-	// end は、エラーがなければ、AWS SDKによるTransactionWriteItemsを実行しトランザクション実行し、エラーがある場合には実行しません。
-	end(err error) (*dynamodb.TransactWriteItemsOutput, error)
+// Transactionは トランザクションを表すインタフェースです
+type Transaction interface {
+	// Start は、トランザクションを開始します。
+	Start(dynamodbAccessor TransactionalDynamoDBAccessor, sqsAccessor TransactionalSQSAccessor)
+	// AppendTransactWriteItemは、DBへトランザクション書き込みしたい場合に対象のTransactWriteItemを追加します。
+	AppendTransactWriteItem(item *types.TransactWriteItem)
+	// AppendTransactMessageは、SQSへトランザクション管理してメッセージ送信したい場合に対象のMessageを追加します。
+	AppendTransactMessage(message *Message)
+	// CheckTransactWriteItems は、TransactWriteItemが存在するかを確認します。
+	CheckTransactWriteItems() bool
+	// End は、エラーがなければ、AWS SDKによるTransactionWriteItemsを実行しトランザクション実行し、エラーがある場合には実行しません。
+	End(err error) (*dynamodb.TransactWriteItemsOutput, error)
 }
 
 // newTrasactionは 新しいTransactionを作成します。
-func newTrasaction(log logging.Logger) transaction {
+func newTrasaction(log logging.Logger) Transaction {
 	return &defaultTransaction{log: log}
 }
 
@@ -84,49 +82,49 @@ type defaultTransaction struct {
 	// transactGetItems []types.TransactGetItem
 }
 
-// start implements Transaction.
-func (t *defaultTransaction) start(dynamodbAccessor TransactionalDynamoDBAccessor, sqsAccessor TransactionalSQSAccessor) {
+// Start implements Transaction.
+func (t *defaultTransaction) Start(dynamodbAccessor TransactionalDynamoDBAccessor, sqsAccessor TransactionalSQSAccessor) {
 	t.log.Debug("トランザクション開始")
 	t.dynamodbAccessor = dynamodbAccessor
 	t.sqsAccessor = sqsAccessor
-	dynamodbAccessor.startTransaction(t)
-	sqsAccessor.startTransaction(t)
+	dynamodbAccessor.StartTransaction(t)
+	sqsAccessor.StartTransaction(t)
 }
 
-// appendTransactWriteItem implements Transaction.
-func (t *defaultTransaction) appendTransactWriteItem(item *types.TransactWriteItem) {
+// AppendTransactWriteItem implements Transaction.
+func (t *defaultTransaction) AppendTransactWriteItem(item *types.TransactWriteItem) {
 	t.transactWriteItems = append(t.transactWriteItems, *item)
 }
 
-// appendTransactMessage implements transaction.
-func (t *defaultTransaction) appendTransactMessage(message *Message) {
+// AppendTransactMessage implements transaction.
+func (t *defaultTransaction) AppendTransactMessage(message *Message) {
 	t.messages = append(t.messages, message)
 }
 
-// checkTransactWriteItems implements Transaction.
-func (t *defaultTransaction) checkTransactWriteItems() bool {
+// CheckTransactWriteItems implements Transaction.
+func (t *defaultTransaction) CheckTransactWriteItems() bool {
 	return len(t.transactWriteItems) > 0
 }
 
 // endTransaction implements Transaction.
-func (t *defaultTransaction) end(err error) (*dynamodb.TransactWriteItemsOutput, error) {
+func (t *defaultTransaction) End(err error) (*dynamodb.TransactWriteItemsOutput, error) {
 	if t.sqsAccessor != nil {
-		err := t.sqsAccessor.transactSendMessages(t.messages)
+		err := t.sqsAccessor.TransactSendMessages(t.messages)
 		if err != nil {
 			t.log.Debug("SQSのメッセージ送信失敗でロールバック")
 			return nil, errors.WithStack(err)
 		}
 	}
 
-	if !t.checkTransactWriteItems() {
+	if !t.CheckTransactWriteItems() {
 		t.log.Debug("トランザクション処理なし")
 		return nil, err
 	}
 	// 処理結果がどんな場合でもDynamoDBAccessorとSQSAccessorのトランザクションを開放
 	defer func() {
-		t.dynamodbAccessor.endTransaction()
+		t.dynamodbAccessor.EndTransaction()
 		if t.sqsAccessor != nil {
-			t.sqsAccessor.endTransaction()
+			t.sqsAccessor.EndTransaction()
 		}
 	}()
 
@@ -136,7 +134,7 @@ func (t *defaultTransaction) end(err error) (*dynamodb.TransactWriteItemsOutput,
 		return nil, err
 	}
 	// DynamoDBトランザクション実行
-	output, err := t.dynamodbAccessor.transactWriteItemsSDK(t.transactWriteItems)
+	output, err := t.dynamodbAccessor.TransactWriteItemsSDK(t.transactWriteItems)
 	if err != nil {
 		t.log.Debug("トランザクション実行失敗でロールバック")
 		return nil, errors.WithStack(err)
