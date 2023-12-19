@@ -3,6 +3,7 @@ package repository
 
 import (
 	"app/internal/pkg/message"
+	"encoding/json"
 
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/id"
@@ -12,10 +13,9 @@ import (
 )
 
 type AsyncMessageRepository interface {
-	// TODO: シグニチャは今後構造体に変更
 	// メッセージを送信する
-	Send(msg string) error
-	SendToFIFOQueue(msg string, msgGroupId string) error
+	Send(msg any) error
+	SendToFIFOQueue(msg any, msgGroupId string) error
 }
 
 func NewAsyncMessageRepository(sqsAccessor transaction.TransactionalSQSAccessor, stadardQueueName string, fifoQueueName string) AsyncMessageRepository {
@@ -33,13 +33,17 @@ type defaultAsyncMessageRepository struct {
 }
 
 // Send implements AsyncMessageRepository.
-func (r *defaultAsyncMessageRepository) Send(msg string) error {
-	// TODO: 構造体で受け取ってjson化してから送信する処理に変更
+func (r *defaultAsyncMessageRepository) Send(msg any) error {
+	// 構造体をjson文字列としてメッセージ送信
+	byteMessage, err := json.Marshal(msg)
+	if err != nil {
+		return errors.NewSystemError(err, message.E_EX_9001)
+	}
 	input := &sqs.SendMessageInput{
-		MessageBody: aws.String(msg),
+		MessageBody: aws.String(string(byteMessage)),
 	}
 	// トランザクション管理して非同期実行依頼メッセージを追加
-	err := r.sqsAccessor.AppendTransactMessage(r.starndardQueueName, input)
+	err = r.sqsAccessor.AppendTransactMessage(r.starndardQueueName, input)
 	if err != nil {
 		return errors.NewSystemError(err, message.E_EX_9001)
 	}
@@ -48,17 +52,21 @@ func (r *defaultAsyncMessageRepository) Send(msg string) error {
 }
 
 // SendToFIFOQueue implements AsyncMessageRepository.
-func (r *defaultAsyncMessageRepository) SendToFIFOQueue(msg string, msgGroupId string) error {
-	// TODO: 構造体で受け取ってjson化してから送信する処理に変更
+func (r *defaultAsyncMessageRepository) SendToFIFOQueue(msg any, msgGroupId string) error {
+	// 構造体をjson文字列としてメッセージ送信
+	byteMessage, err := json.Marshal(msg)
+	if err != nil {
+		return errors.NewSystemError(err, message.E_EX_9001)
+	}
 	// メッセージ重複排除IDの作成
 	msgDeduplicationId := id.GenerateId()
 	input := &sqs.SendMessageInput{
-		MessageBody:            aws.String(msg),
+		MessageBody:            aws.String(string(byteMessage)),
 		MessageGroupId:         aws.String(msgGroupId),
 		MessageDeduplicationId: aws.String(msgDeduplicationId),
 	}
 	// トランザクション管理して非同期実行依頼メッセージを追加
-	err := r.sqsAccessor.AppendTransactMessage(r.fifoQueueName, input)
+	err = r.sqsAccessor.AppendTransactMessage(r.fifoQueueName, input)
 	if err != nil {
 		return errors.NewSystemError(err, message.E_EX_9001)
 	}

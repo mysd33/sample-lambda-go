@@ -84,24 +84,25 @@ func (bs *bffServiceImpl) FindTodo(userId string, todoId string) (*entity.User, 
 // RegisterTodosAsync implements TodoService.
 func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string) error {
 	bs.log.Debug("RegisterTodosAsync")
-	// ダミーのDB登録処理
+	// DBトランザクションを試すためのダミーのDB登録処理
 	bs.dummyRepository.CreateOneTx(&entity.Dummy{Value: "dummy"})
-
-	//TODO: todoTitlesを受け渡す処理
-	bs.asyncMessageRepository.Send("dummy")
+	// TODOタイトルのリストの登録を非同期処理実行依頼
+	asyncMessage := &entity.AsyncMessage{TodoTitles: todoTitles}
+	bs.asyncMessageRepository.Send(asyncMessage)
 	return nil
 }
 
 // RegisterTodosAsyncByFIFO implements BffService.
 func (bs *bffServiceImpl) RegisterTodosAsyncByFIFO(todoTitles []string) error {
 	bs.log.Debug("RegisterTodosAsyncByFIFO")
-	// ダミーのDB登録処理
+	// DBトランザクションを試すためのダミーのDB登録処理
 	bs.dummyRepository.CreateOneTx(&entity.Dummy{Value: "dummy2"})
 
+	// TODOタイトルのリストの登録を非同期処理実行依頼
+	asyncMessage := &entity.AsyncMessage{TodoTitles: todoTitles}
 	// メッセージグループID
 	msgGroupId := id.GenerateId()
-	//TODO: todoTitlesを受け渡す処理
-	bs.asyncMessageRepository.SendToFIFOQueue("dummy2", msgGroupId)
+	bs.asyncMessageRepository.SendToFIFOQueue(asyncMessage, msgGroupId)
 	return nil
 
 }
