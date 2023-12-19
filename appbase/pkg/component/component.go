@@ -7,14 +7,13 @@ import (
 	"log"
 
 	"example.com/appbase/pkg/api"
-	"example.com/appbase/pkg/async"
 	"example.com/appbase/pkg/config"
-	"example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/handler"
 	"example.com/appbase/pkg/httpclient"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
 	"example.com/appbase/pkg/rdb"
+	"example.com/appbase/pkg/transaction"
 	"example.com/appbase/pkg/validator"
 	"github.com/cockroachdb/errors"
 )
@@ -24,9 +23,9 @@ type ApplicationContext interface {
 	GetMessageSource() message.MessageSource
 	GetLogger() logging.Logger
 	GetConfig() config.Config
-	GetDynamoDBAccessor() dynamodb.DynamoDBAccessor
-	GetDynamoDBTransactionManager() dynamodb.TransactionManager
-	GetSQSAccessor() async.SQSAccessor
+	GetDynamoDBAccessor() transaction.TransactionalDynamoDBAccessor
+	GetDynamoDBTransactionManager() transaction.TransactionManager
+	GetSQSAccessor() transaction.TransactionalSQSAccessor
 	GetRDBAccessor() rdb.RDBAccessor
 	GetRDBTransactionManager() rdb.TransactionManager
 	GetHttpClient() httpclient.HttpClient
@@ -42,9 +41,9 @@ func NewApplicationContext() ApplicationContext {
 	messageSource := createMessageSource()
 	apiResponseFormatter := createApiResponseFormatter(messageSource)
 	logger := createLogger(messageSource, config)
-	dynamodbAccessor := createDynamoDBAccessor(logger, config)
-	dynamoDBTransactionManager := createDynamoDBTransactionManager(logger, dynamodbAccessor)
 	sqsAccessor := createSQSAccessor(logger, config)
+	dynamodbAccessor := createDynamoDBAccessor(logger, config)
+	dynamoDBTransactionManager := createDynamoDBTransactionManager(logger, dynamodbAccessor, sqsAccessor)
 	rdbAccessor := createRDBAccessor()
 	rdbTransactionManager := rdb.NewTransactionManager(logger, config, rdbAccessor)
 	httpclient := createHttpClient(logger)
@@ -75,9 +74,9 @@ type defaultApplicationContext struct {
 	config                     config.Config
 	messageSource              message.MessageSource
 	logger                     logging.Logger
-	dynamoDBAccessor           dynamodb.DynamoDBAccessor
-	dynamoDBTransactionManager dynamodb.TransactionManager
-	sqsAccessor                async.SQSAccessor
+	dynamoDBAccessor           transaction.TransactionalDynamoDBAccessor
+	dynamoDBTransactionManager transaction.TransactionManager
+	sqsAccessor                transaction.TransactionalSQSAccessor
 	rdbAccessor                rdb.RDBAccessor
 	rdbTransactionManager      rdb.TransactionManager
 	httpClient                 httpclient.HttpClient
@@ -92,12 +91,12 @@ func (ac *defaultApplicationContext) GetConfig() config.Config {
 }
 
 // GetDynamoDBAccessor implements ApplicationContext.
-func (ac *defaultApplicationContext) GetDynamoDBAccessor() dynamodb.DynamoDBAccessor {
+func (ac *defaultApplicationContext) GetDynamoDBAccessor() transaction.TransactionalDynamoDBAccessor {
 	return ac.dynamoDBAccessor
 }
 
 // GetDynamoDBTransactionManager implements ApplicationContext.
-func (ac *defaultApplicationContext) GetDynamoDBTransactionManager() dynamodb.TransactionManager {
+func (ac *defaultApplicationContext) GetDynamoDBTransactionManager() transaction.TransactionManager {
 	return ac.dynamoDBTransactionManager
 }
 
@@ -112,7 +111,7 @@ func (ac *defaultApplicationContext) GetRDBTransactionManager() rdb.TransactionM
 }
 
 // GetSQSAccessor implements ApplicationContext.
-func (ac *defaultApplicationContext) GetSQSAccessor() async.SQSAccessor {
+func (ac *defaultApplicationContext) GetSQSAccessor() transaction.TransactionalSQSAccessor {
 	return ac.sqsAccessor
 }
 
@@ -177,8 +176,8 @@ func createConfig() config.Config {
 	return cfg
 }
 
-func createDynamoDBAccessor(logger logging.Logger, config config.Config) dynamodb.DynamoDBAccessor {
-	accessor, err := dynamodb.NewDynamoDBAccessor(logger, config)
+func createDynamoDBAccessor(logger logging.Logger, config config.Config) transaction.TransactionalDynamoDBAccessor {
+	accessor, err := transaction.NewDynamoDBAccessor(logger, config)
 	if err != nil {
 		// 異常終了
 		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
@@ -186,12 +185,14 @@ func createDynamoDBAccessor(logger logging.Logger, config config.Config) dynamod
 	return accessor
 }
 
-func createDynamoDBTransactionManager(logger logging.Logger, dynamodbAccessor dynamodb.DynamoDBAccessor) dynamodb.TransactionManager {
-	return dynamodb.NewTransactionManager(logger, dynamodbAccessor)
+func createDynamoDBTransactionManager(logger logging.Logger,
+	dynamodbAccessor transaction.TransactionalDynamoDBAccessor,
+	sqsAccessor transaction.TransactionalSQSAccessor) transaction.TransactionManager {
+	return transaction.NewTransactionManager(logger, dynamodbAccessor, sqsAccessor)
 }
 
-func createSQSAccessor(logger logging.Logger, config config.Config) async.SQSAccessor {
-	accessor, err := async.NewSQSAccessor(logger, config)
+func createSQSAccessor(logger logging.Logger, config config.Config) transaction.TransactionalSQSAccessor {
+	accessor, err := transaction.NewSQSAccessor(logger, config)
 	if err != nil {
 		// 異常終了
 		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))

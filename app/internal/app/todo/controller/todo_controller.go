@@ -5,9 +5,9 @@ import (
 	"app/internal/app/todo/service"
 
 	"example.com/appbase/pkg/domain"
-	"example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
+	"example.com/appbase/pkg/transaction"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,7 +27,7 @@ type TodoController interface {
 
 // New は、TodoControllerを作成します。
 func New(log logging.Logger,
-	transactionManager dynamodb.TransactionManager,
+	transactionManager transaction.TransactionManager,
 	service service.TodoService,
 ) TodoController {
 	return &todoControllerImpl{log: log,
@@ -39,7 +39,7 @@ func New(log logging.Logger,
 // todoControllerImpl は、TodoControllerを実装する構造体です。
 type todoControllerImpl struct {
 	log                logging.Logger
-	transactionManager dynamodb.TransactionManager
+	transactionManager transaction.TransactionManager
 	service            service.TodoService
 }
 

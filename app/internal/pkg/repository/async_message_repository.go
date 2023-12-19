@@ -4,9 +4,9 @@ package repository
 import (
 	"app/internal/pkg/message"
 
-	"example.com/appbase/pkg/async"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/id"
+	"example.com/appbase/pkg/transaction"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 )
@@ -18,7 +18,7 @@ type AsyncMessageRepository interface {
 	SendToFIFOQueue(msg string, msgGroupId string) error
 }
 
-func NewAsyncMessageRepository(sqsAccessor async.SQSAccessor, stadardQueueName string, fifoQueueName string) AsyncMessageRepository {
+func NewAsyncMessageRepository(sqsAccessor transaction.TransactionalSQSAccessor, stadardQueueName string, fifoQueueName string) AsyncMessageRepository {
 	return &defaultAsyncMessageRepository{
 		sqsAccessor:        sqsAccessor,
 		starndardQueueName: stadardQueueName,
@@ -27,7 +27,7 @@ func NewAsyncMessageRepository(sqsAccessor async.SQSAccessor, stadardQueueName s
 }
 
 type defaultAsyncMessageRepository struct {
-	sqsAccessor        async.SQSAccessor
+	sqsAccessor        transaction.TransactionalSQSAccessor
 	starndardQueueName string
 	fifoQueueName      string
 }
@@ -38,8 +38,8 @@ func (r *defaultAsyncMessageRepository) Send(msg string) error {
 	input := &sqs.SendMessageInput{
 		MessageBody: aws.String(msg),
 	}
-	// TODO: Outputの扱い
-	_, err := r.sqsAccessor.SendMessageSdk(r.starndardQueueName, input)
+	// トランザクション管理して非同期実行依頼メッセージを追加
+	err := r.sqsAccessor.AppendTransactMessage(r.starndardQueueName, input)
 	if err != nil {
 		return errors.NewSystemError(err, message.E_EX_9001)
 	}
@@ -57,8 +57,8 @@ func (r *defaultAsyncMessageRepository) SendToFIFOQueue(msg string, msgGroupId s
 		MessageGroupId:         aws.String(msgGroupId),
 		MessageDeduplicationId: aws.String(msgDeduplicationId),
 	}
-	// TODO: Outputの扱い
-	_, err := r.sqsAccessor.SendMessageSdk(r.fifoQueueName, input)
+	// トランザクション管理して非同期実行依頼メッセージを追加
+	err := r.sqsAccessor.AppendTransactMessage(r.fifoQueueName, input)
 	if err != nil {
 		return errors.NewSystemError(err, message.E_EX_9001)
 	}

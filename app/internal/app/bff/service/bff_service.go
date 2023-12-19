@@ -83,6 +83,7 @@ func (bs *bffServiceImpl) FindTodo(userId string, todoId string) (*entity.User, 
 
 // RegisterTodosAsync implements TodoService.
 func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string) error {
+	bs.log.Debug("RegisterTodosAsync")
 	// ダミーのDB登録処理
 	bs.dummyRepository.CreateOneTx(&entity.Dummy{Value: "dummy"})
 
@@ -93,8 +94,9 @@ func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string) error {
 
 // RegisterTodosAsyncByFIFO implements BffService.
 func (bs *bffServiceImpl) RegisterTodosAsyncByFIFO(todoTitles []string) error {
+	bs.log.Debug("RegisterTodosAsyncByFIFO")
 	// ダミーのDB登録処理
-	bs.dummyRepository.CreateOneTx(&entity.Dummy{Value: "dummy"})
+	bs.dummyRepository.CreateOneTx(&entity.Dummy{Value: "dummy2"})
 
 	// メッセージグループID
 	msgGroupId := id.GenerateId()

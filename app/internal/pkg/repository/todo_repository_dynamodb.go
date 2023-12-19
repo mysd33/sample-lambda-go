@@ -6,10 +6,10 @@ import (
 	"app/internal/pkg/message"
 
 	"example.com/appbase/pkg/config"
-	mydynamodb "example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/id"
 	"example.com/appbase/pkg/logging"
+	"example.com/appbase/pkg/transaction"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -21,7 +21,7 @@ const (
 )
 
 // NewTodoRepositoryForDynamoDB は、TodoRepositoryを作成します。
-func NewTodoRepositoryForDynamoDB(accessor mydynamodb.DynamoDBAccessor, log logging.Logger, config config.Config) TodoRepository {
+func NewTodoRepositoryForDynamoDB(accessor transaction.TransactionalDynamoDBAccessor, log logging.Logger, config config.Config) TodoRepository {
 	return &todoRepositoryImplByDynamoDB{
 		accessor: accessor,
 		log:      log,
@@ -31,7 +31,7 @@ func NewTodoRepositoryForDynamoDB(accessor mydynamodb.DynamoDBAccessor, log logg
 
 // todoRepositoryImplByDynamoDB は、TodoRepositoryを実装する構造体です。
 type todoRepositoryImplByDynamoDB struct {
-	accessor mydynamodb.DynamoDBAccessor
+	accessor transaction.TransactionalDynamoDBAccessor
 	log      logging.Logger
 	config   config.Config
 }

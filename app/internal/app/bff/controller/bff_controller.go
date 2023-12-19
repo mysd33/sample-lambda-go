@@ -6,9 +6,9 @@ import (
 	"app/internal/pkg/entity"
 
 	"example.com/appbase/pkg/domain"
-	"example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
+	"example.com/appbase/pkg/transaction"
 	"github.com/gin-gonic/gin"
 )
 
@@ -46,14 +46,14 @@ type BffController interface {
 }
 
 // New は、BffControllerを作成します。
-func New(log logging.Logger, transactionManager dynamodb.TransactionManager, service service.BffService) BffController {
+func New(log logging.Logger, transactionManager transaction.TransactionManager, service service.BffService) BffController {
 	return &bffControllerImpl{log: log, transactionManager: transactionManager, service: service}
 }
 
 // bffControllerImpl は、BffControllerを実装する構造体です。
 type bffControllerImpl struct {
 	log                logging.Logger
-	transactionManager dynamodb.TransactionManager
+	transactionManager transaction.TransactionManager
 	service            service.BffService
 }
 
@@ -114,7 +114,7 @@ func (c *bffControllerImpl) RegisterTodosAsync(ctx *gin.Context) (any, error) {
 	fifo := ctx.Query("fifo")
 	c.log.Debug("fifo=%s", fifo)
 	var serviceFunc domain.ServiceFunc
-	if fifo != "" {
+	if fifo == "" {
 		serviceFunc = func() (any, error) {
 			return nil, c.service.RegisterTodosAsync(todoTitles)
 		}

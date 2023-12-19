@@ -417,8 +417,9 @@ docker-compose up
     * 以下のテーブルを作成
         * 「Table Name」…「todo」、「Hash Attribute Name」…「todo_id」、「Hash Attribute Type」…「String」で作成
         * 「Table Name」…「dummy」、「Hash Attribute Name」…「dummy_id」、「Hash Attribute Type」…「String」で作成
+        * 「Table Name」…「queue_message」、「Hash Attribute Name」…「message_id」、「Hash Attribute Type」…「String」で作成        
 
-* TODO: NoSQL Workbenchの場合のtodoテーブルを作成手順も記載
+* TODO: NoSQL Workbenchの場合のテーブル作成手順も記載
     
 
 * [Elastic MQ](https://github.com/softwaremill/elasticmq)（SQL Local実行）のコンテナを起動

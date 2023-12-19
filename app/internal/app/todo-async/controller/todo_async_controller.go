@@ -4,8 +4,8 @@ package controller
 import (
 	"app/internal/app/todo-async/service"
 
-	"example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/logging"
+	"example.com/appbase/pkg/transaction"
 	"github.com/aws/aws-lambda-go/events"
 )
 
@@ -16,7 +16,7 @@ type TodoAsyncController interface {
 }
 
 func New(log logging.Logger,
-	transactionManager dynamodb.TransactionManager,
+	transactionManager transaction.TransactionManager,
 	service service.TodoAsyncService) TodoAsyncController {
 	return &todoAsyncControllerImpl{
 		log:                log,
@@ -27,7 +27,7 @@ func New(log logging.Logger,
 
 type todoAsyncControllerImpl struct {
 	log                logging.Logger
-	transactionManager dynamodb.TransactionManager
+	transactionManager transaction.TransactionManager
 	service            service.TodoAsyncService
 }
 
