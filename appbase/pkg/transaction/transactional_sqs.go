@@ -56,7 +56,7 @@ func NewTransactionalSQSAccessor(log logging.Logger, myCfg myConfig.Config) (Tra
 		}
 	})
 	messageRegisterer := NewMessageRegisterer(myCfg)
-	return &defaultSQSAccessor{
+	return &defaultTransactionalSQSAccessor{
 		config:            myCfg,
 		log:               log,
 		sqsClient:         sqlClient,
@@ -64,8 +64,8 @@ func NewTransactionalSQSAccessor(log logging.Logger, myCfg myConfig.Config) (Tra
 	}, nil
 }
 
-// defaultSQSAccessor は、TransactionalSQSAccessorを実装する構造体です。
-type defaultSQSAccessor struct {
+// defaultTransactionalSQSAccessor は、TransactionalSQSAccessorを実装する構造体です。
+type defaultTransactionalSQSAccessor struct {
 	config            myConfig.Config
 	log               logging.Logger
 	sqsClient         *sqs.Client
@@ -74,7 +74,7 @@ type defaultSQSAccessor struct {
 }
 
 // SendMessageSdk implements SQSAccessor.
-func (sa *defaultSQSAccessor) SendMessageSdk(queueName string, input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
+func (sa *defaultTransactionalSQSAccessor) SendMessageSdk(queueName string, input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
 	// QueueのURLの取得・設定
 	queueUrlOutput, err := sa.sqsClient.GetQueueUrl(apcontext.Context, &sqs.GetQueueUrlInput{
 		QueueName: aws.String(queueName),
@@ -103,19 +103,19 @@ func (sa *defaultSQSAccessor) SendMessageSdk(queueName string, input *sqs.SendMe
 }
 
 // StartTransaction implements TransactionalSQSAccessor.
-func (sa *defaultSQSAccessor) StartTransaction(transaction Transaction) {
+func (sa *defaultTransactionalSQSAccessor) StartTransaction(transaction Transaction) {
 	sa.transaction = transaction
 }
 
 // AppendTransactMessage implements TransactionalSQSAccessor.
-func (sa *defaultSQSAccessor) AppendTransactMessage(queueName string, input *sqs.SendMessageInput) error {
+func (sa *defaultTransactionalSQSAccessor) AppendTransactMessage(queueName string, input *sqs.SendMessageInput) error {
 	sa.log.Debug("AppendTransactMessage")
 	sa.transaction.AppendTransactMessage(&Message{QueueName: queueName, Input: input})
 	return nil
 }
 
 // TransactSendMessages implements TransactionalSQSAccessor.
-func (sa *defaultSQSAccessor) TransactSendMessages(inputs []*Message) error {
+func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Message) error {
 	for _, v := range inputs {
 		// SQSへメッセージ送信
 		output, err := sa.SendMessageSdk(v.QueueName, v.Input)
@@ -143,6 +143,6 @@ func (sa *defaultSQSAccessor) TransactSendMessages(inputs []*Message) error {
 }
 
 // EndTransaction implements TransactionalSQSAccessor.
-func (sa *defaultSQSAccessor) EndTransaction() {
+func (sa *defaultTransactionalSQSAccessor) EndTransaction() {
 	sa.transaction = nil
 }

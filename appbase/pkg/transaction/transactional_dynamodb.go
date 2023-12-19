@@ -35,17 +35,17 @@ func NewTransactionalDynamoDBAccessor(log logging.Logger, myCfg myConfig.Config)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	return &defaultDynamoDBAccessor{log: log, dynamodbClient: dynamodbClient}, nil
+	return &defaultTransactionalDynamoDBAccessor{log: log, dynamodbClient: dynamodbClient}, nil
 }
 
-type defaultDynamoDBAccessor struct {
+type defaultTransactionalDynamoDBAccessor struct {
 	log            logging.Logger
 	dynamodbClient *dynamodb.Client
 	transaction    Transaction
 }
 
 // GetItemSdk implements DynamoDBAccessor.
-func (d *defaultDynamoDBAccessor) GetItemSdk(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
+func (d *defaultTransactionalDynamoDBAccessor) GetItemSdk(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
 	if !env.IsStragingOrProd() {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
@@ -60,7 +60,7 @@ func (d *defaultDynamoDBAccessor) GetItemSdk(input *dynamodb.GetItemInput) (*dyn
 }
 
 // QuerySdk implements DynamoDBAccessor.
-func (d *defaultDynamoDBAccessor) QuerySdk(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
+func (d *defaultTransactionalDynamoDBAccessor) QuerySdk(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
 	if !env.IsStragingOrProd() {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
@@ -75,7 +75,7 @@ func (d *defaultDynamoDBAccessor) QuerySdk(input *dynamodb.QueryInput) (*dynamod
 }
 
 // QueryPagesSdk implements DynamoDBAccessor.
-func (d *defaultDynamoDBAccessor) QueryPagesSdk(input *dynamodb.QueryInput, fn func(*dynamodb.QueryOutput) bool) error {
+func (d *defaultTransactionalDynamoDBAccessor) QueryPagesSdk(input *dynamodb.QueryInput, fn func(*dynamodb.QueryOutput) bool) error {
 	paginator := dynamodb.NewQueryPaginator(d.dynamodbClient, input)
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(apcontext.Context)
@@ -93,7 +93,7 @@ func (d *defaultDynamoDBAccessor) QueryPagesSdk(input *dynamodb.QueryInput, fn f
 }
 
 // PutItemSdk implements DynamoDBAccessor.
-func (d *defaultDynamoDBAccessor) PutItemSdk(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
+func (d *defaultTransactionalDynamoDBAccessor) PutItemSdk(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
 	if !env.IsStragingOrProd() {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
@@ -109,7 +109,7 @@ func (d *defaultDynamoDBAccessor) PutItemSdk(input *dynamodb.PutItemInput) (*dyn
 }
 
 // UpdateItemSdk implements DynamoDBAccessor.
-func (d *defaultDynamoDBAccessor) UpdateItemSdk(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
+func (d *defaultTransactionalDynamoDBAccessor) UpdateItemSdk(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
 	if !env.IsStragingOrProd() {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
@@ -124,7 +124,7 @@ func (d *defaultDynamoDBAccessor) UpdateItemSdk(input *dynamodb.UpdateItemInput)
 }
 
 // DeleteItemSdk implements DynamoDBAccessor.
-func (d *defaultDynamoDBAccessor) DeleteItemSdk(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
+func (d *defaultTransactionalDynamoDBAccessor) DeleteItemSdk(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
 	if !env.IsStragingOrProd() {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
@@ -139,7 +139,7 @@ func (d *defaultDynamoDBAccessor) DeleteItemSdk(input *dynamodb.DeleteItemInput)
 }
 
 // BatchGetItemSdk implements DynamoDBAccessor.
-func (d *defaultDynamoDBAccessor) BatchGetItemSdk(input *dynamodb.BatchGetItemInput) (*dynamodb.BatchGetItemOutput, error) {
+func (d *defaultTransactionalDynamoDBAccessor) BatchGetItemSdk(input *dynamodb.BatchGetItemInput) (*dynamodb.BatchGetItemOutput, error) {
 	if !env.IsStragingOrProd() {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
@@ -154,7 +154,7 @@ func (d *defaultDynamoDBAccessor) BatchGetItemSdk(input *dynamodb.BatchGetItemIn
 }
 
 // BatchWriteItemSdk implements DynamoDBAccessor.
-func (d *defaultDynamoDBAccessor) BatchWriteItemSdk(input *dynamodb.BatchWriteItemInput) (*dynamodb.BatchWriteItemOutput, error) {
+func (d *defaultTransactionalDynamoDBAccessor) BatchWriteItemSdk(input *dynamodb.BatchWriteItemInput) (*dynamodb.BatchWriteItemOutput, error) {
 	if !env.IsStragingOrProd() {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
@@ -169,20 +169,20 @@ func (d *defaultDynamoDBAccessor) BatchWriteItemSdk(input *dynamodb.BatchWriteIt
 }
 
 // StartTransaction implements DynamoDBAccessor.
-func (d *defaultDynamoDBAccessor) StartTransaction(transaction Transaction) {
+func (d *defaultTransactionalDynamoDBAccessor) StartTransaction(transaction Transaction) {
 	// TODO: 本当はここがスレッド毎にトランザクション管理できるとgoroutineセーフにできるが、現状難しい
 	d.transaction = transaction
 }
 
 // AppendTransactWriteItem implements DynamoDBAccessor.
-func (d *defaultDynamoDBAccessor) AppendTransactWriteItem(item *types.TransactWriteItem) {
+func (d *defaultTransactionalDynamoDBAccessor) AppendTransactWriteItem(item *types.TransactWriteItem) {
 	// TODO: 本当はここがスレッド毎にトランザクション管理できるとgoroutineセーフにできるが、現状難しい
 	d.log.Debug("AppendTransactWriteItem")
 	d.transaction.AppendTransactWriteItem(item)
 }
 
 // TransactWriteItemsSDK implements DynamoDBAccessor.
-func (d *defaultDynamoDBAccessor) TransactWriteItemsSDK(items []types.TransactWriteItem) (*dynamodb.TransactWriteItemsOutput, error) {
+func (d *defaultTransactionalDynamoDBAccessor) TransactWriteItemsSDK(items []types.TransactWriteItem) (*dynamodb.TransactWriteItemsOutput, error) {
 	input := &dynamodb.TransactWriteItemsInput{TransactItems: items}
 	if !env.IsStragingOrProd() {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
@@ -198,6 +198,6 @@ func (d *defaultDynamoDBAccessor) TransactWriteItemsSDK(items []types.TransactWr
 }
 
 // EndTransaction implements DynamoDBAccessor.
-func (d *defaultDynamoDBAccessor) EndTransaction() {
+func (d *defaultTransactionalDynamoDBAccessor) EndTransaction() {
 	d.transaction = nil
 }
