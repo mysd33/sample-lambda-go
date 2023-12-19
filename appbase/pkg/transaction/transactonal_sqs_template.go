@@ -14,6 +14,7 @@ import (
 	"github.com/cockroachdb/errors"
 )
 
+// NewSQSTemplateは、SQSTemplateを作成します。
 func NewSQSTemplate(log logging.Logger, sqsAccessor TransactionalSQSAccessor) async.SQSTemplate {
 	return &defaultTransactionalSQSTemplate{
 		log:         log,
@@ -21,6 +22,7 @@ func NewSQSTemplate(log logging.Logger, sqsAccessor TransactionalSQSAccessor) as
 	}
 }
 
+// defaultTransactionalSQSTemplateは、SQSTemplateの実装です。
 type defaultTransactionalSQSTemplate struct {
 	log         logging.Logger
 	sqsAccessor TransactionalSQSAccessor

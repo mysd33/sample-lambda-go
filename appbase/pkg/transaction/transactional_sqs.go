@@ -13,8 +13,6 @@ import (
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 	"github.com/cockroachdb/errors"
@@ -26,23 +24,6 @@ type Message struct {
 	QueueName string
 	// SQS送信するメッセージ
 	Input *sqs.SendMessageInput
-}
-
-// QueueMessageItem は、QueueMessageテーブルのアイテムを表す構造体です。
-type QueueMessageItem struct {
-	MessageId              string `dynamodbav:"message_id"`
-	DeleteTime             int    `dynamodbav:"delete_time"`
-	MessageDeduplicationId string `dynamodbav:"message_deduplication_id"`
-}
-
-// GetKey は、DynamoDBのキー情報を取得します。
-func (m QueueMessageItem) GetKey() (map[string]types.AttributeValue, error) {
-	id, err := attributevalue.Marshal(m.MessageId)
-	if err != nil {
-		return nil, err
-	}
-
-	return map[string]types.AttributeValue{"message_id": id}, nil
 }
 
 // TransactionalSQSDBAccessorは、トランザクション管理可能なSQSアクセス用インタフェースです。
@@ -74,19 +55,22 @@ func NewTransactionalSQSAccessor(log logging.Logger, myCfg myConfig.Config) (Tra
 			o.BaseEndpoint = aws.String(sqsEndpoint)
 		}
 	})
+	messageRegisterer := NewMessageRegisterer(myCfg)
 	return &defaultSQSAccessor{
-		config:    myCfg,
-		log:       log,
-		sqsClient: sqlClient,
+		config:            myCfg,
+		log:               log,
+		sqsClient:         sqlClient,
+		messageRegisterer: messageRegisterer,
 	}, nil
 }
 
 // defaultSQSAccessor は、TransactionalSQSAccessorを実装する構造体です。
 type defaultSQSAccessor struct {
-	config      myConfig.Config
-	log         logging.Logger
-	sqsClient   *sqs.Client
-	transaction Transaction
+	config            myConfig.Config
+	log               logging.Logger
+	sqsClient         *sqs.Client
+	messageRegisterer MessageRegisterer
+	transaction       Transaction
 }
 
 // SendMessageSdk implements SQSAccessor.
@@ -149,7 +133,8 @@ func (sa *defaultSQSAccessor) TransactSendMessages(inputs []*Message) error {
 		}
 		//TODO: DeleteTime（delete_time）の値を設定
 		//queueMessageItem.DeleteTime = 0
-		if err := sa.appendTransactWriteItemForQueueMessage(queueMessageItem); err != nil {
+
+		if err := sa.messageRegisterer.RegisterMessage(sa.transaction, queueMessageItem); err != nil {
 			return errors.WithStack(err)
 		}
 	}
@@ -160,20 +145,4 @@ func (sa *defaultSQSAccessor) TransactSendMessages(inputs []*Message) error {
 // EndTransaction implements TransactionalSQSAccessor.
 func (sa *defaultSQSAccessor) EndTransaction() {
 	sa.transaction = nil
-}
-
-// appendTransactWriteItemForQueueMessage は、QueueMessageテーブルにTransactWriteItem操作を追加します。
-func (sa *defaultSQSAccessor) appendTransactWriteItemForQueueMessage(queueMessageItem *QueueMessageItem) error {
-	av, err := attributevalue.MarshalMap(queueMessageItem)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	put := &types.Put{
-		Item: av,
-		//TODO: テーブル名をプロパティ管理で設定切り出し
-		TableName: aws.String("queue_message"),
-	}
-	item := &types.TransactWriteItem{Put: put}
-	sa.transaction.AppendTransactWriteItem(item)
-	return nil
 }
