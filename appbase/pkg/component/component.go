@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"example.com/appbase/pkg/api"
+	"example.com/appbase/pkg/async"
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/handler"
 	"example.com/appbase/pkg/httpclient"
@@ -26,6 +27,7 @@ type ApplicationContext interface {
 	GetDynamoDBAccessor() transaction.TransactionalDynamoDBAccessor
 	GetDynamoDBTransactionManager() transaction.TransactionManager
 	GetSQSAccessor() transaction.TransactionalSQSAccessor
+	GetSQSTemplate() async.SQSTemplate
 	GetRDBAccessor() rdb.RDBAccessor
 	GetRDBTransactionManager() rdb.TransactionManager
 	GetHttpClient() httpclient.HttpClient
@@ -42,6 +44,7 @@ func NewApplicationContext() ApplicationContext {
 	apiResponseFormatter := createApiResponseFormatter(messageSource)
 	logger := createLogger(messageSource, config)
 	sqsAccessor := createTransactionalSQSAccessor(logger, config)
+	sqsTemplate := createSQSTemplate(logger, sqsAccessor)
 	dynamodbAccessor := createTransactionalDynamoDBAccessor(logger, config)
 	dynamoDBTransactionManager := createDynamoDBTransactionManager(logger, dynamodbAccessor, sqsAccessor)
 	rdbAccessor := createRDBAccessor()
@@ -61,6 +64,7 @@ func NewApplicationContext() ApplicationContext {
 		dynamoDBAccessor:           dynamodbAccessor,
 		dynamoDBTransactionManager: dynamoDBTransactionManager,
 		sqsAccessor:                sqsAccessor,
+		sqsTemplate:                sqsTemplate,
 		rdbAccessor:                rdbAccessor,
 		rdbTransactionManager:      rdbTransactionManager,
 		httpClient:                 httpclient,
@@ -77,6 +81,7 @@ type defaultApplicationContext struct {
 	dynamoDBAccessor           transaction.TransactionalDynamoDBAccessor
 	dynamoDBTransactionManager transaction.TransactionManager
 	sqsAccessor                transaction.TransactionalSQSAccessor
+	sqsTemplate                async.SQSTemplate
 	rdbAccessor                rdb.RDBAccessor
 	rdbTransactionManager      rdb.TransactionManager
 	httpClient                 httpclient.HttpClient
@@ -113,6 +118,11 @@ func (ac *defaultApplicationContext) GetRDBTransactionManager() rdb.TransactionM
 // GetSQSAccessor implements ApplicationContext.
 func (ac *defaultApplicationContext) GetSQSAccessor() transaction.TransactionalSQSAccessor {
 	return ac.sqsAccessor
+}
+
+// GetSQSTemplate implements ApplicationContext.
+func (ac *defaultApplicationContext) GetSQSTemplate() async.SQSTemplate {
+	return ac.sqsTemplate
 }
 
 // GetHttpClient implements ApplicationContext.
@@ -192,6 +202,10 @@ func createTransactionalSQSAccessor(logger logging.Logger, config config.Config)
 		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
 	}
 	return accessor
+}
+
+func createSQSTemplate(logger logging.Logger, sqsAccessor transaction.TransactionalSQSAccessor) async.SQSTemplate {
+	return transaction.NewSQSTemplate(logger, sqsAccessor)
 }
 
 func createDynamoDBTransactionManager(logger logging.Logger,

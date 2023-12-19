@@ -30,7 +30,7 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	if sampleFifoQueueName == "" {
 		sampleFifoQueueName = "SampleFIFOQueue.fifo"
 	}
-	asyncMessageRepository := repository.NewAsyncMessageRepository(ac.GetSQSAccessor(), sampleQueueName, sampleFifoQueueName)
+	asyncMessageRepository := repository.NewAsyncMessageRepository(ac.GetSQSTemplate(), sampleQueueName, sampleFifoQueueName)
 	// サービスの作成
 	bffService := service.New(ac.GetLogger(), ac.GetConfig(), userRepository, todoRepository, dummyRepository, asyncMessageRepository)
 	// コントローラの作成
