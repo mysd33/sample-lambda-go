@@ -4,17 +4,10 @@ transaction パッケージは、トランザクション管理に関する機�
 package transaction
 
 import (
-	"context"
-
-	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/async"
 	myConfig "example.com/appbase/pkg/config"
-	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/logging"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 	"github.com/cockroachdb/errors"
 )
 
@@ -42,64 +35,29 @@ type TransactionalSQSAccessor interface {
 
 // NewTransactionalSQSAccessor は、TransactionalSQSAccessorを作成します。
 func NewTransactionalSQSAccessor(log logging.Logger, myCfg myConfig.Config) (TransactionalSQSAccessor, error) {
-	// TODO: カスタムHTTPClientの作成
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+	sqsAccessor, err := async.NewSQSAccessor(log, myCfg)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	awsv2.AWSV2Instrumentor(&cfg.APIOptions)
-	sqlClient := sqs.NewFromConfig(cfg, func(o *sqs.Options) {
-		// ローカル実行のためDynamoDB Local起動先が指定されている場合
-		sqsEndpoint := myCfg.Get(constant.SQS_LOCAL_ENDPOINT_NAME)
-		if sqsEndpoint != "" {
-			o.BaseEndpoint = aws.String(sqsEndpoint)
-		}
-	})
 	messageRegisterer := NewMessageRegisterer(myCfg)
 	return &defaultTransactionalSQSAccessor{
-		config:            myCfg,
 		log:               log,
-		sqsClient:         sqlClient,
+		sqsAccessor:       sqsAccessor,
 		messageRegisterer: messageRegisterer,
 	}, nil
 }
 
 // defaultTransactionalSQSAccessor は、TransactionalSQSAccessorを実装する構造体です。
 type defaultTransactionalSQSAccessor struct {
-	config            myConfig.Config
 	log               logging.Logger
-	sqsClient         *sqs.Client
+	sqsAccessor       async.SQSAccessor
 	messageRegisterer MessageRegisterer
 	transaction       Transaction
 }
 
-// SendMessageSdk implements SQSAccessor.
+// SendMessageSdk implements TransactionalSQSAccessor.
 func (sa *defaultTransactionalSQSAccessor) SendMessageSdk(queueName string, input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
-	// QueueのURLの取得・設定
-	queueUrlOutput, err := sa.sqsClient.GetQueueUrl(apcontext.Context, &sqs.GetQueueUrlInput{
-		QueueName: aws.String(queueName),
-	})
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	sa.log.Debug("QueueURL=%s", *queueUrlOutput.QueueUrl)
-	// 送信先の設定
-	input.QueueUrl = queueUrlOutput.QueueUrl
-
-	if input.MessageGroupId != nil {
-		sa.log.Debug("MessageGroupId=%s, MessageDeduplicationId=%s, Message=%s",
-			*input.MessageGroupId,
-			*input.MessageDeduplicationId,
-			*input.MessageBody)
-	} else {
-		sa.log.Debug("Message=%s", *input.MessageBody)
-	}
-	//　SQSへメッセージ送信する
-	output, err := sa.sqsClient.SendMessage(apcontext.Context, input)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return output, nil
+	return sa.sqsAccessor.SendMessageSdk(queueName, input)
 }
 
 // StartTransaction implements TransactionalSQSAccessor.
@@ -116,6 +74,7 @@ func (sa *defaultTransactionalSQSAccessor) AppendTransactMessage(queueName strin
 
 // TransactSendMessages implements TransactionalSQSAccessor.
 func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Message) error {
+	sa.log.Debug("TransactSendMessages")
 	for _, v := range inputs {
 		// SQSへメッセージ送信
 		output, err := sa.SendMessageSdk(v.QueueName, v.Input)
