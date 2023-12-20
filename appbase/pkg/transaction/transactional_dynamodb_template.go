@@ -8,6 +8,10 @@ import (
 	"example.com/appbase/pkg/dynamodb/criteria"
 	"example.com/appbase/pkg/dynamodb/tables"
 	"example.com/appbase/pkg/logging"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/cockroachdb/errors"
 )
 
 // TransactionalDynamoDBTemplate は、トランザクション管理対応のDynamoDBアクセスを定型化した高次のインタフェースです。
@@ -68,7 +72,27 @@ func (t *defaultTransactionalDynamoDBTemplate) DeleteOne(tableName tables.Dynamo
 
 // CreateOneWithTransaction implements TransactinalDynamoDBTemplate.
 func (t *defaultTransactionalDynamoDBTemplate) CreateOneWithTransaction(tableName tables.DynamoDBTableName, inputEntity any) error {
-	panic("unimplemented")
+	item, err := attributevalue.MarshalMap(inputEntity)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	// パーティションキーの重複判定条件
+	partitonkeyName := tables.GetPrimaryKey(tableName).PartitionKey
+	conditionExpression := aws.String("attribute_not_exists(#partition_key)")
+	expressionAttributeNames := map[string]string{
+		"#partition_key": partitonkeyName,
+	}
+
+	input := types.TransactWriteItem{
+		Put: &types.Put{
+			TableName:                aws.String(string(tableName)),
+			Item:                     item,
+			ConditionExpression:      conditionExpression,
+			ExpressionAttributeNames: expressionAttributeNames,
+		},
+	}
+	t.transactionalDynamoDBAccessor.AppendTransactWriteItem(&input)
+	return nil
 }
 
 // UpdateOneWithTransaction implements TransactinalDynamoDBTemplate.

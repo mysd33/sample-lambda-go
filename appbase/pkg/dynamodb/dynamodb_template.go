@@ -7,6 +7,18 @@ import (
 	"example.com/appbase/pkg/dynamodb/criteria"
 	"example.com/appbase/pkg/dynamodb/tables"
 	"example.com/appbase/pkg/logging"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/cockroachdb/errors"
+)
+
+var (
+	ErrRecordNotFound     = errors.New("record not found")
+	ErrKeyDuplicaiton     = errors.New("key duplication")
+	ErrUpdateWithCondtion = errors.New("update with condition error")
+	ErrDeleteWithCondtion = errors.New("delete with condition error")
 )
 
 // DynamoDBTemplate は、DynamoDBアクセスを定型化した高次のインタフェースです。
@@ -36,7 +48,31 @@ type defaultDynamoDBTemplate struct {
 
 // CreateOne implements DynamoDBTemplate.
 func (t *defaultDynamoDBTemplate) CreateOne(tableName tables.DynamoDBTableName, inputEntity any) error {
-	panic("unimplemented")
+	item, err := attributevalue.MarshalMap(inputEntity)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	// パーティションキーの重複判定条件
+	partitonkeyName := tables.GetPrimaryKey(tableName).PartitionKey
+	conditionExpression := aws.String("attribute_not_exists(#partition_key)")
+	expressionAttributeNames := map[string]string{
+		"#partition_key": partitonkeyName,
+	}
+	input := &dynamodb.PutItemInput{
+		TableName:                aws.String(string(tableName)),
+		Item:                     item,
+		ConditionExpression:      conditionExpression,
+		ExpressionAttributeNames: expressionAttributeNames,
+	}
+	_, err = t.dynamodbAccessor.PutItemSdk(input)
+	if err != nil {
+		var condErr *types.ConditionalCheckFailedException
+		if errors.As(err, &condErr) {
+			return ErrKeyDuplicaiton
+		}
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 // FindOneByPrimaryKey implements DynamoDBTemplate.
