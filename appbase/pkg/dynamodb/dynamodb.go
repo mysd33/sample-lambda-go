@@ -11,10 +11,10 @@ import (
 	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/env"
 	"example.com/appbase/pkg/logging"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 	"github.com/cockroachdb/errors"
 )

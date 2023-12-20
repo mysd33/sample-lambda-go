@@ -10,11 +10,11 @@ import (
 	myConfig "example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/logging"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
-	"github.com/pkg/errors"
+	"github.com/cockroachdb/errors"
 )
 
 // SQSTemplate は、SQSにメッセージを送信するための高次のインタフェースです。
