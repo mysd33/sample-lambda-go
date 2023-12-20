@@ -26,6 +26,7 @@ type ApplicationContext interface {
 	GetConfig() config.Config
 	GetDynamoDBAccessor() transaction.TransactionalDynamoDBAccessor
 	GetDynamoDBTransactionManager() transaction.TransactionManager
+	GetDynamoDBTemplate() transaction.TransactinalDynamoDBTemplate
 	GetSQSAccessor() transaction.TransactionalSQSAccessor
 	GetSQSTemplate() async.SQSTemplate
 	GetRDBAccessor() rdb.RDBAccessor
@@ -47,6 +48,7 @@ func NewApplicationContext() ApplicationContext {
 	sqsTemplate := createSQSTemplate(logger, sqsAccessor)
 	dynamodbAccessor := createTransactionalDynamoDBAccessor(logger, config)
 	dynamoDBTransactionManager := createDynamoDBTransactionManager(logger, dynamodbAccessor, sqsAccessor)
+	dynamoDBTempalte := createDynamoDBTemplate(logger, dynamodbAccessor)
 	rdbAccessor := createRDBAccessor()
 	rdbTransactionManager := rdb.NewTransactionManager(logger, config, rdbAccessor)
 	httpclient := createHttpClient(logger)
@@ -63,6 +65,7 @@ func NewApplicationContext() ApplicationContext {
 		logger:                     logger,
 		dynamoDBAccessor:           dynamodbAccessor,
 		dynamoDBTransactionManager: dynamoDBTransactionManager,
+		dynamodbTempalte:           dynamoDBTempalte,
 		sqsAccessor:                sqsAccessor,
 		sqsTemplate:                sqsTemplate,
 		rdbAccessor:                rdbAccessor,
@@ -80,6 +83,7 @@ type defaultApplicationContext struct {
 	logger                     logging.Logger
 	dynamoDBAccessor           transaction.TransactionalDynamoDBAccessor
 	dynamoDBTransactionManager transaction.TransactionManager
+	dynamodbTempalte           transaction.TransactinalDynamoDBTemplate
 	sqsAccessor                transaction.TransactionalSQSAccessor
 	sqsTemplate                async.SQSTemplate
 	rdbAccessor                rdb.RDBAccessor
@@ -103,6 +107,11 @@ func (ac *defaultApplicationContext) GetDynamoDBAccessor() transaction.Transacti
 // GetDynamoDBTransactionManager implements ApplicationContext.
 func (ac *defaultApplicationContext) GetDynamoDBTransactionManager() transaction.TransactionManager {
 	return ac.dynamoDBTransactionManager
+}
+
+// GetDynamoDBTemplate implements ApplicationContext.
+func (ac *defaultApplicationContext) GetDynamoDBTemplate() transaction.TransactinalDynamoDBTemplate {
+	return ac.dynamodbTempalte
 }
 
 // GetRDBAccessor implements ApplicationContext.
@@ -212,6 +221,10 @@ func createDynamoDBTransactionManager(logger logging.Logger,
 	dynamodbAccessor transaction.TransactionalDynamoDBAccessor,
 	sqsAccessor transaction.TransactionalSQSAccessor) transaction.TransactionManager {
 	return transaction.NewTransactionManager(logger, dynamodbAccessor, sqsAccessor)
+}
+
+func createDynamoDBTemplate(logger logging.Logger, dynamodbAccessor transaction.TransactionalDynamoDBAccessor) transaction.TransactinalDynamoDBTemplate {
+	return transaction.NewTransactionalDynamoDBTemplate(logger, dynamodbAccessor)
 }
 
 func createRDBAccessor() rdb.RDBAccessor {
