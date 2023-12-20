@@ -7,18 +7,14 @@ type DynamoDBTableName string
 
 var pkMap map[DynamoDBTableName]*PKKeyPair
 
-const (
-	UserTable DynamoDBTableName = "User"
-	PostTable DynamoDBTableName = "Post"
-)
-
 type PK struct {
 	PartitionKey string
 	SortKey      *string
 }
 
+//TODO: 不要なインタフェースかも
 type Tables interface {
-	initPk()
+	initPk(tableName string)
 }
 
 type PKKeyPair struct {

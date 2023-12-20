@@ -15,7 +15,7 @@ func initBiz(ac component.ApplicationContext) handler.AsyncControllerFunc {
 	// メッセージの設定
 	ac.GetMessageSource().Add(message.Messages_yaml)
 	// リポジトリの作成
-	todoRepository := repository.NewTodoRepositoryForDynamoDB(ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig())
+	todoRepository := repository.NewTodoRepositoryForDynamoDB(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig())
 	// サービスの作成
 	todoAsyncService := service.New(ac.GetLogger(), ac.GetConfig(), todoRepository)
 	// コントローラの作成
