@@ -10,7 +10,7 @@ import (
 
 type DynamoDBTemplate interface {
 	CreateOne(tableName tables.DynamoDBTableName, inputEntity any) error
-	FindOne(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntity any) error
+	FindOneByPrimaryKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntity any) error
 	FindSomeByPrimaryKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntities any) error
 	FindSomeByGSI(tableName tables.DynamoDBTableName, input criteria.GsiQueryInput, outEntities any) error
 	UpdateOne(tableName tables.DynamoDBTableName, input criteria.UpdateInput) error
