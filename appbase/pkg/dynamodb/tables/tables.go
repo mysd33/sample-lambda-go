@@ -14,7 +14,7 @@ type PK struct {
 
 //TODO: 不要なインタフェースかも
 type Tables interface {
-	initPk(tableName string)
+	initPk(tableName DynamoDBTableName)
 }
 
 type PKKeyPair struct {

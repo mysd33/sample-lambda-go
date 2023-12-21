@@ -28,7 +28,7 @@ func NewTodoRepositoryForDynamoDB(dynamoDBTempalte transaction.TransactinalDynam
 	accessor transaction.TransactionalDynamoDBAccessor,
 	log logging.Logger, config config.Config) TodoRepository {
 	// テーブル名の取得
-	tableName := config.Get(TODO_TABLE_NAME)
+	tableName := tables.DynamoDBTableName(config.Get(TODO_TABLE_NAME))
 	// テーブル定義の設定
 	mytables.Todo{}.InitPk(tableName)
 
@@ -47,7 +47,7 @@ type todoRepositoryImplByDynamoDB struct {
 	accessor         transaction.TransactionalDynamoDBAccessor
 	log              logging.Logger
 	config           config.Config
-	tableName        string
+	tableName        tables.DynamoDBTableName
 }
 
 func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, error) {
@@ -63,7 +63,7 @@ func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, er
 	}
 	// Itemの取得
 	result, err := tr.accessor.GetItemSdk(&dynamodb.GetItemInput{
-		TableName: aws.String(tr.tableName),
+		TableName: aws.String(tr.config.Get(TODO_TABLE_NAME)),
 		Key:       key,
 	})
 	if err != nil {
@@ -82,7 +82,7 @@ func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, er
 	//TODO:	DynamoDBTemplateを使ったコード
 	/*
 		var todo *entity.Todo
-		err := tr.dynamodbTemplate.FindOneByPrimaryKey(tables.DynamoDBTableName(tr.tableName), input, outEntity)
+		err := tr.dynamodbTemplate.FindOneByPrimaryKey(tr.tableName, input, outEntity)
 		if err != nil {
 			if errors.Is(err, mydynamodb.ErrRecordNotFound) {
 				// レコード未取得の場合
@@ -119,7 +119,7 @@ func (tr *todoRepositoryImplByDynamoDB) CreateOne(todo *entity.Todo) (*entity.To
 		}
 	*/
 	// DynamoDBTemplateを使ったコード
-	err := tr.dynamodbTemplate.CreateOne(tables.DynamoDBTableName(tr.tableName), todo)
+	err := tr.dynamodbTemplate.CreateOne(tr.tableName, todo)
 	if err != nil {
 		if errors.Is(err, mydynamodb.ErrKeyDuplicaiton) {
 			// キーの重複の場合
@@ -151,7 +151,7 @@ func (tr *todoRepositoryImplByDynamoDB) CreateOneTx(todo *entity.Todo) (*entity.
 		tr.accessor.AppendTransactWriteItem(input)
 	*/
 	// DynamoDBTemplateを使ったコード
-	tr.dynamodbTemplate.CreateOneWithTransaction(tables.DynamoDBTableName(tr.tableName), todo)
+	tr.dynamodbTemplate.CreateOneWithTransaction(tr.tableName, todo)
 
 	return todo, nil
 }

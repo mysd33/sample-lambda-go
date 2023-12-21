@@ -5,9 +5,9 @@ import "example.com/appbase/pkg/dynamodb/tables"
 type Todo struct {
 }
 
-func (Todo) InitPk(tableName string) {
+func (Todo) InitPk(tableName tables.DynamoDBTableName) {
 	pkKeyPair := &tables.PKKeyPair{
 		PartitionKey: "todo_id",
 	}
-	tables.SetPrimaryKey(tables.DynamoDBTableName(tableName), pkKeyPair)
+	tables.SetPrimaryKey(tableName, pkKeyPair)
 }

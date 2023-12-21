@@ -7,7 +7,7 @@ import "example.com/appbase/pkg/dynamodb/tables"
 
 //TODO: 不要なインタフェースかも
 type Gsi interface {
-	initGsi()
+	InitGsi(gsiName DynamoDBGSIName)
 }
 
 type DynamoDBGSIName string
