@@ -9,14 +9,12 @@ import (
 
 	"example.com/appbase/pkg/config"
 	mydynamodb "example.com/appbase/pkg/dynamodb"
+	"example.com/appbase/pkg/dynamodb/criteria"
 	"example.com/appbase/pkg/dynamodb/tables"
 	myerrors "example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/id"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/transaction"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
 const (
@@ -31,6 +29,8 @@ func NewTodoRepositoryForDynamoDB(dynamoDBTempalte transaction.TransactinalDynam
 	tableName := tables.DynamoDBTableName(config.Get(TODO_TABLE_NAME))
 	// テーブル定義の設定
 	mytables.Todo{}.InitPk(tableName)
+	// プライマリキーの設定
+	primaryKey := tables.GetPrimaryKey(tableName)
 
 	return &todoRepositoryImplByDynamoDB{
 		dynamodbTemplate: dynamoDBTempalte,
@@ -38,6 +38,7 @@ func NewTodoRepositoryForDynamoDB(dynamoDBTempalte transaction.TransactinalDynam
 		log:              log,
 		config:           config,
 		tableName:        tableName,
+		primaryKey:       primaryKey,
 	}
 }
 
@@ -48,61 +49,77 @@ type todoRepositoryImplByDynamoDB struct {
 	log              logging.Logger
 	config           config.Config
 	tableName        tables.DynamoDBTableName
+	primaryKey       *tables.PKKeyPair
 }
 
 func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, error) {
+	// DynamoDBTemplateを使ったコード
+	input := criteria.PkOnlyQueryInput{
+		PrimarKey: criteria.KeyPair{
+			PartitionKey: criteria.KeyValue{
+				Key:   tr.primaryKey.PartitionKey,
+				Value: todoId,
+			},
+		},
+	}
+	var todo entity.Todo
+	// Itemの取得
+	err := tr.dynamodbTemplate.FindOneByPrimaryKey(tr.tableName, input, &todo)
+	if err != nil {
+		if errors.Is(err, mydynamodb.ErrRecordNotFound) {
+			// レコード未取得の場合
+			return nil, myerrors.NewBusinessError(message.W_EX_8002, todoId)
+		}
+		return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+	}
+
+	// 従来のDynamoDBAccessorを使ったコード
 	// AWS SDK for Go v2 Migration
 	// https://docs.aws.amazon.com/ja_jp/code-library/latest/ug/go_2_dynamodb_code_examples.html
 	// https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/gov2/dynamodb
-
-	// 従来のDynamoDBAccessorを使ったコード
-	todo := entity.Todo{ID: todoId}
-	key, err := todo.GetKey()
-	if err != nil {
-		return nil, myerrors.NewSystemError(err, message.E_EX_9001)
-	}
-	// Itemの取得
-	result, err := tr.accessor.GetItemSdk(&dynamodb.GetItemInput{
-		TableName: aws.String(tr.config.Get(TODO_TABLE_NAME)),
-		Key:       key,
-	})
-	if err != nil {
-		return nil, myerrors.NewSystemError(err, message.E_EX_9001)
-	}
-	// レコード未取得の場合
-	if len(result.Item) == 0 {
-		return nil, myerrors.NewBusinessError(message.W_EX_8002, todoId)
-	}
-	err = attributevalue.UnmarshalMap(result.Item, &todo)
-	if err != nil {
-		return nil, myerrors.NewSystemError(err, message.E_EX_9001)
-	}
-	return &todo, nil
-
-	//TODO:	DynamoDBTemplateを使ったコード
 	/*
-		var todo *entity.Todo
-		err := tr.dynamodbTemplate.FindOneByPrimaryKey(tr.tableName, input, outEntity)
+		todo := entity.Todo{ID: todoId}
+		key, err := todo.GetKey()
 		if err != nil {
-			if errors.Is(err, mydynamodb.ErrRecordNotFound) {
-				// レコード未取得の場合
-				return nil, myerrors.NewBusinessError(message.W_EX_8002, todoId)
-			}
 			return nil, myerrors.NewSystemError(err, message.E_EX_9001)
 		}
-		return todo, nil
+		// Itemの取得
+		result, err := tr.accessor.GetItemSdk(&dynamodb.GetItemInput{
+			TableName: aws.String(tr.config.Get(TODO_TABLE_NAME)),
+			Key:       key,
+		})
+		if err != nil {
+			return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+		}
+		// レコード未取得の場合
+		if len(result.Item) == 0 {
+			return nil, myerrors.NewBusinessError(message.W_EX_8002, todoId)
+		}
+		err = attributevalue.UnmarshalMap(result.Item, &todo)
+		if err != nil {
+			return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+		}
 	*/
+	return &todo, nil
 }
 
 func (tr *todoRepositoryImplByDynamoDB) CreateOne(todo *entity.Todo) (*entity.Todo, error) {
-	// AWS SDK for Go v2 Migration
-	// https://docs.aws.amazon.com/ja_jp/code-library/latest/ug/go_2_dynamodb_code_examples.html
-	// https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/gov2/dynamodb
-
 	// ID採番
 	todoId := id.GenerateId()
 	todo.ID = todoId
+	// DynamoDBTemplateを使ったコード
+	err := tr.dynamodbTemplate.CreateOne(tr.tableName, todo)
+	if err != nil {
+		if errors.Is(err, mydynamodb.ErrKeyDuplicaiton) {
+			// キーの重複の場合
+			return nil, myerrors.NewBusinessError(message.W_EX_8003, todoId)
+		}
+		return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+	}
 	// 従来のDynamoDBAccessorを使ったコード
+	// AWS SDK for Go v2 Migration
+	// https://docs.aws.amazon.com/ja_jp/code-library/latest/ug/go_2_dynamodb_code_examples.html
+	// https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/gov2/dynamodb
 	/*
 		av, err := attributevalue.MarshalMap(todo)
 		if err != nil {
@@ -118,15 +135,6 @@ func (tr *todoRepositoryImplByDynamoDB) CreateOne(todo *entity.Todo) (*entity.To
 			return nil, myerrors.NewSystemError(err, message.E_EX_9001)
 		}
 	*/
-	// DynamoDBTemplateを使ったコード
-	err := tr.dynamodbTemplate.CreateOne(tr.tableName, todo)
-	if err != nil {
-		if errors.Is(err, mydynamodb.ErrKeyDuplicaiton) {
-			// キーの重複の場合
-			return nil, myerrors.NewBusinessError(message.W_EX_8003, todoId)
-		}
-		return nil, myerrors.NewSystemError(err, message.E_EX_9001)
-	}
 	return todo, nil
 
 }
@@ -136,6 +144,12 @@ func (tr *todoRepositoryImplByDynamoDB) CreateOneTx(todo *entity.Todo) (*entity.
 	// ID採番
 	todoId := id.GenerateId()
 	todo.ID = todoId
+	// DynamoDBTemplateを使ったコード
+	err := tr.dynamodbTemplate.CreateOneWithTransaction(tr.tableName, todo)
+	if err != nil {
+		return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+	}
+
 	// 従来のDynamoDBAccessorを使ったコード
 	/*
 		av, err := attributevalue.MarshalMap(todo)
@@ -150,8 +164,5 @@ func (tr *todoRepositoryImplByDynamoDB) CreateOneTx(todo *entity.Todo) (*entity.
 		input := &types.TransactWriteItem{Put: put}
 		tr.accessor.AppendTransactWriteItem(input)
 	*/
-	// DynamoDBTemplateを使ったコード
-	tr.dynamodbTemplate.CreateOneWithTransaction(tr.tableName, todo)
-
 	return todo, nil
 }

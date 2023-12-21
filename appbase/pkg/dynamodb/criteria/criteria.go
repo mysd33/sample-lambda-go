@@ -18,7 +18,7 @@ type PkOnlyQueryInput struct {
 // PkQueryInput は、パーティションキーの完全一致とソートキーの条件指定時のインプット構造体
 type PkQueryInput struct {
 	// プライマリキーの条件
-	PrimarKey KeyPair
+	PrimaryKey KeyPair
 	// 取得項目
 	SelectItems []string
 	// フィルタ条件（プライマリキーの条件以外で絞込を行いたい場合）
