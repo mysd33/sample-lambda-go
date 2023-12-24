@@ -10,7 +10,7 @@ type PkOnlyQueryInput struct {
 	// プライマリキー
 	PrimarKey KeyPair
 	// 取得項目
-	SelectItems []string
+	SelectAttributes []string
 	// 強い整合性読み込みの使用有無
 	ConsitentRead bool
 }
@@ -20,9 +20,9 @@ type PkQueryInput struct {
 	// プライマリキーの条件
 	PrimaryKey KeyPair
 	// 取得項目
-	SelectItems []string
+	SelectAttributes []string
 	// フィルタ条件（プライマリキーの条件以外で絞込を行いたい場合）
-	WhereKeys []*WhereKeys
+	WhereKeys []*WhereClause
 	// 強い整合性読み込みの使用有無
 	ConsitentRead bool
 }
@@ -34,9 +34,9 @@ type GsiQueryInput struct {
 	// インデックスキーの条件
 	IndexKey KeyPair
 	// 取得項目
-	SelectItems []string
+	SelectAttirbutes []string
 	// フィルタ条件（プライマリキーの条件以外で絞込を行いたい場合）
-	WhereKeys []*WhereKeys
+	WhereKeys []*WhereClause
 	// 取得件数の上限値
 	TotalLimit *int32
 	// 1回のクエリでの取得件数上限値
@@ -48,9 +48,9 @@ type UpdateInput struct {
 	// プライマリキーの条件
 	PrimarKey KeyPair
 	// フィルタ条件（プライマリキーの条件以外で絞込を行いたい場合）
-	WhereKeys []*WhereKeys
+	WhereKeys []*WhereClause
 	// 更新項目
-	UpdateItems []*KeyValue
+	UpdateAttributes []*KeyValue
 }
 
 // DeleteInput は、削除時のインプット構造体
@@ -58,7 +58,7 @@ type DeleteInput struct {
 	// プライマリキーの条件
 	PrimarKey KeyPair
 	// フィルタ条件（プライマリキーの条件以外で絞込を行いたい場合）
-	WhereKeys []*WhereKeys
+	WhereKeys []*WhereClause
 }
 
 // KeyValue は、項目名と値のペア構造体です。
@@ -100,30 +100,30 @@ const (
 	ORDER_BY_ASC  = OrderBy("Asc")
 )
 
-// WhereKeys は、GSIによる検索時のフィルタ条件句です。
-type WhereKeys struct {
-	WhereKey     KeyValue
-	Method       WhereMethod
-	AppendMethod AppendMethod
+// WhereClause は、GSIによる検索時のフィルタ条件句です。
+type WhereClause struct {
+	KeyValue       KeyValue
+	Operator       WhereOperator
+	AppendOperator AppendOperator
 }
 
-// WhereMethod は、GSIによる検索時のフィルタ条件句です。
-type WhereMethod string
+// WhereOperator は、GSIによる検索時のフィルタ条件句です。
+type WhereOperator string
 
 const (
-	WHERE_EQUAL           = WhereMethod("Equal")
-	WHERE_NOT_EQUAL       = WhereMethod("NotEqual")
-	WHERE_BEGINS_WITH     = WhereMethod("BeginWith")
-	WHERE_GREATER_THAN    = WhereMethod("GreaterThan")
-	WHERE_GREATER_THAN_EQ = WhereMethod("GreaterThanEqual")
-	WHERE_LESS_THAN       = WhereMethod("LessThan")
-	WHERE_LESS_THAN_EQ    = WhereMethod("LessThanEqual")
+	WHERE_EQUAL           = WhereOperator("Equal")
+	WHERE_NOT_EQUAL       = WhereOperator("NotEqual")
+	WHERE_BEGINS_WITH     = WhereOperator("BeginWith")
+	WHERE_GREATER_THAN    = WhereOperator("GreaterThan")
+	WHERE_GREATER_THAN_EQ = WhereOperator("GreaterThanEqual")
+	WHERE_LESS_THAN       = WhereOperator("LessThan")
+	WHERE_LESS_THAN_EQ    = WhereOperator("LessThanEqual")
 )
 
-// AppendMethod は、フィルタの結合条件
-type AppendMethod string
+// AppendOperator は、フィルタの結合条件
+type AppendOperator string
 
 const (
-	APPEND_AND = AppendMethod("And")
-	APPEND_OR  = AppendMethod("Or")
+	APPEND_AND = AppendOperator("And")
+	APPEND_OR  = AppendOperator("Or")
 )

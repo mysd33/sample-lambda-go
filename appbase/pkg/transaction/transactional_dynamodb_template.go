@@ -4,7 +4,7 @@ transaction パッケージは、トランザクション管理に関する機�
 package transaction
 
 import (
-	"example.com/appbase/pkg/dynamodb"
+	mydynamodb "example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/dynamodb/criteria"
 	"example.com/appbase/pkg/dynamodb/tables"
 	"example.com/appbase/pkg/logging"
@@ -16,15 +16,18 @@ import (
 
 // TransactionalDynamoDBTemplate は、トランザクション管理対応のDynamoDBアクセスを定型化した高次のインタフェースです。
 type TransactinalDynamoDBTemplate interface {
-	dynamodb.DynamoDBTemplate
+	mydynamodb.DynamoDBTemplate
+	// CreateOneWithTransaction は、トランザクションでDynamoDBに項目を登録します。
 	CreateOneWithTransaction(tableName tables.DynamoDBTableName, inputEntity any) error
+	// UpdateOneWithTransaction は、トランザクションでDynamoDBに項目を更新します。
 	UpdateOneWithTransaction(tableName tables.DynamoDBTableName, input criteria.UpdateInput) error
+	// DeleteOneWithTransaction は、トランザクションでDynamoDBに項目を削除します。
 	DeleteOneWithTransaction(tableName tables.DynamoDBTableName, input criteria.DeleteInput) error
 }
 
 func NewTransactionalDynamoDBTemplate(log logging.Logger,
 	transactionalDynamoDBAccessor TransactionalDynamoDBAccessor) TransactinalDynamoDBTemplate {
-	dynamodbTemplate := dynamodb.NewDynamoDBTemplate(log, transactionalDynamoDBAccessor)
+	dynamodbTemplate := mydynamodb.NewDynamoDBTemplate(log, transactionalDynamoDBAccessor)
 	return &defaultTransactionalDynamoDBTemplate{
 		log:                           log,
 		dynamodbTemplate:              dynamodbTemplate,
@@ -36,7 +39,7 @@ func NewTransactionalDynamoDBTemplate(log logging.Logger,
 
 type defaultTransactionalDynamoDBTemplate struct {
 	log                           logging.Logger
-	dynamodbTemplate              dynamodb.DynamoDBTemplate
+	dynamodbTemplate              mydynamodb.DynamoDBTemplate
 	transactionalDynamoDBAccessor TransactionalDynamoDBAccessor
 }
 
@@ -72,7 +75,7 @@ func (t *defaultTransactionalDynamoDBTemplate) DeleteOne(tableName tables.Dynamo
 
 // CreateOneWithTransaction implements TransactinalDynamoDBTemplate.
 func (t *defaultTransactionalDynamoDBTemplate) CreateOneWithTransaction(tableName tables.DynamoDBTableName, inputEntity any) error {
-	item, err := attributevalue.MarshalMap(inputEntity)
+	attributes, err := attributevalue.MarshalMap(inputEntity)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -82,25 +85,70 @@ func (t *defaultTransactionalDynamoDBTemplate) CreateOneWithTransaction(tableNam
 	expressionAttributeNames := map[string]string{
 		"#partition_key": partitonkeyName,
 	}
-
-	input := types.TransactWriteItem{
+	// TransactWriteItemの作成
+	item := types.TransactWriteItem{
 		Put: &types.Put{
 			TableName:                aws.String(string(tableName)),
-			Item:                     item,
+			Item:                     attributes,
 			ConditionExpression:      conditionExpression,
 			ExpressionAttributeNames: expressionAttributeNames,
 		},
 	}
-	t.transactionalDynamoDBAccessor.AppendTransactWriteItem(&input)
+	// TransactWriteItemの追加
+	t.transactionalDynamoDBAccessor.AppendTransactWriteItem(&item)
 	return nil
 }
 
 // UpdateOneWithTransaction implements TransactinalDynamoDBTemplate.
-func (*defaultTransactionalDynamoDBTemplate) UpdateOneWithTransaction(tableName tables.DynamoDBTableName, input criteria.UpdateInput) error {
-	panic("unimplemented")
+func (t *defaultTransactionalDynamoDBTemplate) UpdateOneWithTransaction(tableName tables.DynamoDBTableName, input criteria.UpdateInput) error {
+	// プライマリキーの条件
+	keyMap, err := mydynamodb.CreatePkAttributeValue(input.PrimarKey)
+	if err != nil {
+		return err
+	}
+	// 更新表現
+	expr, err := mydynamodb.CreateUpdateExpressionBuilder(input)
+	if err != nil {
+		return err
+	}
+	// TransactWriteItemの作成
+	item := types.TransactWriteItem{
+		Update: &types.Update{
+			TableName:                 aws.String(string(tableName)),
+			Key:                       keyMap,
+			ExpressionAttributeNames:  expr.Names(),
+			ExpressionAttributeValues: expr.Values(),
+			UpdateExpression:          expr.Update(),
+			ConditionExpression:       expr.Condition(),
+		},
+	}
+	// TransactWriteItemの追加
+	t.transactionalDynamoDBAccessor.AppendTransactWriteItem(&item)
+	return nil
 }
 
 // DeleteOneWithTransaction implements TransactinalDynamoDBTemplate.
-func (*defaultTransactionalDynamoDBTemplate) DeleteOneWithTransaction(tableName tables.DynamoDBTableName, input criteria.DeleteInput) error {
-	panic("unimplemented")
+func (t *defaultTransactionalDynamoDBTemplate) DeleteOneWithTransaction(tableName tables.DynamoDBTableName, input criteria.DeleteInput) error {
+	// プライマリキーの条件
+	keyMap, err := mydynamodb.CreatePkAttributeValue(input.PrimarKey)
+	if err != nil {
+		return err
+	}
+	// 削除表現
+	expr, err := mydynamodb.CreateDeleteExpressionBuilder(input)
+	if err != nil {
+		return err
+	}
+	// TransactWriteItemの作成
+	item := types.TransactWriteItem{
+		Delete: &types.Delete{
+			TableName:                 aws.String(string(tableName)),
+			Key:                       keyMap,
+			ExpressionAttributeNames:  expr.Names(),
+			ExpressionAttributeValues: expr.Values(),
+		},
+	}
+	// TransactWriteItemの追加
+	t.transactionalDynamoDBAccessor.AppendTransactWriteItem(&item)
+	return nil
 }

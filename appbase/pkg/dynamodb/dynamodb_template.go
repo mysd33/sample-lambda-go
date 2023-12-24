@@ -25,11 +25,17 @@ var (
 
 // DynamoDBTemplate は、DynamoDBアクセスを定型化した高次のインタフェースです。
 type DynamoDBTemplate interface {
+	// CreateOne は、DynamoDBに項目を登録します。
 	CreateOne(tableName tables.DynamoDBTableName, inputEntity any) error
+	// FindOneByPrimaryKey は、ベーステーブルのプライマリキーを使ってDynamoDBから項目を取得します。
 	FindOneByPrimaryKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntity any) error
+	// FindOneByGSI は、GSIを使ってDynamoDBから項目を取得します。
 	FindSomeByPrimaryKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntities any) error
+	// FindSomeByGSI は、GSIを使ってDynamoDBから項目を取得します。
 	FindSomeByGSI(tableName tables.DynamoDBTableName, input criteria.GsiQueryInput, outEntities any) error
+	// UpdateOne は、DynamoDBの項目を更新します。
 	UpdateOne(tableName tables.DynamoDBTableName, input criteria.UpdateInput) error
+	// DeleteOne は、DynamoDBの項目を削除します。
 	DeleteOne(tableName tables.DynamoDBTableName, input criteria.DeleteInput) error
 }
 
@@ -50,7 +56,7 @@ type defaultDynamoDBTemplate struct {
 
 // CreateOne implements DynamoDBTemplate.
 func (t *defaultDynamoDBTemplate) CreateOne(tableName tables.DynamoDBTableName, inputEntity any) error {
-	item, err := attributevalue.MarshalMap(inputEntity)
+	attributes, err := attributevalue.MarshalMap(inputEntity)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -60,13 +66,13 @@ func (t *defaultDynamoDBTemplate) CreateOne(tableName tables.DynamoDBTableName, 
 	expressionAttributeNames := map[string]string{
 		"#partition_key": partitonkeyName,
 	}
-	input := &dynamodb.PutItemInput{
+	item := &dynamodb.PutItemInput{
 		TableName:                aws.String(string(tableName)),
-		Item:                     item,
+		Item:                     attributes,
 		ConditionExpression:      conditionExpression,
 		ExpressionAttributeNames: expressionAttributeNames,
 	}
-	_, err = t.dynamodbAccessor.PutItemSdk(input)
+	_, err = t.dynamodbAccessor.PutItemSdk(item)
 	if err != nil {
 		var condErr *types.ConditionalCheckFailedException
 		if errors.As(err, &condErr) {
@@ -79,15 +85,15 @@ func (t *defaultDynamoDBTemplate) CreateOne(tableName tables.DynamoDBTableName, 
 
 // FindOneByPrimaryKey implements DynamoDBTemplate.
 func (t *defaultDynamoDBTemplate) FindOneByPrimaryKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntity any) error {
-	// プライマリキーの検索条件
-	keyMap, err := t.createPkAttributeValue(input.PrimarKey)
+	// プライマリキーの条件
+	keyMap, err := CreatePkAttributeValue(input.PrimarKey)
 	if err != nil {
-		return errors.WithStack(err)
+		return err
 	}
 	// 取得項目
 	var projection *string
-	if len(input.SelectItems) > 0 {
-		projection = aws.String(strings.Join(input.SelectItems, ","))
+	if len(input.SelectAttributes) > 0 {
+		projection = aws.String(strings.Join(input.SelectAttributes, ","))
 	}
 	// GetItemInput
 	getItemInput := &dynamodb.GetItemInput{
@@ -123,52 +129,68 @@ func (t *defaultDynamoDBTemplate) FindSomeByPrimaryKey(tableName tables.DynamoDB
 
 // UpdateOne implements DynamoDBTemplate.
 func (t *defaultDynamoDBTemplate) UpdateOne(tableName tables.DynamoDBTableName, input criteria.UpdateInput) error {
-	panic("unimplemented")
+	// プライマリキーの条件
+	keyMap, err := CreatePkAttributeValue(input.PrimarKey)
+	if err != nil {
+		return err
+	}
+	// 更新表現
+	expr, err := CreateUpdateExpressionBuilder(input)
+	if err != nil {
+		return err
+	}
+	// UpdateItemInput
+	updateItemInput := &dynamodb.UpdateItemInput{
+		TableName:                 aws.String(string(tableName)),
+		Key:                       keyMap,
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		UpdateExpression:          expr.Update(),
+		ConditionExpression:       expr.Condition(),
+		ReturnValues:              types.ReturnValueAllNew,
+	}
+	// UpdateItemの実行
+	_, err = t.dynamodbAccessor.UpdateItemSdk(updateItemInput)
+	if err != nil {
+		// 更新条件エラー
+		var condErr *types.ConditionalCheckFailedException
+		if errors.As(err, &condErr) {
+			return ErrUpdateWithCondtion
+		}
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 // DeleteOne implements DynamoDBTemplate.
 func (t *defaultDynamoDBTemplate) DeleteOne(tableName tables.DynamoDBTableName, input criteria.DeleteInput) error {
-	panic("unimplemented")
-}
-
-//TODO: transactionパッケージでも使えるように公開しないとダメかも
-
-func (t *defaultDynamoDBTemplate) typeSwitch(keyValue criteria.KeyValue) (types.AttributeValue, error) {
-	t.log.Debug("typeSwitch:%v", keyValue.Value)
-	switch keyValue.Value.(type) {
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
-		//TODO: ほんとに数値をそのままstringキャストでよい？
-		return &types.AttributeValueMemberN{Value: keyValue.Value.(string)}, nil
-	case string:
-		return &types.AttributeValueMemberS{Value: keyValue.Value.(string)}, nil
-	case bool:
-		return &types.AttributeValueMemberBOOL{Value: keyValue.Value.(bool)}, nil
-	case []byte:
-		return &types.AttributeValueMemberB{Value: keyValue.Value.([]byte)}, nil
-	default:
-		return nil, errors.New("type not supported")
-	}
-}
-
-// プライマリキーの完全一致による条件のAttributeValueのマップを生成します。
-func (t *defaultDynamoDBTemplate) createPkAttributeValue(primaryKey criteria.KeyPair) (map[string]types.AttributeValue, error) {
-	keymap := map[string]types.AttributeValue{}
-	// パーティションキー
-	partitionKey := primaryKey.PartitionKey
-	pk, err := t.typeSwitch(partitionKey)
+	// プライマリキーの条件
+	keyMap, err := CreatePkAttributeValue(input.PrimarKey)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return err
 	}
-	keymap[partitionKey.Key] = pk
-
-	// ソートキー
-	sortKey := primaryKey.SortKey
-	if sortKey != nil {
-		sk, err := t.typeSwitch(*sortKey)
-		if err != nil {
-			return nil, errors.WithStack(err)
+	// 削除表現
+	expr, err := CreateDeleteExpressionBuilder(input)
+	if err != nil {
+		return err
+	}
+	// DeleteItemInput
+	deleteItemInput := &dynamodb.DeleteItemInput{
+		TableName:                 aws.String(string(tableName)),
+		Key:                       keyMap,
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		ReturnValues:              types.ReturnValueNone,
+	}
+	// DeleteItemの実行
+	_, err = t.dynamodbAccessor.DeleteItemSdk(deleteItemInput)
+	if err != nil {
+		// 削除条件エラー
+		var condErr *types.ConditionalCheckFailedException
+		if errors.As(err, &condErr) {
+			return ErrDeleteWithCondtion
 		}
-		keymap[sortKey.Key] = sk
+		return errors.WithStack(err)
 	}
-	return keymap, nil
+	return nil
 }
