@@ -64,7 +64,7 @@ func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, er
 	}
 	var todo entity.Todo
 	// Itemの取得
-	err := tr.dynamodbTemplate.FindOneByPrimaryKey(tr.tableName, input, &todo)
+	err := tr.dynamodbTemplate.FindOneByTableKey(tr.tableName, input, &todo)
 	if err != nil {
 		if errors.Is(err, mydynamodb.ErrRecordNotFound) {
 			// レコード未取得の場合

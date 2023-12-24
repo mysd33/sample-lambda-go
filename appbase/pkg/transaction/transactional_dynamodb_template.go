@@ -48,19 +48,19 @@ func (t *defaultTransactionalDynamoDBTemplate) CreateOne(tableName tables.Dynamo
 	return t.dynamodbTemplate.CreateOne(tableName, inputEntity)
 }
 
-// FindOneByPrimaryKey implements TransactinalDynamoDBTemplate.
-func (t *defaultTransactionalDynamoDBTemplate) FindOneByPrimaryKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntity any) error {
-	return t.dynamodbTemplate.FindOneByPrimaryKey(tableName, input, outEntity)
+// FindOneByTableKey implements TransactinalDynamoDBTemplate.
+func (t *defaultTransactionalDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntity any) error {
+	return t.dynamodbTemplate.FindOneByTableKey(tableName, input, outEntity)
 }
 
-// FindSomeByGSI implements TransactinalDynamoDBTemplate.
-func (t *defaultTransactionalDynamoDBTemplate) FindSomeByGSI(tableName tables.DynamoDBTableName, input criteria.GsiQueryInput, outEntities any) error {
-	return t.dynamodbTemplate.FindSomeByGSI(tableName, input, outEntities)
+// FindSomeByGSIKey implements TransactinalDynamoDBTemplate.
+func (t *defaultTransactionalDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTableName, input criteria.GsiQueryInput, outEntities any) error {
+	return t.dynamodbTemplate.FindSomeByGSIKey(tableName, input, outEntities)
 }
 
-// FindSomeByPrimaryKey implements TransactinalDynamoDBTemplate.
-func (t *defaultTransactionalDynamoDBTemplate) FindSomeByPrimaryKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntities any) error {
-	return t.dynamodbTemplate.FindSomeByPrimaryKey(tableName, input, outEntities)
+// FindSomeByTableKey implements TransactinalDynamoDBTemplate.
+func (t *defaultTransactionalDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntities any) error {
+	return t.dynamodbTemplate.FindSomeByTableKey(tableName, input, outEntities)
 }
 
 // UpdateOne implements TransactinalDynamoDBTemplate.

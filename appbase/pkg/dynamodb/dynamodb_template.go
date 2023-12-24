@@ -27,12 +27,12 @@ var (
 type DynamoDBTemplate interface {
 	// CreateOne は、DynamoDBに項目を登録します。
 	CreateOne(tableName tables.DynamoDBTableName, inputEntity any) error
-	// FindOneByPrimaryKey は、ベーステーブルのプライマリキーを使ってDynamoDBから項目を取得します。
-	FindOneByPrimaryKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntity any) error
-	// FindOneByGSI は、GSIを使ってDynamoDBから項目を取得します。
-	FindSomeByPrimaryKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntities any) error
-	// FindSomeByGSI は、GSIを使ってDynamoDBから項目を取得します。
-	FindSomeByGSI(tableName tables.DynamoDBTableName, input criteria.GsiQueryInput, outEntities any) error
+	// FindOneByTableKey は、ベーステーブルのプライマリキーの完全一致でDynamoDBから項目を取得します。
+	FindOneByTableKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntity any) error
+	// FindOneByPrimaryKey は、ベーステーブルのプライマリキーによる条件でDynamoDBから複数件の項目を取得します。
+	FindSomeByTableKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntities any) error
+	// FindSomeByGSIKey は、GSIのプライマリキーによる条件でDynamoDBから項目を複数件取得します。
+	FindSomeByGSIKey(tableName tables.DynamoDBTableName, input criteria.GsiQueryInput, outEntities any) error
 	// UpdateOne は、DynamoDBの項目を更新します。
 	UpdateOne(tableName tables.DynamoDBTableName, input criteria.UpdateInput) error
 	// DeleteOne は、DynamoDBの項目を削除します。
@@ -83,8 +83,8 @@ func (t *defaultDynamoDBTemplate) CreateOne(tableName tables.DynamoDBTableName, 
 	return nil
 }
 
-// FindOneByPrimaryKey implements DynamoDBTemplate.
-func (t *defaultDynamoDBTemplate) FindOneByPrimaryKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntity any) error {
+// FindOneByTableKey implements DynamoDBTemplate.
+func (t *defaultDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntity any) error {
 	// プライマリキーの条件
 	keyMap, err := CreatePkAttributeValue(input.PrimarKey)
 	if err != nil {
@@ -117,13 +117,13 @@ func (t *defaultDynamoDBTemplate) FindOneByPrimaryKey(tableName tables.DynamoDBT
 	return nil
 }
 
-// FindSomeByGSI implements DynamoDBTemplate.
-func (t *defaultDynamoDBTemplate) FindSomeByGSI(tableName tables.DynamoDBTableName, input criteria.GsiQueryInput, outEntities any) error {
+// FindSomeByGSIKey implements DynamoDBTemplate.
+func (t *defaultDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTableName, input criteria.GsiQueryInput, outEntities any) error {
 	panic("unimplemented")
 }
 
-// FindSomeByPrimaryKey implements DynamoDBTemplate.
-func (t *defaultDynamoDBTemplate) FindSomeByPrimaryKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntities any) error {
+// FindSomeByTableKey implements DynamoDBTemplate.
+func (t *defaultDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntities any) error {
 	panic("unimplemented")
 }
 
