@@ -1,7 +1,7 @@
 /*
-criteria パッケージは、検索条件の入力データを扱うパッケージです。
+input パッケージは、検索条件の入力データを扱うパッケージです。
 */
-package criteria
+package input
 
 import "example.com/appbase/pkg/dynamodb/gsi"
 

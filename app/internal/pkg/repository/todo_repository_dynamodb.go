@@ -9,7 +9,7 @@ import (
 
 	"example.com/appbase/pkg/config"
 	mydynamodb "example.com/appbase/pkg/dynamodb"
-	"example.com/appbase/pkg/dynamodb/criteria"
+	"example.com/appbase/pkg/dynamodb/input"
 	"example.com/appbase/pkg/dynamodb/tables"
 	myerrors "example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/id"
@@ -54,9 +54,9 @@ type todoRepositoryImplByDynamoDB struct {
 
 func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, error) {
 	// DynamoDBTemplateを使ったコード
-	input := criteria.PkOnlyQueryInput{
-		PrimaryKey: criteria.PrimaryKey{
-			PartitionKey: criteria.Attribute{
+	input := input.PkOnlyQueryInput{
+		PrimaryKey: input.PrimaryKey{
+			PartitionKey: input.Attribute{
 				Key:   tr.primaryKey.PartitionKey,
 				Value: todoId,
 			},

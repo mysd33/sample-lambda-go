@@ -6,7 +6,7 @@ package dynamodb
 import (
 	"strconv"
 
-	"example.com/appbase/pkg/dynamodb/criteria"
+	"example.com/appbase/pkg/dynamodb/input"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -16,7 +16,7 @@ import (
 // ユーティリティ関数
 
 // CreatePkAttributeValue は、プライマリキーの完全一致による条件のAttributeValueのマップを作成します。
-func CreatePkAttributeValue(primaryKey criteria.PrimaryKey) (map[string]types.AttributeValue, error) {
+func CreatePkAttributeValue(primaryKey input.PrimaryKey) (map[string]types.AttributeValue, error) {
 	keymap := map[string]types.AttributeValue{}
 	// パーティションキー
 	partitionKey := primaryKey.PartitionKey
@@ -39,18 +39,18 @@ func CreatePkAttributeValue(primaryKey criteria.PrimaryKey) (map[string]types.At
 }
 
 // CreateQueryExpressionForTable は、 ベーステーブルに対するクエリの条件のExpressionを作成します。
-func CreateQueryExpressionForTable(input criteria.PkQueryInput) (*expression.Expression, error) {
+func CreateQueryExpressionForTable(input input.PkQueryInput) (*expression.Expression, error) {
 	primaryKey := &input.PrimaryKey
 	return createQueryExpression(primaryKey, input.SelectAttributes, input.WhereClauses)
 }
 
 // CreateQueryExpressionForGSI は、 GSIに対するクエリの条件のExpressionを作成します。
-func CreateQueryExpressionForGSI(input criteria.GsiQueryInput) (*expression.Expression, error) {
+func CreateQueryExpressionForGSI(input input.GsiQueryInput) (*expression.Expression, error) {
 	primaryKey := &input.IndexKey
 	return createQueryExpression(primaryKey, input.SelectAttributes, input.WhereClauses)
 }
 
-func createQueryExpression(primaryKey *criteria.PrimaryKey, attributes []string, whereCauses []*criteria.WhereClause) (*expression.Expression, error) {
+func createQueryExpression(primaryKey *input.PrimaryKey, attributes []string, whereCauses []*input.WhereClause) (*expression.Expression, error) {
 	keyCond, err := CreateKeyCondition(primaryKey)
 	if err != nil {
 		return nil, err
@@ -79,7 +79,7 @@ func createQueryExpression(primaryKey *criteria.PrimaryKey, attributes []string,
 }
 
 // CreateUpdateExpression は、更新条件のExpressionを作成します。
-func CreateUpdateExpression(input criteria.UpdateInput) (*expression.Expression, error) {
+func CreateUpdateExpression(input input.UpdateInput) (*expression.Expression, error) {
 	// 更新項目の設定
 	upd := expression.UpdateBuilder{}
 	for _, attr := range input.UpdateAttributes {
@@ -105,7 +105,7 @@ func CreateUpdateExpression(input criteria.UpdateInput) (*expression.Expression,
 }
 
 // CreateDeleteExpression は、削除条件のExpressionを作成します。
-func CreateDeleteExpression(input criteria.DeleteInput) (*expression.Expression, error) {
+func CreateDeleteExpression(input input.DeleteInput) (*expression.Expression, error) {
 	// 削除条件の作成
 	delCond, err := CreateFilterCondition(input.WhereClauses)
 	if err != nil {
@@ -121,32 +121,32 @@ func CreateDeleteExpression(input criteria.DeleteInput) (*expression.Expression,
 }
 
 // CreateKeyCondition は、キー条件を作成します。
-func CreateKeyCondition(primaryKeyCond *criteria.PrimaryKey) (*expression.KeyConditionBuilder, error) {
+func CreateKeyCondition(primaryKeyCond *input.PrimaryKey) (*expression.KeyConditionBuilder, error) {
 	// パーティションキーの条件
 	keyCond := expression.Key(primaryKeyCond.PartitionKey.Key).Equal(expression.Value(primaryKeyCond.PartitionKey.Value))
 	// ソートキーがある場合
 	if primaryKeyCond.SortKey != nil {
 		switch primaryKeyCond.SortKeyOp {
-		case criteria.SORTKEY_BEGINS_WITH:
+		case input.SORTKEY_BEGINS_WITH:
 			if v, ok := primaryKeyCond.SortKey.Value.(string); ok {
 				keyCond = keyCond.And(expression.Key(primaryKeyCond.SortKey.Key).BeginsWith(v))
 			} else {
 				return nil, errors.New("type not supported")
 			}
-		case criteria.SORTKEY_BETWEEN:
+		case input.SORTKEY_BETWEEN:
 			// primaryKey.SortKey.Value[0] <= ソートキー <= primaryKey.SortKey.Value[1]
 			if v, ok := primaryKeyCond.SortKey.Value.([2]interface{}); ok {
 				keyCond.And(expression.Key(primaryKeyCond.SortKey.Key).Between(expression.Value(v[0]), expression.Value(v[1])))
 			} else {
 				return nil, errors.New("type not supported")
 			}
-		case criteria.SORTKEY_GREATER_THAN:
+		case input.SORTKEY_GREATER_THAN:
 			keyCond = keyCond.And(expression.Key(primaryKeyCond.SortKey.Key).GreaterThan(expression.Value(primaryKeyCond.SortKey.Value)))
-		case criteria.SORTKEY_GREATER_THAN_EQ:
+		case input.SORTKEY_GREATER_THAN_EQ:
 			keyCond = keyCond.And(expression.Key(primaryKeyCond.SortKey.Key).GreaterThanEqual(expression.Value(primaryKeyCond.SortKey.Value)))
-		case criteria.SORTKEY_LESS_THAN:
+		case input.SORTKEY_LESS_THAN:
 			keyCond = keyCond.And(expression.Key(primaryKeyCond.SortKey.Key).LessThan(expression.Value(primaryKeyCond.SortKey.Value)))
-		case criteria.SORTKEY_LESS_THAN_EQ:
+		case input.SORTKEY_LESS_THAN_EQ:
 			keyCond = keyCond.And(expression.Key(primaryKeyCond.SortKey.Key).LessThanEqual(expression.Value(primaryKeyCond.SortKey.Value)))
 		default:
 			return nil, errors.New("opration not supperted")
@@ -168,33 +168,33 @@ func CreateProjection(attributeNames []string) *expression.ProjectionBuilder {
 }
 
 // CreateFilterCondition は、フィルタ条件を作成します。
-func CreateFilterCondition(whereClauses []*criteria.WhereClause) (*expression.ConditionBuilder, error) {
-	fn := func(where criteria.WhereClause, cond *expression.ConditionBuilder) (*expression.ConditionBuilder, error) {
+func CreateFilterCondition(whereClauses []*input.WhereClause) (*expression.ConditionBuilder, error) {
+	fn := func(where input.WhereClause, cond *expression.ConditionBuilder) (*expression.ConditionBuilder, error) {
 		var tmp expression.ConditionBuilder
 		switch where.WhereOp {
-		case criteria.WHERE_EQUAL:
+		case input.WHERE_EQUAL:
 			tmp = expression.Name(where.Attribute.Key).Equal(expression.Value(where.Attribute.Value))
-		case criteria.WHERE_NOT_EQUAL:
+		case input.WHERE_NOT_EQUAL:
 			tmp = expression.Name(where.Attribute.Key).NotEqual(expression.Value(where.Attribute.Value))
-		case criteria.WHERE_BEGINS_WITH:
+		case input.WHERE_BEGINS_WITH:
 			if v, ok := where.Attribute.Value.(string); ok {
 				tmp = expression.Name(where.Attribute.Key).BeginsWith(v)
 			} else {
 				return nil, errors.New("type not supported")
 			}
-		case criteria.WHERE_GREATER_THAN:
+		case input.WHERE_GREATER_THAN:
 			tmp = expression.Name(where.Attribute.Key).GreaterThan(expression.Value(where.Attribute.Value))
-		case criteria.WHERE_GREATER_THAN_EQ:
+		case input.WHERE_GREATER_THAN_EQ:
 			tmp = expression.Name(where.Attribute.Key).GreaterThanEqual(expression.Value(where.Attribute.Value))
-		case criteria.WHERE_LESS_THAN:
+		case input.WHERE_LESS_THAN:
 			tmp = expression.Name(where.Attribute.Key).LessThan(expression.Value(where.Attribute.Value))
-		case criteria.WHERE_LESS_THAN_EQ:
+		case input.WHERE_LESS_THAN_EQ:
 			tmp = expression.Name(where.Attribute.Key).LessThanEqual(expression.Value(where.Attribute.Value))
 		default:
 			return nil, errors.New("operator not supported")
 		}
 		if cond != nil {
-			if where.AppendOp == criteria.APPEND_OR {
+			if where.AppendOp == input.APPEND_OR {
 				tmp = cond.Or(*cond, tmp)
 			} else {
 				tmp = cond.And(*cond, tmp)
@@ -216,16 +216,16 @@ func CreateFilterCondition(whereClauses []*criteria.WhereClause) (*expression.Co
 }
 
 // StandardIndexForward は、インデックスの検索順序を返します。
-func ScanIndexForward(orderby criteria.OrderBy) *bool {
+func ScanIndexForward(orderby input.OrderBy) *bool {
 	switch orderby {
-	case criteria.ORDER_BY_DESC:
+	case input.ORDER_BY_DESC:
 		return aws.Bool(false)
 	default:
 		return aws.Bool(true)
 	}
 }
 
-func typeSwitch(attribute criteria.Attribute) (types.AttributeValue, error) {
+func typeSwitch(attribute input.Attribute) (types.AttributeValue, error) {
 	switch attribute.Value.(type) {
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 		// TODO: 要動作確認

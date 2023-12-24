@@ -5,7 +5,7 @@ package transaction
 
 import (
 	mydynamodb "example.com/appbase/pkg/dynamodb"
-	"example.com/appbase/pkg/dynamodb/criteria"
+	"example.com/appbase/pkg/dynamodb/input"
 	"example.com/appbase/pkg/dynamodb/tables"
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -20,9 +20,9 @@ type TransactinalDynamoDBTemplate interface {
 	// CreateOneWithTransaction は、トランザクションでDynamoDBに項目を登録します。
 	CreateOneWithTransaction(tableName tables.DynamoDBTableName, inputEntity any) error
 	// UpdateOneWithTransaction は、トランザクションでDynamoDBに項目を更新します。
-	UpdateOneWithTransaction(tableName tables.DynamoDBTableName, input criteria.UpdateInput) error
+	UpdateOneWithTransaction(tableName tables.DynamoDBTableName, input input.UpdateInput) error
 	// DeleteOneWithTransaction は、トランザクションでDynamoDBに項目を削除します。
-	DeleteOneWithTransaction(tableName tables.DynamoDBTableName, input criteria.DeleteInput) error
+	DeleteOneWithTransaction(tableName tables.DynamoDBTableName, input input.DeleteInput) error
 }
 
 func NewTransactionalDynamoDBTemplate(log logging.Logger,
@@ -49,27 +49,27 @@ func (t *defaultTransactionalDynamoDBTemplate) CreateOne(tableName tables.Dynamo
 }
 
 // FindOneByTableKey implements TransactinalDynamoDBTemplate.
-func (t *defaultTransactionalDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntity any) error {
+func (t *defaultTransactionalDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTableName, input input.PkOnlyQueryInput, outEntity any) error {
 	return t.dynamodbTemplate.FindOneByTableKey(tableName, input, outEntity)
 }
 
 // FindSomeByTableKey implements TransactinalDynamoDBTemplate.
-func (t *defaultTransactionalDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTableName, input criteria.PkQueryInput, outEntities any) error {
+func (t *defaultTransactionalDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTableName, input input.PkQueryInput, outEntities any) error {
 	return t.dynamodbTemplate.FindSomeByTableKey(tableName, input, outEntities)
 }
 
 // FindSomeByGSIKey implements TransactinalDynamoDBTemplate.
-func (t *defaultTransactionalDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTableName, input criteria.GsiQueryInput, outEntities any) error {
+func (t *defaultTransactionalDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTableName, input input.GsiQueryInput, outEntities any) error {
 	return t.dynamodbTemplate.FindSomeByGSIKey(tableName, input, outEntities)
 }
 
 // UpdateOne implements TransactinalDynamoDBTemplate.
-func (t *defaultTransactionalDynamoDBTemplate) UpdateOne(tableName tables.DynamoDBTableName, input criteria.UpdateInput) error {
+func (t *defaultTransactionalDynamoDBTemplate) UpdateOne(tableName tables.DynamoDBTableName, input input.UpdateInput) error {
 	return t.dynamodbTemplate.UpdateOne(tableName, input)
 }
 
 // DeleteOne implements TransactinalDynamoDBTemplate.
-func (t *defaultTransactionalDynamoDBTemplate) DeleteOne(tableName tables.DynamoDBTableName, input criteria.DeleteInput) error {
+func (t *defaultTransactionalDynamoDBTemplate) DeleteOne(tableName tables.DynamoDBTableName, input input.DeleteInput) error {
 	return t.dynamodbTemplate.DeleteOne(tableName, input)
 }
 
@@ -100,7 +100,7 @@ func (t *defaultTransactionalDynamoDBTemplate) CreateOneWithTransaction(tableNam
 }
 
 // UpdateOneWithTransaction implements TransactinalDynamoDBTemplate.
-func (t *defaultTransactionalDynamoDBTemplate) UpdateOneWithTransaction(tableName tables.DynamoDBTableName, input criteria.UpdateInput) error {
+func (t *defaultTransactionalDynamoDBTemplate) UpdateOneWithTransaction(tableName tables.DynamoDBTableName, input input.UpdateInput) error {
 	// プライマリキーの条件
 	keyMap, err := mydynamodb.CreatePkAttributeValue(input.PrimaryKey)
 	if err != nil {
@@ -128,7 +128,7 @@ func (t *defaultTransactionalDynamoDBTemplate) UpdateOneWithTransaction(tableNam
 }
 
 // DeleteOneWithTransaction implements TransactinalDynamoDBTemplate.
-func (t *defaultTransactionalDynamoDBTemplate) DeleteOneWithTransaction(tableName tables.DynamoDBTableName, input criteria.DeleteInput) error {
+func (t *defaultTransactionalDynamoDBTemplate) DeleteOneWithTransaction(tableName tables.DynamoDBTableName, input input.DeleteInput) error {
 	// プライマリキーの条件
 	keyMap, err := mydynamodb.CreatePkAttributeValue(input.PrimaryKey)
 	if err != nil {

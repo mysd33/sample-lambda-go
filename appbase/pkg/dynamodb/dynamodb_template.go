@@ -6,7 +6,7 @@ package dynamodb
 import (
 	"strings"
 
-	"example.com/appbase/pkg/dynamodb/criteria"
+	"example.com/appbase/pkg/dynamodb/input"
 	"example.com/appbase/pkg/dynamodb/tables"
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -28,15 +28,15 @@ type DynamoDBTemplate interface {
 	// CreateOne は、DynamoDBに項目を1件登録します。
 	CreateOne(tableName tables.DynamoDBTableName, inputEntity any) error
 	// FindOneByTableKey は、ベーステーブルのプライマリキーの完全一致でDynamoDBから1件の項目を取得します。
-	FindOneByTableKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntity any) error
+	FindOneByTableKey(tableName tables.DynamoDBTableName, input input.PkOnlyQueryInput, outEntity any) error
 	// FindSomeByTableKey は、ベーステーブルのプライマリキーによる条件でDynamoDBから複数件の項目を取得します。
-	FindSomeByTableKey(tableName tables.DynamoDBTableName, input criteria.PkQueryInput, outEntities any) error
+	FindSomeByTableKey(tableName tables.DynamoDBTableName, input input.PkQueryInput, outEntities any) error
 	// FindSomeByGSIKey は、GSIのプライマリキーによる条件でDynamoDBから項目を複数件取得します。
-	FindSomeByGSIKey(tableName tables.DynamoDBTableName, input criteria.GsiQueryInput, outEntities any) error
+	FindSomeByGSIKey(tableName tables.DynamoDBTableName, input input.GsiQueryInput, outEntities any) error
 	// UpdateOne は、DynamoDBの項目を更新します。
-	UpdateOne(tableName tables.DynamoDBTableName, input criteria.UpdateInput) error
+	UpdateOne(tableName tables.DynamoDBTableName, input input.UpdateInput) error
 	// DeleteOne は、DynamoDBの項目を削除します。
-	DeleteOne(tableName tables.DynamoDBTableName, input criteria.DeleteInput) error
+	DeleteOne(tableName tables.DynamoDBTableName, input input.DeleteInput) error
 }
 
 // NewDynamoDBTemplate は、DynamoDBTemplateのインスタンスを生成します。
@@ -83,7 +83,7 @@ func (t *defaultDynamoDBTemplate) CreateOne(tableName tables.DynamoDBTableName, 
 }
 
 // FindOneByTableKey implements DynamoDBTemplate.
-func (t *defaultDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntity any) error {
+func (t *defaultDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTableName, input input.PkOnlyQueryInput, outEntity any) error {
 	// プライマリキーの条件
 	keyMap, err := CreatePkAttributeValue(input.PrimaryKey)
 	if err != nil {
@@ -117,7 +117,7 @@ func (t *defaultDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTab
 }
 
 // FindSomeByTableKey implements DynamoDBTemplate.
-func (t *defaultDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTableName, input criteria.PkQueryInput, outEntities any) error {
+func (t *defaultDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTableName, input input.PkQueryInput, outEntities any) error {
 	// クエリ表現の作成
 	expr, err := CreateQueryExpressionForTable(input)
 	if err != nil {
@@ -167,7 +167,7 @@ func (t *defaultDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTa
 }
 
 // FindSomeByGSIKey implements DynamoDBTemplate.
-func (t *defaultDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTableName, input criteria.GsiQueryInput, outEntities any) error {
+func (t *defaultDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTableName, input input.GsiQueryInput, outEntities any) error {
 	// クエリ表現の作成
 	expr, err := CreateQueryExpressionForGSI(input)
 	if err != nil {
@@ -206,7 +206,7 @@ func (t *defaultDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTabl
 }
 
 // UpdateOne implements DynamoDBTemplate.
-func (t *defaultDynamoDBTemplate) UpdateOne(tableName tables.DynamoDBTableName, input criteria.UpdateInput) error {
+func (t *defaultDynamoDBTemplate) UpdateOne(tableName tables.DynamoDBTableName, input input.UpdateInput) error {
 	// プライマリキーの条件
 	keyMap, err := CreatePkAttributeValue(input.PrimaryKey)
 	if err != nil {
@@ -241,7 +241,7 @@ func (t *defaultDynamoDBTemplate) UpdateOne(tableName tables.DynamoDBTableName, 
 }
 
 // DeleteOne implements DynamoDBTemplate.
-func (t *defaultDynamoDBTemplate) DeleteOne(tableName tables.DynamoDBTableName, input criteria.DeleteInput) error {
+func (t *defaultDynamoDBTemplate) DeleteOne(tableName tables.DynamoDBTableName, input input.DeleteInput) error {
 	// プライマリキーの条件
 	keyMap, err := CreatePkAttributeValue(input.PrimaryKey)
 	if err != nil {
