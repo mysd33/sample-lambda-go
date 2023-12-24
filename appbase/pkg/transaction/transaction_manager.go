@@ -6,6 +6,7 @@ package transaction
 import (
 	"example.com/appbase/pkg/domain"
 	"example.com/appbase/pkg/logging"
+	"example.com/appbase/pkg/message"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/cockroachdb/errors"
@@ -136,7 +137,18 @@ func (t *defaultTransaction) End(err error) (*dynamodb.TransactWriteItemsOutput,
 	// DynamoDBトランザクション実行
 	output, err := t.dynamodbAccessor.TransactWriteItemsSDK(t.transactWriteItems)
 	if err != nil {
-		t.log.Debug("トランザクション実行失敗でロールバック")
+		t.log.Debug("トランザクション実行失敗")
+		// https://docs.aws.amazon.com/ja_jp/amazondynamodb/latest/developerguide/transaction-apis.html
+		var txCanceledException *types.TransactionCanceledException
+		var txConflictException *types.TransactionConflictException
+		// トランザクションロールバックの理由を警告ログ出力
+		if errors.As(err, &txCanceledException) {
+			for _, v := range txCanceledException.CancellationReasons {
+				t.log.Info(message.I_FW_0003, *v.Code, *v.Message, v.Item)
+			}
+		} else if errors.As(err, &txConflictException) {
+			t.log.Info(message.I_FW_0004, *txConflictException.ErrorCodeOverride, *txConflictException.Message)
+		}
 		return nil, errors.WithStack(err)
 	}
 	t.log.Debug("トランザクション終了")

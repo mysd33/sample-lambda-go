@@ -14,6 +14,7 @@ import (
 	myerrors "example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/id"
 	"example.com/appbase/pkg/logging"
+
 	"example.com/appbase/pkg/transaction"
 )
 
@@ -106,6 +107,7 @@ func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, er
 func (tr *todoRepositoryImplByDynamoDB) CreateOne(todo *entity.Todo) (*entity.Todo, error) {
 	// ID採番
 	todoId := id.GenerateId()
+	//todoId := "dummy"
 	todo.ID = todoId
 	// DynamoDBTemplateを使ったコード
 	err := tr.dynamodbTemplate.CreateOne(tr.tableName, todo)
@@ -143,6 +145,7 @@ func (tr *todoRepositoryImplByDynamoDB) CreateOne(todo *entity.Todo) (*entity.To
 func (tr *todoRepositoryImplByDynamoDB) CreateOneTx(todo *entity.Todo) (*entity.Todo, error) {
 	// ID採番
 	todoId := id.GenerateId()
+	//todoId := "dummy"
 	todo.ID = todoId
 	// DynamoDBTemplateを使ったコード
 	err := tr.dynamodbTemplate.CreateOneWithTransaction(tr.tableName, todo)

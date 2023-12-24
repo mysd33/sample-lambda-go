@@ -35,8 +35,6 @@ func NewTransactionalDynamoDBTemplate(log logging.Logger,
 	}
 }
 
-//TODO:　TransactinalDynamoDBTemplateインタフェースの実装
-
 type defaultTransactionalDynamoDBTemplate struct {
 	log                           logging.Logger
 	dynamodbTemplate              mydynamodb.DynamoDBTemplate

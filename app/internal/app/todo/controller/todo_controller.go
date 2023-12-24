@@ -3,11 +3,14 @@ package controller
 
 import (
 	"app/internal/app/todo/service"
+	"app/internal/pkg/message"
+	"errors"
 
 	"example.com/appbase/pkg/domain"
-	"example.com/appbase/pkg/errors"
+	myerrors "example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/transaction"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/gin-gonic/gin"
 )
 
@@ -49,7 +52,7 @@ func (c *todoControllerImpl) Find(ctx *gin.Context) (any, error) {
 	// 入力チェック
 	if todoId == "" {
 		// 入力チェックエラーのハンドリング
-		return nil, errors.NewValidationErrorWithMessage("クエリパラメータtodoIdが未指定です")
+		return nil, myerrors.NewValidationErrorWithMessage("クエリパラメータtodoIdが未指定です")
 	}
 	// DynamoDBトランザクション管理してサービスの実行
 	return c.transactionManager.ExecuteTransaction(func() (any, error) {
@@ -62,7 +65,7 @@ func (c *todoControllerImpl) Register(ctx *gin.Context) (any, error) {
 	var request Request
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		// 入力チェックエラーのハンドリング
-		return nil, errors.NewValidationError(err)
+		return nil, myerrors.NewValidationError(err)
 	}
 	// クエリパラメータの取得
 	transaction := ctx.Query("tx")
@@ -74,11 +77,26 @@ func (c *todoControllerImpl) Register(ctx *gin.Context) (any, error) {
 			return c.service.RegisterTx(request.TodoTitle)
 		}
 	} else {
+		// トランザクション指定なし
 		serviceFunc = func() (any, error) {
 			return c.service.Register(request.TodoTitle)
 		}
 	}
 
 	// DynamoDBトランザクション管理してサービスの実行
-	return c.transactionManager.ExecuteTransaction(serviceFunc)
+	result, err := c.transactionManager.ExecuteTransaction(serviceFunc)
+	if err != nil {
+		// トランザクションロールバックの場合に業務エラーで返却
+		var txCanceledException *types.TransactionCanceledException
+		var txConflictException *types.TransactionConflictException
+		if errors.As(err, &txCanceledException) {
+			// 登録失敗の業務エラー
+			return nil, myerrors.NewBusinessError(message.W_EX_8004, request.TodoTitle)
+		} else if errors.As(err, &txConflictException) {
+			// 登録失敗の業務エラー
+			return nil, myerrors.NewBusinessError(message.W_EX_8004, request.TodoTitle)
+		}
+		return nil, err
+	}
+	return result, nil
 }

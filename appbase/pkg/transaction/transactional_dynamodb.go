@@ -111,9 +111,6 @@ func (da *defaultTransactionalDynamoDBAccessor) TransactWriteItemsSDK(items []ty
 	}
 	output, err := da.GetDynamoDBClient().TransactWriteItems(apcontext.Context, input)
 
-	// TODO: TransactWriteItems実行時に主キー重複（ErrKeyDuplicaiton）や
-	// 更新条件、削除条件のエラー（ErrUpdateWithCondtion、ErrDeleteWithCondtion）相当が
-	// あった場合に、業務AP側でどうハンドリングするのか？
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
