@@ -29,7 +29,7 @@ type DynamoDBTemplate interface {
 	CreateOne(tableName tables.DynamoDBTableName, inputEntity any) error
 	// FindOneByTableKey は、ベーステーブルのプライマリキーの完全一致でDynamoDBから項目を取得します。
 	FindOneByTableKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntity any) error
-	// FindOneByPrimaryKey は、ベーステーブルのプライマリキーによる条件でDynamoDBから複数件の項目を取得します。
+	// FindSomeByTableKey は、ベーステーブルのプライマリキーによる条件でDynamoDBから複数件の項目を取得します。
 	FindSomeByTableKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntities any) error
 	// FindSomeByGSIKey は、GSIのプライマリキーによる条件でDynamoDBから項目を複数件取得します。
 	FindSomeByGSIKey(tableName tables.DynamoDBTableName, input criteria.GsiQueryInput, outEntities any) error
@@ -46,8 +46,6 @@ func NewDynamoDBTemplate(log logging.Logger, dynamodbAccessor DynamoDBAccessor) 
 		dynamodbAccessor: dynamodbAccessor,
 	}
 }
-
-//TODO:　DynamoDBTemplateインタフェースの実装
 
 type defaultDynamoDBTemplate struct {
 	log              logging.Logger
@@ -86,7 +84,7 @@ func (t *defaultDynamoDBTemplate) CreateOne(tableName tables.DynamoDBTableName, 
 // FindOneByTableKey implements DynamoDBTemplate.
 func (t *defaultDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntity any) error {
 	// プライマリキーの条件
-	keyMap, err := CreatePkAttributeValue(input.PrimarKey)
+	keyMap, err := CreatePkAttributeValue(input.PrimaryKeyCond)
 	if err != nil {
 		return err
 	}
@@ -117,20 +115,20 @@ func (t *defaultDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTab
 	return nil
 }
 
-// FindSomeByGSIKey implements DynamoDBTemplate.
-func (t *defaultDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTableName, input criteria.GsiQueryInput, outEntities any) error {
+// FindSomeByTableKey implements DynamoDBTemplate.
+func (t *defaultDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntities any) error {
 	panic("unimplemented")
 }
 
-// FindSomeByTableKey implements DynamoDBTemplate.
-func (t *defaultDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntities any) error {
+// FindSomeByGSIKey implements DynamoDBTemplate.
+func (t *defaultDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTableName, input criteria.GsiQueryInput, outEntities any) error {
 	panic("unimplemented")
 }
 
 // UpdateOne implements DynamoDBTemplate.
 func (t *defaultDynamoDBTemplate) UpdateOne(tableName tables.DynamoDBTableName, input criteria.UpdateInput) error {
 	// プライマリキーの条件
-	keyMap, err := CreatePkAttributeValue(input.PrimarKey)
+	keyMap, err := CreatePkAttributeValue(input.PrimaryKeyCond)
 	if err != nil {
 		return err
 	}
@@ -165,7 +163,7 @@ func (t *defaultDynamoDBTemplate) UpdateOne(tableName tables.DynamoDBTableName, 
 // DeleteOne implements DynamoDBTemplate.
 func (t *defaultDynamoDBTemplate) DeleteOne(tableName tables.DynamoDBTableName, input criteria.DeleteInput) error {
 	// プライマリキーの条件
-	keyMap, err := CreatePkAttributeValue(input.PrimarKey)
+	keyMap, err := CreatePkAttributeValue(input.PrimaryKeyCond)
 	if err != nil {
 		return err
 	}

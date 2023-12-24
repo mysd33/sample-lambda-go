@@ -15,7 +15,7 @@ import (
 // ユーティリティ関数
 
 // CreatePkAttributeValue は、プライマリキーの完全一致による条件のAttributeValueのマップを作成します。
-func CreatePkAttributeValue(primaryKey criteria.KeyPair) (map[string]types.AttributeValue, error) {
+func CreatePkAttributeValue(primaryKey criteria.PrimaryKeyCond) (map[string]types.AttributeValue, error) {
 	keymap := map[string]types.AttributeValue{}
 	// パーティションキー
 	partitionKey := primaryKey.PartitionKey
@@ -37,9 +37,14 @@ func CreatePkAttributeValue(primaryKey criteria.KeyPair) (map[string]types.Attri
 	return keymap, nil
 }
 
+func CreateKeyCondition(primaryKey *criteria.PrimaryKeyCond) (*expression.KeyConditionBuilder, error) {
+	//TODO:
+	return nil, nil
+}
+
 // CreateUpdateExpressionBuilder は、更新条件のExpressionを作成します。
 func CreateUpdateExpressionBuilder(input criteria.UpdateInput) (*expression.Expression, error) {
-	updCond, err := CreateFilterCondition(input.WhereKeys)
+	updCond, err := CreateFilterCondition(input.WhereClauses)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -75,25 +80,25 @@ func CreateDeleteExpressionBuilder(input criteria.DeleteInput) (*expression.Expr
 func CreateFilterCondition(whereClauses []*criteria.WhereClause) (*expression.ConditionBuilder, error) {
 	fn := func(where criteria.WhereClause, cond *expression.ConditionBuilder) (*expression.ConditionBuilder, error) {
 		var tmp expression.ConditionBuilder
-		switch where.Operator {
+		switch where.WhereOperator {
 		case criteria.WHERE_EQUAL:
-			tmp = expression.Name(where.KeyValue.Key).Equal(expression.Value(where.KeyValue.Value))
+			tmp = expression.Name(where.Attribute.Key).Equal(expression.Value(where.Attribute.Value))
 		case criteria.WHERE_NOT_EQUAL:
-			tmp = expression.Name(where.KeyValue.Key).NotEqual(expression.Value(where.KeyValue.Value))
+			tmp = expression.Name(where.Attribute.Key).NotEqual(expression.Value(where.Attribute.Value))
 		case criteria.WHERE_BEGINS_WITH:
-			if v, ok := where.KeyValue.Value.(string); ok {
-				tmp = expression.Name(where.KeyValue.Key).BeginsWith(v)
+			if v, ok := where.Attribute.Value.(string); ok {
+				tmp = expression.Name(where.Attribute.Key).BeginsWith(v)
 			} else {
 				return nil, errors.New("type not supported")
 			}
 		case criteria.WHERE_GREATER_THAN:
-			tmp = expression.Name(where.KeyValue.Key).GreaterThan(expression.Value(where.KeyValue.Value))
+			tmp = expression.Name(where.Attribute.Key).GreaterThan(expression.Value(where.Attribute.Value))
 		case criteria.WHERE_GREATER_THAN_EQ:
-			tmp = expression.Name(where.KeyValue.Key).GreaterThanEqual(expression.Value(where.KeyValue.Value))
+			tmp = expression.Name(where.Attribute.Key).GreaterThanEqual(expression.Value(where.Attribute.Value))
 		case criteria.WHERE_LESS_THAN:
-			tmp = expression.Name(where.KeyValue.Key).LessThan(expression.Value(where.KeyValue.Value))
+			tmp = expression.Name(where.Attribute.Key).LessThan(expression.Value(where.Attribute.Value))
 		case criteria.WHERE_LESS_THAN_EQ:
-			tmp = expression.Name(where.KeyValue.Key).LessThanEqual(expression.Value(where.KeyValue.Value))
+			tmp = expression.Name(where.Attribute.Key).LessThanEqual(expression.Value(where.Attribute.Value))
 		default:
 			return nil, errors.New("operator not supported")
 		}
@@ -119,7 +124,7 @@ func CreateFilterCondition(whereClauses []*criteria.WhereClause) (*expression.Co
 	return filterCond, nil
 }
 
-func typeSwitch(keyValue criteria.KeyValue) (types.AttributeValue, error) {
+func typeSwitch(keyValue criteria.Attribute) (types.AttributeValue, error) {
 	switch keyValue.Value.(type) {
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 		// TODO: 要確認

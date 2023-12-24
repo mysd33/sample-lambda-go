@@ -102,7 +102,7 @@ func (t *defaultTransactionalDynamoDBTemplate) CreateOneWithTransaction(tableNam
 // UpdateOneWithTransaction implements TransactinalDynamoDBTemplate.
 func (t *defaultTransactionalDynamoDBTemplate) UpdateOneWithTransaction(tableName tables.DynamoDBTableName, input criteria.UpdateInput) error {
 	// プライマリキーの条件
-	keyMap, err := mydynamodb.CreatePkAttributeValue(input.PrimarKey)
+	keyMap, err := mydynamodb.CreatePkAttributeValue(input.PrimaryKeyCond)
 	if err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func (t *defaultTransactionalDynamoDBTemplate) UpdateOneWithTransaction(tableNam
 // DeleteOneWithTransaction implements TransactinalDynamoDBTemplate.
 func (t *defaultTransactionalDynamoDBTemplate) DeleteOneWithTransaction(tableName tables.DynamoDBTableName, input criteria.DeleteInput) error {
 	// プライマリキーの条件
-	keyMap, err := mydynamodb.CreatePkAttributeValue(input.PrimarKey)
+	keyMap, err := mydynamodb.CreatePkAttributeValue(input.PrimaryKeyCond)
 	if err != nil {
 		return err
 	}
