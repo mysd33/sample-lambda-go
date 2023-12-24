@@ -17,17 +17,17 @@ import (
 )
 
 var (
-	ErrRecordNotFound     = errors.New("record not found")
-	ErrKeyDuplicaiton     = errors.New("key duplication")
-	ErrUpdateWithCondtion = errors.New("update with condition error")
-	ErrDeleteWithCondtion = errors.New("delete with condition error")
+	ErrRecordNotFound     = errors.New("対象レコードなし")
+	ErrKeyDuplicaiton     = errors.New("プライマリキー重複エラー")
+	ErrUpdateWithCondtion = errors.New("条件付き更新エラー")
+	ErrDeleteWithCondtion = errors.New("条件付き削除エラー")
 )
 
 // DynamoDBTemplate は、DynamoDBアクセスを定型化した高次のインタフェースです。
 type DynamoDBTemplate interface {
-	// CreateOne は、DynamoDBに項目を登録します。
+	// CreateOne は、DynamoDBに項目を1件登録します。
 	CreateOne(tableName tables.DynamoDBTableName, inputEntity any) error
-	// FindOneByTableKey は、ベーステーブルのプライマリキーの完全一致でDynamoDBから項目を取得します。
+	// FindOneByTableKey は、ベーステーブルのプライマリキーの完全一致でDynamoDBから1件の項目を取得します。
 	FindOneByTableKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntity any) error
 	// FindSomeByTableKey は、ベーステーブルのプライマリキーによる条件でDynamoDBから複数件の項目を取得します。
 	FindSomeByTableKey(tableName tables.DynamoDBTableName, input criteria.PkQueryInput, outEntities any) error
@@ -47,6 +47,7 @@ func NewDynamoDBTemplate(log logging.Logger, dynamodbAccessor DynamoDBAccessor) 
 	}
 }
 
+// defaultDynamoDBTemplate は、DynamoDBTemplateを実装する構造体です。
 type defaultDynamoDBTemplate struct {
 	log              logging.Logger
 	dynamodbAccessor DynamoDBAccessor
@@ -56,7 +57,7 @@ type defaultDynamoDBTemplate struct {
 func (t *defaultDynamoDBTemplate) CreateOne(tableName tables.DynamoDBTableName, inputEntity any) error {
 	attributes, err := attributevalue.MarshalMap(inputEntity)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Wrap(err, "CreateOneで構造体をAttributeValueのMap変換時にエラー")
 	}
 	// パーティションキーの重複判定条件
 	partitonkeyName := tables.GetPrimaryKey(tableName).PartitionKey
@@ -76,7 +77,7 @@ func (t *defaultDynamoDBTemplate) CreateOne(tableName tables.DynamoDBTableName, 
 		if errors.As(err, &condErr) {
 			return ErrKeyDuplicaiton
 		}
-		return errors.WithStack(err)
+		return errors.Wrap(err, "CreateOneで登録実行時エラー")
 	}
 	return nil
 }
@@ -86,7 +87,7 @@ func (t *defaultDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTab
 	// プライマリキーの条件
 	keyMap, err := CreatePkAttributeValue(input.PrimaryKey)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "FindOneByTableKeyで検索条件生成時エラー")
 	}
 	// 取得項目
 	var projection *string
@@ -103,13 +104,13 @@ func (t *defaultDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTab
 	// GetItemの実行
 	getItemOutput, err := t.dynamodbAccessor.GetItemSdk(getItemInput)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Wrap(err, "FindOneByTableKeyで検索実行時エラー")
 	}
 	if len(getItemOutput.Item) == 0 {
 		return ErrRecordNotFound
 	}
 	if err := attributevalue.UnmarshalMap(getItemOutput.Item, &outEntity); err != nil {
-		return errors.WithStack(err)
+		return errors.Wrap(err, "FindOneByTableKeyで検索結果を構造体にアンマーシャル時エラー")
 	}
 
 	return nil
@@ -120,7 +121,7 @@ func (t *defaultDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTa
 	// クエリ表現の作成
 	expr, err := CreateQueryExpressionForTable(input)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Wrap(err, "FindSomeByTableKeyで検索条件生成時エラー")
 	}
 	// 最終的な検索結果
 	var resultItems []map[string]types.AttributeValue
@@ -145,7 +146,7 @@ func (t *defaultDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTa
 		// Queryの実行
 		result, err := t.dynamodbAccessor.QuerySdk(queryInput)
 		if err != nil {
-			return errors.WithStack(err)
+			return errors.Wrap(err, "FindSomeByTableKeyで検索実行時エラー")
 		}
 		// 検索結果の追加
 		resultItems = append(resultItems, result.Items...)
@@ -160,7 +161,7 @@ func (t *defaultDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTa
 		return ErrRecordNotFound
 	}
 	if err := attributevalue.UnmarshalListOfMaps(resultItems, &outEntities); err != nil {
-		return errors.WithStack(err)
+		return errors.Wrap(err, "FindSomeByTableKeyで検索結果を構造体にアンマーシャル時エラー")
 	}
 	return nil
 }
@@ -170,7 +171,7 @@ func (t *defaultDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTabl
 	// クエリ表現の作成
 	expr, err := CreateQueryExpressionForGSI(input)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Wrap(err, "FindSomeByGSIKeyで検索条件生成時エラー")
 	}
 	// 最終的な検索結果
 	var resultItems []map[string]types.AttributeValue
@@ -193,13 +194,13 @@ func (t *defaultDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTabl
 	}
 	err = t.dynamodbAccessor.QueryPagesSdk(queryInput, handleFn)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Wrap(err, "FindSomeByGSIKeyで検索時エラー")
 	}
 	if len(resultItems) == 0 {
 		return ErrRecordNotFound
 	}
 	if err := attributevalue.UnmarshalListOfMaps(resultItems, &outEntities); err != nil {
-		return errors.WithStack(err)
+		return errors.Wrap(err, "FindSomeByGSIKeyで検索結果を構造体にアンマーシャル時エラー")
 	}
 	return nil
 }
@@ -209,12 +210,12 @@ func (t *defaultDynamoDBTemplate) UpdateOne(tableName tables.DynamoDBTableName, 
 	// プライマリキーの条件
 	keyMap, err := CreatePkAttributeValue(input.PrimaryKey)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "UpdateOneで更新対象条件の生成時エラー")
 	}
 	// 更新表現
 	expr, err := CreateUpdateExpression(input)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "UpdateOneで更新条件の生成時エラー")
 	}
 	// UpdateItemInput
 	updateItemInput := &dynamodb.UpdateItemInput{
@@ -234,7 +235,7 @@ func (t *defaultDynamoDBTemplate) UpdateOne(tableName tables.DynamoDBTableName, 
 		if errors.As(err, &condErr) {
 			return ErrUpdateWithCondtion
 		}
-		return errors.WithStack(err)
+		return errors.Wrap(err, "UpdateOneで更新実行時エラー")
 	}
 	return nil
 }
@@ -244,12 +245,12 @@ func (t *defaultDynamoDBTemplate) DeleteOne(tableName tables.DynamoDBTableName, 
 	// プライマリキーの条件
 	keyMap, err := CreatePkAttributeValue(input.PrimaryKey)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "DeleteOneで削除対象条件の生成時エラー")
 	}
 	// 削除表現
 	expr, err := CreateDeleteExpression(input)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "DelteOneで削除条件の生成時エラー")
 	}
 	// DeleteItemInput
 	deleteItemInput := &dynamodb.DeleteItemInput{
@@ -267,7 +268,7 @@ func (t *defaultDynamoDBTemplate) DeleteOne(tableName tables.DynamoDBTableName, 
 		if errors.As(err, &condErr) {
 			return ErrDeleteWithCondtion
 		}
-		return errors.WithStack(err)
+		return errors.Wrap(err, "DeleteOneで削除実行時エラー")
 	}
 	return nil
 }

@@ -77,7 +77,7 @@ func (t *defaultTransactionalDynamoDBTemplate) DeleteOne(tableName tables.Dynamo
 func (t *defaultTransactionalDynamoDBTemplate) CreateOneWithTransaction(tableName tables.DynamoDBTableName, inputEntity any) error {
 	attributes, err := attributevalue.MarshalMap(inputEntity)
 	if err != nil {
-		return errors.WithStack(err)
+		return errors.Wrap(err, "CreateOneWithTransactionで構造体をAttributeValueのMap変換時にエラー")
 	}
 	// パーティションキーの重複判定条件
 	partitonkeyName := tables.GetPrimaryKey(tableName).PartitionKey
@@ -104,12 +104,12 @@ func (t *defaultTransactionalDynamoDBTemplate) UpdateOneWithTransaction(tableNam
 	// プライマリキーの条件
 	keyMap, err := mydynamodb.CreatePkAttributeValue(input.PrimaryKey)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "UpdateOneWithTransactionで更新対象条件の生成時エラー")
 	}
 	// 更新表現
 	expr, err := mydynamodb.CreateUpdateExpression(input)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "UpdateOneWithTransactionで更新条件の生成時エラー")
 	}
 	// TransactWriteItemの作成
 	item := types.TransactWriteItem{
@@ -132,12 +132,12 @@ func (t *defaultTransactionalDynamoDBTemplate) DeleteOneWithTransaction(tableNam
 	// プライマリキーの条件
 	keyMap, err := mydynamodb.CreatePkAttributeValue(input.PrimaryKey)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "DeleteOneWithTransactionで削除対象条件の生成時エラー")
 	}
 	// 削除表現
 	expr, err := mydynamodb.CreateDeleteExpression(input)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "DelteOneWithTransactionで削除条件の生成時エラー")
 	}
 	// TransactWriteItemの作成
 	item := types.TransactWriteItem{

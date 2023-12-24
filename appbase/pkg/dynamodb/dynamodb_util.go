@@ -38,11 +38,13 @@ func CreatePkAttributeValue(primaryKey criteria.PrimaryKey) (map[string]types.At
 	return keymap, nil
 }
 
+// CreateQueryExpressionForTable は、 ベーステーブルに対するクエリの条件のExpressionを作成します。
 func CreateQueryExpressionForTable(input criteria.PkQueryInput) (*expression.Expression, error) {
 	primaryKey := &input.PrimaryKey
 	return createQueryExpression(primaryKey, input.SelectAttributes, input.WhereClauses)
 }
 
+// CreateQueryExpressionForGSI は、 GSIに対するクエリの条件のExpressionを作成します。
 func CreateQueryExpressionForGSI(input criteria.GsiQueryInput) (*expression.Expression, error) {
 	primaryKey := &input.IndexKey
 	return createQueryExpression(primaryKey, input.SelectAttributes, input.WhereClauses)

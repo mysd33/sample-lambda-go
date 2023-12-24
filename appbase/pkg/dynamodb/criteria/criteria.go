@@ -100,27 +100,27 @@ const (
 	ORDER_BY_ASC  = OrderBy("Asc")
 )
 
-// WhereClause は、検索時のフィルタ条件句です。
+// WhereClause は、検索時のフィルタ条件または、更新・登録時の条件を表します。
 type WhereClause struct {
 	// Where句で指定する属性
 	Attribute Attribute
 	// Where句の演算子
-	WhereOp CondOperator
+	WhereOp WhereOperator
 	// Where句を連結する演算子
 	AppendOp AppendOperator
 }
 
-// CondOperator は、フィルタの条件指定する際の演算子です。
-type CondOperator string
+// WhereOperator は、フィルタの条件指定する際の演算子です。
+type WhereOperator string
 
 const (
-	WHERE_EQUAL           = CondOperator("Equal")
-	WHERE_NOT_EQUAL       = CondOperator("NotEqual")
-	WHERE_BEGINS_WITH     = CondOperator("BeginWith")
-	WHERE_GREATER_THAN    = CondOperator("GreaterThan")
-	WHERE_GREATER_THAN_EQ = CondOperator("GreaterThanEqual")
-	WHERE_LESS_THAN       = CondOperator("LessThan")
-	WHERE_LESS_THAN_EQ    = CondOperator("LessThanEqual")
+	WHERE_EQUAL           = WhereOperator("Equal")
+	WHERE_NOT_EQUAL       = WhereOperator("NotEqual")
+	WHERE_BEGINS_WITH     = WhereOperator("BeginWith")
+	WHERE_GREATER_THAN    = WhereOperator("GreaterThan")
+	WHERE_GREATER_THAN_EQ = WhereOperator("GreaterThanEqual")
+	WHERE_LESS_THAN       = WhereOperator("LessThan")
+	WHERE_LESS_THAN_EQ    = WhereOperator("LessThanEqual")
 )
 
 // AppendOperator は、フィルタの条件を連結する際の演算子です。
