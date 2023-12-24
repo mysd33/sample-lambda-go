@@ -55,7 +55,7 @@ type todoRepositoryImplByDynamoDB struct {
 func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, error) {
 	// DynamoDBTemplateを使ったコード
 	input := criteria.PkOnlyQueryInput{
-		PrimaryKeyCond: criteria.PrimaryKeyCond{
+		PrimaryKey: criteria.PrimaryKey{
 			PartitionKey: criteria.Attribute{
 				Key:   tr.primaryKey.PartitionKey,
 				Value: todoId,

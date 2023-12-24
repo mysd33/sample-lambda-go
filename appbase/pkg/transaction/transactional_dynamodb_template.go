@@ -53,14 +53,14 @@ func (t *defaultTransactionalDynamoDBTemplate) FindOneByTableKey(tableName table
 	return t.dynamodbTemplate.FindOneByTableKey(tableName, input, outEntity)
 }
 
+// FindSomeByTableKey implements TransactinalDynamoDBTemplate.
+func (t *defaultTransactionalDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTableName, input criteria.PkQueryInput, outEntities any) error {
+	return t.dynamodbTemplate.FindSomeByTableKey(tableName, input, outEntities)
+}
+
 // FindSomeByGSIKey implements TransactinalDynamoDBTemplate.
 func (t *defaultTransactionalDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTableName, input criteria.GsiQueryInput, outEntities any) error {
 	return t.dynamodbTemplate.FindSomeByGSIKey(tableName, input, outEntities)
-}
-
-// FindSomeByTableKey implements TransactinalDynamoDBTemplate.
-func (t *defaultTransactionalDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTableName, input criteria.PkOnlyQueryInput, outEntities any) error {
-	return t.dynamodbTemplate.FindSomeByTableKey(tableName, input, outEntities)
 }
 
 // UpdateOne implements TransactinalDynamoDBTemplate.
@@ -102,12 +102,12 @@ func (t *defaultTransactionalDynamoDBTemplate) CreateOneWithTransaction(tableNam
 // UpdateOneWithTransaction implements TransactinalDynamoDBTemplate.
 func (t *defaultTransactionalDynamoDBTemplate) UpdateOneWithTransaction(tableName tables.DynamoDBTableName, input criteria.UpdateInput) error {
 	// プライマリキーの条件
-	keyMap, err := mydynamodb.CreatePkAttributeValue(input.PrimaryKeyCond)
+	keyMap, err := mydynamodb.CreatePkAttributeValue(input.PrimaryKey)
 	if err != nil {
 		return err
 	}
 	// 更新表現
-	expr, err := mydynamodb.CreateUpdateExpressionBuilder(input)
+	expr, err := mydynamodb.CreateUpdateExpression(input)
 	if err != nil {
 		return err
 	}
@@ -130,12 +130,12 @@ func (t *defaultTransactionalDynamoDBTemplate) UpdateOneWithTransaction(tableNam
 // DeleteOneWithTransaction implements TransactinalDynamoDBTemplate.
 func (t *defaultTransactionalDynamoDBTemplate) DeleteOneWithTransaction(tableName tables.DynamoDBTableName, input criteria.DeleteInput) error {
 	// プライマリキーの条件
-	keyMap, err := mydynamodb.CreatePkAttributeValue(input.PrimaryKeyCond)
+	keyMap, err := mydynamodb.CreatePkAttributeValue(input.PrimaryKey)
 	if err != nil {
 		return err
 	}
 	// 削除表現
-	expr, err := mydynamodb.CreateDeleteExpressionBuilder(input)
+	expr, err := mydynamodb.CreateDeleteExpression(input)
 	if err != nil {
 		return err
 	}
