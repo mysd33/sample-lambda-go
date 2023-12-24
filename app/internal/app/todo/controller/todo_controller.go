@@ -86,12 +86,13 @@ func (c *todoControllerImpl) Register(ctx *gin.Context) (any, error) {
 	// DynamoDBトランザクション管理してサービスの実行
 	result, err := c.transactionManager.ExecuteTransaction(serviceFunc)
 	if err != nil {
-		// トランザクションロールバックの場合に業務エラーで返却
+		// TODO: ロールバックの場合に、予期せぬエラーとならないよう各Controllerでハンドリングするか？
+		// 集約的にinterceptorで実施するか？
 		var txCanceledException *types.TransactionCanceledException
 		var txConflictException *types.TransactionConflictException
 		if errors.As(err, &txCanceledException) {
 			// 登録失敗の業務エラー
-			return nil, myerrors.NewBusinessError(message.W_EX_8004, request.TodoTitle)
+			return nil, myerrors.NewBusinessError(message.W_EX_8003, request.TodoTitle)
 		} else if errors.As(err, &txConflictException) {
 			// 登録失敗の業務エラー
 			return nil, myerrors.NewBusinessError(message.W_EX_8004, request.TodoTitle)
