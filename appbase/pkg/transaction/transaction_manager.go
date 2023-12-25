@@ -141,7 +141,7 @@ func (t *defaultTransaction) End(err error) (*dynamodb.TransactWriteItemsOutput,
 		// https://docs.aws.amazon.com/ja_jp/amazondynamodb/latest/developerguide/transaction-apis.html
 		var txCanceledException *types.TransactionCanceledException
 		var txConflictException *types.TransactionConflictException
-		// トランザクションロールバックの理由を警告ログ出力
+		// トランザクションロールバックの理由をログ出力
 		if errors.As(err, &txCanceledException) {
 			for _, v := range txCanceledException.CancellationReasons {
 				t.log.Info(message.I_FW_0003, *v.Code, *v.Message, v.Item)
