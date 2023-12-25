@@ -175,11 +175,27 @@ func (t *defaultDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTabl
 	}
 	// 最終的な検索結果
 	var resultItems []map[string]types.AttributeValue
+	// 合計取得件数
+	var totalCnt int32
+	// ページング回数
+	var pagingCnt int
 
 	handleFn := func(result *dynamodb.QueryOutput) bool {
-		//TODO:	元の実装確認
-		resultItems = append(resultItems, result.Items...)
-		return len(result.LastEvaluatedKey) == 0
+		pagingCnt += 1
+		totalCnt += result.Count
+		t.log.Debug("ページング回数: %d, 今回取得件数: %d, 合計取得件数: %d", pagingCnt, result.Count, totalCnt)
+		if input.TotalLimit != nil && totalCnt < *input.TotalLimit {
+			t.log.Debug("合計件数: %d, 合計取得件数の上限値: %d, 切り捨て件数: %d", totalCnt, *input.TotalLimit, totalCnt-*input.TotalLimit)
+			delIdx := int(*input.TotalLimit) - len(resultItems)
+			resultItems = append(resultItems, result.Items[:delIdx]...)
+			return true
+		} else {
+			resultItems = append(resultItems, result.Items...)
+			if len(result.LastEvaluatedKey) == 0 {
+				return true
+			}
+		}
+		return false
 	}
 	// Limitの件数毎に取得する。
 	queryInput := &dynamodb.QueryInput{
