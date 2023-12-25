@@ -47,12 +47,12 @@ func (t *defaultTransactionalDynamoDBTemplate) CreateOne(tableName tables.Dynamo
 }
 
 // FindOneByTableKey implements TransactinalDynamoDBTemplate.
-func (t *defaultTransactionalDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTableName, input input.PkOnlyQueryInput, outEntity any) error {
+func (t *defaultTransactionalDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTableName, input input.PKOnlyQueryInput, outEntity any) error {
 	return t.dynamodbTemplate.FindOneByTableKey(tableName, input, outEntity)
 }
 
 // FindSomeByTableKey implements TransactinalDynamoDBTemplate.
-func (t *defaultTransactionalDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTableName, input input.PkQueryInput, outEntities any) error {
+func (t *defaultTransactionalDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTableName, input input.PKQueryInput, outEntities any) error {
 	return t.dynamodbTemplate.FindSomeByTableKey(tableName, input, outEntities)
 }
 

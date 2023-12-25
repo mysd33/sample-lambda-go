@@ -5,8 +5,8 @@ package input
 
 import "example.com/appbase/pkg/dynamodb/gsi"
 
-// PkOnlyQueryInput は、プライマリキーの完全一致の条件指定による検索時のインプット構造体
-type PkOnlyQueryInput struct {
+// PKOnlyQueryInput は、プライマリキーの完全一致の条件指定による検索時のインプット構造体
+type PKOnlyQueryInput struct {
 	// プライマリキー
 	PrimaryKey PrimaryKey
 	// 取得項目
@@ -15,8 +15,8 @@ type PkOnlyQueryInput struct {
 	ConsitentRead bool
 }
 
-// PkQueryInput は、パーティションキーの完全一致とソートキーの条件指定による複数検索用のインプット構造体
-type PkQueryInput struct {
+// PKQueryInput は、パーティションキーの完全一致とソートキーの条件指定による複数検索用のインプット構造体
+type PKQueryInput struct {
 	// プライマリキーの条件
 	PrimaryKey PrimaryKey
 	// 取得項目

@@ -28,9 +28,9 @@ type DynamoDBTemplate interface {
 	// CreateOne は、DynamoDBに項目を1件登録します。
 	CreateOne(tableName tables.DynamoDBTableName, inputEntity any) error
 	// FindOneByTableKey は、ベーステーブルのプライマリキーの完全一致でDynamoDBから1件の項目を取得します。
-	FindOneByTableKey(tableName tables.DynamoDBTableName, input input.PkOnlyQueryInput, outEntity any) error
+	FindOneByTableKey(tableName tables.DynamoDBTableName, input input.PKOnlyQueryInput, outEntity any) error
 	// FindSomeByTableKey は、ベーステーブルのプライマリキーによる条件でDynamoDBから複数件の項目を取得します。
-	FindSomeByTableKey(tableName tables.DynamoDBTableName, input input.PkQueryInput, outEntities any) error
+	FindSomeByTableKey(tableName tables.DynamoDBTableName, input input.PKQueryInput, outEntities any) error
 	// FindSomeByGSIKey は、GSIのプライマリキーによる条件でDynamoDBから項目を複数件取得します。
 	FindSomeByGSIKey(tableName tables.DynamoDBTableName, input input.GsiQueryInput, outEntities any) error
 	// UpdateOne は、DynamoDBの項目を更新します。
@@ -83,7 +83,7 @@ func (t *defaultDynamoDBTemplate) CreateOne(tableName tables.DynamoDBTableName, 
 }
 
 // FindOneByTableKey implements DynamoDBTemplate.
-func (t *defaultDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTableName, input input.PkOnlyQueryInput, outEntity any) error {
+func (t *defaultDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTableName, input input.PKOnlyQueryInput, outEntity any) error {
 	// プライマリキーの条件
 	keyMap, err := CreatePkAttributeValue(input.PrimaryKey)
 	if err != nil {
@@ -117,7 +117,7 @@ func (t *defaultDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTab
 }
 
 // FindSomeByTableKey implements DynamoDBTemplate.
-func (t *defaultDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTableName, input input.PkQueryInput, outEntities any) error {
+func (t *defaultDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTableName, input input.PKQueryInput, outEntities any) error {
 	// クエリ表現の作成
 	expr, err := CreateQueryExpressionForTable(input)
 	if err != nil {

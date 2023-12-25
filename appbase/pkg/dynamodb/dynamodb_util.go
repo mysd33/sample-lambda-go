@@ -39,7 +39,7 @@ func CreatePkAttributeValue(primaryKey input.PrimaryKey) (map[string]types.Attri
 }
 
 // CreateQueryExpressionForTable は、 ベーステーブルに対するクエリの条件のExpressionを作成します。
-func CreateQueryExpressionForTable(input input.PkQueryInput) (*expression.Expression, error) {
+func CreateQueryExpressionForTable(input input.PKQueryInput) (*expression.Expression, error) {
 	primaryKey := &input.PrimaryKey
 	return createQueryExpression(primaryKey, input.SelectAttributes, input.WhereClauses)
 }
