@@ -58,7 +58,7 @@ func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, er
 	input := input.PKOnlyQueryInput{
 		PrimaryKey: input.PrimaryKey{
 			PartitionKey: input.Attribute{
-				Key:   tr.primaryKey.PartitionKey,
+				Name:  tr.primaryKey.PartitionKey,
 				Value: todoId,
 			},
 		},

@@ -24,7 +24,7 @@ func CreatePkAttributeValue(primaryKey input.PrimaryKey) (map[string]types.Attri
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	keymap[partitionKey.Key] = pk
+	keymap[partitionKey.Name] = pk
 
 	// ソートキー
 	sortKey := primaryKey.SortKey
@@ -33,7 +33,7 @@ func CreatePkAttributeValue(primaryKey input.PrimaryKey) (map[string]types.Attri
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
-		keymap[sortKey.Key] = sk
+		keymap[sortKey.Name] = sk
 	}
 	return keymap, nil
 }
@@ -84,7 +84,7 @@ func CreateUpdateExpression(input input.UpdateInput) (*expression.Expression, er
 	upd := expression.UpdateBuilder{}
 	for _, attr := range input.UpdateAttributes {
 		if attr != nil {
-			upd = upd.Set(expression.Name(attr.Key), expression.Value(attr.Value))
+			upd = upd.Set(expression.Name(attr.Name), expression.Value(attr.Value))
 		}
 	}
 	// Update表現の作成
@@ -123,31 +123,31 @@ func CreateDeleteExpression(input input.DeleteInput) (*expression.Expression, er
 // CreateKeyCondition は、キー条件を作成します。
 func CreateKeyCondition(primaryKeyCond *input.PrimaryKey) (*expression.KeyConditionBuilder, error) {
 	// パーティションキーの条件
-	keyCond := expression.Key(primaryKeyCond.PartitionKey.Key).Equal(expression.Value(primaryKeyCond.PartitionKey.Value))
+	keyCond := expression.Key(primaryKeyCond.PartitionKey.Name).Equal(expression.Value(primaryKeyCond.PartitionKey.Value))
 	// ソートキーがある場合
 	if primaryKeyCond.SortKey != nil {
 		switch primaryKeyCond.SortKeyOp {
 		case input.SORTKEY_BEGINS_WITH:
 			if v, ok := primaryKeyCond.SortKey.Value.(string); ok {
-				keyCond = keyCond.And(expression.Key(primaryKeyCond.SortKey.Key).BeginsWith(v))
+				keyCond = keyCond.And(expression.Key(primaryKeyCond.SortKey.Name).BeginsWith(v))
 			} else {
 				return nil, errors.New("type not supported")
 			}
 		case input.SORTKEY_BETWEEN:
 			// primaryKey.SortKey.Value[0] <= ソートキー <= primaryKey.SortKey.Value[1]
 			if v, ok := primaryKeyCond.SortKey.Value.([2]interface{}); ok {
-				keyCond.And(expression.Key(primaryKeyCond.SortKey.Key).Between(expression.Value(v[0]), expression.Value(v[1])))
+				keyCond.And(expression.Key(primaryKeyCond.SortKey.Name).Between(expression.Value(v[0]), expression.Value(v[1])))
 			} else {
 				return nil, errors.New("type not supported")
 			}
 		case input.SORTKEY_GREATER_THAN:
-			keyCond = keyCond.And(expression.Key(primaryKeyCond.SortKey.Key).GreaterThan(expression.Value(primaryKeyCond.SortKey.Value)))
+			keyCond = keyCond.And(expression.Key(primaryKeyCond.SortKey.Name).GreaterThan(expression.Value(primaryKeyCond.SortKey.Value)))
 		case input.SORTKEY_GREATER_THAN_EQ:
-			keyCond = keyCond.And(expression.Key(primaryKeyCond.SortKey.Key).GreaterThanEqual(expression.Value(primaryKeyCond.SortKey.Value)))
+			keyCond = keyCond.And(expression.Key(primaryKeyCond.SortKey.Name).GreaterThanEqual(expression.Value(primaryKeyCond.SortKey.Value)))
 		case input.SORTKEY_LESS_THAN:
-			keyCond = keyCond.And(expression.Key(primaryKeyCond.SortKey.Key).LessThan(expression.Value(primaryKeyCond.SortKey.Value)))
+			keyCond = keyCond.And(expression.Key(primaryKeyCond.SortKey.Name).LessThan(expression.Value(primaryKeyCond.SortKey.Value)))
 		case input.SORTKEY_LESS_THAN_EQ:
-			keyCond = keyCond.And(expression.Key(primaryKeyCond.SortKey.Key).LessThanEqual(expression.Value(primaryKeyCond.SortKey.Value)))
+			keyCond = keyCond.And(expression.Key(primaryKeyCond.SortKey.Name).LessThanEqual(expression.Value(primaryKeyCond.SortKey.Value)))
 		default:
 			return nil, errors.New("opration not supperted")
 		}
@@ -173,23 +173,23 @@ func CreateFilterCondition(whereClauses []*input.WhereClause) (*expression.Condi
 		var tmp expression.ConditionBuilder
 		switch where.WhereOp {
 		case input.WHERE_EQUAL:
-			tmp = expression.Name(where.Attribute.Key).Equal(expression.Value(where.Attribute.Value))
+			tmp = expression.Name(where.Attribute.Name).Equal(expression.Value(where.Attribute.Value))
 		case input.WHERE_NOT_EQUAL:
-			tmp = expression.Name(where.Attribute.Key).NotEqual(expression.Value(where.Attribute.Value))
+			tmp = expression.Name(where.Attribute.Name).NotEqual(expression.Value(where.Attribute.Value))
 		case input.WHERE_BEGINS_WITH:
 			if v, ok := where.Attribute.Value.(string); ok {
-				tmp = expression.Name(where.Attribute.Key).BeginsWith(v)
+				tmp = expression.Name(where.Attribute.Name).BeginsWith(v)
 			} else {
 				return nil, errors.New("type not supported")
 			}
 		case input.WHERE_GREATER_THAN:
-			tmp = expression.Name(where.Attribute.Key).GreaterThan(expression.Value(where.Attribute.Value))
+			tmp = expression.Name(where.Attribute.Name).GreaterThan(expression.Value(where.Attribute.Value))
 		case input.WHERE_GREATER_THAN_EQ:
-			tmp = expression.Name(where.Attribute.Key).GreaterThanEqual(expression.Value(where.Attribute.Value))
+			tmp = expression.Name(where.Attribute.Name).GreaterThanEqual(expression.Value(where.Attribute.Value))
 		case input.WHERE_LESS_THAN:
-			tmp = expression.Name(where.Attribute.Key).LessThan(expression.Value(where.Attribute.Value))
+			tmp = expression.Name(where.Attribute.Name).LessThan(expression.Value(where.Attribute.Value))
 		case input.WHERE_LESS_THAN_EQ:
-			tmp = expression.Name(where.Attribute.Key).LessThanEqual(expression.Value(where.Attribute.Value))
+			tmp = expression.Name(where.Attribute.Name).LessThanEqual(expression.Value(where.Attribute.Value))
 		default:
 			return nil, errors.New("operator not supported")
 		}

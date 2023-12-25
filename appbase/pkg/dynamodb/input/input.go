@@ -63,7 +63,7 @@ type DeleteInput struct {
 
 // Attribute は、属性の名称と値のペア構造体です。
 type Attribute struct {
-	Key   string
+	Name  string
 	Value any
 }
 
