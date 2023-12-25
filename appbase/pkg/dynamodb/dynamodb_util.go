@@ -149,7 +149,8 @@ func CreateKeyCondition(primaryKeyCond *input.PrimaryKey) (*expression.KeyCondit
 		case input.SORTKEY_LESS_THAN_EQ:
 			keyCond = keyCond.And(expression.Key(primaryKeyCond.SortKey.Name).LessThanEqual(expression.Value(primaryKeyCond.SortKey.Value)))
 		default:
-			return nil, errors.New("opration not supperted")
+			//それ以外はEqualで扱う
+			keyCond = keyCond.And(expression.Key(primaryKeyCond.SortKey.Name).Equal(expression.Value(primaryKeyCond.SortKey.Value)))
 		}
 	}
 	return &keyCond, nil
