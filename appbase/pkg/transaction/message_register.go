@@ -50,6 +50,8 @@ func (*defaultMessageRegisterer) RegisterMessage(transaction Transaction, queueM
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	// TODO: キュー管理テーブルへのアクセス処理を、QueueMessageItemRepositoryへ切り出す予定
 	put := &types.Put{
 		Item: av,
 		//TODO: テーブル名をプロパティ管理(Config.Getで取得)で設定切り出し

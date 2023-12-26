@@ -28,6 +28,17 @@ func NewTransactionManager(log logging.Logger,
 	}
 }
 
+// NewTransactionManagerFoDBOnly は、DynamoDBのみのトランザクションに対応するTransactionManagerを作成します。
+// SQSのトランザクションは利用しない場合に使用します。
+func NewTransactionManagerForDBOnly(log logging.Logger,
+	dynamodbAccessor TransactionalDynamoDBAccessor,
+) TransactionManager {
+	return &defaultTransactionManager{log: log,
+		dynamodbAccessor: dynamodbAccessor,
+	}
+}
+
+// defaultTransactionManager は、TransactionManagerを実装する構造体です。
 type defaultTransactionManager struct {
 	log              logging.Logger
 	dynamodbAccessor TransactionalDynamoDBAccessor
@@ -104,7 +115,9 @@ func (t *defaultTransaction) Start(dynamodbAccessor TransactionalDynamoDBAccesso
 	t.dynamodbAccessor = dynamodbAccessor
 	t.sqsAccessor = sqsAccessor
 	dynamodbAccessor.StartTransaction(t)
-	sqsAccessor.StartTransaction(t)
+	if sqsAccessor != nil {
+		sqsAccessor.StartTransaction(t)
+	}
 }
 
 // AppendTransactWriteItem implements Transaction.
