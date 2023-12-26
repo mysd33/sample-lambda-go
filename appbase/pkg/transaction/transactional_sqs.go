@@ -82,7 +82,7 @@ func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Messag
 	sa.log.Debug("TransactSendMessages")
 	for _, v := range inputs {
 		// 業務テーブルでのDynamoDBトランザクション処理がない場合は、メッセージにフラグ情報を送る
-		addIsTableCheckFlag(hasDbTrancation, v)
+		addIsTableCheckFlag(v, hasDbTrancation)
 		// SQSへメッセージ送信
 		output, err := sa.SendMessageSdk(v.QueueName, v.Input)
 		if err != nil {
@@ -117,7 +117,7 @@ func (sa *defaultTransactionalSQSAccessor) EndTransaction() {
 }
 
 // addIsTableCheckFlag は、業務テーブルでのDynamoDBトランザクション処理がない場合にメッセージにフラグ情報を追加します
-func addIsTableCheckFlag(hasDbTrancation bool, v *Message) {
+func addIsTableCheckFlag(v *Message, hasDbTrancation bool) {
 	if hasDbTrancation {
 		return
 	}
