@@ -35,22 +35,32 @@ type defaultTransactionManager struct {
 }
 
 // ExecuteTransaction implements TransactionManager.
-func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.ServiceFunc) (any, error) {
+func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.ServiceFunc) (result any, err error) {
 	// 新しいトランザクションを作成
 	transction := newTrasaction(tm.log)
 	// トランザクションを開始
 	transction.Start(tm.dynamodbAccessor, tm.sqsAccessor)
 
-	// TODO: panicを考慮したdefferによるトランザクション実行コードに修正
+	defer func() {
+		if r := recover(); r != nil {
+			// panic発生時トランザクションをロールバック
+			transction.Rollback()
+			// 上位にpanicをリスロー
+			panic(r)
+		} else if err != nil {
+			// Serviceの実行エラー時トランザクションをロールバック
+			transction.Rollback()
+		} else {
+			// Serviceの実行成功時トランザクションをコミット
+			_, err = transction.Commit()
+			// TODO: TransactWriteItemsOutputの利用（ログ出力等）
+		}
+	}()
 
 	// サービスの実行
-	result, err := serviceFunc()
-	// DynamoDBのトランザクションを終了
-	_, err = transction.End(err)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	result, err = serviceFunc()
+
+	return
 }
 
 // Transactionは トランザクションを表すインタフェースです
@@ -63,8 +73,10 @@ type Transaction interface {
 	AppendTransactMessage(message *Message)
 	// CheckTransactWriteItems は、TransactWriteItemが存在するかを確認します。
 	CheckTransactWriteItems() bool
-	// End は、エラーがなければ、AWS SDKによるTransactionWriteItemsを実行しトランザクション実行し、エラーがある場合には実行しません。
-	End(err error) (*dynamodb.TransactWriteItemsOutput, error)
+	// Commit は、トランザクションをコミットします。
+	Commit() (*dynamodb.TransactWriteItemsOutput, error)
+	// Rollback は、トランザクションをロールバックします。
+	Rollback()
 }
 
 // newTrasactionは 新しいTransactionを作成します。
@@ -110,13 +122,14 @@ func (t *defaultTransaction) CheckTransactWriteItems() bool {
 	return len(t.transactWriteItems) > 0
 }
 
-// endTransaction implements Transaction.
-func (t *defaultTransaction) End(err error) (*dynamodb.TransactWriteItemsOutput, error) {
+// Commit implements Transaction.
+func (t *defaultTransaction) Commit() (*dynamodb.TransactWriteItemsOutput, error) {
+	var err error
 	if t.sqsAccessor != nil {
 		// 業務テーブルのDBトランザクションがあるかチェック
 		hasDbTrancation := t.CheckTransactWriteItems()
-		// SQSのメッセージの送信とトランザクションを管理
-		err := t.sqsAccessor.TransactSendMessages(t.messages, hasDbTrancation)
+		// SQSのメッセージの送信とメッセージのDBトランザクション管理
+		err = t.sqsAccessor.TransactSendMessages(t.messages, hasDbTrancation)
 		if err != nil {
 			t.log.Debug("SQSのメッセージ送信失敗でロールバック")
 			return nil, errors.WithStack(err)
@@ -135,19 +148,14 @@ func (t *defaultTransaction) End(err error) (*dynamodb.TransactWriteItemsOutput,
 		}
 	}()
 
-	if err != nil {
-		t.log.Debug("業務処理エラーでトランザクションロールバック")
-		// Serviceの処理結果がエラー場合は、トランザクションを実行せず、元のエラーを返却し終了
-		return nil, err
-	}
 	// DynamoDBトランザクション実行
 	output, err := t.dynamodbAccessor.TransactWriteItemsSDK(t.transactWriteItems)
 	if err != nil {
-		t.log.Debug("トランザクション実行失敗")
+		t.log.Debug("トランザクションコミットエラー")
 		// https://docs.aws.amazon.com/ja_jp/amazondynamodb/latest/developerguide/transaction-apis.html
 		var txCanceledException *types.TransactionCanceledException
 		var txConflictException *types.TransactionConflictException
-		// トランザクションロールバックの理由をログ出力
+		// トランザクションコミット失敗の理由をログ出力
 		if errors.As(err, &txCanceledException) {
 			for _, v := range txCanceledException.CancellationReasons {
 				t.log.Info(message.I_FW_0003, *v.Code, *v.Message, v.Item)
@@ -157,6 +165,15 @@ func (t *defaultTransaction) End(err error) (*dynamodb.TransactWriteItemsOutput,
 		}
 		return nil, errors.WithStack(err)
 	}
-	t.log.Debug("トランザクション終了")
+	t.log.Debug("トランザクションコミット")
 	return output, nil
+}
+
+// Rollback implements Transaction.
+func (t *defaultTransaction) Rollback() {
+	t.log.Debug("業務処理エラーでトランザクションロールバック")
+	t.dynamodbAccessor.EndTransaction()
+	if t.sqsAccessor != nil {
+		t.sqsAccessor.EndTransaction()
+	}
 }
