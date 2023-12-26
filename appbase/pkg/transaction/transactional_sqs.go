@@ -28,7 +28,7 @@ type TransactionalSQSAccessor interface {
 	AppendTransactMessage(queueName string, input *sqs.SendMessageInput) error
 	// TransactSendMessages は、トランザクション管理されたメッセージを送信します。
 	// メッセージの送信は、TransactionManagerTransactionManagerが実行するため非公開にしています。
-	TransactSendMessages(inputs []*Message) error
+	TransactSendMessages(inputs []*Message, hasDBTranaction bool) error
 	// EndTransactionは、トランザクションを終了します。
 	EndTransaction()
 }
@@ -73,7 +73,7 @@ func (sa *defaultTransactionalSQSAccessor) AppendTransactMessage(queueName strin
 }
 
 // TransactSendMessages implements TransactionalSQSAccessor.
-func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Message) error {
+func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Message, hasDbTrancation bool) error {
 	sa.log.Debug("TransactSendMessages")
 	for _, v := range inputs {
 		// SQSへメッセージ送信
@@ -84,17 +84,20 @@ func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Messag
 		}
 		sa.log.Debug("Send Message Id=%s", *output.MessageId)
 
-		// DBトランザクションにアイテムを追加
-		queueMessageItem := &QueueMessageItem{}
-		queueMessageItem.MessageId = *output.MessageId
-		if v.Input.MessageGroupId != nil {
-			queueMessageItem.MessageDeduplicationId = *v.Input.MessageDeduplicationId
-		}
-		//TODO: DeleteTime（delete_time）の値を設定
-		//queueMessageItem.DeleteTime = 0
-
-		if err := sa.messageRegisterer.RegisterMessage(sa.transaction, queueMessageItem); err != nil {
-			return errors.WithStack(err)
+		// 業務テーブルでのDynamoDBトランザクション処理がある場合
+		if hasDbTrancation {
+			// メッセージ管理テーブル用のアイテムのトランザクション登録処理を追加
+			queueMessageItem := &QueueMessageItem{}
+			// (キュー名) + "_" + (メッセージID)をパーティションキーとする
+			queueMessageItem.MessageId = v.QueueName + "_" + *output.MessageId
+			if v.Input.MessageGroupId != nil {
+				queueMessageItem.MessageDeduplicationId = *v.Input.MessageDeduplicationId
+			}
+			//TODO: DeleteTime（delete_time）の値を設定
+			//queueMessageItem.DeleteTime = 0
+			if err := sa.messageRegisterer.RegisterMessage(sa.transaction, queueMessageItem); err != nil {
+				return errors.WithStack(err)
+			}
 		}
 	}
 

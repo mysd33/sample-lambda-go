@@ -40,6 +40,9 @@ func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.Servi
 	transction := newTrasaction(tm.log)
 	// トランザクションを開始
 	transction.Start(tm.dynamodbAccessor, tm.sqsAccessor)
+
+	// TODO: panicを考慮したdefferによるトランザクション実行コードに修正
+
 	// サービスの実行
 	result, err := serviceFunc()
 	// DynamoDBのトランザクションを終了
@@ -110,13 +113,16 @@ func (t *defaultTransaction) CheckTransactWriteItems() bool {
 // endTransaction implements Transaction.
 func (t *defaultTransaction) End(err error) (*dynamodb.TransactWriteItemsOutput, error) {
 	if t.sqsAccessor != nil {
-		err := t.sqsAccessor.TransactSendMessages(t.messages)
+		// 業務テーブルのDBトランザクションがあるかチェック
+		hasDbTrancation := t.CheckTransactWriteItems()
+		// SQSのメッセージの送信とトランザクションを管理
+		err := t.sqsAccessor.TransactSendMessages(t.messages, hasDbTrancation)
 		if err != nil {
 			t.log.Debug("SQSのメッセージ送信失敗でロールバック")
 			return nil, errors.WithStack(err)
 		}
 	}
-
+	// DBトランザクションの実行
 	if !t.CheckTransactWriteItems() {
 		t.log.Debug("トランザクション処理なし")
 		return nil, err
