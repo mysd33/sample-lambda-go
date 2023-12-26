@@ -5,6 +5,8 @@ package transaction
 
 import (
 	"maps"
+	"strconv"
+	"time"
 
 	"example.com/appbase/pkg/async"
 	myConfig "example.com/appbase/pkg/config"
@@ -72,7 +74,24 @@ func (sa *defaultTransactionalSQSAccessor) StartTransaction(transaction Transact
 // AppendTransactMessage implements TransactionalSQSAccessor.
 func (sa *defaultTransactionalSQSAccessor) AppendTransactMessage(queueName string, input *sqs.SendMessageInput) error {
 	sa.log.Debug("AppendTransactMessage")
-	//TODO: SendMessageInputに、DeleteTime（delete_time）の値を設定
+
+	// TODO: TTL設定に切り出す
+	ttl := 24 * 4 // 4日間
+	// 削除時間の追加
+	nowTime := time.Now()
+	delTimeStr := strconv.FormatInt(nowTime.Add(time.Duration(ttl)*time.Hour).Unix(), 10)
+	deleteTime := map[string]types.MessageAttributeValue{
+		// TODO: 定数化
+		"delete_time": {
+			DataType:    aws.String("String"),
+			StringValue: aws.String(delTimeStr),
+		},
+	}
+	if input.MessageAttributes == nil {
+		input.MessageAttributes = deleteTime
+	} else {
+		maps.Copy(input.MessageAttributes, deleteTime)
+	}
 	sa.transaction.AppendTransactMessage(&Message{QueueName: queueName, Input: input})
 	return nil
 }
