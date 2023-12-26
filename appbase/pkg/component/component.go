@@ -4,8 +4,6 @@ component パッケージはフレームワークのコンポーネントのイ�
 package component
 
 import (
-	"log"
-
 	"example.com/appbase/pkg/api"
 	"example.com/appbase/pkg/async"
 	"example.com/appbase/pkg/config"
@@ -168,7 +166,7 @@ func createMessageSource() message.MessageSource {
 	messageSource, err := message.NewMessageSource()
 	if err != nil {
 		// 異常終了
-		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
+		panic(errors.Wrap(err, "初期化処理エラー"))
 	}
 	return messageSource
 }
@@ -181,7 +179,7 @@ func createLogger(messageSource message.MessageSource, config config.Config) log
 	logger, err := logging.NewLogger(messageSource, config)
 	if err != nil {
 		// 異常終了
-		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
+		panic(errors.Wrap(err, "初期化処理エラー"))
 	}
 	return logger
 }
@@ -190,7 +188,7 @@ func createConfig() config.Config {
 	cfg, err := config.NewConfig()
 	if err != nil {
 		// 異常終了
-		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
+		panic(errors.Wrap(err, "初期化処理エラー"))
 	}
 	return cfg
 }
@@ -199,7 +197,7 @@ func createTransactionalDynamoDBAccessor(logger logging.Logger, config config.Co
 	accessor, err := transaction.NewTransactionalDynamoDBAccessor(logger, config)
 	if err != nil {
 		// 異常終了
-		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
+		panic(errors.Wrap(err, "初期化処理エラー"))
 	}
 	return accessor
 }
@@ -208,7 +206,7 @@ func createTransactionalSQSAccessor(logger logging.Logger, config config.Config)
 	accessor, err := transaction.NewTransactionalSQSAccessor(logger, config)
 	if err != nil {
 		// 異常終了
-		log.Fatalf("初期化処理エラー:%+v", errors.WithStack(err))
+		panic(errors.Wrap(err, "初期化処理エラー"))
 	}
 	return accessor
 }
