@@ -15,7 +15,7 @@ import (
 // QueueMessageItem は、QueueMessageテーブルのアイテムを表す構造体です。
 type QueueMessageItem struct {
 	MessageId              string `dynamodbav:"message_id"`
-	DeleteTime             int    `dynamodbav:"delete_time"`
+	DeleteTime             string `dynamodbav:"delete_time"`
 	MessageDeduplicationId string `dynamodbav:"message_deduplication_id"`
 }
 

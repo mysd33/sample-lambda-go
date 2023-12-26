@@ -75,18 +75,7 @@ func (sa *defaultTransactionalSQSAccessor) StartTransaction(transaction Transact
 func (sa *defaultTransactionalSQSAccessor) AppendTransactMessage(queueName string, input *sqs.SendMessageInput) error {
 	sa.log.Debug("AppendTransactMessage")
 
-	// TODO: TTL設定に切り出す
-	ttl := 24 * 4 // 4日間
-	// 削除時間の追加
-	nowTime := time.Now()
-	delTimeStr := strconv.FormatInt(nowTime.Add(time.Duration(ttl)*time.Hour).Unix(), 10)
-	deleteTime := map[string]types.MessageAttributeValue{
-		// TODO: 定数化
-		"delete_time": {
-			DataType:    aws.String("String"),
-			StringValue: aws.String(delTimeStr),
-		},
-	}
+	deleteTime := sa.addDeleteTime()
 	if input.MessageAttributes == nil {
 		input.MessageAttributes = deleteTime
 	} else {
@@ -101,7 +90,7 @@ func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Messag
 	sa.log.Debug("TransactSendMessages")
 	for _, v := range inputs {
 		// 業務テーブルでのDynamoDBトランザクション処理がない場合は、メッセージにフラグ情報を送る
-		addIsTableCheckFlag(v, hasDbTrancation)
+		sa.addIsTableCheckFlag(v, hasDbTrancation)
 		// SQSへメッセージ送信
 		output, err := sa.SendMessageSdk(v.QueueName, v.Input)
 		if err != nil {
@@ -119,8 +108,8 @@ func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Messag
 			if v.Input.MessageGroupId != nil {
 				queueMessageItem.MessageDeduplicationId = *v.Input.MessageDeduplicationId
 			}
-			//TODO: DeleteTime（delete_time）の値を設定
-			//queueMessageItem.DeleteTime = 0
+			// DeleteTime（delete_time）の値を設定
+			queueMessageItem.DeleteTime = *v.Input.MessageAttributes["delete_time"].StringValue
 			if err := sa.messageRegisterer.RegisterMessage(sa.transaction, queueMessageItem); err != nil {
 				return errors.WithStack(err)
 			}
@@ -135,8 +124,24 @@ func (sa *defaultTransactionalSQSAccessor) EndTransaction() {
 	sa.transaction = nil
 }
 
+// 削除時間の追加
+func (*defaultTransactionalSQSAccessor) addDeleteTime() map[string]types.MessageAttributeValue {
+	// TODO: TTL設定に切り出す
+	ttl := 24 * 4 // 4日間
+	nowTime := time.Now()
+	delTimeStr := strconv.FormatInt(nowTime.Add(time.Duration(ttl)*time.Hour).Unix(), 10)
+	deleteTime := map[string]types.MessageAttributeValue{
+		// TODO: 定数化
+		"delete_time": {
+			DataType:    aws.String("String"),
+			StringValue: aws.String(delTimeStr),
+		},
+	}
+	return deleteTime
+}
+
 // addIsTableCheckFlag は、業務テーブルでのDynamoDBトランザクション処理がない場合にメッセージにフラグ情報を追加します
-func addIsTableCheckFlag(v *Message, hasDbTrancation bool) {
+func (*defaultTransactionalSQSAccessor) addIsTableCheckFlag(v *Message, hasDbTrancation bool) {
 	if hasDbTrancation {
 		return
 	}
