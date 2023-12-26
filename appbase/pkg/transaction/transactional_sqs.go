@@ -4,10 +4,14 @@ transaction パッケージは、トランザクション管理に関する機�
 package transaction
 
 import (
+	"maps"
+
 	"example.com/appbase/pkg/async"
 	myConfig "example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/logging"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/cockroachdb/errors"
 )
 
@@ -68,6 +72,7 @@ func (sa *defaultTransactionalSQSAccessor) StartTransaction(transaction Transact
 // AppendTransactMessage implements TransactionalSQSAccessor.
 func (sa *defaultTransactionalSQSAccessor) AppendTransactMessage(queueName string, input *sqs.SendMessageInput) error {
 	sa.log.Debug("AppendTransactMessage")
+	//TODO: SendMessageInputに、DeleteTime（delete_time）の値を設定
 	sa.transaction.AppendTransactMessage(&Message{QueueName: queueName, Input: input})
 	return nil
 }
@@ -76,6 +81,8 @@ func (sa *defaultTransactionalSQSAccessor) AppendTransactMessage(queueName strin
 func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Message, hasDbTrancation bool) error {
 	sa.log.Debug("TransactSendMessages")
 	for _, v := range inputs {
+		// 業務テーブルでのDynamoDBトランザクション処理がない場合は、メッセージにフラグ情報を送る
+		addIsTableCheckFlag(hasDbTrancation, v)
 		// SQSへメッセージ送信
 		output, err := sa.SendMessageSdk(v.QueueName, v.Input)
 		if err != nil {
@@ -107,4 +114,23 @@ func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Messag
 // EndTransaction implements TransactionalSQSAccessor.
 func (sa *defaultTransactionalSQSAccessor) EndTransaction() {
 	sa.transaction = nil
+}
+
+// addIsTableCheckFlag は、業務テーブルでのDynamoDBトランザクション処理がない場合にメッセージにフラグ情報を追加します
+func addIsTableCheckFlag(hasDbTrancation bool, v *Message) {
+	if hasDbTrancation {
+		return
+	}
+	isTableChecked := map[string]types.MessageAttributeValue{
+		// TODO: 定数化
+		"is_table_check": {
+			DataType:    aws.String("String"),
+			StringValue: aws.String("false"),
+		},
+	}
+	if v.Input.MessageAttributes == nil {
+		v.Input.MessageAttributes = isTableChecked
+	} else {
+		maps.Copy(v.Input.MessageAttributes, isTableChecked)
+	}
 }
