@@ -24,6 +24,7 @@ type ApplicationContext interface {
 	GetConfig() config.Config
 	GetDynamoDBAccessor() transaction.TransactionalDynamoDBAccessor
 	GetDynamoDBTransactionManager() transaction.TransactionManager
+	GetDynamoDBTransactionManagerForDBOnly() transaction.TransactionManager
 	GetDynamoDBTemplate() transaction.TransactinalDynamoDBTemplate
 	GetSQSAccessor() transaction.TransactionalSQSAccessor
 	GetSQSTemplate() async.SQSTemplate
@@ -46,6 +47,7 @@ func NewApplicationContext() ApplicationContext {
 	sqsTemplate := createSQSTemplate(logger, sqsAccessor)
 	dynamodbAccessor := createTransactionalDynamoDBAccessor(logger, config)
 	dynamoDBTransactionManager := createDynamoDBTransactionManager(logger, dynamodbAccessor, sqsAccessor)
+	dynamoDBTransactionManagerForDBOnly := createDynamoDBTransactionManagerForDBOnly(logger, dynamodbAccessor)
 	dynamoDBTempalte := createDynamoDBTemplate(logger, dynamodbAccessor)
 	rdbAccessor := createRDBAccessor()
 	rdbTransactionManager := rdb.NewTransactionManager(logger, config, rdbAccessor)
@@ -58,38 +60,40 @@ func NewApplicationContext() ApplicationContext {
 	validator.Setup()
 
 	return &defaultApplicationContext{
-		config:                     config,
-		messageSource:              messageSource,
-		logger:                     logger,
-		dynamoDBAccessor:           dynamodbAccessor,
-		dynamoDBTransactionManager: dynamoDBTransactionManager,
-		dynamodbTempalte:           dynamoDBTempalte,
-		sqsAccessor:                sqsAccessor,
-		sqsTemplate:                sqsTemplate,
-		rdbAccessor:                rdbAccessor,
-		rdbTransactionManager:      rdbTransactionManager,
-		httpClient:                 httpclient,
-		interceptor:                interceptor,
-		apiLambdaHandler:           apiLambdaHandler,
-		asyncLambdaHandler:         asyncLambdaHandler,
+		config:                              config,
+		messageSource:                       messageSource,
+		logger:                              logger,
+		dynamoDBAccessor:                    dynamodbAccessor,
+		dynamoDBTransactionManager:          dynamoDBTransactionManager,
+		dynamoDBTransactionManagerForDBOnly: dynamoDBTransactionManagerForDBOnly,
+		dynamodbTempalte:                    dynamoDBTempalte,
+		sqsAccessor:                         sqsAccessor,
+		sqsTemplate:                         sqsTemplate,
+		rdbAccessor:                         rdbAccessor,
+		rdbTransactionManager:               rdbTransactionManager,
+		httpClient:                          httpclient,
+		interceptor:                         interceptor,
+		apiLambdaHandler:                    apiLambdaHandler,
+		asyncLambdaHandler:                  asyncLambdaHandler,
 	}
 }
 
 type defaultApplicationContext struct {
-	config                     config.Config
-	messageSource              message.MessageSource
-	logger                     logging.Logger
-	dynamoDBAccessor           transaction.TransactionalDynamoDBAccessor
-	dynamoDBTransactionManager transaction.TransactionManager
-	dynamodbTempalte           transaction.TransactinalDynamoDBTemplate
-	sqsAccessor                transaction.TransactionalSQSAccessor
-	sqsTemplate                async.SQSTemplate
-	rdbAccessor                rdb.RDBAccessor
-	rdbTransactionManager      rdb.TransactionManager
-	httpClient                 httpclient.HttpClient
-	interceptor                handler.HandlerInterceptor
-	apiLambdaHandler           *handler.APILambdaHandler
-	asyncLambdaHandler         *handler.AsyncLambdaHandler
+	config                              config.Config
+	messageSource                       message.MessageSource
+	logger                              logging.Logger
+	dynamoDBAccessor                    transaction.TransactionalDynamoDBAccessor
+	dynamoDBTransactionManager          transaction.TransactionManager
+	dynamoDBTransactionManagerForDBOnly transaction.TransactionManager
+	dynamodbTempalte                    transaction.TransactinalDynamoDBTemplate
+	sqsAccessor                         transaction.TransactionalSQSAccessor
+	sqsTemplate                         async.SQSTemplate
+	rdbAccessor                         rdb.RDBAccessor
+	rdbTransactionManager               rdb.TransactionManager
+	httpClient                          httpclient.HttpClient
+	interceptor                         handler.HandlerInterceptor
+	apiLambdaHandler                    *handler.APILambdaHandler
+	asyncLambdaHandler                  *handler.AsyncLambdaHandler
 }
 
 // GetConfig implements ApplicationContext.
@@ -105,6 +109,11 @@ func (ac *defaultApplicationContext) GetDynamoDBAccessor() transaction.Transacti
 // GetDynamoDBTransactionManager implements ApplicationContext.
 func (ac *defaultApplicationContext) GetDynamoDBTransactionManager() transaction.TransactionManager {
 	return ac.dynamoDBTransactionManager
+}
+
+// GetDynamoDBTransactionManagerForDBOnly implements ApplicationContext.
+func (ac *defaultApplicationContext) GetDynamoDBTransactionManagerForDBOnly() transaction.TransactionManager {
+	return ac.dynamoDBTransactionManagerForDBOnly
 }
 
 // GetDynamoDBTemplate implements ApplicationContext.
@@ -219,6 +228,11 @@ func createDynamoDBTransactionManager(logger logging.Logger,
 	dynamodbAccessor transaction.TransactionalDynamoDBAccessor,
 	sqsAccessor transaction.TransactionalSQSAccessor) transaction.TransactionManager {
 	return transaction.NewTransactionManager(logger, dynamodbAccessor, sqsAccessor)
+}
+
+func createDynamoDBTransactionManagerForDBOnly(logger logging.Logger,
+	dynamodbAccessor transaction.TransactionalDynamoDBAccessor) transaction.TransactionManager {
+	return transaction.NewTransactionManagerForDBOnly(logger, dynamodbAccessor)
 }
 
 func createDynamoDBTemplate(logger logging.Logger, dynamodbAccessor transaction.TransactionalDynamoDBAccessor) transaction.TransactinalDynamoDBTemplate {
