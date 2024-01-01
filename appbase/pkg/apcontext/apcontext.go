@@ -9,3 +9,6 @@ import (
 
 // Contextは、アプリケーションで格納するコンテキスト領域です。
 var Context context.Context
+
+// ContextKey は、Contextのキーを表す型です。
+type ContextKey string

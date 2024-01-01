@@ -7,7 +7,10 @@ import "example.com/appbase/pkg/transaction/entity"
 
 // MessageRegisterer は、メッセージをトランザクションに登録するためのインターフェースです。
 type MessageRegisterer interface {
-	RegisterMessage(transaction Transaction, queueMessage *entity.QueueMessageItem) error
+	// メッセージ情報を登録
+	RegisterMessage(queueMessage *entity.QueueMessageItem) error
+	// メッセージ情報のメッセージ重複排除IDを追加更新
+	UpdateMessage(queueMessage *entity.QueueMessageItem) error
 }
 
 // NewMessageRegisterer は、MessageRegistererを作成します。
@@ -23,6 +26,11 @@ type defaultMessageRegisterer struct {
 }
 
 // RegisterMessage implements MessageRegisterer.
-func (r *defaultMessageRegisterer) RegisterMessage(transaction Transaction, queueMessage *entity.QueueMessageItem) error {
+func (r *defaultMessageRegisterer) RegisterMessage(queueMessage *entity.QueueMessageItem) error {
 	return r.queueMessageItemRepository.CreateOneWithTx(queueMessage)
+}
+
+// UpdateMessage implements MessageRegisterer.
+func (r *defaultMessageRegisterer) UpdateMessage(queueMessage *entity.QueueMessageItem) error {
+	return r.queueMessageItemRepository.UpdateOneWithTx(queueMessage)
 }

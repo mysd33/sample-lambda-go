@@ -509,10 +509,17 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
                 {
                     # メッセージIDを修正       
                     "messageId": "99a809d5-0e25-42ad-89df-c466385dad58",
-                    # レセプトハンドルを修正
                     "receiptHandle": "99a809d5-0e25-42ad-89df-c466385dad58#d753a0fb-c153-495f-81f3-d849a3705116",
                     # Bodyを送信したメッセージに適宜修正
                     "body": "{\"todoTitles\":[\"dummy1\",\"dummy2\"]}",
+                    "attributes": {
+                        "ApproximateFirstReceiveTimestamp": "1704094384254",
+                        "SentTimestamp": "1704091021068",
+                        "SenderId": "127.0.0.1",
+                        # メッセージの受信回数（リトライ回数）を変更したい場合に適宜修正
+                        "ApproximateReceiveCount": "1",
+                        "AWSTraceHeader": "Parent=0000000000000000;Sampled=0"                        
+                    },
                     "messageAttributes": {
                         # messageAttributes内のdelete_timeの値修正    
                         "delete_time": {
@@ -521,8 +528,6 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
                         }
                         # todo: messageAttributes内に、is_table_checkの追加                
                     },
-                    # md5OfBodyを修正
-                    "md5OfBody": "97a3b5b2e8fd43c9bd84590c0c529c14",
                     …
                 }
             ]
@@ -562,21 +567,22 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
                 {
                     # メッセージIDを修正       
                     "messageId": "99a809d5-0e25-42ad-89df-c466385dad58",
-                    # レセプトハンドルを修正
                     "receiptHandle": "99a809d5-0e25-42ad-89df-c466385dad58#d753a0fb-c153-495f-81f3-d849a3705116",
                     # Bodyを送信したメッセージに適宜修正
                     "body": "{\"todoTitles\":[\"dummy1\",\"dummy2\"]}",
                     "attributes": {
-                        "ApproximateReceiveCount": "1",
+                        "ApproximateFirstReceiveTimestamp": "1545082649185",    
                         "SentTimestamp": "1545082649183",
-                        # メッセージグループIDを修正
-                        "MessageGroupId": "1",
-                        # シーケンス番号を修正
-                        "SequenceNumber": "18849496460467696128",
+                        # メッセージの受信回数（リトライ回数）を変更したい場合に適宜修正    
+                        "ApproximateReceiveCount": "1",                
                         # メッセージ重複排除IDを修正
-                        "MessageDeduplicationId": "1",                        
+                        "MessageDeduplicationId": "049a0b4e-a882-11ee-80df-0242ac110005",
                         "SenderId": "AIDAIENQZJOLO23YVJ4VO",
-                        "ApproximateFirstReceiveTimestamp": "1545082649185"                
+                        "AWSTraceHeader": "Parent=0000000000000000;Sampled=0",
+                        # メッセージグループIDを修正
+                        "MessageGroupId": "049a0ab8-a882-11ee-80df-0242ac110005",                                
+                        # シーケンス番号を修正
+                        "SequenceNumber": "0"                                      
                     },                    
                     "messageAttributes": {
                         # messageAttributes内のdelete_timeの値修正    
@@ -586,8 +592,6 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
                         }
                         # todo: messageAttributes内に、is_table_checkの追加                
                     },
-                    # md5OfBodyを修正
-                    "md5OfBody": "97a3b5b2e8fd43c9bd84590c0c529c14",
                     …
                 }
             ]        

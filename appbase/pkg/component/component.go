@@ -49,8 +49,8 @@ func NewApplicationContext() ApplicationContext {
 	messageRegisterer := createMessageRegisterer(queueMessageItemRepository)
 	sqsAccessor := createTransactionalSQSAccessor(logger, config, messageRegisterer)
 	sqsTemplate := createSQSTemplate(logger, sqsAccessor)
-	dynamoDBTransactionManager := createDynamoDBTransactionManager(logger, dynamodbAccessor, sqsAccessor)
-	dynamoDBTransactionManagerForDBOnly := createDynamoDBTransactionManagerForDBOnly(logger, dynamodbAccessor)
+	dynamoDBTransactionManager := createDynamoDBTransactionManager(logger, dynamodbAccessor, sqsAccessor, messageRegisterer)
+	dynamoDBTransactionManagerForDBOnly := createDynamoDBTransactionManagerForDBOnly(logger, dynamodbAccessor, messageRegisterer)
 	rdbAccessor := createRDBAccessor()
 	rdbTransactionManager := rdb.NewTransactionManager(logger, config, rdbAccessor)
 	httpclient := createHttpClient(logger)
@@ -228,13 +228,15 @@ func createSQSTemplate(logger logging.Logger, sqsAccessor transaction.Transactio
 
 func createDynamoDBTransactionManager(logger logging.Logger,
 	dynamodbAccessor transaction.TransactionalDynamoDBAccessor,
-	sqsAccessor transaction.TransactionalSQSAccessor) transaction.TransactionManager {
-	return transaction.NewTransactionManager(logger, dynamodbAccessor, sqsAccessor)
+	sqsAccessor transaction.TransactionalSQSAccessor,
+	messageRegigsterer transaction.MessageRegisterer) transaction.TransactionManager {
+	return transaction.NewTransactionManager(logger, dynamodbAccessor, sqsAccessor, messageRegigsterer)
 }
 
 func createDynamoDBTransactionManagerForDBOnly(logger logging.Logger,
-	dynamodbAccessor transaction.TransactionalDynamoDBAccessor) transaction.TransactionManager {
-	return transaction.NewTransactionManagerForDBOnly(logger, dynamodbAccessor)
+	dynamodbAccessor transaction.TransactionalDynamoDBAccessor,
+	messageRegigsterer transaction.MessageRegisterer) transaction.TransactionManager {
+	return transaction.NewTransactionManagerForDBOnly(logger, dynamodbAccessor, messageRegigsterer)
 }
 
 func createDynamoDBTemplate(logger logging.Logger, dynamodbAccessor transaction.TransactionalDynamoDBAccessor) transaction.TransactionalDynamoDBTemplate {

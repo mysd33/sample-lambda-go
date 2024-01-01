@@ -10,6 +10,7 @@ import (
 
 	"example.com/appbase/pkg/async"
 	myConfig "example.com/appbase/pkg/config"
+	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/transaction/entity"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -48,6 +49,7 @@ func NewTransactionalSQSAccessor(log logging.Logger, myCfg myConfig.Config, mess
 	}
 	return &defaultTransactionalSQSAccessor{
 		log:               log,
+		config:            myCfg,
 		sqsAccessor:       sqsAccessor,
 		messageRegisterer: messageRegisterer,
 	}, nil
@@ -56,6 +58,7 @@ func NewTransactionalSQSAccessor(log logging.Logger, myCfg myConfig.Config, mess
 // defaultTransactionalSQSAccessor は、TransactionalSQSAccessorを実装する構造体です。
 type defaultTransactionalSQSAccessor struct {
 	log               logging.Logger
+	config            myConfig.Config
 	sqsAccessor       async.SQSAccessor
 	messageRegisterer MessageRegisterer
 	transaction       Transaction
@@ -106,12 +109,10 @@ func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Messag
 			queueMessageItem := &entity.QueueMessageItem{}
 			// (キュー名) + "_" + (メッセージID)をパーティションキーとする
 			queueMessageItem.MessageId = v.QueueName + "_" + *output.MessageId
-			if v.Input.MessageGroupId != nil {
-				queueMessageItem.MessageDeduplicationId = *v.Input.MessageDeduplicationId
-			}
+			// メッセージ重複排除IDは送信時は格納しない（処理済みフラグ代わりに使用しているため）
 			// DeleteTime（delete_time）の値を設定
 			queueMessageItem.DeleteTime = *v.Input.MessageAttributes["delete_time"].StringValue
-			if err := sa.messageRegisterer.RegisterMessage(sa.transaction, queueMessageItem); err != nil {
+			if err := sa.messageRegisterer.RegisterMessage(queueMessageItem); err != nil {
 				return errors.WithStack(err)
 			}
 		}
@@ -126,14 +127,14 @@ func (sa *defaultTransactionalSQSAccessor) EndTransaction() {
 }
 
 // 削除時間の追加
-func (*defaultTransactionalSQSAccessor) addDeleteTime() map[string]types.MessageAttributeValue {
-	// TODO: TTL設定に切り出す
+func (sa *defaultTransactionalSQSAccessor) addDeleteTime() map[string]types.MessageAttributeValue {
+	// TODO: TTLを設定に切り出す
+	//ttl := sa.config.Get("QUEUE_MESSAGE_TABLE_TTL")
 	ttl := 24 * 4 // 4日間
 	nowTime := time.Now()
 	delTimeStr := strconv.FormatInt(nowTime.Add(time.Duration(ttl)*time.Hour).Unix(), 10)
 	deleteTime := map[string]types.MessageAttributeValue{
-		// TODO: 定数化
-		"delete_time": {
+		constant.DELETE_TIME_NAME: {
 			DataType:    aws.String("String"),
 			StringValue: aws.String(delTimeStr),
 		},
@@ -147,8 +148,7 @@ func (*defaultTransactionalSQSAccessor) addIsTableCheckFlag(v *Message, hasDbTra
 		return
 	}
 	isTableChecked := map[string]types.MessageAttributeValue{
-		// TODO: 定数化
-		"is_table_check": {
+		constant.IS_TABLE_CHECK_NAME: {
 			DataType:    aws.String("String"),
 			StringValue: aws.String("false"),
 		},

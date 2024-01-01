@@ -4,6 +4,7 @@ dynamodb パッケージは、DynamoDBアクセスに関する機能を提供す
 package dynamodb
 
 import (
+	"fmt"
 	"strconv"
 
 	"example.com/appbase/pkg/dynamodb/input"
@@ -228,9 +229,9 @@ func ScanIndexForward(orderby input.OrderBy) *bool {
 
 func typeSwitch(attribute input.Attribute) (types.AttributeValue, error) {
 	switch attribute.Value.(type) {
+	case nil:
+		return nil, fmt.Errorf("cannot switch type because attribuite is nil")
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
-		// TODO: 要動作確認
-		//return &types.AttributeValueMemberN{Value: keyValue.Value.(string)}, nil
 		return &types.AttributeValueMemberN{Value: strconv.Itoa(attribute.Value.(int))}, nil
 	case string:
 		return &types.AttributeValueMemberS{Value: attribute.Value.(string)}, nil
@@ -239,6 +240,6 @@ func typeSwitch(attribute input.Attribute) (types.AttributeValue, error) {
 	case []byte:
 		return &types.AttributeValueMemberB{Value: attribute.Value.([]byte)}, nil
 	default:
-		return nil, errors.New("type not supported")
+		return nil, fmt.Errorf("type not supported: %T", attribute.Value)
 	}
 }

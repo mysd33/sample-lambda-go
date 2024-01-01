@@ -4,9 +4,12 @@ transaction パッケージは、トランザクション管理に関する機�
 package transaction
 
 import (
+	"example.com/appbase/pkg/apcontext"
+	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/domain"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
+	"example.com/appbase/pkg/transaction/entity"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/cockroachdb/errors"
@@ -21,10 +24,12 @@ type TransactionManager interface {
 // NewTransactionManager は、TransactionManagerを作成します
 func NewTransactionManager(log logging.Logger,
 	dynamodbAccessor TransactionalDynamoDBAccessor,
-	sqsAccessor TransactionalSQSAccessor) TransactionManager {
+	sqsAccessor TransactionalSQSAccessor,
+	messageRegsiterer MessageRegisterer) TransactionManager {
 	return &defaultTransactionManager{log: log,
-		dynamodbAccessor: dynamodbAccessor,
-		sqsAccessor:      sqsAccessor,
+		dynamodbAccessor:  dynamodbAccessor,
+		sqsAccessor:       sqsAccessor,
+		messageRegsiterer: messageRegsiterer,
 	}
 }
 
@@ -32,23 +37,26 @@ func NewTransactionManager(log logging.Logger,
 // SQSのトランザクションは利用しない場合に使用します。
 func NewTransactionManagerForDBOnly(log logging.Logger,
 	dynamodbAccessor TransactionalDynamoDBAccessor,
+	messageRegsterer MessageRegisterer,
 ) TransactionManager {
 	return &defaultTransactionManager{log: log,
-		dynamodbAccessor: dynamodbAccessor,
+		dynamodbAccessor:  dynamodbAccessor,
+		messageRegsiterer: messageRegsterer,
 	}
 }
 
 // defaultTransactionManager は、TransactionManagerを実装する構造体です。
 type defaultTransactionManager struct {
-	log              logging.Logger
-	dynamodbAccessor TransactionalDynamoDBAccessor
-	sqsAccessor      TransactionalSQSAccessor
+	log               logging.Logger
+	dynamodbAccessor  TransactionalDynamoDBAccessor
+	sqsAccessor       TransactionalSQSAccessor
+	messageRegsiterer MessageRegisterer
 }
 
 // ExecuteTransaction implements TransactionManager.
 func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.ServiceFunc) (result any, err error) {
 	// 新しいトランザクションを作成
-	transction := newTrasaction(tm.log)
+	transction := newTrasaction(tm.log, tm.messageRegsiterer)
 	// トランザクションを開始
 	transction.Start(tm.dynamodbAccessor, tm.sqsAccessor)
 
@@ -91,15 +99,16 @@ type Transaction interface {
 }
 
 // newTrasactionは 新しいTransactionを作成します。
-func newTrasaction(log logging.Logger) Transaction {
-	return &defaultTransaction{log: log}
+func newTrasaction(log logging.Logger, messageRegsiterer MessageRegisterer) Transaction {
+	return &defaultTransaction{log: log, messageRegsiterer: messageRegsiterer}
 }
 
 // defaultTransactionは、transactionを実装する構造体です。
 type defaultTransaction struct {
-	log              logging.Logger
-	dynamodbAccessor TransactionalDynamoDBAccessor
-	sqsAccessor      TransactionalSQSAccessor
+	log               logging.Logger
+	messageRegsiterer MessageRegisterer
+	dynamodbAccessor  TransactionalDynamoDBAccessor
+	sqsAccessor       TransactionalSQSAccessor
 	// DynamoDBの書き込みトランザクション
 	transactWriteItems []types.TransactWriteItem
 	// SQSのメッセージ
@@ -148,6 +157,12 @@ func (t *defaultTransaction) Commit() (*dynamodb.TransactWriteItemsOutput, error
 			return nil, errors.WithStack(err)
 		}
 	}
+	// ディレード処理の場合は、メッセージ管理テーブルのアイテムの重複メッセージIDを登録する更新トランザクションを追加
+	err = t.transactUpdateQueueMessageItem()
+	if err != nil {
+		return nil, err
+	}
+
 	// DBトランザクションの実行
 	if !t.CheckTransactWriteItems() {
 		t.log.Debug("トランザクション処理なし")
@@ -189,4 +204,22 @@ func (t *defaultTransaction) Rollback() {
 	if t.sqsAccessor != nil {
 		t.sqsAccessor.EndTransaction()
 	}
+}
+
+// transactUpdateQueueMessageItem は、メッセージ管理テーブルのアイテムの重複メッセージIDを登録する更新トランザクションを追加します。
+func (t *defaultTransaction) transactUpdateQueueMessageItem() error {
+	// Contextから非同期処理情報を取得
+	asyncHandlerInfo := apcontext.Context.Value(constant.ASYNC_HANDLER_INFO_CTX_KEY)
+	if asyncHandlerInfo == nil {
+		t.log.Debug("非同期処理情報なし")
+		return nil
+	}
+	queueMessageItem, ok := asyncHandlerInfo.(*entity.QueueMessageItem)
+	if ok {
+		// メッセージ管理テーブルのアイテムの重複メッセージIDを登録する更新トランザクションを追加
+		t.log.Debug("メッセージ管理テーブルに重複メッセージIDを登録する更新トランザクションを追加")
+		return t.messageRegsiterer.UpdateMessage(queueMessageItem)
+	}
+	//TODO: エラー定義
+	return errors.Errorf("非同期処理情報の型が誤りのため、処理できません。")
 }

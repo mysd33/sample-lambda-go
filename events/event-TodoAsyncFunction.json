@@ -1,22 +1,23 @@
 {
     "Records": [
         {
-            "messageId": "44f0c6f6-93d1-4fe9-8d22-00d9cc8d813b",
-            "receiptHandle": "44f0c6f6-93d1-4fe9-8d22-00d9cc8d813b#f827def7-7815-4942-925b-c23f57ef09e3",
+            "messageId": "27edd462-8a18-474a-9248-26b449e4f535",
+            "receiptHandle": "27edd462-8a18-474a-9248-26b449e4f535#71f1ab5d-2622-458b-ba49-beb3b8b3321a",
             "body": "{\"todoTitles\":[\"dummy1\",\"dummy2\"]}",
-            "attributes": {
+            "Attributes": {
+                "ApproximateFirstReceiveTimestamp": "1704094384254",
+                "SentTimestamp": "1704091021068",
+                "SenderId": "127.0.0.1",
                 "ApproximateReceiveCount": "1",
-                "SentTimestamp": "1545082649183",
-                "SenderId": "AIDAIENQZJOLO23YVJ4VO",
-                "ApproximateFirstReceiveTimestamp": "1545082649185"
-            },
+                "AWSTraceHeader": "Parent=0000000000000000;Sampled=0"
+            },            
             "messageAttributes": {
                 "delete_time": {
-                    "StringValue": "1704420512",
+                    "StringValue": "1704436621",
                     "DataType": "String"
                 }    
             },
-            "md5OfBody": "482a190174a0aeed528c5e0e43eafcdb",
+            "md5OfBody": "cb8b3aa532aaa026bf3f2980d892c7b9",
             "eventSource": "aws:sqs",
             "eventSourceARN": "arn:aws:sqs:ap-northeast-1:123456789012:SampleQueue",
             "awsRegion": "ap-northeast-1"

@@ -99,6 +99,7 @@ func (t *defaultTransactionalDynamoDBTemplate) CreateOneWithTransaction(tableNam
 
 // UpdateOneWithTransaction implements TransactinalDynamoDBTemplate.
 func (t *defaultTransactionalDynamoDBTemplate) UpdateOneWithTransaction(tableName tables.DynamoDBTableName, input input.UpdateInput) error {
+	t.log.Debug("UpdateOneWithTransaction")
 	// プライマリキーの条件
 	keyMap, err := mydynamodb.CreatePkAttributeValue(input.PrimaryKey)
 	if err != nil {
