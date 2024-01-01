@@ -1,6 +1,7 @@
 package main
 
 import (
+	"app/cmd/common"
 	"app/internal/pkg/entity"
 	"context"
 	"encoding/json"
@@ -27,7 +28,7 @@ func TestPostTodo(t *testing.T) {
 
 	ac := component.NewApplicationContext()
 	apiLambdaHandler := ac.GetAPILambdaHandler()
-	r := apiLambdaHandler.GetDefaultGinEngine()
+	r := apiLambdaHandler.GetDefaultGinEngine(common.NewCommonErrorResponse(ac.GetMessageSource()))
 	initBiz(ac, r)
 
 	t.Run("Postのテスト", func(t *testing.T) {

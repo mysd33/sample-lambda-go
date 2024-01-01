@@ -1,6 +1,7 @@
 package main
 
 import (
+	"app/cmd/common"
 	"testing"
 
 	"example.com/appbase/pkg/component"
@@ -22,7 +23,7 @@ func init() {
 	ac := component.NewApplicationContext()
 	// Ginのエンジンを作成
 	apiLambdaHandler := ac.GetAPILambdaHandler()
-	r := apiLambdaHandler.GetDefaultGinEngine()
+	r := apiLambdaHandler.GetDefaultGinEngine(common.NewCommonErrorResponse(ac.GetMessageSource()))
 	// 業務の初期化処理実行
 	initBiz(ac, r)
 	// ハンドラ関数の作成

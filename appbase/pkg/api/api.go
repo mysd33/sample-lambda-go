@@ -15,7 +15,7 @@ import (
 // ApiResponseFormatterは、レスポンスデータを作成するインタフェース
 type ApiResponseFormatter interface {
 	// ReturnResponseBody は、処理結果resultまたはエラーerrに対応するレスポンスボディを返却します。
-	ReturnResponseBody(ctx *gin.Context)
+	ReturnResponseBody(ctx *gin.Context, errorResponse ErrorResponse)
 }
 
 // NewApiResponseFormatter は、ApiResponseFormatterを作成します。
@@ -28,7 +28,7 @@ type defaultApiResponseFormatter struct {
 }
 
 // ReturnResponseBody implements ApiResponseFormatter.
-func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context) {
+func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context, errorResponse ErrorResponse) {
 	var (
 		validationError *myerrors.ValidationError
 		businessError   *myerrors.BusinessError
@@ -43,13 +43,13 @@ func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context) {
 
 		// 各エラー内容に応じた応答メッセージの成形
 		if errors.As(err, &validationError) {
-			ctx.JSON(http.StatusBadRequest, ErrorResponseBody("validationError", validationError.Error()))
+			ctx.JSON(errorResponse.ValidationErrorResponse(validationError))
 		} else if errors.As(err, &businessError) {
-			ctx.JSON(http.StatusBadRequest, ErrorResponseBody(businessError.ErrorCode(), f.messageSource.GetMessage(businessError.ErrorCode(), businessError.Args()...)))
+			ctx.JSON(errorResponse.BusinessErrorResponse(businessError))
 		} else if errors.As(err, &systemError) {
-			ctx.JSON(http.StatusInternalServerError, ErrorResponseBody(systemError.ErrorCode(), f.messageSource.GetMessage(message.E_FW_9001)))
+			ctx.JSON(errorResponse.SystemErrorResponse(systemError))
 		} else {
-			ctx.JSON(http.StatusInternalServerError, ErrorResponseBody(message.E_FW_9999, f.messageSource.GetMessage(message.E_FW_9999)))
+			ctx.JSON(errorResponse.UnExpectedErrorResponse(err))
 		}
 	} else {
 		//TODO: 定数化
@@ -59,9 +59,4 @@ func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context) {
 		}
 		//TODO: resultがない場合
 	}
-}
-
-func ErrorResponseBody(label string, detail string) gin.H {
-	//TODO: 要件に応じてエラーレスポンスの形式を修正する。
-	return gin.H{"code": label, "detail": detail}
 }

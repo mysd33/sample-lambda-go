@@ -15,7 +15,13 @@ import (
 	"example.com/appbase/pkg/message"
 	"github.com/aws/aws-lambda-go/events"
 	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
+	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
+)
+
+var (
+	NoRouteError  = errors.New("NOT FOUND")
+	NoMethodError = errors.New("METHOD NOT ALLOWED")
 )
 
 // APITriggeredLambdaHandlerFunc は、APIGatewayトリガのLambdaのハンドラを表す関数です。
@@ -43,14 +49,14 @@ func NewAPILambdaHandler(config config.Config,
 }
 
 // GetDefaultGinEngine は、ginのEngineを取得します。
-func (h *APILambdaHandler) GetDefaultGinEngine() *gin.Engine {
+func (h *APILambdaHandler) GetDefaultGinEngine(errorResponse api.ErrorResponse) *gin.Engine {
 	// ginをLoggerとCustomerRecoverのミドルウェアがアタッチされた状態で作成
 	engine := gin.New()
 	engine.Use(gin.Logger(),
 		func(ctx *gin.Context) {
 			ctx.Next()
 			// レスポンスの生成
-			h.apiResponseFormatter.ReturnResponseBody(ctx)
+			h.apiResponseFormatter.ReturnResponseBody(ctx, errorResponse)
 		},
 		// パニック時のカスタムリカバリ処理
 		gin.CustomRecovery(func(c *gin.Context, recover any) {
@@ -62,14 +68,14 @@ func (h *APILambdaHandler) GetDefaultGinEngine() *gin.Engine {
 
 	// 404エラー
 	engine.NoRoute(func(ctx *gin.Context) {
-		h.log.Debug("404エラー")
-		ctx.JSON(http.StatusNotFound, api.ErrorResponseBody("NOT_FOUND", fmt.Sprintf("%s is not found", ctx.Request.URL.Path)))
+		h.log.Debug("%s is not found", ctx.Request.URL.Path)
+		ctx.JSON(errorResponse.WarnErrorResponse(NoRouteError))
 	})
 	// 405エラー
 	engine.HandleMethodNotAllowed = true
 	engine.NoMethod(func(ctx *gin.Context) {
-		h.log.Debug("405エラー")
-		ctx.JSON(http.StatusMethodNotAllowed, api.ErrorResponseBody("METHOD_NOT_ALLOWED", fmt.Sprintf("%s Method %s is not allowed", ctx.Request.Method, ctx.Request.URL.Path)))
+		h.log.Debug("%s Method %s is not allowed", ctx.Request.Method, ctx.Request.URL.Path)
+		ctx.JSON(errorResponse.WarnErrorResponse(NoMethodError))
 	})
 	return engine
 }
