@@ -578,8 +578,7 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
                     "md5OfBody": "97a3b5b2e8fd43c9bd84590c0c529c14",
                     …
                 }
-            ]
-        }    
+            ]        
         ```
 
         * 後方の非同期処理の実行
