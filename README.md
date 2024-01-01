@@ -295,8 +295,10 @@ curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v
 ```sh
 # BFFからの非同期実行依頼（標準キュー）
 curl -X POST https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo-async
+curl -X POST https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo-async?dbtx=no
 # BFFからの非同期実行依頼（FIFOキュー）
 curl -X POST https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo-async?fifo=true
+curl -X POST https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo-async?fifo=true\&dbtx=no
 
 ```
 
@@ -496,8 +498,11 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
         * ディレード処理実行依頼
 
         ```sh
-        # BFF (ディレード処理実行依頼)
+        # 業務のDB更新を伴う場合
         curl -X POST http://127.0.0.1:3000/bff-api/v1/todo-async
+        # 業務のDB更新を伴わない場合
+        curl -X POST http://127.0.0.1:3000/bff-api/v1/todo-async?dbtx=no
+
         # Elastic MQから実行依頼したメッセージを取得し確認
         aws sqs receive-message --queue-url http://localhost:9324/000000000000/SampleQueue --endpoint-url http://localhost:9324 --attribute-names All --message-attribute-names All
         ```
@@ -525,8 +530,12 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
                         "delete_time": {
                             "StringValue": "1704413117",
                             "DataType": "String"
+                        },
+                        # DB更新を伴わない場合は、messageAttributes内に、needs_table_checkの追加 
+                        "needs_table_check": {
+                            "StringValue": "false",
+                            "DataType": "String"
                         }
-                        # todo: messageAttributes内に、is_table_checkの追加                
                     },
                     …
                 }
@@ -553,9 +562,11 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
 
         * ディレード実行依頼
 
-        ```sh
-        # BFF (ディレード処理実行依頼)
+        ```sh        
+        # 業務のDB更新を伴う場合
         curl -X POST http://127.0.0.1:3000/bff-api/v1/todo-async?fifo=true
+        # 業務のDB更新を伴わない場合
+        curl -X POST http://127.0.0.1:3000/bff-api/v1/todo-async?fifo=true\&dbtx=no
         # Elastic MQから実行依頼したメッセージを取得し確認
         aws sqs receive-message --queue-url http://localhost:9324/000000000000/SampleFIFOQueue.fifo --endpoint-url http://localhost:9324 --attribute-names All --message-attribute-names All
         ```
@@ -572,12 +583,12 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
                     "body": "{\"todoTitles\":[\"dummy1\",\"dummy2\"]}",
                     "attributes": {
                         "ApproximateFirstReceiveTimestamp": "1545082649185",    
-                        "SentTimestamp": "1545082649183",
-                        # メッセージの受信回数（リトライ回数）を変更したい場合に適宜修正    
-                        "ApproximateReceiveCount": "1",                
+                        "SentTimestamp": "1545082649183",           
                         # メッセージ重複排除IDを修正
                         "MessageDeduplicationId": "049a0b4e-a882-11ee-80df-0242ac110005",
                         "SenderId": "AIDAIENQZJOLO23YVJ4VO",
+                        # メッセージの受信回数（リトライ回数）を変更したい場合に適宜修正    
+                        "ApproximateReceiveCount": "1",   
                         "AWSTraceHeader": "Parent=0000000000000000;Sampled=0",
                         # メッセージグループIDを修正
                         "MessageGroupId": "049a0ab8-a882-11ee-80df-0242ac110005",                                
@@ -589,8 +600,12 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
                         "delete_time": {
                             "StringValue": "1704413117",
                             "DataType": "String"
-                        }
-                        # todo: messageAttributes内に、is_table_checkの追加                
+                        },
+                        # DB更新を伴わない場合は、messageAttributes内に、needs_table_checkの追加 
+                        "needs_table_check": {
+                            "StringValue": "false",
+                            "DataType": "String"
+                        }                                                
                     },
                     …
                 }

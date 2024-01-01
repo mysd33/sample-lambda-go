@@ -149,12 +149,9 @@ func (h *AsyncLambdaHandler) sortMessages(sqsMsgs []events.SQSMessage) {
 // checkMessagId は、キューメッセージ管理テーブルにメッセージIDが存在するか確認する
 func (h *AsyncLambdaHandler) checkMessageId(sqsMsg events.SQSMessage) (string, error) {
 	queueMessageTableId := h.getQueueMessageTableId(sqsMsg)
-	// フラグが立っている場合は、DynamoDBのキューメッセージ管理テーブルを確認しない
-	// Message1Attributeからis_table_checkの値を取得
-	isTableCheck := sqsMsg.MessageAttributes[constant.IS_TABLE_CHECK_NAME].StringValue
-	if isTableCheck != nil && *isTableCheck == "false" {
+	if h.unnecessaryToCheckTable(sqsMsg) {
 		// DBを確認しないため、メッセージ重複排除IDは空文字を返却
-		h.log.Debug(constant.IS_TABLE_CHECK_NAME + ":あり")
+		h.log.Debug("メッセージ管理テーブルのチェック不要")
 		return "", nil
 	}
 	h.log.Debug("キューメッセージテーブルID: %s", queueMessageTableId)
@@ -187,6 +184,11 @@ func (h *AsyncLambdaHandler) checkMessageId(sqsMsg events.SQSMessage) (string, e
 // addAsyncInfoToContext は、非同期処理情報をContextに格納します。
 func (h *AsyncLambdaHandler) addAsyncInfoToContext(sqsMsg events.SQSMessage, isFIFO bool) {
 	var messageDeduplicationId string
+	if h.unnecessaryToCheckTable(sqsMsg) {
+		// DBを確認を必要としないため、非同期処理情報格納しない
+		h.log.Debug("メッセージ管理テーブルの更新不要のため非同期処理情報のContext格納なし")
+		return
+	}
 	if isFIFO {
 		// FIFOキューの場合は、実際のメッセージ重複排除IDを設定
 		messageDeduplicationId = sqsMsg.Attributes[string(types.MessageSystemAttributeNameMessageDeduplicationId)]
@@ -202,6 +204,12 @@ func (h *AsyncLambdaHandler) addAsyncInfoToContext(sqsMsg events.SQSMessage, isF
 			DeleteTime:             *sqsMsg.MessageAttributes[constant.DELETE_TIME_NAME].StringValue,
 		},
 	)
+}
+
+// unnecessaryToCheckTable は、キューメッセージ管理テーブルを確認する不要であるかを判定します。
+func (*AsyncLambdaHandler) unnecessaryToCheckTable(sqsMsg events.SQSMessage) bool {
+	needsTableCheckFlag := sqsMsg.MessageAttributes[constant.NEEDS_TABLE_CHECK_NAME].StringValue
+	return needsTableCheckFlag != nil && *needsTableCheckFlag == "false"
 }
 
 // getQueueMessageTableId は、キューメッセージ管理テーブルのキーを作成します。

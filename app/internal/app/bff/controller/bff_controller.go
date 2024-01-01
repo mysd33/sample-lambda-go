@@ -113,14 +113,18 @@ func (c *bffControllerImpl) RegisterTodosAsync(ctx *gin.Context) (any, error) {
 	// クエリパラメータfifoの取得
 	fifo := ctx.Query("fifo")
 	c.log.Debug("fifo=%s", fifo)
+	// クエリパラメータdbtxの取得
+	dbtx := ctx.Query("dbtx")
+	c.log.Debug("dbtx=%s", dbtx)
+
 	var serviceFunc domain.ServiceFunc
 	if fifo == "" {
 		serviceFunc = func() (any, error) {
-			return nil, c.service.RegisterTodosAsync(todoTitles)
+			return nil, c.service.RegisterTodosAsync(todoTitles, dbtx)
 		}
 	} else {
 		serviceFunc = func() (any, error) {
-			return nil, c.service.RegisterTodosAsyncByFIFO(todoTitles)
+			return nil, c.service.RegisterTodosAsyncByFIFO(todoTitles, dbtx)
 		}
 	}
 	// トランザクション管理してサービス実行

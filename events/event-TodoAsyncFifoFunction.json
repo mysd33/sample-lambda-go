@@ -1,24 +1,24 @@
 {
     "Records": [
         {
-            "messageId": "38255778-7684-42b6-a3da-f4df14656e36",
+            "messageId": "7a848484-6c15-40a4-b247-c765bb2db204",
             "receiptHandle": "999dd0b6-b928-41f8-915b-55937f8be7cc#7e9e8d45-176b-4edc-9a87-e4df2381f066",
             "body": "{\"todoTitles\":[\"dummy1\",\"dummy2\"]}",
             "attributes": {
                 "ApproximateFirstReceiveTimestamp": "1545082649185",    
-                "SentTimestamp": "1545082649183",
-                "ApproximateReceiveCount": "1",                
-                "MessageDeduplicationId": "049a0b4e-a882-11ee-80df-0242ac110005",
+                "SentTimestamp": "1545082649183",                
+                "MessageDeduplicationId": "c4282a0f-a8a3-11ee-ba39-0242ac110008",
                 "SenderId": "AIDAIENQZJOLO23YVJ4VO",
+                "ApproximateReceiveCount": "1",
                 "AWSTraceHeader": "Parent=0000000000000000;Sampled=0",
                 "MessageGroupId": "049a0ab8-a882-11ee-80df-0242ac110005",                                
                 "SequenceNumber": "0"                
             },
             "messageAttributes": {
                 "delete_time": {
-                    "StringValue": "1704444287",
+                    "StringValue": "1704458781",
                     "DataType": "String"
-                }    
+                }
             },
             "md5OfBody": "c95302638fa008847d0955d3fd2442b7",
             "eventSource": "aws:sqs",

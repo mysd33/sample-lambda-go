@@ -112,6 +112,15 @@ func (r *defaultQueueMessageItemRepository) UpdateOneWithTx(queueMessage *entity
 				Value: queueMessage.MessageDeduplicationId,
 			},
 		},
+		WhereClauses: []*input.WhereClause{
+			{
+				Attribute: input.Attribute{
+					Name:  r.primaryKey.PartitionKey,
+					Value: queueMessage.MessageId,
+				},
+				WhereOp: input.WHERE_EQUAL,
+			},
+		},
 	}
 	r.log.Debug("メッセージ重複排除ID: %s", queueMessage.MessageDeduplicationId)
 	err := r.dynamodbTemplate.UpdateOneWithTransaction(r.tableName, input)

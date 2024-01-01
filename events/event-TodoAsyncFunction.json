@@ -1,7 +1,7 @@
 {
     "Records": [
         {
-            "messageId": "27edd462-8a18-474a-9248-26b449e4f535",
+            "messageId": "080b7512-9870-4ebc-8dac-801c7188196f",
             "receiptHandle": "27edd462-8a18-474a-9248-26b449e4f535#71f1ab5d-2622-458b-ba49-beb3b8b3321a",
             "body": "{\"todoTitles\":[\"dummy1\",\"dummy2\"]}",
             "Attributes": {
@@ -13,9 +13,9 @@
             },            
             "messageAttributes": {
                 "delete_time": {
-                    "StringValue": "1704436621",
+                    "StringValue": "1704455994",
                     "DataType": "String"
-                }    
+                }
             },
             "md5OfBody": "cb8b3aa532aaa026bf3f2980d892c7b9",
             "eventSource": "aws:sqs",

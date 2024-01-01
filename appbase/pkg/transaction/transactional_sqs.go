@@ -147,15 +147,15 @@ func (*defaultTransactionalSQSAccessor) addIsTableCheckFlag(v *Message, hasDbTra
 	if hasDbTrancation {
 		return
 	}
-	isTableChecked := map[string]types.MessageAttributeValue{
-		constant.IS_TABLE_CHECK_NAME: {
+	needsTableChecked := map[string]types.MessageAttributeValue{
+		constant.NEEDS_TABLE_CHECK_NAME: {
 			DataType:    aws.String("String"),
 			StringValue: aws.String("false"),
 		},
 	}
 	if v.Input.MessageAttributes == nil {
-		v.Input.MessageAttributes = isTableChecked
+		v.Input.MessageAttributes = needsTableChecked
 	} else {
-		maps.Copy(v.Input.MessageAttributes, isTableChecked)
+		maps.Copy(v.Input.MessageAttributes, needsTableChecked)
 	}
 }

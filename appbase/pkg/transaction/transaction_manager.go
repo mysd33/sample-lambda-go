@@ -186,7 +186,21 @@ func (t *defaultTransaction) Commit() (*dynamodb.TransactWriteItemsOutput, error
 		// トランザクションコミット失敗の理由をログ出力
 		if errors.As(err, &txCanceledException) {
 			for _, v := range txCanceledException.CancellationReasons {
-				t.log.Info(message.I_FW_0003, *v.Code, *v.Message, v.Item)
+				codePtr := v.Code
+				messagePtr := v.Message
+				var code string
+				if codePtr == nil {
+					code = ""
+				} else {
+					code = *codePtr
+				}
+				var msg string
+				if messagePtr == nil {
+					msg = ""
+				} else {
+					msg = *messagePtr
+				}
+				t.log.Info(message.I_FW_0003, code, msg, v.Item)
 			}
 		} else if errors.As(err, &txConflictException) {
 			t.log.Info(message.I_FW_0004, *txConflictException.ErrorCodeOverride, *txConflictException.Message)

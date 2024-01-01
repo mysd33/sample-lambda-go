@@ -19,9 +19,9 @@ type BffService interface {
 	// RegisterTodo は、タイトルtodoTitleのTodoを登録します。
 	RegisterTodo(todoTitle string) (*entity.Todo, error)
 	// RegisterTodosAsync は、（標準キューで）タイトルのリストtodoTitlesのTodoを非同期で登録します。
-	RegisterTodosAsync(todoTitles []string) error
+	RegisterTodosAsync(todoTitles []string, dbtx string) error
 	// RegisterTodosAsyncByFIFO は、FIFOキューでタイトルのリストtodoTitlesのTodoを非同期で登録します。
-	RegisterTodosAsyncByFIFO(todoTitles []string) error
+	RegisterTodosAsyncByFIFO(todoTitles []string, dbtx string) error
 }
 
 // New は、BffServiceを作成します。
@@ -82,10 +82,13 @@ func (bs *bffServiceImpl) FindTodo(userId string, todoId string) (*entity.User, 
 }
 
 // RegisterTodosAsync implements TodoService.
-func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string) error {
+func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string, dbtx string) error {
 	bs.log.Debug("RegisterTodosAsync")
 	// DBトランザクションを試すためのダミーのDB登録処理
-	bs.dummyRepository.CreateOneTx(&entity.Dummy{Value: "dummy"})
+	if dbtx != "no" {
+		bs.log.Debug("業務のDB登録処理あり")
+		bs.dummyRepository.CreateOneTx(&entity.Dummy{Value: "dummy"})
+	}
 	// TODOタイトルのリストの登録を非同期処理実行依頼
 	asyncMessage := &entity.AsyncMessage{TodoTitles: todoTitles}
 	bs.asyncMessageRepository.Send(asyncMessage)
@@ -93,10 +96,13 @@ func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string) error {
 }
 
 // RegisterTodosAsyncByFIFO implements BffService.
-func (bs *bffServiceImpl) RegisterTodosAsyncByFIFO(todoTitles []string) error {
+func (bs *bffServiceImpl) RegisterTodosAsyncByFIFO(todoTitles []string, dbtx string) error {
 	bs.log.Debug("RegisterTodosAsyncByFIFO")
-	// DBトランザクションを試すためのダミーのDB登録処理
-	bs.dummyRepository.CreateOneTx(&entity.Dummy{Value: "dummy2"})
+	if dbtx != "no" {
+		bs.log.Debug("業務のDB登録処理あり")
+		// DBトランザクションを試すためのダミーのDB登録処理
+		bs.dummyRepository.CreateOneTx(&entity.Dummy{Value: "dummy2"})
+	}
 
 	// TODOタイトルのリストの登録を非同期処理実行依頼
 	asyncMessage := &entity.AsyncMessage{TodoTitles: todoTitles}
