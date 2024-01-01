@@ -4,6 +4,7 @@ component パッケージはフレームワークのコンポーネントのイ�
 package component
 
 import (
+	"example.com/appbase/internal/pkg/repository"
 	"example.com/appbase/pkg/api"
 	"example.com/appbase/pkg/async"
 	"example.com/appbase/pkg/config"
@@ -25,7 +26,7 @@ type ApplicationContext interface {
 	GetDynamoDBAccessor() transaction.TransactionalDynamoDBAccessor
 	GetDynamoDBTransactionManager() transaction.TransactionManager
 	GetDynamoDBTransactionManagerForDBOnly() transaction.TransactionManager
-	GetDynamoDBTemplate() transaction.TransactinalDynamoDBTemplate
+	GetDynamoDBTemplate() transaction.TransactionalDynamoDBTemplate
 	GetSQSAccessor() transaction.TransactionalSQSAccessor
 	GetSQSTemplate() async.SQSTemplate
 	GetRDBAccessor() rdb.RDBAccessor
@@ -43,18 +44,20 @@ func NewApplicationContext() ApplicationContext {
 	messageSource := createMessageSource()
 	apiResponseFormatter := createApiResponseFormatter(messageSource)
 	logger := createLogger(messageSource, config)
+	dynamodbAccessor := createTransactionalDynamoDBAccessor(logger, config)
+	dynamoDBTempalte := createDynamoDBTemplate(logger, dynamodbAccessor)
+	queueMessageItemRepository := createQueueMessageItemRepository(config, logger, dynamoDBTempalte)
+	// TODO: queueMessageItemRepositoryをDIするようにする
 	sqsAccessor := createTransactionalSQSAccessor(logger, config)
 	sqsTemplate := createSQSTemplate(logger, sqsAccessor)
-	dynamodbAccessor := createTransactionalDynamoDBAccessor(logger, config)
 	dynamoDBTransactionManager := createDynamoDBTransactionManager(logger, dynamodbAccessor, sqsAccessor)
 	dynamoDBTransactionManagerForDBOnly := createDynamoDBTransactionManagerForDBOnly(logger, dynamodbAccessor)
-	dynamoDBTempalte := createDynamoDBTemplate(logger, dynamodbAccessor)
 	rdbAccessor := createRDBAccessor()
 	rdbTransactionManager := rdb.NewTransactionManager(logger, config, rdbAccessor)
 	httpclient := createHttpClient(logger)
 	interceptor := createHanderInterceptor(config, logger)
 	apiLambdaHandler := createAPILambdaHandler(config, logger, messageSource, apiResponseFormatter)
-	asyncLambdaHandler := createAsyncLambdaHandler(config, logger)
+	asyncLambdaHandler := createAsyncLambdaHandler(config, logger, queueMessageItemRepository)
 
 	// Validatorの日本語化
 	validator.Setup()
@@ -85,7 +88,7 @@ type defaultApplicationContext struct {
 	dynamoDBAccessor                    transaction.TransactionalDynamoDBAccessor
 	dynamoDBTransactionManager          transaction.TransactionManager
 	dynamoDBTransactionManagerForDBOnly transaction.TransactionManager
-	dynamodbTempalte                    transaction.TransactinalDynamoDBTemplate
+	dynamodbTempalte                    transaction.TransactionalDynamoDBTemplate
 	sqsAccessor                         transaction.TransactionalSQSAccessor
 	sqsTemplate                         async.SQSTemplate
 	rdbAccessor                         rdb.RDBAccessor
@@ -117,7 +120,7 @@ func (ac *defaultApplicationContext) GetDynamoDBTransactionManagerForDBOnly() tr
 }
 
 // GetDynamoDBTemplate implements ApplicationContext.
-func (ac *defaultApplicationContext) GetDynamoDBTemplate() transaction.TransactinalDynamoDBTemplate {
+func (ac *defaultApplicationContext) GetDynamoDBTemplate() transaction.TransactionalDynamoDBTemplate {
 	return ac.dynamodbTempalte
 }
 
@@ -235,7 +238,7 @@ func createDynamoDBTransactionManagerForDBOnly(logger logging.Logger,
 	return transaction.NewTransactionManagerForDBOnly(logger, dynamodbAccessor)
 }
 
-func createDynamoDBTemplate(logger logging.Logger, dynamodbAccessor transaction.TransactionalDynamoDBAccessor) transaction.TransactinalDynamoDBTemplate {
+func createDynamoDBTemplate(logger logging.Logger, dynamodbAccessor transaction.TransactionalDynamoDBAccessor) transaction.TransactionalDynamoDBTemplate {
 	return transaction.NewTransactionalDynamoDBTemplate(logger, dynamodbAccessor)
 }
 
@@ -255,6 +258,10 @@ func createAPILambdaHandler(config config.Config, logger logging.Logger, message
 	return handler.NewAPILambdaHandler(config, logger, messageSource, apiResponseFormatter)
 }
 
-func createAsyncLambdaHandler(config config.Config, logger logging.Logger) *handler.AsyncLambdaHandler {
-	return handler.NewAsyncLambdaHandler(config, logger)
+func createAsyncLambdaHandler(config config.Config, logger logging.Logger, queueMessageItemRepository repository.QueueMessageItemRepository) *handler.AsyncLambdaHandler {
+	return handler.NewAsyncLambdaHandler(config, logger, queueMessageItemRepository)
+}
+
+func createQueueMessageItemRepository(config config.Config, logger logging.Logger, dynamodbTemplate transaction.TransactionalDynamoDBTemplate) repository.QueueMessageItemRepository {
+	return repository.NewQueueMessageItemRepository(config, logger, dynamodbTemplate)
 }

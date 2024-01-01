@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"example.com/appbase/internal/pkg/entity"
 	"example.com/appbase/pkg/async"
 	myConfig "example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/logging"
@@ -102,7 +103,7 @@ func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Messag
 		// 業務テーブルでのDynamoDBトランザクション処理がある場合
 		if hasDbTrancation {
 			// メッセージ管理テーブル用のアイテムのトランザクション登録処理を追加
-			queueMessageItem := &QueueMessageItem{}
+			queueMessageItem := &entity.QueueMessageItem{}
 			// (キュー名) + "_" + (メッセージID)をパーティションキーとする
 			queueMessageItem.MessageId = v.QueueName + "_" + *output.MessageId
 			if v.Input.MessageGroupId != nil {

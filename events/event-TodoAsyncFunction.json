@@ -1,0 +1,25 @@
+{
+    "Records": [
+        {
+            "messageId": "99a809d5-0e25-42ad-89df-c466385dad58",
+            "receiptHandle": "99a809d5-0e25-42ad-89df-c466385dad58#d753a0fb-c153-495f-81f3-d849a3705116",
+            "body": "{\"todoTitles\":[\"dummy1\",\"dummy2\"]}",
+            "attributes": {
+                "ApproximateReceiveCount": "1",
+                "SentTimestamp": "1545082649183",
+                "SenderId": "AIDAIENQZJOLO23YVJ4VO",
+                "ApproximateFirstReceiveTimestamp": "1545082649185"
+            },
+            "messageAttributes": {
+                "delete_time": {
+                    "StringValue": "1704413117",
+                    "DataType": "String"
+                }    
+            },
+            "md5OfBody": "e4e68fb7bd0e697a0ae8f1bb342846b3",
+            "eventSource": "aws:sqs",
+            "eventSourceARN": "arn:aws:sqs:ap-northeast-1:123456789012:SampleQueue",
+            "awsRegion": "ap-northeast-1"
+        }
+    ]
+}

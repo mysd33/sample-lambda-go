@@ -4,6 +4,8 @@ transaction パッケージは、トランザクション管理に関する機�
 package transaction
 
 import (
+	"example.com/appbase/internal/pkg/entity"
+
 	"example.com/appbase/pkg/config"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -12,26 +14,9 @@ import (
 	"github.com/cockroachdb/errors"
 )
 
-// QueueMessageItem は、QueueMessageテーブルのアイテムを表す構造体です。
-type QueueMessageItem struct {
-	MessageId              string `dynamodbav:"message_id"`
-	DeleteTime             string `dynamodbav:"delete_time"`
-	MessageDeduplicationId string `dynamodbav:"message_deduplication_id"`
-}
-
-// GetKey は、DynamoDBのキー情報を取得します。
-func (m QueueMessageItem) GetKey() (map[string]types.AttributeValue, error) {
-	id, err := attributevalue.Marshal(m.MessageId)
-	if err != nil {
-		return nil, err
-	}
-
-	return map[string]types.AttributeValue{"message_id": id}, nil
-}
-
 // MessageRegisterer は、メッセージをトランザクションに登録するためのインターフェースです。
 type MessageRegisterer interface {
-	RegisterMessage(transaction Transaction, queueMessage *QueueMessageItem) error
+	RegisterMessage(transaction Transaction, queueMessage *entity.QueueMessageItem) error
 }
 
 // NewMessageRegisterer は、MessageRegistererを作成します。
@@ -45,7 +30,7 @@ type defaultMessageRegisterer struct {
 }
 
 // RegisterMessage implements MessageRegisterer.
-func (*defaultMessageRegisterer) RegisterMessage(transaction Transaction, queueMessage *QueueMessageItem) error {
+func (*defaultMessageRegisterer) RegisterMessage(transaction Transaction, queueMessage *entity.QueueMessageItem) error {
 	av, err := attributevalue.MarshalMap(queueMessage)
 	if err != nil {
 		return errors.WithStack(err)

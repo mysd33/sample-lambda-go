@@ -2,12 +2,12 @@ package tables
 
 import "example.com/appbase/pkg/dynamodb/tables"
 
-type Todo struct {
+type QueueMessageTable struct {
 }
 
-func (Todo) InitPK(tableName tables.DynamoDBTableName) {
+func (QueueMessageTable) InitPK(tableName tables.DynamoDBTableName) {
 	pkKeyPair := &tables.PKKeyPair{
-		PartitionKey: "todo_id",
+		PartitionKey: "message_id",
 	}
 	tables.SetPrimaryKey(tableName, pkKeyPair)
 }

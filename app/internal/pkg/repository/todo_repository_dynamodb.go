@@ -23,13 +23,13 @@ const (
 )
 
 // NewTodoRepositoryForDynamoDB は、TodoRepositoryを作成します。
-func NewTodoRepositoryForDynamoDB(dynamoDBTempalte transaction.TransactinalDynamoDBTemplate,
+func NewTodoRepositoryForDynamoDB(dynamoDBTempalte transaction.TransactionalDynamoDBTemplate,
 	accessor transaction.TransactionalDynamoDBAccessor,
 	log logging.Logger, config config.Config) TodoRepository {
 	// テーブル名の取得
 	tableName := tables.DynamoDBTableName(config.Get(TODO_TABLE_NAME))
 	// テーブル定義の設定
-	mytables.Todo{}.InitPk(tableName)
+	mytables.Todo{}.InitPK(tableName)
 	// プライマリキーの設定
 	primaryKey := tables.GetPrimaryKey(tableName)
 
@@ -45,7 +45,7 @@ func NewTodoRepositoryForDynamoDB(dynamoDBTempalte transaction.TransactinalDynam
 
 // todoRepositoryImplByDynamoDB は、TodoRepositoryを実装する構造体です。
 type todoRepositoryImplByDynamoDB struct {
-	dynamodbTemplate transaction.TransactinalDynamoDBTemplate
+	dynamodbTemplate transaction.TransactionalDynamoDBTemplate
 	accessor         transaction.TransactionalDynamoDBAccessor
 	log              logging.Logger
 	config           config.Config

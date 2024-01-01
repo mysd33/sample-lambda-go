@@ -12,9 +12,8 @@ type PK struct {
 	SortKey      *string
 }
 
-//TODO: 不要なインタフェースかも
 type Tables interface {
-	initPk(tableName DynamoDBTableName)
+	InitPK(tableName DynamoDBTableName)
 }
 
 type PKKeyPair struct {

@@ -1,0 +1,25 @@
+{
+    "Records": [
+        {
+            "messageId": "57200b89-3e8e-4eb1-9639-84238bd9b381",
+            "receiptHandle": "57200b89-3e8e-4eb1-9639-84238bd9b381#b72d1150-e76c-4eb4-b45b-eb2c1cf98068",
+            "body": "{\"todoTitles\":[\"dummy1\",\"dummy2\"]}",
+            "attributes": {
+                "ApproximateReceiveCount": "1",
+                "SentTimestamp": "1545082649183",
+                "SenderId": "AIDAIENQZJOLO23YVJ4VO",
+                "ApproximateFirstReceiveTimestamp": "1545082649185"
+            },
+            "messageAttributes": {
+                "delete_time": {
+                    "StringValue": "1704415200",
+                    "DataType": "String"
+                }    
+            },
+            "md5OfBody": "c95302638fa008847d0955d3fd2442b7",
+            "eventSource": "aws:sqs",
+            "eventSourceARN": "arn:aws:sqs:ap-northeast-1:123456789012:SampleFIFOQueue.fifo",
+            "awsRegion": "ap-northeast-1"
+        }
+    ]
+}

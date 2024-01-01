@@ -15,7 +15,7 @@ import (
 )
 
 // TransactionalDynamoDBTemplate は、トランザクション管理対応のDynamoDBアクセスを定型化した高次のインタフェースです。
-type TransactinalDynamoDBTemplate interface {
+type TransactionalDynamoDBTemplate interface {
 	mydynamodb.DynamoDBTemplate
 	// CreateOneWithTransaction は、トランザクションでDynamoDBに項目を登録します。
 	CreateOneWithTransaction(tableName tables.DynamoDBTableName, inputEntity any) error
@@ -26,7 +26,7 @@ type TransactinalDynamoDBTemplate interface {
 }
 
 func NewTransactionalDynamoDBTemplate(log logging.Logger,
-	transactionalDynamoDBAccessor TransactionalDynamoDBAccessor) TransactinalDynamoDBTemplate {
+	transactionalDynamoDBAccessor TransactionalDynamoDBAccessor) TransactionalDynamoDBTemplate {
 	dynamodbTemplate := mydynamodb.NewDynamoDBTemplate(log, transactionalDynamoDBAccessor)
 	return &defaultTransactionalDynamoDBTemplate{
 		log:                           log,

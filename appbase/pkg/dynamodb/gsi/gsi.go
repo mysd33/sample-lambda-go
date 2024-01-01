@@ -5,7 +5,6 @@ package gsi
 
 import "example.com/appbase/pkg/dynamodb/tables"
 
-//TODO: 不要なインタフェースかも
 type Gsi interface {
 	InitGsi(gsiName DynamoDBGSIName)
 }
