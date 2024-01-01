@@ -499,7 +499,7 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
         # BFF (ディレード処理実行依頼)
         curl -X POST http://127.0.0.1:3000/bff-api/v1/todo-async
         # Elastic MQから実行依頼したメッセージを取得し確認
-        aws sqs receive-message --queue-url http://localhost:9324/000000000000/SampleQueue --endpoint-url http://localhost:9324  --message-attribute-names All
+        aws sqs receive-message --queue-url http://localhost:9324/000000000000/SampleQueue --endpoint-url http://localhost:9324 --attribute-names All --message-attribute-names All
         ```
 
         * events/event-TodoAsyncFunction.jsonをメッセージ内容に合わせて編集
@@ -552,7 +552,7 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
         # BFF (ディレード処理実行依頼)
         curl -X POST http://127.0.0.1:3000/bff-api/v1/todo-async?fifo=true
         # Elastic MQから実行依頼したメッセージを取得し確認
-        aws sqs receive-message --queue-url http://localhost:9324/000000000000/SampleFIFOQueue.fifo --endpoint-url http://localhost:9324 --message-attribute-names All
+        aws sqs receive-message --queue-url http://localhost:9324/000000000000/SampleFIFOQueue.fifo --endpoint-url http://localhost:9324 --attribute-names All --message-attribute-names All
         ```
 
         * events/event-TodoAsyncFifoFunction.jsonをメッセージ内容に合わせて編集
@@ -566,6 +566,18 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
                     "receiptHandle": "99a809d5-0e25-42ad-89df-c466385dad58#d753a0fb-c153-495f-81f3-d849a3705116",
                     # Bodyを送信したメッセージに適宜修正
                     "body": "{\"todoTitles\":[\"dummy1\",\"dummy2\"]}",
+                    "attributes": {
+                        "ApproximateReceiveCount": "1",
+                        "SentTimestamp": "1545082649183",
+                        # メッセージグループIDを修正
+                        "MessageGroupId": "1",
+                        # シーケンス番号を修正
+                        "SequenceNumber": "18849496460467696128",
+                        # メッセージ重複排除IDを修正
+                        "MessageDeduplicationId": "1",                        
+                        "SenderId": "AIDAIENQZJOLO23YVJ4VO",
+                        "ApproximateFirstReceiveTimestamp": "1545082649185"                
+                    },                    
                     "messageAttributes": {
                         # messageAttributes内のdelete_timeの値修正    
                         "delete_time": {

@@ -11,12 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"example.com/appbase/internal/pkg/entity"
-	"example.com/appbase/internal/pkg/repository"
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
+	"example.com/appbase/pkg/transaction"
+	"example.com/appbase/pkg/transaction/entity"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/cockroachdb/errors"
@@ -31,13 +31,13 @@ type SQSTriggeredLambdaHandlerFunc func(ctx context.Context, event events.SQSEve
 type AsyncLambdaHandler struct {
 	config                     config.Config
 	log                        logging.Logger
-	queueMessageItemRepository repository.QueueMessageItemRepository
+	queueMessageItemRepository transaction.QueueMessageItemRepository
 }
 
 // NewAsyncLambdaHandler は、AsyncLambdaHandlerを作成します。
 func NewAsyncLambdaHandler(config config.Config,
 	log logging.Logger,
-	queueMessageItemRepository repository.QueueMessageItemRepository) *AsyncLambdaHandler {
+	queueMessageItemRepository transaction.QueueMessageItemRepository) *AsyncLambdaHandler {
 	return &AsyncLambdaHandler{
 		config:                     config,
 		log:                        log,
@@ -59,8 +59,8 @@ func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQS
 			}
 		}()
 		// FIFOの対応（FIFOの場合はメッセージグループID毎にメッセージのソート）
-		isFifo := event.Records[0].Attributes[string(types.QueueAttributeNameFifoQueue)] == "true"
-
+		isFifo := event.Records[0].Attributes[string(types.MessageSystemAttributeNameMessageGroupId)] != ""
+		h.log.Debug("isFifo: %t", isFifo)
 		if isFifo {
 			// FIFOの場合はメッセージをソート
 			h.sortMessages(event.Records)
@@ -87,6 +87,7 @@ func (h *AsyncLambdaHandler) doHandle(sqsMsg events.SQSMessage, response events.
 	if isFifo && response.BatchItemFailures != nil {
 		return errors.New("以前のメッセージが失敗しているためエラー")
 	}
+	h.log.Debug("doHandle[MessageId: %s]", sqsMsg.MessageId)
 	// キュー名取得
 	queueArn := strings.Split(sqsMsg.EventSourceARN, ":")
 	queueName := queueArn[len(queueArn)-1]
@@ -113,7 +114,7 @@ func (h *AsyncLambdaHandler) doHandle(sqsMsg events.SQSMessage, response events.
 	}
 
 	// 処理済のメッセージの場合
-	if deduplicationId == "" {
+	if isFifo && deduplicationId == "" {
 		// 重複して処理しないよう正常終了
 		return nil
 	}

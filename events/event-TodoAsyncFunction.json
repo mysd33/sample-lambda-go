@@ -1,8 +1,8 @@
 {
     "Records": [
         {
-            "messageId": "99a809d5-0e25-42ad-89df-c466385dad58",
-            "receiptHandle": "99a809d5-0e25-42ad-89df-c466385dad58#d753a0fb-c153-495f-81f3-d849a3705116",
+            "messageId": "44f0c6f6-93d1-4fe9-8d22-00d9cc8d813b",
+            "receiptHandle": "44f0c6f6-93d1-4fe9-8d22-00d9cc8d813b#f827def7-7815-4942-925b-c23f57ef09e3",
             "body": "{\"todoTitles\":[\"dummy1\",\"dummy2\"]}",
             "attributes": {
                 "ApproximateReceiveCount": "1",
@@ -12,11 +12,11 @@
             },
             "messageAttributes": {
                 "delete_time": {
-                    "StringValue": "1704413117",
+                    "StringValue": "1704420512",
                     "DataType": "String"
                 }    
             },
-            "md5OfBody": "e4e68fb7bd0e697a0ae8f1bb342846b3",
+            "md5OfBody": "482a190174a0aeed528c5e0e43eafcdb",
             "eventSource": "aws:sqs",
             "eventSourceARN": "arn:aws:sqs:ap-northeast-1:123456789012:SampleQueue",
             "awsRegion": "ap-northeast-1"

@@ -104,7 +104,7 @@ func (da *defaultTransactionalDynamoDBAccessor) AppendTransactWriteItem(item *ty
 
 // TransactWriteItemsSDK implements TransactionalDynamoDBAccessor.
 func (da *defaultTransactionalDynamoDBAccessor) TransactWriteItemsSDK(items []types.TransactWriteItem) (*dynamodb.TransactWriteItemsOutput, error) {
-	da.log.Debug("TransactWriteItemsSDK")
+	da.log.Debug("TransactWriteItemsSDK: %d件", len(items))
 	input := &dynamodb.TransactWriteItemsInput{TransactItems: items}
 	if !env.IsStragingOrProd() {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
@@ -115,7 +115,7 @@ func (da *defaultTransactionalDynamoDBAccessor) TransactWriteItemsSDK(items []ty
 		return nil, errors.WithStack(err)
 	}
 	for i, v := range output.ConsumedCapacity {
-		da.log.Debug("TransactWriteItems(%d)[%s]消費キャパシティユニット:%f", i, *v.TableName, *v.CapacityUnits)
+		da.log.Debug("TransactWriteItems(%d番目)[%s]消費キャパシティユニット:%f", i+1, *v.TableName, *v.CapacityUnits)
 	}
 	return output, nil
 }

@@ -1,13 +1,12 @@
-package repository
+package transaction
 
 import (
-	"example.com/appbase/internal/pkg/entity"
-	mytables "example.com/appbase/internal/pkg/repository/tables"
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/dynamodb/input"
 	"example.com/appbase/pkg/dynamodb/tables"
 	"example.com/appbase/pkg/logging"
-	"example.com/appbase/pkg/transaction"
+	"example.com/appbase/pkg/transaction/entity"
+	mytables "example.com/appbase/pkg/transaction/tables"
 	"github.com/cockroachdb/errors"
 )
 
@@ -18,7 +17,7 @@ type QueueMessageItemRepository interface {
 
 func NewQueueMessageItemRepository(config config.Config,
 	log logging.Logger,
-	dynamodbTemplate transaction.TransactionalDynamoDBTemplate) QueueMessageItemRepository {
+	dynamodbTemplate TransactionalDynamoDBTemplate) QueueMessageItemRepository {
 	// テーブル名取得
 	//TODO: テーブル名をプロパティ管理(Config.Getで取得)で設定切り出し
 	tableName := tables.DynamoDBTableName("queue_message")
@@ -36,18 +35,9 @@ func NewQueueMessageItemRepository(config config.Config,
 
 type defaultQueueMessageItemRepository struct {
 	log              logging.Logger
-	dynamodbTemplate transaction.TransactionalDynamoDBTemplate
+	dynamodbTemplate TransactionalDynamoDBTemplate
 	tableName        tables.DynamoDBTableName
 	primaryKey       *tables.PKKeyPair
-}
-
-// CreateOneWithTx implements QueueMessageItemRepository.
-func (r *defaultQueueMessageItemRepository) CreateOneWithTx(queueMessage *entity.QueueMessageItem) error {
-	err := r.dynamodbTemplate.CreateOneWithTransaction(r.tableName, queueMessage)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
 }
 
 // FindOne implements QueueMessageItemRepository.
@@ -67,4 +57,13 @@ func (r *defaultQueueMessageItemRepository) FindOne(messageId string) (*entity.Q
 		return nil, err
 	}
 	return &queueMessageItem, nil
+}
+
+// CreateOneWithTx implements QueueMessageItemRepository.
+func (r *defaultQueueMessageItemRepository) CreateOneWithTx(queueMessage *entity.QueueMessageItem) error {
+	err := r.dynamodbTemplate.CreateOneWithTransaction(r.tableName, queueMessage)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }

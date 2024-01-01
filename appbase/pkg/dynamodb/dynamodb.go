@@ -186,7 +186,7 @@ func (da *defaultDynamoDBAccessor) BatchGetItemSdk(input *dynamodb.BatchGetItemI
 		return nil, errors.WithStack(err)
 	}
 	for i, v := range output.ConsumedCapacity {
-		da.log.Debug("BatchGetItem(%d)[%s]消費キャパシティユニット:%f", i, *v.TableName, *v.CapacityUnits)
+		da.log.Debug("BatchGetItem(%d番目)[%s]消費キャパシティユニット:%f", i+1, *v.TableName, *v.CapacityUnits)
 	}
 	return output, nil
 }
@@ -201,7 +201,7 @@ func (da *defaultDynamoDBAccessor) BatchWriteItemSdk(input *dynamodb.BatchWriteI
 		return nil, errors.WithStack(err)
 	}
 	for i, v := range output.ConsumedCapacity {
-		da.log.Debug("BatchWriteItem(%d)[%s]消費キャパシティユニット:%f", i, *v.TableName, *v.CapacityUnits)
+		da.log.Debug("BatchWriteItem(%d番目)[%s]消費キャパシティユニット:%f", i+1, *v.TableName, *v.CapacityUnits)
 	}
 	return output, nil
 }

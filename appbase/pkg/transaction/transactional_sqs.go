@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"time"
 
-	"example.com/appbase/internal/pkg/entity"
 	"example.com/appbase/pkg/async"
 	myConfig "example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/logging"
+	"example.com/appbase/pkg/transaction/entity"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
@@ -41,12 +41,11 @@ type TransactionalSQSAccessor interface {
 }
 
 // NewTransactionalSQSAccessor は、TransactionalSQSAccessorを作成します。
-func NewTransactionalSQSAccessor(log logging.Logger, myCfg myConfig.Config) (TransactionalSQSAccessor, error) {
+func NewTransactionalSQSAccessor(log logging.Logger, myCfg myConfig.Config, messageRegisterer MessageRegisterer) (TransactionalSQSAccessor, error) {
 	sqsAccessor, err := async.NewSQSAccessor(log, myCfg)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	messageRegisterer := NewMessageRegisterer(myCfg)
 	return &defaultTransactionalSQSAccessor{
 		log:               log,
 		sqsAccessor:       sqsAccessor,
@@ -88,7 +87,8 @@ func (sa *defaultTransactionalSQSAccessor) AppendTransactMessage(queueName strin
 
 // TransactSendMessages implements TransactionalSQSAccessor.
 func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Message, hasDbTrancation bool) error {
-	sa.log.Debug("TransactSendMessages")
+	sa.log.Debug("TransactSendMessages: %d件", len(inputs))
+
 	for _, v := range inputs {
 		// 業務テーブルでのDynamoDBトランザクション処理がない場合は、メッセージにフラグ情報を送る
 		sa.addIsTableCheckFlag(v, hasDbTrancation)
