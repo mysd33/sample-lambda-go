@@ -4,11 +4,14 @@ package controller
 import (
 	"app/internal/app/bff/service"
 	"app/internal/pkg/entity"
+	"app/internal/pkg/message"
+	"errors"
 
 	"example.com/appbase/pkg/domain"
-	"example.com/appbase/pkg/errors"
+	myerrors "example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/transaction"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,6 +33,10 @@ type ResponseFindTodo struct {
 }
 
 type RequestRegisterTodoAsync struct {
+	TodoTitles []string `json:"todo_titles" binding:"required"`
+}
+
+type ResponseRegisterTodoAsync struct {
 	Result string `json:"result"`
 }
 
@@ -64,12 +71,12 @@ func (c *bffControllerImpl) FindTodo(ctx *gin.Context) (any, error) {
 	// 入力チェック
 	if userId == "" {
 		// 入力チェックエラーのハンドリング
-		return nil, errors.NewValidationErrorWithMessage("クエリパラメータuserIdが未指定です")
+		return nil, myerrors.NewValidationErrorWithMessage("クエリパラメータuserIdが未指定です")
 	}
 	todoId := ctx.Query("todo_id")
 	if todoId == "" {
 		// 入力チェックエラーのハンドリング
-		return nil, errors.NewValidationErrorWithMessage("クエリパラメータtodoIdが未指定です")
+		return nil, myerrors.NewValidationErrorWithMessage("クエリパラメータtodoIdが未指定です")
 	}
 	// サービスの実行（DynamoDBトランザクション管理なし）
 	user, todo, err := c.service.FindTodo(userId, todoId)
@@ -86,7 +93,7 @@ func (c *bffControllerImpl) RegisterUser(ctx *gin.Context) (any, error) {
 	var request RequestRegisterUser
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		// 入力チェックエラーのハンドリング
-		return nil, errors.NewValidationError(err)
+		return nil, myerrors.NewValidationError(err)
 	}
 
 	// サービスの実行
@@ -99,7 +106,7 @@ func (c *bffControllerImpl) RegisterTodo(ctx *gin.Context) (any, error) {
 	var request RequestRegisterTodo
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		// 入力チェックエラーのハンドリング
-		return nil, errors.NewValidationError(err)
+		return nil, myerrors.NewValidationError(err)
 	}
 
 	// サービスの実行
@@ -108,8 +115,14 @@ func (c *bffControllerImpl) RegisterTodo(ctx *gin.Context) (any, error) {
 
 // RegisterTodosAsync implements BffController.
 func (c *bffControllerImpl) RegisterTodosAsync(ctx *gin.Context) (any, error) {
-	// TODO: 入力情報の受付
-	todoTitles := []string{"dummy1", "dummy2"}
+	// POSTデータをバインド
+	var request RequestRegisterTodoAsync
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		// 入力チェックエラーのハンドリング
+		return nil, myerrors.NewValidationError(err)
+	}
+	todoTitles := request.TodoTitles
+
 	// クエリパラメータfifoの取得
 	fifo := ctx.Query("fifo")
 	c.log.Debug("fifo=%s", fifo)
@@ -129,10 +142,20 @@ func (c *bffControllerImpl) RegisterTodosAsync(ctx *gin.Context) (any, error) {
 	}
 	// トランザクション管理してサービス実行
 	_, err := c.transactionManager.ExecuteTransaction(serviceFunc)
-	// TODO: トランザクションエラーのハンドリング
+	// TODO:トランザクションエラーのハンドリング
 	if err != nil {
+		// TODO: ロールバックの場合に、予期せぬエラーとならないよう各Controllerでハンドリングするか？
+		// 集約的にinterceptorで実施するか？
+		var txCanceledException *types.TransactionCanceledException
+		var txConflictException *types.TransactionConflictException
+		// 登録失敗の業務エラー
+		if errors.As(err, &txCanceledException) {
+			return nil, myerrors.NewBusinessError(message.W_EX_8005)
+		} else if errors.As(err, &txConflictException) {
+			return nil, myerrors.NewBusinessError(message.W_EX_8005)
+		}
 		return nil, err
 	}
 
-	return &RequestRegisterTodoAsync{Result: "ok"}, nil
+	return &ResponseRegisterTodoAsync{Result: "ok"}, nil
 }

@@ -56,7 +56,7 @@ func (ts *todoAsyncServiceImpl) RegisterTodosAsync(asyncMesssage entity.AsyncMes
 	}
 	// TODO: todoTitlesをS3上のファイルから取得して登録するように変更
 	for _, v := range todoTitles {
-		ts.log.Debug("todoList: %s", v)
+		ts.log.Debug("todoTitle: %s", v)
 		todo := entity.Todo{Title: v}
 		newTodo, err := ts.todoRepository.CreateOneTx(&todo)
 		if err != nil {
@@ -64,5 +64,6 @@ func (ts *todoAsyncServiceImpl) RegisterTodosAsync(asyncMesssage entity.AsyncMes
 		}
 		ts.log.Info(message.I_EX_0003, newTodo.ID)
 	}
+	// TODO: tempテーブルのアイテムの削除
 	return nil
 }

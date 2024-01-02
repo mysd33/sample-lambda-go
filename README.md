@@ -499,9 +499,9 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
 
         ```sh
         # 業務のDB更新を伴う場合
-        curl -X POST http://127.0.0.1:3000/bff-api/v1/todo-async
+        curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Milk", "Study English"]}' http://127.0.0.1:3000/bff-api/v1/todo-async
         # 業務のDB更新を伴わない場合
-        curl -X POST http://127.0.0.1:3000/bff-api/v1/todo-async?dbtx=no
+        curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Milk", "Study English"]}' http://127.0.0.1:3000/bff-api/v1/todo-async?dbtx=no
 
         # Elastic MQから実行依頼したメッセージを取得し確認
         aws sqs receive-message --queue-url http://localhost:9324/000000000000/SampleQueue --endpoint-url http://localhost:9324 --attribute-names All --message-attribute-names All
@@ -564,9 +564,9 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
 
         ```sh        
         # 業務のDB更新を伴う場合
-        curl -X POST http://127.0.0.1:3000/bff-api/v1/todo-async?fifo=true
+        curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Milk", "Study English"]}' http://127.0.0.1:3000/bff-api/v1/todo-async?fifo=true
         # 業務のDB更新を伴わない場合
-        curl -X POST http://127.0.0.1:3000/bff-api/v1/todo-async?fifo=true\&dbtx=no
+        curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Milk", "Study English"]}' http://127.0.0.1:3000/bff-api/v1/todo-async?fifo=true\&dbtx=no
         # Elastic MQから実行依頼したメッセージを取得し確認
         aws sqs receive-message --queue-url http://localhost:9324/000000000000/SampleFIFOQueue.fifo --endpoint-url http://localhost:9324 --attribute-names All --message-attribute-names All
         ```

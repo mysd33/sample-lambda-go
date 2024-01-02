@@ -90,11 +90,10 @@ func (c *todoControllerImpl) Register(ctx *gin.Context) (any, error) {
 		// 集約的にinterceptorで実施するか？
 		var txCanceledException *types.TransactionCanceledException
 		var txConflictException *types.TransactionConflictException
+		// 登録失敗の業務エラー
 		if errors.As(err, &txCanceledException) {
-			// 登録失敗の業務エラー
 			return nil, myerrors.NewBusinessError(message.W_EX_8003, request.TodoTitle)
 		} else if errors.As(err, &txConflictException) {
-			// 登録失敗の業務エラー
 			return nil, myerrors.NewBusinessError(message.W_EX_8004, request.TodoTitle)
 		}
 		return nil, err
