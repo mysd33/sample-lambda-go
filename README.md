@@ -69,14 +69,13 @@ aws cloudformation create-stack --stack-name Demo-SG-Stack --template-body file:
 ```
 
 ## 4. VPC Endpointの作成とプライベートサブネットのルートテーブル更新
-* VPC内LambdaからDynamoDBへアクセスするためのVPC Endpointを作成
+* API GatewayのPrivate APIのためのVPC Endpointや、VPC内LambdaからDynamoDB、SQS、AppConfig等へアクセスするためのVPC Endpointを作成
 ```sh
 aws cloudformation validate-template --template-body file://cfn-vpe.yaml
 aws cloudformation create-stack --stack-name Demo-VPE-Stack --template-body file://cfn-vpe.yaml
 ```
 ## 5. NAT Gatewayの作成とプライベートサブネットのルートテーブル更新
 * VPC内Lambdaからインターネットに接続する場合に必要となる。
-    * 現状、VPC Endpointに対応していないためVPC内LambdaからのAppConfigへのアクセスに必要。
     * hello-worldのサンプルAPでは[https://checkip.amazonaws.com](https://checkip.amazonaws.com)へアクセスしに行くため必要。
 
 ```sh
@@ -288,15 +287,18 @@ curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v
 ```
 
 * ディレード処理の実行例
-    * TODO: Bffからのキューへのメッセージ送信ができるまでの暫定手順
-
 ```sh
 # BFFからの非同期実行依頼（標準キュー）
-curl -X POST https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo-async
-curl -X POST https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo-async?dbtx=no
+# 業務のDB更新を伴う場合
+curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Milk", "Study English"]}' https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo-async
+# 業務のDB更新を伴わない場合
+curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Milk", "Study English"]}' https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo-async?dbtx=no
+
 # BFFからの非同期実行依頼（FIFOキュー）
-curl -X POST https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo-async?fifo=true
-curl -X POST https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo-async?fifo=true\&dbtx=no
+# 業務のDB更新を伴う場合
+curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Milk", "Study English"]}' https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo-async?fifo=true
+# 業務のDB更新を伴わない場合
+curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Milk", "Study English"]}' https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/todo-async?fifo=true\&dbtx=no
 
 ```
 
