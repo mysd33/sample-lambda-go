@@ -26,7 +26,8 @@ Resources:
         TODO_TABLE_NAME: todo
         TEMP_TABLE_NAME: temp
         QUEUE_MESSAGE_TABLE_NAME: queue_message
-        GIN_DEBUG: true        
+        QUEUE_MESSAGE_TABLE_TTL_HOUR: 96
+        GIN_DEBUG: true                
 #        LOG_LEVEL: DEBUG
 #        USERS_TABLE_NAME: users
   AppConfigDeployment:

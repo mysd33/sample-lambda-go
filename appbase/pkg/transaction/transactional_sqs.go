@@ -19,6 +19,10 @@ import (
 	"github.com/cockroachdb/errors"
 )
 
+const (
+	QUEUE_MESSAGE_TABLE_TTL_HOUR = "QUEUE_MESSAGE_TABLE_TTL_HOUR"
+)
+
 // Message は、送信先のSQSのキューとメッセージのペアを管理する構造体です。
 type Message struct {
 	// キュー名
@@ -47,11 +51,17 @@ func NewTransactionalSQSAccessor(log logging.Logger, myCfg myConfig.Config, mess
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	// TTL（時間）の取得
+	ttl, err := strconv.Atoi(myCfg.Get(QUEUE_MESSAGE_TABLE_TTL_HOUR))
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 	return &defaultTransactionalSQSAccessor{
 		log:               log,
 		config:            myCfg,
 		sqsAccessor:       sqsAccessor,
 		messageRegisterer: messageRegisterer,
+		ttl:               ttl,
 	}, nil
 }
 
@@ -62,6 +72,7 @@ type defaultTransactionalSQSAccessor struct {
 	sqsAccessor       async.SQSAccessor
 	messageRegisterer MessageRegisterer
 	transaction       Transaction
+	ttl               int
 }
 
 // SendMessageSdk implements TransactionalSQSAccessor.
@@ -132,11 +143,8 @@ func (sa *defaultTransactionalSQSAccessor) EndTransaction() {
 
 // 削除時間の追加
 func (sa *defaultTransactionalSQSAccessor) getDeleteTime() map[string]types.MessageAttributeValue {
-	// TODO: TTLを設定に切り出す
-	//ttl := sa.config.Get("QUEUE_MESSAGE_TABLE_TTL")
-	ttl := 24 * 4 // 4日間
 	nowTime := time.Now()
-	delTimeStr := strconv.FormatInt(nowTime.Add(time.Duration(ttl)*time.Hour).Unix(), 10)
+	delTimeStr := strconv.FormatInt(nowTime.Add(time.Duration(sa.ttl)*time.Hour).Unix(), 10)
 	deleteTime := map[string]types.MessageAttributeValue{
 		constant.DELETE_TIME_NAME: {
 			DataType:    aws.String("String"),

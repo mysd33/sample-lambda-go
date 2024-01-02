@@ -2,5 +2,6 @@ hoge_name: "fuga-staging"
 #TODO_TABLE_NAME: "todo"
 #TEMP_TABLE_NAME: "temp"
 #QUEUE_MESSAGE_TABLE_NAME: "queue_message"
+#QUEUE_MESSAGE_TABLE_TTL_HOUR: "96"
 #USERS_TABLE_NAME: "users"
 #LOG_LEVEL: DEBUG
