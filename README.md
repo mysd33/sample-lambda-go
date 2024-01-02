@@ -141,7 +141,7 @@ psql -h (RDS Proxyのエンドポイント) -U postgres -d testdb
 
 ## 9. DynamoDBのテーブル作成
 * DynamoDBにTODOテーブルを作成する。
-* TODO: dummyテーブルの作成
+* TODO: tempテーブルの作成
 * TODO: queue_messageテーブルの作成
 ```sh
 aws cloudformation validate-template --template-body file://cfn-dynamodb.yaml
@@ -418,7 +418,7 @@ docker-compose up
     * ブラウザで[http://localhost:8001/](http://localhost:8001/)にアクセスし「Create Table」ボタンをクリック    
     * 以下のテーブルを作成
         * 「Table Name」…「todo」、「Hash Attribute Name」…「todo_id」、「Hash Attribute Type」…「String」で作成
-        * 「Table Name」…「dummy」、「Hash Attribute Name」…「dummy_id」、「Hash Attribute Type」…「String」で作成
+        * 「Table Name」…「temp」、「Hash Attribute Name」…「id」、「Hash Attribute Type」…「String」で作成
         * 「Table Name」…「queue_message」、「Hash Attribute Name」…「message_id」、「Hash Attribute Type」…「String」で作成        
 
 * TODO: NoSQL Workbenchの場合のテーブル作成手順も記載

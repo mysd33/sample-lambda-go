@@ -16,68 +16,69 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-// DummyRepository は、ダミーテーブルを管理するRepositoryインタフェースです。
-type DummyRepository interface {
-	// FindOne は、dummyIdが一致する値を取得します。
-	FindOne(dummyId string) (*entity.Dummy, error)
+// TempRepository は、一時テーブルを管理するRepositoryインタフェースです。
+type TempRepository interface {
+	// FindOne は、idが一致する値を取得します。
+	FindOne(id string) (*entity.Temp, error)
 	// CreateOneTx は、指定された値をトランザクションを使って登録します。
-	CreateOneTx(dummy *entity.Dummy) (*entity.Dummy, error)
+	CreateOneTx(temp *entity.Temp) (*entity.Temp, error)
 }
 
-// NewTodoRepositoryForDynamoDB は、TodoRepositoryを作成します。
-func NewDummyRepository(accessor transaction.TransactionalDynamoDBAccessor, log logging.Logger, config config.Config) DummyRepository {
-	return &dummyRepositoryImpl{
+// NewTempRepository は、TempRepositoryを生成します。
+func NewTempRepository(accessor transaction.TransactionalDynamoDBAccessor, log logging.Logger, config config.Config) TempRepository {
+	return &tempRepositoryImpl{
 		accessor: accessor,
 		log:      log,
 		config:   config,
 	}
 }
 
-// dummyRepositoryImpl は、DummyRepositoryを実装する構造体です。
-type dummyRepositoryImpl struct {
+// tempRepositoryImpl は、TempRepositoryを実装する構造体です。
+type tempRepositoryImpl struct {
 	accessor transaction.TransactionalDynamoDBAccessor
 	log      logging.Logger
 	config   config.Config
 }
 
-// FindOne implements DummyRepository.
-func (r *dummyRepositoryImpl) FindOne(dummyId string) (*entity.Dummy, error) {
+// FindOne implements TempRepository.
+func (r *tempRepositoryImpl) FindOne(id string) (*entity.Temp, error) {
 	// Itemの取得
-	dummy := entity.Dummy{ID: dummyId}
-	key, err := dummy.GetKey()
+	temp := entity.Temp{ID: id}
+	key, err := temp.GetKey()
 	if err != nil {
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	result, err := r.accessor.GetItemSdk(&dynamodb.GetItemInput{
-		TableName: aws.String("dummy"),
+		//TODO: テーブル名を設定外だし
+		TableName: aws.String("temp"),
 		Key:       key,
 	})
 	if err != nil {
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
-	err = attributevalue.UnmarshalMap(result.Item, &dummy)
+	err = attributevalue.UnmarshalMap(result.Item, &temp)
 	if err != nil {
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
-	return &dummy, nil
+	return &temp, nil
 }
 
-// CreateOneTx implements DummyRepository.
-func (r *dummyRepositoryImpl) CreateOneTx(dummy *entity.Dummy) (*entity.Dummy, error) {
+// CreateOneTx implements TempRepository.
+func (r *tempRepositoryImpl) CreateOneTx(temp *entity.Temp) (*entity.Temp, error) {
 	// ID採番
-	dummyId := id.GenerateId()
-	dummy.ID = dummyId
-	av, err := attributevalue.MarshalMap(dummy)
+	id := id.GenerateId()
+	temp.ID = id
+	av, err := attributevalue.MarshalMap(temp)
 	if err != nil {
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	put := &types.Put{
 		Item:      av,
-		TableName: aws.String("dummy"),
+		TableName: aws.String("temp"),
 	}
 	// TransactWriteItemの追加
 	input := &types.TransactWriteItem{Put: put}
 	r.accessor.AppendTransactWriteItem(input)
 
-	return dummy, nil
+	return temp, nil
 }

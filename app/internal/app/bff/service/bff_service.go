@@ -29,7 +29,7 @@ func New(log logging.Logger,
 	config config.Config,
 	userRepository repository.UserRepository,
 	todoRepository repository.TodoRepository,
-	dummyRepository repository.DummyRepository,
+	tempRepository repository.TempRepository,
 	asyncMessageRepository repository.AsyncMessageRepository,
 ) BffService {
 	return &bffServiceImpl{
@@ -37,7 +37,7 @@ func New(log logging.Logger,
 		config:                 config,
 		userRepository:         userRepository,
 		todoRepository:         todoRepository,
-		dummyRepository:        dummyRepository,
+		tempRepository:         tempRepository,
 		asyncMessageRepository: asyncMessageRepository,
 	}
 }
@@ -48,7 +48,7 @@ type bffServiceImpl struct {
 	config                 config.Config
 	userRepository         repository.UserRepository
 	todoRepository         repository.TodoRepository
-	dummyRepository        repository.DummyRepository
+	tempRepository         repository.TempRepository
 	asyncMessageRepository repository.AsyncMessageRepository
 }
 
@@ -87,7 +87,7 @@ func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string, dbtx string) e
 	// DBトランザクションを試すためのダミーのDB登録処理
 	if dbtx != "no" {
 		bs.log.Debug("業務のDB登録処理あり")
-		bs.dummyRepository.CreateOneTx(&entity.Dummy{Value: "dummy"})
+		bs.tempRepository.CreateOneTx(&entity.Temp{Value: "temp"})
 	}
 	// TODOタイトルのリストの登録を非同期処理実行依頼
 	asyncMessage := &entity.AsyncMessage{TodoTitles: todoTitles}
@@ -101,7 +101,7 @@ func (bs *bffServiceImpl) RegisterTodosAsyncByFIFO(todoTitles []string, dbtx str
 	if dbtx != "no" {
 		bs.log.Debug("業務のDB登録処理あり")
 		// DBトランザクションを試すためのダミーのDB登録処理
-		bs.dummyRepository.CreateOneTx(&entity.Dummy{Value: "dummy2"})
+		bs.tempRepository.CreateOneTx(&entity.Temp{Value: "dummy2"})
 	}
 
 	// TODOタイトルのリストの登録を非同期処理実行依頼
