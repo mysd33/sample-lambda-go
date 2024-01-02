@@ -9,6 +9,12 @@ Parameters:
   TodoTableName:
     Type: String
     Default: todo
+  TempTableName:
+    Type: String
+    Default: temp
+  QueueMessageTableName:
+    Type: String
+    Default: queue_message
 
 #Mappings: 
 
@@ -39,8 +45,31 @@ Resources:
         - AttributeName: todo_id
           AttributeType: S
       BillingMode: PAY_PER_REQUEST
-# TODO: temp Table
-# TODO: queue_message Table
+  TempTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref TempTableName
+      KeySchema:
+        - AttributeName: id
+          KeyType:  HASH
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+  QueueMessageTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref QueueMessageTableName
+      KeySchema:
+        - AttributeName: message_id
+          KeyType:  HASH
+      AttributeDefinitions:
+        - AttributeName: message_id
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      TimeToLiveSpecification:
+        AttributeName: delete_time
+        Enabled: true
 
 
 #Outputs:

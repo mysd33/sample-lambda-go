@@ -18,7 +18,7 @@ const (
 
 // QueueMessageItemRepository は、キューメッセージ管理テーブルのリポジトリインタフェースです。
 type QueueMessageItemRepository interface {
-	FindOne(messageId string, deleteTime string) (*entity.QueueMessageItem, error)
+	FindOne(messageId string, deleteTime int) (*entity.QueueMessageItem, error)
 	CreateOneWithTx(queueMessage *entity.QueueMessageItem) error
 	UpdateOneWithTx(queueMessage *entity.QueueMessageItem) error
 }
@@ -50,7 +50,7 @@ type defaultQueueMessageItemRepository struct {
 }
 
 // FindOne implements QueueMessageItemRepository.
-func (r *defaultQueueMessageItemRepository) FindOne(messageId string, deleteTime string) (*entity.QueueMessageItem, error) {
+func (r *defaultQueueMessageItemRepository) FindOne(messageId string, deleteTime int) (*entity.QueueMessageItem, error) {
 	r.log.Debug("partitionKey: %s", r.primaryKey.PartitionKey)
 	input := input.PKQueryInput{
 		PrimaryKey: input.PrimaryKey{

@@ -78,7 +78,7 @@ func (sa *defaultTransactionalSQSAccessor) StartTransaction(transaction Transact
 func (sa *defaultTransactionalSQSAccessor) AppendTransactMessage(queueName string, input *sqs.SendMessageInput) error {
 	sa.log.Debug("AppendTransactMessage")
 
-	deleteTime := sa.addDeleteTime()
+	deleteTime := sa.getDeleteTime()
 	if input.MessageAttributes == nil {
 		input.MessageAttributes = deleteTime
 	} else {
@@ -111,7 +111,11 @@ func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Messag
 			queueMessageItem.MessageId = v.QueueName + "_" + *output.MessageId
 			// メッセージ重複排除IDは送信時は格納しない（処理済みフラグ代わりに使用しているため）
 			// DeleteTime（delete_time）の値を設定
-			queueMessageItem.DeleteTime = *v.Input.MessageAttributes["delete_time"].StringValue
+			deleteTime, err := strconv.Atoi(*v.Input.MessageAttributes["delete_time"].StringValue)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			queueMessageItem.DeleteTime = deleteTime
 			if err := sa.messageRegisterer.RegisterMessage(queueMessageItem); err != nil {
 				return errors.WithStack(err)
 			}
@@ -127,7 +131,7 @@ func (sa *defaultTransactionalSQSAccessor) EndTransaction() {
 }
 
 // 削除時間の追加
-func (sa *defaultTransactionalSQSAccessor) addDeleteTime() map[string]types.MessageAttributeValue {
+func (sa *defaultTransactionalSQSAccessor) getDeleteTime() map[string]types.MessageAttributeValue {
 	// TODO: TTLを設定に切り出す
 	//ttl := sa.config.Get("QUEUE_MESSAGE_TABLE_TTL")
 	ttl := 24 * 4 // 4日間

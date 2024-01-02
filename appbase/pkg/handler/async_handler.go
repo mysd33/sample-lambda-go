@@ -124,7 +124,10 @@ func (h *AsyncLambdaHandler) doHandle(sqsMsg events.SQSMessage, response events.
 		return nil
 	}
 	// Contextに非同期処理情報を格納
-	h.addAsyncInfoToContext(sqsMsg, isFIFO)
+	err = h.addAsyncInfoToContext(sqsMsg, isFIFO)
+	if err != nil {
+		return err
+	}
 
 	// Controllerの実行（実際にはインタセプターを経由）
 	return asyncControllerFunc(sqsMsg)
@@ -155,13 +158,15 @@ func (h *AsyncLambdaHandler) checkMessageId(sqsMsg events.SQSMessage) (string, e
 		return "", nil
 	}
 	h.log.Debug("キューメッセージテーブルID: %s", queueMessageTableId)
-	deleteTime := sqsMsg.MessageAttributes[constant.DELETE_TIME_NAME].StringValue
+	deleteTime, err := strconv.Atoi(*sqsMsg.MessageAttributes[constant.DELETE_TIME_NAME].StringValue)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
 	retryCount := 0
 	var queueMessageItem *entity.QueueMessageItem
-	var err error
 	for {
 		// メッセージIDに対応するキューメッセージ管理テーブルからのアイテムを取得
-		queueMessageItem, err = h.queueMessageItemRepository.FindOne(queueMessageTableId, *deleteTime)
+		queueMessageItem, err = h.queueMessageItemRepository.FindOne(queueMessageTableId, deleteTime)
 		if err != nil {
 			return "", err
 		}
@@ -182,12 +187,12 @@ func (h *AsyncLambdaHandler) checkMessageId(sqsMsg events.SQSMessage) (string, e
 }
 
 // addAsyncInfoToContext は、非同期処理情報をContextに格納します。
-func (h *AsyncLambdaHandler) addAsyncInfoToContext(sqsMsg events.SQSMessage, isFIFO bool) {
+func (h *AsyncLambdaHandler) addAsyncInfoToContext(sqsMsg events.SQSMessage, isFIFO bool) error {
 	var messageDeduplicationId string
 	if h.unnecessaryToCheckTable(sqsMsg) {
 		// DBを確認を必要としないため、非同期処理情報格納しない
 		h.log.Debug("メッセージ管理テーブルの更新不要のため非同期処理情報のContext格納なし")
-		return
+		return nil
 	}
 	if isFIFO {
 		// FIFOキューの場合は、実際のメッセージ重複排除IDを設定
@@ -196,14 +201,20 @@ func (h *AsyncLambdaHandler) addAsyncInfoToContext(sqsMsg events.SQSMessage, isF
 		// 標準キューの場合は、ダミーのメッセージ重複排除IDを設定
 		messageDeduplicationId = "standard-queue-dummy"
 	}
+	// メッセージ削除時間を設定
+	deleteTime, err := strconv.Atoi(*sqsMsg.MessageAttributes[constant.DELETE_TIME_NAME].StringValue)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	// 処理成功時にメッセージ管理テーブルを更新するため、Context領域に非同期処理情報を格納しておく
 	apcontext.Context = context.WithValue(apcontext.Context, constant.ASYNC_HANDLER_INFO_CTX_KEY,
 		&entity.QueueMessageItem{
 			MessageId:              h.getQueueMessageTableId(sqsMsg),
 			MessageDeduplicationId: messageDeduplicationId,
-			DeleteTime:             *sqsMsg.MessageAttributes[constant.DELETE_TIME_NAME].StringValue,
+			DeleteTime:             deleteTime,
 		},
 	)
+	return nil
 }
 
 // unnecessaryToCheckTable は、キューメッセージ管理テーブルを確認する不要であるかを判定します。
