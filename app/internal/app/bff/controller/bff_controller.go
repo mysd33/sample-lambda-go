@@ -129,6 +129,7 @@ func (c *bffControllerImpl) RegisterTodosAsync(ctx *gin.Context) (any, error) {
 	}
 	// トランザクション管理してサービス実行
 	_, err := c.transactionManager.ExecuteTransaction(serviceFunc)
+	// TODO: トランザクションエラーのハンドリング
 	if err != nil {
 		return nil, err
 	}

@@ -27,9 +27,7 @@ Resources:
 #      AttributeDefinitions:
 #        - AttributeName: user_id
 #          AttributeType: S
-#      ProvisionedThroughput:
-#        ReadCapacityUnits: 1
-#        WriteCapacityUnits: 1       
+#      BillingMode: PAY_PER_REQUEST   
   TodoTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -40,8 +38,9 @@ Resources:
       AttributeDefinitions:
         - AttributeName: todo_id
           AttributeType: S
-      ProvisionedThroughput:
-        ReadCapacityUnits: 1
-        WriteCapacityUnits: 1
+      BillingMode: PAY_PER_REQUEST
+# TODO: temp Table
+# TODO: queue_message Table
+
 
 #Outputs:

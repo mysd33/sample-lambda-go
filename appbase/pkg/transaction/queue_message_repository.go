@@ -28,9 +28,7 @@ func NewQueueMessageItemRepository(config config.Config,
 	log logging.Logger,
 	dynamodbTemplate TransactionalDynamoDBTemplate) QueueMessageItemRepository {
 	// テーブル名取得
-	//TODO: テーブル名をプロパティ管理(Config.Getで取得)で設定切り出し
-	//tableName := tables.DynamoDBTableName(config.Get("QUEUE_MESSAGE_TABLE_NAME"))
-	tableName := tables.DynamoDBTableName("queue_message")
+	tableName := tables.DynamoDBTableName(config.Get(QUEUE_MESSAGE_TABLE_NAME))
 	// テーブル定義の設定
 	mytables.QueueMessageTable{}.InitPK(tableName)
 	// プライマリキーの設定

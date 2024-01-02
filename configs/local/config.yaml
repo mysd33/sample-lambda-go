@@ -1,5 +1,7 @@
 hoge_name: "fuga-local"
 TODO_TABLE_NAME: "todo"
+TEMP_TABLE_NAME: "temp"
+QUEUE_MESSAGE_TABLE_NAME: "queue_message"
 #USERS_TABLE_NAME: "users"
 DYNAMODB_LOCAL_ENDPOINT: "http://host.docker.internal:8000"
 SQS_LOCAL_ENDPOINT: "http://host.docker.internal:9324"

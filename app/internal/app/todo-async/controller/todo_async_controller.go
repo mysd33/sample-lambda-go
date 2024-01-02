@@ -3,7 +3,11 @@ package controller
 
 import (
 	"app/internal/app/todo-async/service"
+	"app/internal/pkg/entity"
+	"app/internal/pkg/message"
+	"encoding/json"
 
+	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/transaction"
 	"github.com/aws/aws-lambda-go/events"
@@ -36,13 +40,16 @@ func (c *todoAsyncControllerImpl) RegisterAll(sqsMessage events.SQSMessage) erro
 	body := sqsMessage.Body
 	c.log.Debug("Message: %s", body)
 
-	//TODO: メッセージをjsonデコードして、todoTitileを取得する処理
-	//現状、ダミーの処理
-	todoTitles := []string{body}
+	//メッセージをjsonデコードして、AsyncMessageを取得する処理
+	var asyncMessage entity.AsyncMessage
+	err := json.Unmarshal([]byte(body), &asyncMessage)
+	if err != nil {
+		return errors.NewSystemError(err, message.E_EX_9003)
+	}
 
 	// DynamoDBトランザクション管理してサービスの実行
-	_, err := c.transactionManager.ExecuteTransaction(func() (any, error) {
-		err := c.service.RegisterTodosAsync(todoTitles)
+	_, err = c.transactionManager.ExecuteTransaction(func() (any, error) {
+		err := c.service.RegisterTodosAsync(asyncMessage)
 		return nil, err
 	})
 	return err

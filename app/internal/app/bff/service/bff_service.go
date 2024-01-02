@@ -84,13 +84,18 @@ func (bs *bffServiceImpl) FindTodo(userId string, todoId string) (*entity.User, 
 // RegisterTodosAsync implements TodoService.
 func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string, dbtx string) error {
 	bs.log.Debug("RegisterTodosAsync")
-	// DBトランザクションを試すためのダミーのDB登録処理
+	var tempId string
+	// TODO: todoTitlesをS3のファイルに入れて登録するように変更
 	if dbtx != "no" {
+		// TODO: Valueに、S3のパスを入れて登録するように変更
+		temp := &entity.Temp{Value: "temp"}
 		bs.log.Debug("業務のDB登録処理あり")
-		bs.tempRepository.CreateOneTx(&entity.Temp{Value: "temp"})
+		bs.tempRepository.CreateOneTx(temp)
+		tempId = temp.ID
 	}
-	// TODOタイトルのリストの登録を非同期処理実行依頼
-	asyncMessage := &entity.AsyncMessage{TodoTitles: todoTitles}
+	// TODO: todoTitlesはSQSのメッセージに送付しないように変更
+	// TODOリストの登録を非同期処理実行依頼
+	asyncMessage := &entity.AsyncMessage{TempId: tempId, TodoTitles: todoTitles}
 	bs.asyncMessageRepository.Send(asyncMessage)
 	return nil
 }
@@ -98,15 +103,21 @@ func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string, dbtx string) e
 // RegisterTodosAsyncByFIFO implements BffService.
 func (bs *bffServiceImpl) RegisterTodosAsyncByFIFO(todoTitles []string, dbtx string) error {
 	bs.log.Debug("RegisterTodosAsyncByFIFO")
+	var tempId string
+	// TODO: todoTitlesをS3のファイルに入れて登録するように変更
 	if dbtx != "no" {
+		// TODO: Valueに、S3のパスを入れて登録するように変更
+		temp := &entity.Temp{Value: "temp"}
 		bs.log.Debug("業務のDB登録処理あり")
 		// DBトランザクションを試すためのダミーのDB登録処理
-		bs.tempRepository.CreateOneTx(&entity.Temp{Value: "dummy2"})
+		bs.tempRepository.CreateOneTx(temp)
+		tempId = temp.ID
 	}
 
-	// TODOタイトルのリストの登録を非同期処理実行依頼
-	asyncMessage := &entity.AsyncMessage{TodoTitles: todoTitles}
-	// メッセージグループID
+	// TODO: todoTitlesはSQSのメッセージに送付しないように変更
+	// TODOリストの登録を非同期処理実行依頼
+	asyncMessage := &entity.AsyncMessage{TempId: tempId, TodoTitles: todoTitles}
+	// メッセージグループIDの生成
 	msgGroupId := id.GenerateId()
 	bs.asyncMessageRepository.SendToFIFOQueue(asyncMessage, msgGroupId)
 	return nil

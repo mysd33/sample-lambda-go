@@ -20,7 +20,7 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	// リポジトリの作成
 	userRepository := repository.NewUserRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger(), ac.GetConfig())
 	todoRepository := repository.NewTodoRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger(), ac.GetConfig())
-	tempRepository := repository.NewTempRepository(ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig())
+	tempRepository := repository.NewTempRepository(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig())
 	// Configからキュー名を取得する
 	sampleQueueName := ac.GetConfig().Get("SampleQueueName")
 	if sampleQueueName == "" {

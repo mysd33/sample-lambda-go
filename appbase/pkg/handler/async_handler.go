@@ -109,7 +109,7 @@ func (h *AsyncLambdaHandler) doHandle(sqsMsg events.SQSMessage, response events.
 			receiveCount, _ := strconv.Atoi(sqsMsg.Attributes[string(types.MessageSystemAttributeNameApproximateReceiveCount)])
 			if receiveCount >= QUEUE_MESSAGE_DELETE_RETRY_COUNT {
 				// Errorログの出力
-				h.log.Error(message.E_FW_9002, err)
+				h.log.Error(message.E_FW_9002, queueName, messageId)
 
 				// メッセージ削除させるため正常終了
 				return nil

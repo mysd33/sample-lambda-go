@@ -4,16 +4,21 @@ package repository
 import (
 	"app/internal/pkg/entity"
 	"app/internal/pkg/message"
+	mytables "app/internal/pkg/repository/tables"
+	"errors"
 
 	"example.com/appbase/pkg/config"
-	"example.com/appbase/pkg/errors"
+	mydynamodb "example.com/appbase/pkg/dynamodb"
+	"example.com/appbase/pkg/dynamodb/input"
+	"example.com/appbase/pkg/dynamodb/tables"
+	myerrors "example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/id"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/transaction"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+)
+
+const (
+	TEMP_TABLE_NAME = "TEMP_TABLE_NAME"
 )
 
 // TempRepository は、一時テーブルを管理するRepositoryインタフェースです。
@@ -25,41 +30,77 @@ type TempRepository interface {
 }
 
 // NewTempRepository は、TempRepositoryを生成します。
-func NewTempRepository(accessor transaction.TransactionalDynamoDBAccessor, log logging.Logger, config config.Config) TempRepository {
+func NewTempRepository(dynamoDBTempalte transaction.TransactionalDynamoDBTemplate,
+	accessor transaction.TransactionalDynamoDBAccessor,
+	log logging.Logger, config config.Config) TempRepository {
+	// テーブル名の取得
+	tableName := tables.DynamoDBTableName(config.Get(TEMP_TABLE_NAME))
+	// テーブル定義の設定
+	mytables.Temp{}.InitPK(tableName)
+	// プライマリキーの設定
+	primaryKey := tables.GetPrimaryKey(tableName)
+
 	return &tempRepositoryImpl{
-		accessor: accessor,
-		log:      log,
-		config:   config,
+		dynamodbTemplate: dynamoDBTempalte,
+		accessor:         accessor,
+		log:              log,
+		config:           config,
+		tableName:        tableName,
+		primaryKey:       primaryKey,
 	}
 }
 
 // tempRepositoryImpl は、TempRepositoryを実装する構造体です。
 type tempRepositoryImpl struct {
-	accessor transaction.TransactionalDynamoDBAccessor
-	log      logging.Logger
-	config   config.Config
+	dynamodbTemplate transaction.TransactionalDynamoDBTemplate
+	accessor         transaction.TransactionalDynamoDBAccessor
+	log              logging.Logger
+	config           config.Config
+	tableName        tables.DynamoDBTableName
+	primaryKey       *tables.PKKeyPair
 }
 
 // FindOne implements TempRepository.
 func (r *tempRepositoryImpl) FindOne(id string) (*entity.Temp, error) {
+	// DynamoDBTemplateを使ったコード
+	input := input.PKOnlyQueryInput{
+		PrimaryKey: input.PrimaryKey{
+			PartitionKey: input.Attribute{
+				Name:  r.primaryKey.PartitionKey,
+				Value: id,
+			},
+		},
+	}
+	var temp entity.Temp
 	// Itemの取得
-	temp := entity.Temp{ID: id}
-	key, err := temp.GetKey()
+	err := r.dynamodbTemplate.FindOneByTableKey(r.tableName, input, &temp)
 	if err != nil {
-		return nil, errors.NewSystemError(err, message.E_EX_9001)
+		if errors.Is(err, mydynamodb.ErrRecordNotFound) {
+			// レコード未取得の場合
+			return nil, myerrors.NewBusinessError(message.W_EX_8002, id)
+		}
+		return nil, myerrors.NewSystemError(err, message.E_EX_9001)
 	}
-	result, err := r.accessor.GetItemSdk(&dynamodb.GetItemInput{
-		//TODO: テーブル名を設定外だし
-		TableName: aws.String("temp"),
-		Key:       key,
-	})
-	if err != nil {
-		return nil, errors.NewSystemError(err, message.E_EX_9001)
-	}
-	err = attributevalue.UnmarshalMap(result.Item, &temp)
-	if err != nil {
-		return nil, errors.NewSystemError(err, message.E_EX_9001)
-	}
+
+	// 従来のDynamoDBAccessorを使ったコード
+	// Itemの取得
+	/*
+		temp := entity.Temp{ID: id}
+		key, err := temp.GetKey()
+		if err != nil {
+			return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+		}
+		result, err := r.accessor.GetItemSdk(&dynamodb.GetItemInput{
+			TableName: aws.String("temp"),
+			Key:       key,
+		})
+		if err != nil {
+			return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+		}
+		err = attributevalue.UnmarshalMap(result.Item, &temp)
+		if err != nil {
+			return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+		}*/
 	return &temp, nil
 }
 
@@ -68,17 +109,28 @@ func (r *tempRepositoryImpl) CreateOneTx(temp *entity.Temp) (*entity.Temp, error
 	// ID採番
 	id := id.GenerateId()
 	temp.ID = id
-	av, err := attributevalue.MarshalMap(temp)
-	if err != nil {
-		return nil, errors.NewSystemError(err, message.E_EX_9001)
-	}
-	put := &types.Put{
-		Item:      av,
-		TableName: aws.String("temp"),
-	}
-	// TransactWriteItemの追加
-	input := &types.TransactWriteItem{Put: put}
-	r.accessor.AppendTransactWriteItem(input)
+	r.log.Debug("CreateOneTx Table name: %s", r.tableName)
+	r.log.Debug("CreateOneTx Temp id: %s", id)
 
+	// DynamoDBTemplateを使ったコード
+	err := r.dynamodbTemplate.CreateOneWithTransaction(r.tableName, temp)
+	if err != nil {
+		return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+	}
+
+	// 従来のDynamoDBAccessorを使ったコード
+	/*
+		av, err := attributevalue.MarshalMap(temp)
+		if err != nil {
+			return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+		}
+		put := &types.Put{
+			Item:      av,
+			TableName: aws.String("temp"),
+		}
+		// TransactWriteItemの追加
+		input := &types.TransactWriteItem{Put: put}
+		r.accessor.AppendTransactWriteItem(input)
+	*/
 	return temp, nil
 }
