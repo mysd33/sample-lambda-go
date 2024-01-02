@@ -1,9 +1,9 @@
 {
     "Records": [
         {
-            "messageId": "12c091a5-dfaa-4340-b0a9-583f2db96dae",
+            "messageId": "a684f467-c9d6-466a-85d1-b7bce11cbb9a",
             "receiptHandle": "12c091a5-dfaa-4340-b0a9-583f2db96dae#e6d9e217-6eff-4372-9d57-8f6f1fa83ba7",
-            "body": "{\"tempId\":\"e5ddd1ee-a915-11ee-95ad-0242ac110007\",\"todoTitles\":[\"dummy1\",\"dummy2\"]}",
+            "body": "{\"tempId\":\"45c95bba-a933-11ee-bc9f-0242ac110005\"}",
             "Attributes": {
                 "ApproximateFirstReceiveTimestamp": "1704094384254",
                 "SentTimestamp": "1704091021068",
@@ -13,7 +13,7 @@
             },            
             "messageAttributes": {
                 "delete_time": {
-                    "StringValue": "1704507801",
+                    "StringValue": "1704520417",
                     "DataType": "String"
                 }
             },

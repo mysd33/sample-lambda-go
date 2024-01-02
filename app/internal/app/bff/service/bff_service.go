@@ -3,9 +3,12 @@ package service
 
 import (
 	"app/internal/pkg/entity"
+	"app/internal/pkg/message"
 	"app/internal/pkg/repository"
+	"encoding/json"
 
 	"example.com/appbase/pkg/config"
+	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/id"
 	"example.com/appbase/pkg/logging"
 )
@@ -87,15 +90,20 @@ func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string, dbtx string) e
 	var tempId string
 	// TODO: todoTitlesをS3のファイルに入れて登録するように変更
 	if dbtx != "no" {
-		// TODO: Valueに、S3のパスを入れて登録するように変更
-		temp := &entity.Temp{Value: "temp"}
 		bs.log.Debug("業務のDB登録処理あり")
+		// TODO: Valueに、S3のパスを入れて登録するように変更
+		byteMessage, err := json.Marshal(todoTitles)
+		if err != nil {
+			return errors.NewSystemError(err, message.E_EX_9001)
+		}
+		value := string(byteMessage)
+		temp := &entity.Temp{Value: value}
+		// Tempテーブルの登録
 		bs.tempRepository.CreateOneTx(temp)
 		tempId = temp.ID
 	}
-	// TODO: todoTitlesはSQSのメッセージに送付しないように変更
 	// TODOリストの登録を非同期処理実行依頼
-	asyncMessage := &entity.AsyncMessage{TempId: tempId, TodoTitles: todoTitles}
+	asyncMessage := &entity.AsyncMessage{TempId: tempId}
 	bs.asyncMessageRepository.Send(asyncMessage)
 	return nil
 }
@@ -104,19 +112,23 @@ func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string, dbtx string) e
 func (bs *bffServiceImpl) RegisterTodosAsyncByFIFO(todoTitles []string, dbtx string) error {
 	bs.log.Debug("RegisterTodosAsyncByFIFO")
 	var tempId string
-	// TODO: todoTitlesをS3のファイルに入れて登録するように変更
+	// TODO: todoTitlesをS3上のファイルに入れて登録するように変更
 	if dbtx != "no" {
-		// TODO: Valueに、S3のパスを入れて登録するように変更
-		temp := &entity.Temp{Value: "temp"}
 		bs.log.Debug("業務のDB登録処理あり")
-		// DBトランザクションを試すためのダミーのDB登録処理
+		// TODO: Valueに、S3のパスを入れて登録するように変更
+		byteMessage, err := json.Marshal(todoTitles)
+		if err != nil {
+			return errors.NewSystemError(err, message.E_EX_9001)
+		}
+		value := string(byteMessage)
+		temp := &entity.Temp{Value: value}
+		// Tempテーブルの登録
 		bs.tempRepository.CreateOneTx(temp)
 		tempId = temp.ID
 	}
 
-	// TODO: todoTitlesはSQSのメッセージに送付しないように変更
 	// TODOリストの登録を非同期処理実行依頼
-	asyncMessage := &entity.AsyncMessage{TempId: tempId, TodoTitles: todoTitles}
+	asyncMessage := &entity.AsyncMessage{TempId: tempId}
 	// メッセージグループIDの生成
 	msgGroupId := id.GenerateId()
 	bs.asyncMessageRepository.SendToFIFOQueue(asyncMessage, msgGroupId)

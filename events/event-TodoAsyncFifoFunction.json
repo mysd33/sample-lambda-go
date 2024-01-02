@@ -1,22 +1,22 @@
 {
     "Records": [
         {
-            "messageId": "8a756852-ed51-4812-8df0-9d4d4e2a8adf",
+            "messageId": "52f4c1cb-fa86-4cf8-b09d-1eab75312344",
             "receiptHandle": "8a756852-ed51-4812-8df0-9d4d4e2a8adf",
-            "body": "{\"tempId\":\"3ccddd56-a917-11ee-95ad-0242ac110007\",\"todoTitles\":[\"dummy1\",\"dummy2\"]}",
+            "body": "{\"tempId\":\"feebe597-a934-11ee-896d-0242ac110003\"}",
             "attributes": {
                 "ApproximateFirstReceiveTimestamp": "1545082649185",    
                 "SentTimestamp": "1545082649183",                
-                "MessageDeduplicationId": "3ccde156-a917-11ee-95ad-0242ac110007",
+                "MessageDeduplicationId": "feebefd8-a934-11ee-896d-0242ac110003",
                 "SenderId": "AIDAIENQZJOLO23YVJ4VO",
                 "ApproximateReceiveCount": "1",
                 "AWSTraceHeader": "Parent=0000000000000000;Sampled=0",
-                "MessageGroupId": "3ccde0ce-a917-11ee-95ad-0242ac110007",                                
+                "MessageGroupId": "feebeed5-a934-11ee-896d-0242ac110003",                                
                 "SequenceNumber": "0"                
             },
             "messageAttributes": {
                 "delete_time": {
-                    "StringValue": "1704508376",
+                    "StringValue": "1704521157",
                     "DataType": "String"
                 }
             },

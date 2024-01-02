@@ -5,8 +5,10 @@ import (
 	"app/internal/pkg/entity"
 	"app/internal/pkg/message"
 	"app/internal/pkg/repository"
+	"encoding/json"
 
 	"example.com/appbase/pkg/config"
+	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 )
 
@@ -41,15 +43,20 @@ func (ts *todoAsyncServiceImpl) RegisterTodosAsync(asyncMesssage entity.AsyncMes
 		// TempIdが空の場合は、何もしない
 		return nil
 	}
-
-	// TODO: tempテーブルのIDをもとに、todoTitles情報から取得して登録するように変更
+	// tempテーブルのIDをもとに、TodoListを取得
 	temp, err := ts.tempRepository.FindOne(asyncMesssage.TempId)
 	if err != nil {
 		return err
 	}
 	ts.log.Debug("temp: %+v", temp)
-	todoTitles := asyncMesssage.TodoTitles
+	var todoTitles []string
+	err = json.Unmarshal([]byte(temp.Value), &todoTitles)
+	if err != nil {
+		return errors.NewSystemError(err, message.E_EX_9001)
+	}
+	// TODO: todoTitlesをS3上のファイルから取得して登録するように変更
 	for _, v := range todoTitles {
+		ts.log.Debug("todoList: %s", v)
 		todo := entity.Todo{Title: v}
 		newTodo, err := ts.todoRepository.CreateOneTx(&todo)
 		if err != nil {

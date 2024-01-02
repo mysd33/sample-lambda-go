@@ -114,6 +114,7 @@ func (da *defaultTransactionalDynamoDBAccessor) TransactWriteItemsSDK(items []ty
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	da.log.Debug("消費キャパシティユニット: %d件", len(output.ConsumedCapacity))
 	for i, v := range output.ConsumedCapacity {
 		da.log.Debug("TransactWriteItems(%d番目)[%s]消費キャパシティユニット:%f", i+1, *v.TableName, *v.CapacityUnits)
 	}

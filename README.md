@@ -516,7 +516,7 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
                     "messageId": "99a809d5-0e25-42ad-89df-c466385dad58",
                     "receiptHandle": "99a809d5-0e25-42ad-89df-c466385dad58#d753a0fb-c153-495f-81f3-d849a3705116",
                     # Bodyを送信したメッセージに修正
-                    "body": "{\"tempId\":\"e5ddd1ee-a915-11ee-95ad-0242ac110007\",\"todoTitles\":[\"dummy1\",\"dummy2\"]}",
+                    "body": "{\"tempId\":\"45c95bba-a933-11ee-bc9f-0242ac110005\"}",
                     "attributes": {
                         "ApproximateFirstReceiveTimestamp": "1704094384254",
                         "SentTimestamp": "1704091021068",
@@ -580,7 +580,7 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
                     "messageId": "99a809d5-0e25-42ad-89df-c466385dad58",
                     "receiptHandle": "99a809d5-0e25-42ad-89df-c466385dad58#d753a0fb-c153-495f-81f3-d849a3705116",
                     # Bodyを送信したメッセージに修正
-                    "body": "{\"tempId\":\"e5ddd1ee-a915-11ee-95ad-0242ac110007\",\"todoTitles\":[\"dummy1\",\"dummy2\"]}",
+                    "body": "{\"tempId\":\"45c95bba-a933-11ee-bc9f-0242ac110005\"}",
                     "attributes": {
                         "ApproximateFirstReceiveTimestamp": "1545082649185",    
                         "SentTimestamp": "1545082649183",           
