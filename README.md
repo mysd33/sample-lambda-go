@@ -140,9 +140,7 @@ psql -h (RDS Proxyのエンドポイント) -U postgres -d testdb
 ```
 
 ## 9. DynamoDBのテーブル作成
-* DynamoDBにTODOテーブルを作成する。
-* TODO: tempテーブルの作成
-* TODO: queue_messageテーブルの作成
+* DynamoDBに「todo」、「temp」、「queue_message」の各テーブルを作成する。
 ```sh
 aws cloudformation validate-template --template-body file://cfn-dynamodb.yaml
 aws cloudformation create-stack --stack-name Demo-DynamoDB-Stack --template-body file://cfn-dynamodb.yaml
