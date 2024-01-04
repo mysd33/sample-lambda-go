@@ -48,7 +48,7 @@ func NewApplicationContext() ApplicationContext {
 	queueMessageItemRepository := createQueueMessageItemRepository(config, logger, dynamoDBTempalte)
 	messageRegisterer := createMessageRegisterer(queueMessageItemRepository)
 	sqsAccessor := createTransactionalSQSAccessor(logger, config, messageRegisterer)
-	sqsTemplate := createSQSTemplate(logger, sqsAccessor)
+	sqsTemplate := createSQSTemplate(logger, config, sqsAccessor)
 	dynamoDBTransactionManager := createDynamoDBTransactionManager(logger, dynamodbAccessor, sqsAccessor, messageRegisterer)
 	dynamoDBTransactionManagerForDBOnly := createDynamoDBTransactionManagerForDBOnly(logger, dynamodbAccessor, messageRegisterer)
 	rdbAccessor := createRDBAccessor()
@@ -222,8 +222,8 @@ func createTransactionalSQSAccessor(logger logging.Logger, config config.Config,
 	return accessor
 }
 
-func createSQSTemplate(logger logging.Logger, sqsAccessor transaction.TransactionalSQSAccessor) async.SQSTemplate {
-	return transaction.NewSQSTemplate(logger, sqsAccessor)
+func createSQSTemplate(logger logging.Logger, config config.Config, sqsAccessor transaction.TransactionalSQSAccessor) async.SQSTemplate {
+	return transaction.NewSQSTemplate(logger, config, sqsAccessor)
 }
 
 func createDynamoDBTransactionManager(logger logging.Logger,

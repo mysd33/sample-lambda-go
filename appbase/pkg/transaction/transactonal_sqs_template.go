@@ -5,8 +5,10 @@ package transaction
 
 import (
 	"encoding/json"
+	"strconv"
 
 	"example.com/appbase/pkg/async"
+	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/id"
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -14,10 +16,15 @@ import (
 	"github.com/cockroachdb/errors"
 )
 
+const (
+	STANDARD_QUEUE_DELAY_SECONDS = "STANDARD_QUEUE_DELAY_SECONDS"
+)
+
 // NewSQSTemplateは、SQSTemplateを作成します。
-func NewSQSTemplate(log logging.Logger, sqsAccessor TransactionalSQSAccessor) async.SQSTemplate {
+func NewSQSTemplate(log logging.Logger, config config.Config, sqsAccessor TransactionalSQSAccessor) async.SQSTemplate {
 	return &defaultTransactionalSQSTemplate{
 		log:         log,
+		config:      config,
 		sqsAccessor: sqsAccessor,
 	}
 }
@@ -25,6 +32,7 @@ func NewSQSTemplate(log logging.Logger, sqsAccessor TransactionalSQSAccessor) as
 // defaultTransactionalSQSTemplateは、SQSTemplateの実装です。
 type defaultTransactionalSQSTemplate struct {
 	log         logging.Logger
+	config      config.Config
 	sqsAccessor TransactionalSQSAccessor
 }
 
@@ -36,8 +44,22 @@ func (t *defaultTransactionalSQSTemplate) SendToStandardQueue(queueName string, 
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	input := &sqs.SendMessageInput{
-		MessageBody: aws.String(string(byteMessage)),
+	// DelaySecondsが設定されていれば上書き
+	delaySecondsStr := t.config.Get(STANDARD_QUEUE_DELAY_SECONDS)
+	var input *sqs.SendMessageInput
+	if delaySecondsStr == "" {
+		input = &sqs.SendMessageInput{
+			MessageBody: aws.String(string(byteMessage)),
+		}
+	} else {
+		delaySeconds, err := strconv.Atoi(delaySecondsStr)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		input = &sqs.SendMessageInput{
+			MessageBody:  aws.String(string(byteMessage)),
+			DelaySeconds: int32(delaySeconds),
+		}
 	}
 	// トランザクション管理して非同期実行依頼メッセージを追加
 	err = t.sqsAccessor.AppendTransactMessage(queueName, input)
