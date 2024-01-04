@@ -119,7 +119,7 @@ func (r *defaultQueueMessageItemRepository) UpdateOneWithTx(queueMessage *entity
 			},
 		},
 	}
-	r.log.Debug("メッセージ重複排除ID: %s", queueMessage.Status)
+	r.log.Debug("ステータス: %s", queueMessage.Status)
 	err := r.dynamodbTemplate.UpdateOneWithTransaction(r.tableName, input)
 	if err != nil {
 		return errors.WithStack(err)
