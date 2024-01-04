@@ -19,6 +19,7 @@ const (
 	GIN_DEBUG_NAME               = "GIN_DEBUG"
 	NEEDS_TABLE_CHECK_NAME       = "needs_table_check"
 	DELETE_TIME_NAME             = "delete_time"
-	MESSAGE_DEDUPLICATION_ID     = "message_deduplication_id"
+	STATUS                       = "status"
+	STATUS_COMPLETE              = "complete"
 	ASYNC_HANDLER_INFO_CTX_KEY   = apcontext.ContextKey("ASYNC_HANDLER_INFO")
 )

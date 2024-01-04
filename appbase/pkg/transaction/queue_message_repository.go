@@ -103,11 +103,10 @@ func (r *defaultQueueMessageItemRepository) UpdateOneWithTx(queueMessage *entity
 			},
 		},
 		UpdateAttributes: []*input.Attribute{
-			// TODO: 本来は、処理済みのStatus列を定義して更新すべき
-			// メッセージ重複排除IDを登録する（処理済みフラグの代わりに使用している）
+			// Status列を更新
 			{
-				Name:  constant.MESSAGE_DEDUPLICATION_ID,
-				Value: queueMessage.MessageDeduplicationId,
+				Name:  constant.STATUS,
+				Value: queueMessage.Status,
 			},
 		},
 		WhereClauses: []*input.WhereClause{
@@ -120,7 +119,7 @@ func (r *defaultQueueMessageItemRepository) UpdateOneWithTx(queueMessage *entity
 			},
 		},
 	}
-	r.log.Debug("メッセージ重複排除ID: %s", queueMessage.MessageDeduplicationId)
+	r.log.Debug("メッセージ重複排除ID: %s", queueMessage.Status)
 	err := r.dynamodbTemplate.UpdateOneWithTransaction(r.tableName, input)
 	if err != nil {
 		return errors.WithStack(err)

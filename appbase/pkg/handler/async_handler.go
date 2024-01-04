@@ -101,7 +101,7 @@ func (h *AsyncLambdaHandler) doHandle(sqsMsg events.SQSMessage, response events.
 
 	h.log.Debug("doHandle[QueueName: %s, MessageId: %s]", queueName, messageId)
 	// キューメッセージテーブルのキーを作成
-	deduplicationId, err := h.checkMessageId(sqsMsg)
+	status, err := h.checkMessageId(sqsMsg)
 	if err != nil {
 		// メッセージIDが取得できない場合
 		if errors.Is(err, ErrMessageIdNotFound) {
@@ -117,8 +117,8 @@ func (h *AsyncLambdaHandler) doHandle(sqsMsg events.SQSMessage, response events.
 		}
 		return err
 	}
-	// 処理済のメッセージ（重複排除IDがメッセージ管理テーブルに入っている）の場合
-	if deduplicationId != "" {
+	// ステータス処理済（空列でない）の場合
+	if status != "" {
 		h.log.Debug("処理済のメッセージです。[QueueName: %s, MessageId: %s]", queueName, messageId)
 		// 重複して処理しないよう正常終了
 		return nil
@@ -183,23 +183,15 @@ func (h *AsyncLambdaHandler) checkMessageId(sqsMsg events.SQSMessage) (string, e
 	if queueMessageItem.MessageId == "" {
 		return "", ErrMessageIdNotFound
 	}
-	return queueMessageItem.MessageDeduplicationId, nil
+	return queueMessageItem.Status, nil
 }
 
 // addAsyncInfoToContext は、非同期処理情報をContextに格納します。
 func (h *AsyncLambdaHandler) addAsyncInfoToContext(sqsMsg events.SQSMessage, isFIFO bool) error {
-	var messageDeduplicationId string
 	if h.unnecessaryToCheckTable(sqsMsg) {
 		// DBを確認を必要としないため、非同期処理情報格納しない
 		h.log.Debug("メッセージ管理テーブルの更新不要のため非同期処理情報のContext格納なし")
 		return nil
-	}
-	if isFIFO {
-		// FIFOキューの場合は、実際のメッセージ重複排除IDを設定
-		messageDeduplicationId = sqsMsg.Attributes[string(types.MessageSystemAttributeNameMessageDeduplicationId)]
-	} else {
-		// 標準キューの場合は、ダミーのメッセージ重複排除IDを設定
-		messageDeduplicationId = "standard-queue-dummy"
 	}
 	// メッセージ削除時間を設定
 	deleteTime, err := strconv.Atoi(*sqsMsg.MessageAttributes[constant.DELETE_TIME_NAME].StringValue)
@@ -209,9 +201,8 @@ func (h *AsyncLambdaHandler) addAsyncInfoToContext(sqsMsg events.SQSMessage, isF
 	// 処理成功時にメッセージ管理テーブルを更新するため、Context領域に非同期処理情報を格納しておく
 	apcontext.Context = context.WithValue(apcontext.Context, constant.ASYNC_HANDLER_INFO_CTX_KEY,
 		&entity.QueueMessageItem{
-			MessageId:              h.getQueueMessageTableId(sqsMsg),
-			MessageDeduplicationId: messageDeduplicationId,
-			DeleteTime:             deleteTime,
+			MessageId:  h.getQueueMessageTableId(sqsMsg),
+			DeleteTime: deleteTime,
 		},
 	)
 	return nil
