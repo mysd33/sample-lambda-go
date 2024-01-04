@@ -528,8 +528,8 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
                         "ApproximateReceiveCount": "1",
                         "AWSTraceHeader": "Parent=0000000000000000;Sampled=0"                        
                     },
-                    "messageAttributes": {
-                        # messageAttributes内のdelete_timeの値修正    
+                    "messageAttributes": {                        
+                        # DB更新を伴う場合は、messageAttributes内に、delete_timeの値の追加
                         "delete_time": {
                             "StringValue": "1704413117",
                             "DataType": "String"
@@ -599,7 +599,7 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
                         "SequenceNumber": "0"                                      
                     },                    
                     "messageAttributes": {
-                        # messageAttributes内のdelete_timeの値修正    
+                        # DB更新を伴う場合は、messageAttributes内に、delete_timeの値の追加
                         "delete_time": {
                             "StringValue": "1704413117",
                             "DataType": "String"

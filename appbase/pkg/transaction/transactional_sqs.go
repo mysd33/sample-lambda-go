@@ -88,13 +88,6 @@ func (sa *defaultTransactionalSQSAccessor) StartTransaction(transaction Transact
 // AppendTransactMessage implements TransactionalSQSAccessor.
 func (sa *defaultTransactionalSQSAccessor) AppendTransactMessage(queueName string, input *sqs.SendMessageInput) error {
 	sa.log.Debug("AppendTransactMessage")
-
-	deleteTime := sa.getDeleteTime()
-	if input.MessageAttributes == nil {
-		input.MessageAttributes = deleteTime
-	} else {
-		maps.Copy(input.MessageAttributes, deleteTime)
-	}
 	sa.transaction.AppendTransactMessage(&Message{QueueName: queueName, Input: input})
 	return nil
 }
@@ -104,7 +97,9 @@ func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Messag
 	sa.log.Debug("TransactSendMessages: %d件", len(inputs))
 
 	for _, v := range inputs {
-		// 業務テーブルでのDynamoDBトランザクション処理がない場合は、メッセージにフラグ情報を送る
+		// 業務テーブルでのDynamoDBトランザクション処理がある場合は、メッセージに削除時間を追加する
+		sa.addDeleteTime(v, hasDbTrancation)
+		// 業務テーブルでのDynamoDBトランザクション処理がない場合は、メッセージにフラグ情報を追加する。
 		sa.addIsTableCheckFlag(v, hasDbTrancation)
 		// SQSへメッセージ送信
 		output, err := sa.SendMessageSdk(v.QueueName, v.Input)
@@ -141,8 +136,11 @@ func (sa *defaultTransactionalSQSAccessor) EndTransaction() {
 	sa.transaction = nil
 }
 
-// 削除時間の追加
-func (sa *defaultTransactionalSQSAccessor) getDeleteTime() map[string]types.MessageAttributeValue {
+// addDeleteTime は、業務テーブルでのDynamoDBトランザクション処理がある場合に削除時間をメッセージに追加します。
+func (sa *defaultTransactionalSQSAccessor) addDeleteTime(v *Message, hasDbTrancation bool) {
+	if !hasDbTrancation {
+		return
+	}
 	nowTime := time.Now()
 	delTimeStr := strconv.FormatInt(nowTime.Add(time.Duration(sa.ttl)*time.Hour).Unix(), 10)
 	deleteTime := map[string]types.MessageAttributeValue{
@@ -151,10 +149,16 @@ func (sa *defaultTransactionalSQSAccessor) getDeleteTime() map[string]types.Mess
 			StringValue: aws.String(delTimeStr),
 		},
 	}
-	return deleteTime
+
+	if v.Input.MessageAttributes == nil {
+		v.Input.MessageAttributes = deleteTime
+	} else {
+		maps.Copy(v.Input.MessageAttributes, deleteTime)
+	}
+
 }
 
-// addIsTableCheckFlag は、業務テーブルでのDynamoDBトランザクション処理がない場合にメッセージにフラグ情報を追加します
+// addIsTableCheckFlag は、業務テーブルでのDynamoDBトランザクション処理がない場合にメッセージにフラグ情報を追加します。
 func (*defaultTransactionalSQSAccessor) addIsTableCheckFlag(v *Message, hasDbTrancation bool) {
 	if hasDbTrancation {
 		return
