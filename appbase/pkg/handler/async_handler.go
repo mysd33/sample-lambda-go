@@ -25,9 +25,9 @@ import (
 
 const (
 	// TODO: メッセージ受信時、キューメッセージ管理テーブルのアイテムがない場合のリトライ回数の設定切り出し
-	QUEUE_MESSAGE_DELETE_RETRY_COUNT = 1
+	QUEUE_MESSAGE_DELETE_RETRY_COUNT = 2
 	// TODO: リトライ間隔の設定切り出し
-	TABLE_ACESS_RETRY_DURATION = time.Duration(300)
+	TABLE_ACESS_RETRY_DURATION = time.Duration(500)
 	// TODO: リトライ回数の設定切り出し
 	TABLE_ACESS_RETRY_COUNT = 5
 )
