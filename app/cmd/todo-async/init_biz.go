@@ -13,7 +13,10 @@ import (
 // 業務の初期化処理
 func initBiz(ac component.ApplicationContext) handler.AsyncControllerFunc {
 	// メッセージの設定
-	ac.GetMessageSource().Add(message.Messages_yaml)
+	err := ac.GetMessageSource().Add(message.Messages_yaml)
+	if err != nil {
+		panic(err)
+	}
 	// リポジトリの作成
 	tempRepository := repository.NewTempRepository(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig())
 	todoRepository := repository.NewTodoRepositoryForDynamoDB(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig())

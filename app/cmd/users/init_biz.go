@@ -13,7 +13,10 @@ import (
 // 業務の初期化処理
 func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	// メッセージの設定
-	ac.GetMessageSource().Add(message.Messages_yaml)
+	err := ac.GetMessageSource().Add(message.Messages_yaml)
+	if err != nil {
+		panic(err)
+	}
 	// リポジトリの作成（DynamoDBの場合）
 	//userRepository := repository.NewUserRepositoryForDynamoDB(ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig())
 	// リポジトリの作成（RDBの場合）

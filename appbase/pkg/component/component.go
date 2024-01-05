@@ -14,7 +14,6 @@ import (
 	"example.com/appbase/pkg/rdb"
 	"example.com/appbase/pkg/transaction"
 	"example.com/appbase/pkg/validator"
-	"github.com/cockroachdb/errors"
 )
 
 // ApplicationContext は、フレームワークのコンポーネントを管理するインタフェースです。
@@ -177,7 +176,7 @@ func createMessageSource() message.MessageSource {
 	messageSource, err := message.NewMessageSource()
 	if err != nil {
 		// 異常終了
-		panic(errors.Wrap(err, "初期化処理エラー"))
+		panic(err)
 	}
 	return messageSource
 }
@@ -190,7 +189,7 @@ func createLogger(messageSource message.MessageSource, config config.Config) log
 	logger, err := logging.NewLogger(messageSource, config)
 	if err != nil {
 		// 異常終了
-		panic(errors.Wrap(err, "初期化処理エラー"))
+		panic(err)
 	}
 	return logger
 }
@@ -199,7 +198,7 @@ func createConfig() config.Config {
 	cfg, err := config.NewConfig()
 	if err != nil {
 		// 異常終了
-		panic(errors.Wrap(err, "初期化処理エラー"))
+		panic(err)
 	}
 	return cfg
 }
@@ -208,7 +207,7 @@ func createTransactionalDynamoDBAccessor(logger logging.Logger, config config.Co
 	accessor, err := transaction.NewTransactionalDynamoDBAccessor(logger, config)
 	if err != nil {
 		// 異常終了
-		panic(errors.Wrap(err, "初期化処理エラー"))
+		panic(err)
 	}
 	return accessor
 }
@@ -217,7 +216,7 @@ func createTransactionalSQSAccessor(logger logging.Logger, config config.Config,
 	accessor, err := transaction.NewTransactionalSQSAccessor(logger, config, messageRegisterer)
 	if err != nil {
 		// 異常終了
-		panic(errors.Wrap(err, "初期化処理エラー"))
+		panic(err)
 	}
 	return accessor
 }
