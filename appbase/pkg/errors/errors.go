@@ -164,15 +164,15 @@ func requiredNotBusinessAndSystemError(cause error) {
 	// causeがBusinessError、SystemErrorの場合は、
 	// コーディングミスで二重でラップしてしまっている判断して、開発中は異常終了させている
 	if errors.As(cause, &be) {
-		if env.IsProd() {
+		if !env.IsProd() {
 			// 異常終了
-			log.Fatalf("誤ってBusinessErrorを二重でラップしています:%+v", be)
+			panic(fmt.Sprintf("誤ってBusinessErrorを二重でラップしています:%+v", be))
 		}
 		log.Printf("誤ってBusinessErrorを二重でラップしています:%+v", be)
 	} else if errors.As(cause, &se) {
-		if env.IsProd() {
+		if !env.IsProd() {
 			// 異常終了
-			log.Fatalf("誤ってSystemErrorを二重でラップしています:%+v", se)
+			panic(fmt.Sprintf("誤ってSystemErrorを二重でラップしています:%+v", se))
 		}
 		log.Printf("誤ってSystemErrorを二重でラップしています:%+v", se)
 	}
