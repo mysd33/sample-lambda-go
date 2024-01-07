@@ -28,7 +28,7 @@ func NewQueueMessageItemRepository(config config.Config,
 	log logging.Logger,
 	dynamodbTemplate TransactionalDynamoDBTemplate) QueueMessageItemRepository {
 	// テーブル名取得
-	tableName := tables.DynamoDBTableName(config.Get(QUEUE_MESSAGE_TABLE_NAME))
+	tableName := tables.DynamoDBTableName(config.Get(QUEUE_MESSAGE_TABLE_NAME, "queue_message"))
 	// テーブル定義の設定
 	mytables.QueueMessageTable{}.InitPK(tableName)
 	// プライマリキーの設定
@@ -63,7 +63,7 @@ func (r *defaultQueueMessageItemRepository) FindOne(messageId string, deleteTime
 		WhereClauses: []*input.WhereClause{
 			{
 				Attribute: input.Attribute{
-					Name:  constant.DELETE_TIME_NAME,
+					Name:  constant.QUEUE_MESSAGE_DELETE_TIME_NAME,
 					Value: deleteTime,
 				},
 				WhereOp: input.WHERE_EQUAL,
@@ -105,7 +105,7 @@ func (r *defaultQueueMessageItemRepository) UpdateOneWithTx(queueMessage *entity
 		UpdateAttributes: []*input.Attribute{
 			// Status列を更新
 			{
-				Name:  constant.STATUS,
+				Name:  constant.QUEUE_MESSAGE_STATUS,
 				Value: queueMessage.Status,
 			},
 		},

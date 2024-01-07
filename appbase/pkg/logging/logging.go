@@ -5,11 +5,14 @@ package logging
 
 import (
 	"example.com/appbase/pkg/config"
-	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/env"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/message"
 	"go.uber.org/zap"
+)
+
+const (
+	LOG_LEVEL_NAME = "LOG_LEVEL"
 )
 
 // Loggerは、ログ出力のインタフェースです
@@ -40,7 +43,7 @@ func NewLogger(messageSource message.MessageSource, mycfg config.Config) (Logger
 		config = zap.NewDevelopmentConfig()
 	}
 	// 個別にログレベルが設定されている場合はログレベル上書き
-	level := mycfg.Get(constant.LOG_LEVEL_NAME)
+	level := mycfg.Get(LOG_LEVEL_NAME, "")
 	if level != "" {
 		al, err := zap.ParseAtomicLevel(level)
 		if err == nil {

@@ -9,13 +9,21 @@ import (
 
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/config"
-	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/domain"
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-xray-sdk-go/xray"
 	"github.com/cockroachdb/errors"
 
 	_ "github.com/lib/pq"
+)
+
+const (
+	RDB_USER_NAME     = "RDB_USER"
+	RDB_PASSWORD_NAME = "RDB_PASSWORD"
+	RDB_ENDPOINT_NAME = "RDB_ENDPOINT"
+	RDB_PORT_NAME     = "RDB_PORT"
+	RDB_DB_NAME_NAME  = "RDB_DB_NAME"
+	RDB_SSL_MODE_NAME = "RDB_SSL_MODE"
 )
 
 // TransactionManager はトランザクションを管理するインタフェースです
@@ -66,20 +74,34 @@ func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.Servi
 // rdbConnectは、RDBに接続します。
 func (tm *defaultTransactionManager) rdbConnect() (*sql.DB, error) {
 	// RDBに作成したユーザ名
-	rdbUser := tm.config.Get(constant.RDB_USER_NAME)
+	rdbUser, found := tm.config.GetWithContains(RDB_USER_NAME)
+	if !found {
+		return nil, errors.New("RDB_USER_NAMEが設定されていません")
+	}
 	// TODO: IAM認証でトークン取得による方法
 	//（スロットリングによる性能問題の恐れもあるので一旦様子見）
 	// RDBユーザのパスワード
-	rdbPassword := tm.config.Get(constant.RDB_PASSWORD_NAME)
+	rdbPassword, found := tm.config.GetWithContains(RDB_PASSWORD_NAME)
+	if !found {
+		return nil, errors.New("RDB_PASSWORD_NAMEが設定されていません")
+	}
 	// RDS Proxyのエンドポイント
-	rdbEndpoint := tm.config.Get(constant.RDB_ENDPOINT_NAME)
+	rdbEndpoint, found := tm.config.GetWithContains(RDB_ENDPOINT_NAME)
+	if !found {
+		return nil, errors.New("RDB_ENDPOINT_NAMEが設定されていません")
+	}
 	// RDS Proxyのポート
-	rdbPort := tm.config.Get(constant.RDB_PORT_NAME)
+	rdbPort, found := tm.config.GetWithContains(RDB_PORT_NAME)
+	if !found {
+		return nil, errors.New("RDB_PORT_NAMEが設定されていません")
+	}
 	// DB名
-	rdbName := tm.config.Get(constant.RDB_DB_NAME_NAME)
+	rdbName, found := tm.config.GetWithContains(RDB_DB_NAME_NAME)
+	if !found {
+		return nil, errors.New("RDB_DB_NAME_NAMEが設定されていません")
+	}
 	// SSLMode
-	rdbSslMode := tm.config.Get(constant.RDB_SSL_MODE_NAME)
-
+	rdbSslMode := tm.config.Get(RDB_SSL_MODE_NAME, "require")
 	// X-Rayを使ったDB接続をすると、プリペアドステートメントを使用していなくても、RDS Proxyでのピン留めが起きてしまう
 	// ただし、ピン留めは短時間のため影響は少ない
 	// X-RayのSQLトレースに対応したDB接続の取得

@@ -43,7 +43,7 @@ func (ur *UserRepositoryImplByDynamoDB) FindOne(userId string) (*entity.User, er
 	user := entity.User{ID: userId}
 	key, err := user.GetKey()
 
-	userTable := ur.config.Get(USERS_TABLE_NAME)
+	userTable := ur.config.Get(USERS_TABLE_NAME, "users")
 	if err != nil {
 		// return nil, errors.Wrapf(err, "failed to get key")
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
@@ -72,7 +72,7 @@ func (ur *UserRepositoryImplByDynamoDB) CreateOne(user *entity.User) (*entity.Us
 	// ID採番
 	userId := id.GenerateId()
 	user.ID = userId
-	userTable := ur.config.Get(USERS_TABLE_NAME)
+	userTable := ur.config.Get(USERS_TABLE_NAME, "users")
 	av, err := attributevalue.MarshalMap(user)
 	if err != nil {
 		// return nil, errors.Wrapf(err, "failed to marshal item")

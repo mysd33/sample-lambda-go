@@ -34,7 +34,7 @@ func NewTempRepository(dynamoDBTempalte transaction.TransactionalDynamoDBTemplat
 	accessor transaction.TransactionalDynamoDBAccessor,
 	log logging.Logger, config config.Config) TempRepository {
 	// テーブル名の取得
-	tableName := tables.DynamoDBTableName(config.Get(TEMP_TABLE_NAME))
+	tableName := tables.DynamoDBTableName(config.Get(TEMP_TABLE_NAME, "temp"))
 	// テーブル定義の設定
 	mytables.Temp{}.InitPK(tableName)
 	// プライマリキーの設定

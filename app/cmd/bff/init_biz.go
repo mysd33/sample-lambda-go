@@ -25,14 +25,10 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	todoRepository := repository.NewTodoRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger(), ac.GetConfig())
 	tempRepository := repository.NewTempRepository(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig())
 	// Configからキュー名を取得する
-	sampleQueueName := ac.GetConfig().Get("SampleQueueName")
-	if sampleQueueName == "" {
-		sampleQueueName = "SampleQueue"
-	}
-	sampleFifoQueueName := ac.GetConfig().Get("SampleFIFOQueueName")
-	if sampleFifoQueueName == "" {
-		sampleFifoQueueName = "SampleFIFOQueue.fifo"
-	}
+	sampleQueueName := ac.GetConfig().Get("SampleQueueName", "SampleQueue")
+	ac.GetLogger().Debug("SampleQueueName:%s", sampleQueueName)
+	sampleFifoQueueName := ac.GetConfig().Get("SampleFIFOQueueName", "SampleFIFOQueue.fifo")
+	ac.GetLogger().Debug("SampleFIFOQueueName:%s", sampleFifoQueueName)
 	asyncMessageRepository := repository.NewAsyncMessageRepository(ac.GetSQSTemplate(), sampleQueueName, sampleFifoQueueName)
 	// サービスの作成
 	bffService := service.New(ac.GetLogger(), ac.GetConfig(), userRepository, todoRepository, tempRepository, asyncMessageRepository)

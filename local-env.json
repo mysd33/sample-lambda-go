@@ -1,11 +1,5 @@
 {
     "Parameters": {
-        "RDB_USER": "postgres",
-        "RDB_PASSWORD": "password",
-        "RDB_ENDPOINT": "host.docker.internal",
-        "RDB_PORT": "5432",
-        "RDB_DB_NAME": "testdb",
-        "RDB_SSL_MODE": "disable",
         "TODO_API_BASE_URL": "http://host.docker.internal:3000",
         "USERS_API_BASE_URL": "http://host.docker.internal:3000",
         "ENV": "Local"

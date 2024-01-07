@@ -30,7 +30,10 @@ type todoRepositoryImplByRestAPI struct {
 
 // FindOne implements TodoRepository.
 func (tr *todoRepositoryImplByRestAPI) FindOne(todoId string) (*entity.Todo, error) {
-	baseUrl := tr.config.Get(TODO_API_BASE_URL)
+	baseUrl, found := tr.config.GetWithContains(TODO_API_BASE_URL)
+	if !found {
+		return nil, errors.NewSystemError(nil, message.E_EX_9001)
+	}
 	url := fmt.Sprintf("%s/todo-api/v1/todo/%s", baseUrl, todoId)
 	tr.log.Debug("url:%s", url)
 
@@ -48,7 +51,10 @@ func (tr *todoRepositoryImplByRestAPI) FindOne(todoId string) (*entity.Todo, err
 
 // CreateOne implements TodoRepository.
 func (tr *todoRepositoryImplByRestAPI) CreateOne(todo *entity.Todo) (*entity.Todo, error) {
-	baseUrl := tr.config.Get(TODO_API_BASE_URL)
+	baseUrl, found := tr.config.GetWithContains(TODO_API_BASE_URL)
+	if !found {
+		return nil, errors.NewSystemError(nil, message.E_EX_9001)
+	}
 	url := fmt.Sprintf("%s/todo-api/v1/todo", baseUrl)
 	tr.log.Debug("url:%s", url)
 	// リクエストデータをアンマーシャル

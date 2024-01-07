@@ -52,10 +52,7 @@ func NewTransactionalSQSAccessor(log logging.Logger, myCfg myConfig.Config, mess
 		return nil, errors.WithStack(err)
 	}
 	// TTL（時間）の取得
-	ttl, err := strconv.Atoi(myCfg.Get(QUEUE_MESSAGE_TABLE_TTL_HOUR))
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
+	ttl := myCfg.GetInt(QUEUE_MESSAGE_TABLE_TTL_HOUR, 24*4)
 	return &defaultTransactionalSQSAccessor{
 		log:               log,
 		config:            myCfg,
@@ -144,7 +141,7 @@ func (sa *defaultTransactionalSQSAccessor) addDeleteTime(v *Message, hasDbTranca
 	nowTime := time.Now()
 	delTimeStr := strconv.FormatInt(nowTime.Add(time.Duration(sa.ttl)*time.Hour).Unix(), 10)
 	deleteTime := map[string]types.MessageAttributeValue{
-		constant.DELETE_TIME_NAME: {
+		constant.QUEUE_MESSAGE_DELETE_TIME_NAME: {
 			DataType:    aws.String("String"),
 			StringValue: aws.String(delTimeStr),
 		},
@@ -164,7 +161,7 @@ func (*defaultTransactionalSQSAccessor) addIsTableCheckFlag(v *Message, hasDbTra
 		return
 	}
 	needsTableChecked := map[string]types.MessageAttributeValue{
-		constant.NEEDS_TABLE_CHECK_NAME: {
+		constant.QUEUE_MESSAGE_NEEDS_TABLE_CHECK_NAME: {
 			DataType:    aws.String("String"),
 			StringValue: aws.String("false"),
 		},

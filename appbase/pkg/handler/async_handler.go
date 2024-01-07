@@ -117,8 +117,8 @@ func (h *AsyncLambdaHandler) doHandle(sqsMsg events.SQSMessage, response events.
 		}
 		return err
 	}
-	// ステータス処理済（空列でない）の場合
-	if status != "" {
+	// ステータスが処理済の場合
+	if status == constant.QUEUE_MESSAGE_STATUS_COMPLETE {
 		h.log.Debug("処理済のメッセージです。[QueueName: %s, MessageId: %s]", queueName, messageId)
 		// 重複して処理しないよう正常終了
 		return nil
@@ -158,7 +158,7 @@ func (h *AsyncLambdaHandler) checkMessageId(sqsMsg events.SQSMessage) (string, e
 		return "", nil
 	}
 	h.log.Debug("キューメッセージテーブルID: %s", queueMessageTableId)
-	deleteTime, err := strconv.Atoi(*sqsMsg.MessageAttributes[constant.DELETE_TIME_NAME].StringValue)
+	deleteTime, err := strconv.Atoi(*sqsMsg.MessageAttributes[constant.QUEUE_MESSAGE_DELETE_TIME_NAME].StringValue)
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
@@ -194,7 +194,7 @@ func (h *AsyncLambdaHandler) addAsyncInfoToContext(sqsMsg events.SQSMessage, isF
 		return nil
 	}
 	// メッセージ削除時間を設定
-	deleteTime, err := strconv.Atoi(*sqsMsg.MessageAttributes[constant.DELETE_TIME_NAME].StringValue)
+	deleteTime, err := strconv.Atoi(*sqsMsg.MessageAttributes[constant.QUEUE_MESSAGE_DELETE_TIME_NAME].StringValue)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -210,7 +210,7 @@ func (h *AsyncLambdaHandler) addAsyncInfoToContext(sqsMsg events.SQSMessage, isF
 
 // unnecessaryToCheckTable は、キューメッセージ管理テーブルを確認する不要であるかを判定します。
 func (*AsyncLambdaHandler) unnecessaryToCheckTable(sqsMsg events.SQSMessage) bool {
-	needsTableCheckFlag := sqsMsg.MessageAttributes[constant.NEEDS_TABLE_CHECK_NAME].StringValue
+	needsTableCheckFlag := sqsMsg.MessageAttributes[constant.QUEUE_MESSAGE_NEEDS_TABLE_CHECK_NAME].StringValue
 	return needsTableCheckFlag != nil && *needsTableCheckFlag == "false"
 }
 

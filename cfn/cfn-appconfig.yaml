@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: AppConfig Template for CloudFormation Demo
+Description: AppConfig Template for CloudFormation Demo. Depends on cfn-rds.yaml.
 #Metadata: 
 Parameters: 
   StackPrefix:
@@ -16,9 +16,12 @@ Parameters:
       - Staging
       - Dev      
     Default: Prod 
-  ConfigurationProfileName:
+  HostedConfigurationProfileName:
     Type: String
     Default: config
+  SecretsManagerConfigurationProfileName:
+    Type: String
+    Default: sm-config
 
 #Mappings: 
 
@@ -42,18 +45,26 @@ Resources:
         - Key: Name
           Value: !Sub ${StackPrefix}-AppConfigEnv
 
-  AppConfigProfile:
+  AppConfigHostedProfile:
     Type: AWS::AppConfig::ConfigurationProfile
     Properties:
       ApplicationId: !Ref AppConfigApplication
       LocationUri: hosted
-      Name: !Ref ConfigurationProfileName
+      Name: !Ref HostedConfigurationProfileName
+      Type: AWS.Freeform
       Tags:
         - Key: Name
           Value: !Sub ${StackPrefix}-AppConfigProfile
-      Type: AWS.Freeform
-#      Validators: 
-#        - Validators
+
+  AppConfigSecretsManagerProfile:
+    Type: AWS::AppConfig::ConfigurationProfile
+    Properties:
+      ApplicationId: !Ref AppConfigApplication
+      LocationUri: !Sub secretsmanager://${StackPrefix}-RDS-Secrets
+      Name: !Ref SecretsManagerConfigurationProfileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-AppConfigSecretsManagerProfile      
 
   AppConfigDeploymentStrategy:
     Type: AWS::AppConfig::DeploymentStrategy
@@ -77,11 +88,6 @@ Outputs:
     Value: !Ref AppConfigApplication
     Export: 
       Name: !Sub ${StackPrefix}-AppConfigApplicationID
-  AppConfigProfileID:
-    Description: AppConfig ConfigurationProfile ID
-    Value: !Ref AppConfigProfile
-    Export: 
-      Name: !Sub ${StackPrefix}-AppConfigProfileID
   AppConfigEnvID:
     Description: AppConfig Environment ID
     Value: !Ref AppConfigEnv
@@ -92,14 +98,32 @@ Outputs:
     Value: !Ref AppConfigDeploymentStrategy
     Export: 
       Name: !Sub ${StackPrefix}-AppConfigDeploymentStrategyID
+  AppConfigHostedProfileID:
+    Description: AppConfig Hosted ConfigurationProfile ID
+    Value: !Ref AppConfigHostedProfile
+    Export: 
+      Name: !Sub ${StackPrefix}-AppConfigHostedProfileID
+  AppConfigHostedProfileLambdaExtensionURL:  
+    Description: Hosted AppConfig Lambda Extension Endpoint URL
+    Value: !Sub http://localhost:2772/applications/${ApplicationName}/environments/${Stage}/configurations/${HostedConfigurationProfileName}    
+    Export: 
+      Name: !Sub ${StackPrefix}-AppConfigHostedProfileLambdaExtension${Stage}URL
+  AppConfigSecretsManagerProfileID:
+    Description: AppConfig SecretsManager ConfigurationProfile ID
+    Value: !Ref AppConfigSecretsManagerProfile
+    Export: 
+      Name: !Sub ${StackPrefix}-AppConfigSecretsManagerProfileID
+  SecretsManagerAppConfigLambdaExtensionURL:  
+    Description: Secrets Manager AppConfig Lambda Extension Endpoint URL
+    Value: !Sub http://localhost:2772/applications/${ApplicationName}/environments/${Stage}/configurations/${SecretsManagerConfigurationProfileName} 
+    Export: 
+      Name: !Sub ${StackPrefix}-AppConfigSMProfileLambdaExtension${Stage}URL
   AppConfigLambdaExtensionPath:
-    Description: AppConfig Lambda Extension Endpoint URL
-    Value: !Sub /applications/${ApplicationName}/environments/${Stage}/configurations/${ConfigurationProfileName}
+    Description: AppConfig Lambda Extension Endpoint Path
+    Value: 
+      Fn::Join:
+        - ","
+        - - !Sub /applications/${ApplicationName}/environments/${Stage}/configurations/${HostedConfigurationProfileName}
+          - !Sub /applications/${ApplicationName}/environments/${Stage}/configurations/${SecretsManagerConfigurationProfileName}
     Export: 
       Name: !Sub ${StackPrefix}-AppConfigLambdaExtension${Stage}Path
-  AppConfigLambdaExtensionURL:
-  
-    Description: AppConfig Lambda Extension Endpoint URL
-    Value: !Sub http://localhost:2772/applications/${ApplicationName}/environments/${Stage}/configurations/${ConfigurationProfileName}    
-    Export: 
-      Name: !Sub ${StackPrefix}-AppConfigLambdaExtension${Stage}URL

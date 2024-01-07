@@ -8,13 +8,16 @@ import (
 
 	"example.com/appbase/pkg/apcontext"
 	myConfig "example.com/appbase/pkg/config"
-	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 	"github.com/cockroachdb/errors"
+)
+
+const (
+	SQS_LOCAL_ENDPOINT_NAME = "SQS_LOCAL_ENDPOINT"
 )
 
 // SQSTemplate は、SQSにメッセージを送信するための高次のインタフェースです。
@@ -39,7 +42,7 @@ func NewSQSAccessor(log logging.Logger, myCfg myConfig.Config) (SQSAccessor, err
 	awsv2.AWSV2Instrumentor(&cfg.APIOptions)
 	sqlClient := sqs.NewFromConfig(cfg, func(o *sqs.Options) {
 		// ローカル実行のためDynamoDB Local起動先が指定されている場合
-		sqsEndpoint := myCfg.Get(constant.SQS_LOCAL_ENDPOINT_NAME)
+		sqsEndpoint := myCfg.Get(SQS_LOCAL_ENDPOINT_NAME, "")
 		if sqsEndpoint != "" {
 			o.BaseEndpoint = aws.String(sqsEndpoint)
 		}

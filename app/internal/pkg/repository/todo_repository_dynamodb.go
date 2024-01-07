@@ -27,7 +27,7 @@ func NewTodoRepositoryForDynamoDB(dynamoDBTempalte transaction.TransactionalDyna
 	accessor transaction.TransactionalDynamoDBAccessor,
 	log logging.Logger, config config.Config) TodoRepository {
 	// テーブル名の取得
-	tableName := tables.DynamoDBTableName(config.Get(TODO_TABLE_NAME))
+	tableName := tables.DynamoDBTableName(config.Get(TODO_TABLE_NAME, "todo"))
 	// テーブル定義の設定
 	mytables.Todo{}.InitPK(tableName)
 	// プライマリキーの設定
@@ -86,7 +86,7 @@ func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, er
 		}
 		// Itemの取得
 		result, err := tr.accessor.GetItemSdk(&dynamodb.GetItemInput{
-			TableName: aws.String(tr.config.Get(TODO_TABLE_NAME)),
+			TableName: aws.String(tr.tableName),
 			Key:       key,
 		})
 		if err != nil {

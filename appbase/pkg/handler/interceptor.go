@@ -6,13 +6,16 @@ import (
 	"runtime"
 
 	"example.com/appbase/pkg/config"
-	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/env"
 	myerrors "example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/gin-gonic/gin"
+)
+
+const (
+	GIN_DEBUG_NAME = "GIN_DEBUG"
 )
 
 type HandlerInterceptor interface {
@@ -32,7 +35,7 @@ type defaultHandlerInterceptor struct {
 
 // NewHandlerInterceptor は、HandlerInterceptorを作成します。
 func NewHandlerInterceptor(config config.Config, log logging.Logger) HandlerInterceptor {
-	ginDebugMode := config.Get(constant.GIN_DEBUG_NAME)
+	ginDebugMode := config.Get(GIN_DEBUG_NAME, "false")
 	if env.IsStragingOrProd() && ginDebugMode != "true" {
 		// 本番相当の動作環境の場合、ginのモードを本番モードに設定
 		gin.SetMode(gin.ReleaseMode)

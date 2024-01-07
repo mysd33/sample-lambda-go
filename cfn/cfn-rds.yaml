@@ -83,7 +83,6 @@ Resources:
         MaxCapacity: !Ref AuroraServerlessMaxCapacity
         MinCapacity: !Ref AuroraServerlessMinCapacity
 
-
   RDSDBInstance1:
     Type: 'AWS::RDS::DBInstance'
     Properties:
@@ -109,8 +108,8 @@ Resources:
       Name: !Sub ${StackPrefix}-RDS-Secrets
       Description: RDS Aurora Secrets
       SecretString: !Sub '{
-        "username": "${DBUsername}",
-        "password": "${DBPassword}"
+        "RDB_USER": "${DBUsername}",
+        "RDB_PASSWORD": "${DBPassword}"
         }'
       Tags:
         - Key: Name

@@ -4,14 +4,23 @@ config パッケージは、設定ファイルを管理するパッケージで�
 package config
 
 import (
+	"strconv"
+
 	"example.com/appbase/pkg/env"
 )
 
+// Config は、設定ファイルを管理するインターフェースです。
 type Config interface {
-	Get(key string) string
-	getWithContains(key string) (string, bool)
+	GetWithContains(key string) (string, bool)
+	Get(key string, defaultValue string) string
+	GetIntWithContains(key string) (int, bool)
+	GetInt(key string, defaultValue int) int
+	GetBoolWithContains(key string) (bool, bool)
+	GetBool(key string, defaultValue bool) bool
 	Reload() error
 }
+
+// NewConfig は、設定ファイルをロードし、Configを作成します。
 
 func NewConfig() (Config, error) {
 	var cfgs []Config
@@ -33,6 +42,7 @@ func NewConfig() (Config, error) {
 	return &compositeConfig{cfgs: cfgs}, nil
 }
 
+// compositeConfigは、複数のConfigをまとめたConfig実装です。
 type compositeConfig struct {
 	cfgs []Config
 }
@@ -47,22 +57,89 @@ func (c *compositeConfig) Reload() error {
 	return nil
 }
 
-// Get implements Config.
-func (c *compositeConfig) Get(key string) string {
-	value, found := c.getWithContains(key)
-	if found {
-		return value
-	}
-	return ""
-}
-
-// getWithContains implements Config.
-func (c *compositeConfig) getWithContains(key string) (string, bool) {
+// GetWithContains implements Config.
+func (c *compositeConfig) GetWithContains(key string) (string, bool) {
 	for _, v := range c.cfgs {
-		value, found := v.getWithContains(key)
+		value, found := v.GetWithContains(key)
 		if found {
 			return value, found
 		}
 	}
 	return "", false
+}
+
+// Get implements Config.
+func (c *compositeConfig) Get(key string, defaultValue string) string {
+	value, found := c.GetWithContains(key)
+	return returnStringValueIfFound(found, value, defaultValue)
+}
+
+// GetIntWithContains implements Config.
+func (c *compositeConfig) GetIntWithContains(key string) (int, bool) {
+	value, found := c.GetWithContains(key)
+	// int変換に失敗した場合は、値が見つからなかったとしてfalseを返す
+	return returnIntValue(found, value)
+}
+
+// GetInt implements Config.
+func (c *compositeConfig) GetInt(key string, defaultValue int) int {
+	value, found := c.GetIntWithContains(key)
+	return returnIntValueIfFound(found, value, defaultValue)
+}
+
+// GetBoolWithContains implements Config.
+func (c *compositeConfig) GetBoolWithContains(key string) (bool, bool) {
+	value, found := c.GetWithContains(key)
+	// bool変換に失敗した場合は、値が見つからなかったとしてfalseを返す
+	return returnBoolValue(found, value)
+}
+
+// GetBool implements Config.
+func (c *compositeConfig) GetBool(key string, defaultValue bool) bool {
+	value, found := c.GetBoolWithContains(key)
+	return returnBoolValueIfFound(found, value, defaultValue)
+}
+
+func returnStringValueIfFound(found bool, value string, defaultValue string) string {
+	if found {
+		return value
+	}
+	return defaultValue
+}
+
+func returnIntValue(found bool, value string) (int, bool) {
+	if found {
+		intValue, err := strconv.Atoi(value)
+		if err != nil {
+
+			return 0, false
+		}
+		return intValue, true
+	}
+	return 0, false
+}
+
+func returnIntValueIfFound(found bool, value, defaultValue int) int {
+	if found {
+		return value
+	}
+	return defaultValue
+}
+
+func returnBoolValue(found bool, value string) (bool, bool) {
+	if found {
+		boolValue, err := strconv.ParseBool(value)
+		if err != nil {
+			return false, false
+		}
+		return boolValue, true
+	}
+	return false, false
+}
+
+func returnBoolValueIfFound(found, value, defaultValue bool) bool {
+	if found {
+		return value
+	}
+	return defaultValue
 }

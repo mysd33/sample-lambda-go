@@ -8,7 +8,6 @@ import (
 
 	"example.com/appbase/pkg/apcontext"
 	myConfig "example.com/appbase/pkg/config"
-	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/env"
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -17,6 +16,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 	"github.com/cockroachdb/errors"
+)
+
+const (
+	DYNAMODB_LOCAL_ENDPOINT_NAME = "DYNAMODB_LOCAL_ENDPOINT"
 )
 
 // CreateDynamoDBClient は、DynamoDBClientを作成します。
@@ -35,7 +38,7 @@ func CreateDynamoDBClient(myCfg myConfig.Config) (*dynamodb.Client, error) {
 	awsv2.AWSV2Instrumentor(&cfg.APIOptions)
 	return dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
 		// ローカル実行のためDynamoDB Local起動先が指定されている場合
-		dynamodbEndpoint := myCfg.Get(constant.DYNAMODB_LOCAL_ENDPOINT_NAME)
+		dynamodbEndpoint := myCfg.Get(DYNAMODB_LOCAL_ENDPOINT_NAME, "")
 		if dynamodbEndpoint != "" {
 			o.BaseEndpoint = aws.String(dynamodbEndpoint)
 		}

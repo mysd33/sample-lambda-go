@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: AppConfig Deployment Template for CloudFormation Demo. Depends on cfn-appconfig.yaml.
+Description: AppConfig Deployment Template for CloudFormation Demo. Depends on cfn-appconfig.yaml, cfn-rds.yaml.
 #Metadata: 
 Parameters: 
   StackPrefix:
@@ -18,19 +18,30 @@ Resources:
       ApplicationId:
         Fn::ImportValue: !Sub ${StackPrefix}-AppConfigApplicationID
       ConfigurationProfileId:
-        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigProfileID
+        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigHostedProfileID
       ContentType: text/plain
-      Content: |
-        hoge_name: foo
-        fuga_name: gaa
-        TODO_TABLE_NAME: todo
-        TEMP_TABLE_NAME: temp
-        QUEUE_MESSAGE_TABLE_NAME: queue_message
-        QUEUE_MESSAGE_TABLE_TTL_HOUR: 96
-        GIN_DEBUG: true                
-#        LOG_LEVEL: DEBUG
-#        USERS_TABLE_NAME: users
-  AppConfigDeployment:
+      Content:
+        Fn::Join:
+          - ""
+          - - |
+              hoge_name: foo
+              fuga_name: gaa
+              TODO_TABLE_NAME: todo
+              TEMP_TABLE_NAME: temp
+              #USERS_TABLE_NAME: users
+              QUEUE_MESSAGE_TABLE_NAME: queue_message
+              QUEUE_MESSAGE_TABLE_TTL_HOUR: 96
+              GIN_DEBUG: true
+              #LOG_LEVEL: DEBUG              
+              RDB_SSL_MODE: require             
+            - "\nRDB_ENDPOINT: "
+            - Fn::ImportValue: !Sub ${StackPrefix}-RDSProxyEndpoint
+            - "\nRDB_PORT: "
+            - Fn::ImportValue: !Sub ${StackPrefix}-RDSClusterEndpointPort
+            - "\nRDB_DB_NAME: "
+            - Fn::ImportValue: !Sub ${StackPrefix}-RDSDBName            
+
+  AppConfigHostedProfileDeployment:
     Type: AWS::AppConfig::Deployment
     Properties:
       ApplicationId:
@@ -38,7 +49,7 @@ Resources:
       EnvironmentId:
         Fn::ImportValue: !Sub ${StackPrefix}-AppConfigEnvID
       ConfigurationProfileId:
-        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigProfileID
+        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigHostedProfileID
       ConfigurationVersion: !Ref AppConfigHostedConfigurationVersion
 #      DeploymentStrategyId: AppConfig.AllAtOnce
 #      DeploymentStrategyId: AppConfig.Linear50PercentEvery30Seconds
@@ -47,4 +58,23 @@ Resources:
         Fn::ImportValue: !Sub ${StackPrefix}-AppConfigDeploymentStrategyID
       Tags:
         - Key: Name
-          Value: !Sub ${StackPrefix}-Deployment
+          Value: !Sub ${StackPrefix}-AppConfigHostedProfileDeployment
+
+  AppConfigSecretsManagerProfileDeployment:
+    Type: AWS::AppConfig::Deployment
+    Properties:
+      ApplicationId:
+        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigApplicationID
+      EnvironmentId:
+        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigEnvID
+      ConfigurationProfileId:
+        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigSecretsManagerProfileID
+      ConfigurationVersion: !Ref AppConfigHostedConfigurationVersion
+#      DeploymentStrategyId: AppConfig.AllAtOnce
+#      DeploymentStrategyId: AppConfig.Linear50PercentEvery30Seconds
+#      DeploymentStrategyId: AppConfig.Linear20PercentEvery6Minutes      
+      DeploymentStrategyId:
+        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigDeploymentStrategyID
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-AppConfigSecretsManagerProfileDeployment

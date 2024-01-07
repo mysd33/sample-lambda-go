@@ -40,22 +40,45 @@ func newViperConfig() (Config, error) {
 	return &viperConfig{}, nil
 }
 
-// Get implements Config.
-func (c *viperConfig) Get(key string) string {
-	v, found := c.getWithContains(key)
-	if !found {
-		return ""
-	}
-	return v
-}
-
-// getWithContains implements Config.
-func (c *viperConfig) getWithContains(key string) (string, bool) {
+// GetWithContains implements Config.
+func (c *viperConfig) GetWithContains(key string) (string, bool) {
 	v := viper.Get(key)
 	if v == nil {
 		return "", false
 	}
 	return cast.ToString(v), true
+}
+
+// Get implements Config.
+func (c *viperConfig) Get(key string, defaultValue string) string {
+	value, found := c.GetWithContains(key)
+	return returnStringValueIfFound(found, value, defaultValue)
+}
+
+// GetIntWithContains implements Config.
+func (c *viperConfig) GetIntWithContains(key string) (int, bool) {
+	value, found := c.GetWithContains(key)
+	// int変換に失敗した場合は、値が見つからなかったとしてfalseを返す
+	return returnIntValue(found, value)
+}
+
+// GetInt implements Config.
+func (c *viperConfig) GetInt(key string, defaultValue int) int {
+	value, found := c.GetIntWithContains(key)
+	return returnIntValueIfFound(found, value, defaultValue)
+}
+
+// GetBoolWithContains implements Config.
+func (c *viperConfig) GetBoolWithContains(key string) (bool, bool) {
+	value, found := c.GetWithContains(key)
+	// bool変換に失敗した場合は、値が見つからなかったとしてfalseを返す
+	return returnBoolValue(found, value)
+}
+
+// GetBool implements Config.
+func (c *viperConfig) GetBool(key string, defaultValue bool) bool {
+	value, found := c.GetBoolWithContains(key)
+	return returnBoolValueIfFound(found, value, defaultValue)
 }
 
 // Reload implements Config.

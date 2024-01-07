@@ -1,12 +1,20 @@
-# Private APIでのAPIGatewayを使ったLambda/GoのAWS SAMサンプルAP
-
+# Lambda/GoのAWS SAMサンプルAP
 ## 構成イメージ
-* API GatewayをPrivate APIで公開
-    * VPC内にEC2で構築した、Bastionからアクセスする
-* LambdaからDynamoDBやRDS AuroraへのDBアクセス、SQSへのアクセスを実現
+* オンラインリアルタイム処理方式
+    * API GatewayをトリガにLambda実行
+    * Private APIで公開、VPC内にEC2で構築した、Bastionからアクセスする構成に対応
+    * LambdaからDynamoDBやRDS AuroraへのDBアクセスへのアクセスを実現
     * LambdaはVPC内Lambdaとして、RDS Aurora（RDS Proxy経由）でのアクセスも可能としている
-    * AWSリソースへのアクセスは、AWS SDK for Go v2に対応
-        * AWS SDKやX-Ray SDKの利用方法がv1の時と変更になっている
+
+* ディレード処理方式
+    * Lambdaから、SQSへのアクセスし、非同期処理の実行依頼を実現
+    * SQSトリガにLambda実行
+    * 標準キュー、FIFOキューの両方に対応
+    * DynamoDBのトランザクション管理機能を利用した、メッセージ送達とDynamoDBトランザクションの整合性を担保する仕組みを実装
+
+* LambdaからのDynamoDB、SQSといった各種AWSリソースへのアクセスに対応
+    * AWS SDK for Go v2に対応
+    * AWS SDKやX-Ray SDKの利用方法がv1の時と変更になっている
 
 ![構成イメージ](image/demo.png)
 

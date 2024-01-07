@@ -5,7 +5,6 @@ package transaction
 
 import (
 	"encoding/json"
-	"strconv"
 
 	"example.com/appbase/pkg/async"
 	"example.com/appbase/pkg/config"
@@ -44,18 +43,14 @@ func (t *defaultTransactionalSQSTemplate) SendToStandardQueue(queueName string, 
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	// DelaySecondsが設定されていれば上書き
-	delaySecondsStr := t.config.Get(STANDARD_QUEUE_DELAY_SECONDS)
 	var input *sqs.SendMessageInput
-	if delaySecondsStr == "" {
+	// DelaySecondsが設定されていれば上書き
+	delaySeconds, found := t.config.GetIntWithContains(STANDARD_QUEUE_DELAY_SECONDS)
+	if !found {
 		input = &sqs.SendMessageInput{
 			MessageBody: aws.String(string(byteMessage)),
 		}
 	} else {
-		delaySeconds, err := strconv.Atoi(delaySecondsStr)
-		if err != nil {
-			return errors.WithStack(err)
-		}
 		input = &sqs.SendMessageInput{
 			MessageBody:  aws.String(string(byteMessage)),
 			DelaySeconds: int32(delaySeconds),
