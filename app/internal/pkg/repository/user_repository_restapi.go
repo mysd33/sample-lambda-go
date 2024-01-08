@@ -32,7 +32,7 @@ type userRepositoryImplByRestAPI struct {
 func (ur *userRepositoryImplByRestAPI) FindOne(userId string) (*entity.User, error) {
 	baseUrl, found := ur.config.GetWithContains(USERS_API_BASE_URL)
 	if !found {
-		return nil, errors.NewSystemError(nil, message.E_EX_9001)
+		return nil, errors.NewSystemError(fmt.Errorf("USERS_API_BASE_URLがありません"), message.E_EX_9001)
 	}
 	url := fmt.Sprintf("%s/users-api/v1/users/%s", baseUrl, userId)
 	ur.log.Debug("url:%s", url)
@@ -57,7 +57,7 @@ func (ur *userRepositoryImplByRestAPI) FindOne(userId string) (*entity.User, err
 func (ur *userRepositoryImplByRestAPI) CreateOne(user *entity.User) (*entity.User, error) {
 	baseUrl, found := ur.config.GetWithContains(USERS_API_BASE_URL)
 	if !found {
-		return nil, errors.NewSystemError(nil, message.E_EX_9001)
+		return nil, errors.NewSystemError(fmt.Errorf("USERS_API_BASE_URLがありません"), message.E_EX_9001)
 	}
 	url := fmt.Sprintf("%s/users-api/v1/users", baseUrl)
 	ur.log.Debug("url:%s", url)

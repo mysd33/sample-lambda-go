@@ -32,7 +32,7 @@ type todoRepositoryImplByRestAPI struct {
 func (tr *todoRepositoryImplByRestAPI) FindOne(todoId string) (*entity.Todo, error) {
 	baseUrl, found := tr.config.GetWithContains(TODO_API_BASE_URL)
 	if !found {
-		return nil, errors.NewSystemError(nil, message.E_EX_9001)
+		return nil, errors.NewSystemError(fmt.Errorf("TODO_API_BASE_URLがありません"), message.E_EX_9001)
 	}
 	url := fmt.Sprintf("%s/todo-api/v1/todo/%s", baseUrl, todoId)
 	tr.log.Debug("url:%s", url)
@@ -53,7 +53,7 @@ func (tr *todoRepositoryImplByRestAPI) FindOne(todoId string) (*entity.Todo, err
 func (tr *todoRepositoryImplByRestAPI) CreateOne(todo *entity.Todo) (*entity.Todo, error) {
 	baseUrl, found := tr.config.GetWithContains(TODO_API_BASE_URL)
 	if !found {
-		return nil, errors.NewSystemError(nil, message.E_EX_9001)
+		return nil, errors.NewSystemError(fmt.Errorf("TODO_API_BASE_URLがありません"), message.E_EX_9001)
 	}
 	url := fmt.Sprintf("%s/todo-api/v1/todo", baseUrl)
 	tr.log.Debug("url:%s", url)
