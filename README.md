@@ -233,7 +233,7 @@ aws cloudformation validate-template --template-body file://cfn-appconfig-sm-dep
 aws cloudformation create-stack --stack-name Demo-AppConfigSMDeploy-Stack --template-body file://cfn-appconfig-sm-deploy.yaml --parameters ParameterKey=SecretsManagerVersion,ParameterValue=（SecretsManagerVersionのバージョンID）
 ```
 
-## 15. APの実行確認
+## 14. APの実行確認
 * マネージドコンソールから、EC2(Bation)へSystems Manager Session Managerで接続して、curlコマンドで動作確認
     * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
 
@@ -322,7 +322,7 @@ curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Mil
 
 ```
 
-## 14. AppConfingの設定変更＆デプロイ
+## 15. AppConfingの設定変更＆デプロイ
 * cfn-appconfig-hosted-deploy.yaml内のホスト化された設定の内容を修正
 ```yaml
   AppConfigHostedConfigurationVersion:
@@ -359,7 +359,7 @@ aws cloudformation update-stack --stack-name Demo-AppConfigDeploy-Stack --templa
 {"level":"info","ts":1699780051.3576484,"caller":"service/user_service.go:39","msg":"hoge_name=foo2"}
 ```
 
-## 15. SAMのCloudFormationスタック削除
+## 16. SAMのCloudFormationスタック削除
 * VPC内Lambdaが参照するHyperplane ENIの削除に最大20分かかるため、スタックの削除に時間がかかる。
 ```sh
 sam delete
@@ -367,7 +367,7 @@ sam delete
 make delete
 ```
 
-## 16. その他リソースのCloudFormationスタック削除
+## 17. その他リソースのCloudFormationスタック削除
 ```sh
 aws cloudformation delete-stack --stack-name Demo-Bastion-Stack
 aws cloudformation delete-stack --stack-name Demo-AppConfigDeploy-Stack
@@ -382,7 +382,7 @@ aws cloudformation delete-stack --stack-name Demo-VPC-Stack
 aws cloudformation delete-stack --stack-name Demo-IAM-Stack 
 ```
 
-## 17. CloudWatch Logsのロググループ削除
+## 18. CloudWatch Logsのロググループ削除
 * マネージドコンソールからCloudWatchのロググループを削除する。
     * 特に、/aws/lambda/bff-function、/aws/lambda/todo-function、/aws/lambda/user-functionは、次回スタック作成時にエラーになってしまうので削除する。本来は、sam delete時にスタックとともに当該ロググループが削除されるはずだが、AppConfigのLambda拡張機能の導入により、Lambda拡張機能終了時のログが残ってしまうようになってしまったため、明示的な削除が必要となっている。
 ```
