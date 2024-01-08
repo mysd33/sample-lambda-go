@@ -359,19 +359,27 @@ aws cloudformation update-stack --stack-name Demo-AppConfigDeploy-Stack --templa
 {"level":"info","ts":1699780051.3576484,"caller":"service/user_service.go:39","msg":"hoge_name=foo2"}
 ```
 
-## 16. SAMのCloudFormationスタック削除
-* VPC内Lambdaが参照するHyperplane ENIの削除に最大20分かかるため、スタックの削除に時間がかかる。
+## 16. AWSリソースの削除
+* AppConfig Deploymentリソースの削除
+```sh
+aws cloudformation delete-stack --stack-name Demo-AppConfigSMDeploy-Stack
+aws cloudformation delete-stack --stack-name Demo-AppConfigHostedDeploy-Stack
+```
+
+* SAMのCloudFormationスタック削除
+    * VPC内Lambdaが参照するHyperplane ENIの削除に最大20分かかるため、スタックの削除に時間がかかる。
+
 ```sh
 sam delete
 # Windowsでもmakeをインストールすればmakeでいけます
 make delete
 ```
 
-## 17. その他リソースのCloudFormationスタック削除
+* その他のリソース削除
+
 ```sh
-aws cloudformation delete-stack --stack-name Demo-Bastion-Stack
-aws cloudformation delete-stack --stack-name Demo-AppConfigDeploy-Stack
 aws cloudformation delete-stack --stack-name Demo-AppConfig-Stack
+aws cloudformation delete-stack --stack-name Demo-Bastion-Stack
 aws cloudformation delete-stack --stack-name Demo-SQS-Stack
 aws cloudformation delete-stack --stack-name Demo-DynamoDB-Stack
 aws cloudformation delete-stack --stack-name Demo-RDS-Stack
