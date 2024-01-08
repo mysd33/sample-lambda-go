@@ -119,7 +119,7 @@ func returnIntValue(found bool, value string) (int, bool) {
 	return 0, false
 }
 
-func returnIntValueIfFound(found bool, value, defaultValue int) int {
+func returnIntValueIfFound(found bool, value int, defaultValue int) int {
 	if found {
 		return value
 	}
@@ -137,7 +137,7 @@ func returnBoolValue(found bool, value string) (bool, bool) {
 	return false, false
 }
 
-func returnBoolValueIfFound(found, value, defaultValue bool) bool {
+func returnBoolValueIfFound(found bool, value bool, defaultValue bool) bool {
 	if found {
 		return value
 	}

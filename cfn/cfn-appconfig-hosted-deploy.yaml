@@ -6,7 +6,6 @@ Parameters:
     Description: Stack Resource Name Prefix
     Type: String
     Default: Demo
-
 #Mappings: 
 
 #Conditions: 
@@ -32,7 +31,7 @@ Resources:
               QUEUE_MESSAGE_TABLE_NAME: queue_message
               QUEUE_MESSAGE_TABLE_TTL_HOUR: 96
               GIN_DEBUG: true
-              #LOG_LEVEL: DEBUG              
+              LOG_LEVEL: DEBUG              
               RDB_SSL_MODE: require             
             - "\nRDB_ENDPOINT: "
             - Fn::ImportValue: !Sub ${StackPrefix}-RDSProxyEndpoint
@@ -59,22 +58,3 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${StackPrefix}-AppConfigHostedProfileDeployment
-
-  AppConfigSecretsManagerProfileDeployment:
-    Type: AWS::AppConfig::Deployment
-    Properties:
-      ApplicationId:
-        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigApplicationID
-      EnvironmentId:
-        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigEnvID
-      ConfigurationProfileId:
-        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigSecretsManagerProfileID
-      ConfigurationVersion: !Ref AppConfigHostedConfigurationVersion
-#      DeploymentStrategyId: AppConfig.AllAtOnce
-#      DeploymentStrategyId: AppConfig.Linear50PercentEvery30Seconds
-#      DeploymentStrategyId: AppConfig.Linear20PercentEvery6Minutes      
-      DeploymentStrategyId:
-        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigDeploymentStrategyID
-      Tags:
-        - Key: Name
-          Value: !Sub ${StackPrefix}-AppConfigSecretsManagerProfileDeployment

@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	RDB_USER_NAME     = "RDB_USER"
-	RDB_PASSWORD_NAME = "RDB_PASSWORD"
+	RDB_USER_NAME     = "username"
+	RDB_PASSWORD_NAME = "password"
 	RDB_ENDPOINT_NAME = "RDB_ENDPOINT"
 	RDB_PORT_NAME     = "RDB_PORT"
 	RDB_DB_NAME_NAME  = "RDB_DB_NAME"
@@ -78,6 +78,7 @@ func (tm *defaultTransactionManager) rdbConnect() (*sql.DB, error) {
 	if !found {
 		return nil, errors.New("RDB_USER_NAMEが設定されていません")
 	}
+	tm.log.Debug("RDB_USER_NAME: %s", rdbUser)
 	// TODO: IAM認証でトークン取得による方法
 	//（スロットリングによる性能問題の恐れもあるので一旦様子見）
 	// RDBユーザのパスワード
@@ -85,6 +86,7 @@ func (tm *defaultTransactionManager) rdbConnect() (*sql.DB, error) {
 	if !found {
 		return nil, errors.New("RDB_PASSWORD_NAMEが設定されていません")
 	}
+	tm.log.Debug("RDB_PASSWORD_NAME: %s", rdbPassword)
 	// RDS Proxyのエンドポイント
 	rdbEndpoint, found := tm.config.GetWithContains(RDB_ENDPOINT_NAME)
 	if !found {

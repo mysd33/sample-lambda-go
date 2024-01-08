@@ -1,0 +1,34 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AppConfig Deployment Template for CloudFormation Demo. Depends on cfn-appconfig.yaml, cfn-rds.yaml.
+#Metadata: 
+Parameters: 
+  StackPrefix:
+    Description: Stack Resource Name Prefix
+    Type: String
+    Default: Demo
+  SecretsManagerVersion:
+    Description: SecretsManager Version
+    Type: String
+#Mappings: 
+
+#Conditions: 
+
+Resources: 
+  AppConfigSecretsManagerProfileDeployment:
+    Type: AWS::AppConfig::Deployment
+    Properties:
+      ApplicationId:
+        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigApplicationID
+      EnvironmentId:
+        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigEnvID
+      ConfigurationProfileId:
+        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigSecretsManagerProfileID
+      ConfigurationVersion: !Ref SecretsManagerVersion
+#      DeploymentStrategyId: AppConfig.AllAtOnce
+#      DeploymentStrategyId: AppConfig.Linear50PercentEvery30Seconds
+#      DeploymentStrategyId: AppConfig.Linear20PercentEvery6Minutes      
+      DeploymentStrategyId:
+        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigDeploymentStrategyID      
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-AppConfigSecretsManagerProfileDeployment

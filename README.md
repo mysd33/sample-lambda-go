@@ -169,10 +169,18 @@ aws cloudformation validate-template --template-body file://cfn-appconfig.yaml
 aws cloudformation create-stack --stack-name Demo-AppConfig-Stack --template-body file://cfn-appconfig.yaml
 ```
 
-* 設定バージョンの作成と初回デプロイする。
+* Hosted Configurationの設定バージョンの作成と初回デプロイする。
 ```sh
-aws cloudformation validate-template --template-body file://cfn-appconfig-deploy.yaml
-aws cloudformation create-stack --stack-name Demo-AppConfigDeploy-Stack --template-body file://cfn-appconfig-deploy.yaml
+aws cloudformation validate-template --template-body file://cfn-appconfig-hosted-deploy.yaml
+aws cloudformation create-stack --stack-name Demo-AppConfigHostedDeploy-Stack --template-body file://cfn-appconfig-hosted-deploy.yaml
+```
+
+* SecretManagerの設定を初回デプロイする。
+    * Hosted Configurationの設定のデプロイが完了に実施すること
+    * パラメータのSecretsManagerVersionのバージョンIDは、マネコン等で確認してパラメータに設定する
+```sh
+aws cloudformation validate-template --template-body file://cfn-appconfig-sm-deploy.yaml
+aws cloudformation create-stack --stack-name Demo-AppConfigSMDeploy-Stack --template-body file://cfn-appconfig-sm-deploy.yaml --parameters ParameterKey=SecretsManagerVersion,ParameterValue=（SecretsManagerVersionのバージョンID）
 ```
 
 
@@ -314,7 +322,7 @@ curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Mil
 ```
 
 ## 14. AppConfingの設定変更＆デプロイ
-* cfn-appconfig-deploy.yaml内のホスト化された設定の内容を修正
+* cfn-appconfig-hosted-deploy.yaml内のホスト化された設定の内容を修正
 ```yaml
   AppConfigHostedConfigurationVersion:
     Type: AWS::AppConfig::HostedConfigurationVersion
@@ -329,8 +337,8 @@ curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Mil
 * 以下のコマンドを実行しAppConfigのスタック更新すると、新しいホスト化された設定が指定したデプロイ戦略に基づき再デプロイされる
 ```sh
 cd cfn
-aws cloudformation validate-template --template-body file://cfn-appconfig-deploy.yaml
-aws cloudformation update-stack --stack-name Demo-AppConfigDeploy-Stack --template-body file://cfn-appconfig-deploy.yaml
+aws cloudformation validate-template --template-body file://cfn-appconfig-hosted-deploy.yaml
+aws cloudformation update-stack --stack-name Demo-AppConfigDeploy-Stack --template-body file://cfn-appconfig-hosted-deploy.yaml
 ```
 
 ![AppConfigの設定再デプロイ](image/appconfig.png)

@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: AppConfig Template for CloudFormation Demo. Depends on cfn-rds.yaml.
+Description: AppConfig Template for CloudFormation Demo. Depends on cfn-iam.yaml, cfn-rds.yaml.
 #Metadata: 
 Parameters: 
   StackPrefix:
@@ -61,6 +61,8 @@ Resources:
     Properties:
       ApplicationId: !Ref AppConfigApplication
       LocationUri: !Sub secretsmanager://${StackPrefix}-RDS-Secrets
+      RetrievalRoleArn:
+        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigRoleArn
       Name: !Ref SecretsManagerConfigurationProfileName
       Tags:
         - Key: Name

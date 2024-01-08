@@ -5,7 +5,9 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
+	"log"
 	"maps"
 	"net/http"
 	"os"
@@ -36,8 +38,12 @@ func newAppConfigConfig() (Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	// TODO: ログ見直し
+	fmt.Printf("AppConfig設定(SM):%v\n", smCfg)
 	// 設定をマージ
 	maps.Copy(cfg, smCfg)
+	// TODO: ログ見直し
+	fmt.Printf("AppConfig設定:%v\n", cfg)
 	return &appConfigConfig{cfg: cfg}, nil
 }
 
@@ -87,7 +93,17 @@ func (c *appConfigConfig) Reload() error {
 	if err != nil {
 		return err
 	}
+	smCfg, err := loadSecretManagerConfig()
+	if err != nil {
+		return err
+	}
+	// TODO: ログ見直し
+	fmt.Printf("AppConfig設定(SM):%v\n", smCfg)
+	// 設定をマージ
+	maps.Copy(cfg, smCfg)
 	c.cfg = cfg
+	// TODO: ログ見直し
+	fmt.Printf("AppConfig設定:%v\n", cfg)
 	return nil
 }
 
@@ -128,9 +144,14 @@ func loadSecretManagerConfig() (map[string]string, error) {
 	if err != nil {
 		return nil, errors.Errorf("SecretManagerのAppConfig読み込みエラー:%w", err)
 	}
+	// TODO: ログ見直し
+	log.Printf("SecretManagerのAppConfig読み込み:%s\n", string(data))
+
 	// JSONの設定データを読み込み
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return nil, errors.Errorf("SecretManagerのAppConfig読み込みエラー:%w", err)
 	}
+	// TODO: ログ見直し
+	fmt.Printf("SecretManagerのAppConfig読み込みmap:%v\n", cfg)
 	return cfg, nil
 }

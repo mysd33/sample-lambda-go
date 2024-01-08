@@ -108,8 +108,8 @@ Resources:
       Name: !Sub ${StackPrefix}-RDS-Secrets
       Description: RDS Aurora Secrets
       SecretString: !Sub '{
-        "RDB_USER": "${DBUsername}",
-        "RDB_PASSWORD": "${DBPassword}"
+        "username": "${DBUsername}",
+        "password": "${DBPassword}"
         }'
       Tags:
         - Key: Name

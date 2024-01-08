@@ -51,10 +51,29 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${StackPrefix}-RDSProxyRole
-  RDSProxyPolicy:
+
+  #AppConfig IAM Role
+  AppConfigRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - appconfig.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-AppConfigRole
+
+  SecretManagerPolicy:
     Type: AWS::IAM::Policy
     Properties:
-      PolicyName: !Sub ${StackPrefix}-RDSProxyPolicy
+      PolicyName: !Sub ${StackPrefix}-SecretManagerPolicy
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -71,6 +90,8 @@ Resources:
                 kms:ViaService: !Sub secretsmanager.${AWS::Region}.amazonaws.com
       Roles:
         - !Ref RDSProxyRole
+        - !Ref AppConfigRole         
+
   #IAM Role for Lambda
   LambdaRole:
     Type: AWS::IAM::Role
@@ -170,6 +191,11 @@ Outputs:
     Value: !GetAtt RDSProxyRole.Arn
     Export: 
       Name: !Sub ${StackPrefix}-RDSProxyRoleArn
+  AppConfigRoleArn:
+    Description: AppConfig Role Arn
+    Value: !GetAtt AppConfigRole.Arn
+    Export: 
+      Name: !Sub ${StackPrefix}-AppConfigRoleArn
   LambdaRoleArn:
     Description: Lambda Role Arn
     Value: !GetAtt LambdaRole.Arn

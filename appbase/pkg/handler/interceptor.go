@@ -35,8 +35,8 @@ type defaultHandlerInterceptor struct {
 
 // NewHandlerInterceptor は、HandlerInterceptorを作成します。
 func NewHandlerInterceptor(config config.Config, log logging.Logger) HandlerInterceptor {
-	ginDebugMode := config.Get(GIN_DEBUG_NAME, "false")
-	if env.IsStragingOrProd() && ginDebugMode != "true" {
+	ginDebugMode := config.GetBool(GIN_DEBUG_NAME, false)
+	if env.IsStragingOrProd() && ginDebugMode {
 		// 本番相当の動作環境の場合、ginのモードを本番モードに設定
 		gin.SetMode(gin.ReleaseMode)
 	}
