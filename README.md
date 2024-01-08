@@ -169,21 +169,6 @@ aws cloudformation validate-template --template-body file://cfn-appconfig.yaml
 aws cloudformation create-stack --stack-name Demo-AppConfig-Stack --template-body file://cfn-appconfig.yaml
 ```
 
-* Hosted Configurationの設定バージョンの作成と初回デプロイする。
-```sh
-aws cloudformation validate-template --template-body file://cfn-appconfig-hosted-deploy.yaml
-aws cloudformation create-stack --stack-name Demo-AppConfigHostedDeploy-Stack --template-body file://cfn-appconfig-hosted-deploy.yaml
-```
-
-* SecretManagerの設定を初回デプロイする。
-    * Hosted Configurationの設定のデプロイが完了に実施すること
-    * パラメータのSecretsManagerVersionのバージョンIDは、マネコン等で確認してパラメータに設定する
-```sh
-aws cloudformation validate-template --template-body file://cfn-appconfig-sm-deploy.yaml
-aws cloudformation create-stack --stack-name Demo-AppConfigSMDeploy-Stack --template-body file://cfn-appconfig-sm-deploy.yaml --parameters ParameterKey=SecretsManagerVersion,ParameterValue=（SecretsManagerVersionのバージョンID）
-```
-
-
 ## 12. AWS SAMでLambda/API Gatewayのデプロイ       
 * SAMビルド    
 ```sh
@@ -231,8 +216,24 @@ sam deploy
 make deploy
 ```
 
+## 13. AppConfigのデプロイ
+* Hosted Configurationの設定バージョンの作成と初回デプロイする。
+```sh
+#cfnフォルダに移動
+cd cfn
+aws cloudformation validate-template --template-body file://cfn-appconfig-hosted-deploy.yaml
+aws cloudformation create-stack --stack-name Demo-AppConfigHostedDeploy-Stack --template-body file://cfn-appconfig-hosted-deploy.yaml
+```
 
-## 13. APの実行確認
+* SecretManagerの設定を初回デプロイする。
+    * Hosted Configurationの設定のデプロイが完了に実施すること
+    * パラメータのSecretsManagerVersionのバージョンIDは、マネコン等で確認してパラメータに設定する
+```sh
+aws cloudformation validate-template --template-body file://cfn-appconfig-sm-deploy.yaml
+aws cloudformation create-stack --stack-name Demo-AppConfigSMDeploy-Stack --template-body file://cfn-appconfig-sm-deploy.yaml --parameters ParameterKey=SecretsManagerVersion,ParameterValue=（SecretsManagerVersionのバージョンID）
+```
+
+## 15. APの実行確認
 * マネージドコンソールから、EC2(Bation)へSystems Manager Session Managerで接続して、curlコマンドで動作確認
     * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
 

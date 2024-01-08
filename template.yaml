@@ -182,10 +182,6 @@ Resources:
             Path: /bff-api/{proxy+}
             Method: ANY
             RestApiId: !Ref BffApi
-      Environment:
-        Variables:
-          TODO_API_BASE_URL: !Sub https://${TodoApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
-          USERS_API_BASE_URL: !Sub https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
   TodoAsyncFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -364,13 +360,18 @@ Resources:
       AutoConfigurationEnabled: 'true'
 Outputs:
   HelloWorldAPI:
-    Description: API Gateway endpoint URL for Prod environment for First Function
+    Description: API Gateway endpoint URL for HelloWorld
     Value: !Sub https://${HelloApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/hello
   HelloWorldFunction:
     Description: First Lambda Function ARN
     Value: !GetAtt HelloWorldFunction.Arn
+  UsersAPIBaseURL:
+    Description: API Gateway endpoint Base URL for Users
+    Value: !Sub https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
+    Export: 
+      Name: !Sub ${StackPrefix}-UsersAPIBaseURL-${Stage}
   UsersAPI:
-    Description: API Gateway endpoint URL for Prod environment
+    Description: API Gateway endpoint URL for Users
     Value: !Sub https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/users-api/v1/users
   UsersFunction:
     Description: Users Lambda Function ARN
@@ -378,8 +379,13 @@ Outputs:
   UsersFunctionDeploymentGroup:
     Description: Users Lambda Function DeploymentGroup ARN
     Value: !Ref UsersFunctionDeploymentGroup
+  TodoAPIBaseURL:
+    Description: API Gateway endpoint Base URL for Todo
+    Value: !Sub https://${TodoApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
+    Export: 
+      Name: !Sub ${StackPrefix}-TodoAPIBaseURL-${Stage}
   TodoAPI:
-    Description: API Gateway endpoint URL for Prod environment
+    Description: API Gateway endpoint URL for Todo
     Value: !Sub https://${TodoApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/todo-api/v1/todo
   TodoFunction:
     Description: Todo Lambda Function ARN
@@ -388,7 +394,7 @@ Outputs:
     Description: Todo Lambda Function DeploymentGroup ARN
     Value: !Ref TodoFunctionDeploymentGroup
   BffAPI:
-    Description: API Gateway endpoint URL for Prod environment
+    Description: API Gateway endpoint URL for Bff
     Value: !Sub https://${BffApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/bff-api/v1/
   BffFunction:
     Description: Bff Lambda Function ARN
