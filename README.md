@@ -339,7 +339,7 @@ curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Mil
 ```sh
 cd cfn
 aws cloudformation validate-template --template-body file://cfn-appconfig-hosted-deploy.yaml
-aws cloudformation update-stack --stack-name Demo-AppConfigDeploy-Stack --template-body file://cfn-appconfig-hosted-deploy.yaml
+aws cloudformation update-stack --stack-name Demo-AppConfigHostedDeploy-Stack --template-body file://cfn-appconfig-hosted-deploy.yaml
 ```
 
 ![AppConfigの設定再デプロイ](image/appconfig.png)
