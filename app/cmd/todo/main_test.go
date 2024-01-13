@@ -31,6 +31,7 @@ func TestPostTodo(t *testing.T) {
 	r := apiLambdaHandler.GetDefaultGinEngine(common.NewCommonErrorResponse(ac.GetMessageSource()))
 	initBiz(ac, r)
 
+	// TODO: データ駆動テスト化
 	t.Run("Postのテスト", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		input := "{ \"todo_title\" : \"Buy Milk\"}"

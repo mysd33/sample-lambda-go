@@ -27,6 +27,6 @@ func initBiz(ac component.ApplicationContext) handler.AsyncControllerFunc {
 	// ハンドラインタセプタの取得
 	interceptor := ac.GetInterceptor()
 	// ハンドラインタセプタ経由でコントローラのメソッドを呼び出し
-	return interceptor.HandleAsync(controller.RegisterAll)
+	return interceptor.HandleAsync(controller.RegisterAllAsync)
 
 }

@@ -27,6 +27,8 @@ type TempRepository interface {
 	FindOne(id string) (*entity.Temp, error)
 	// CreateOneTx は、指定された値をトランザクションを使って登録します。
 	CreateOneTx(temp *entity.Temp) (*entity.Temp, error)
+	// CreateOne は、指定された値を登録します。
+	CreateOne(temp *entity.Temp) (*entity.Temp, error)
 }
 
 // NewTempRepository は、TempRepositoryを生成します。
@@ -70,6 +72,7 @@ func (r *tempRepositoryImpl) FindOne(id string) (*entity.Temp, error) {
 				Value: id,
 			},
 		},
+		//ConsitentRead: true,
 	}
 	var temp entity.Temp
 	// Itemの取得
@@ -77,7 +80,7 @@ func (r *tempRepositoryImpl) FindOne(id string) (*entity.Temp, error) {
 	if err != nil {
 		if errors.Is(err, mydynamodb.ErrRecordNotFound) {
 			// レコード未取得の場合
-			return nil, myerrors.NewBusinessError(message.W_EX_8002, id)
+			return nil, myerrors.NewBusinessError(message.W_EX_8006, id)
 		}
 		return nil, myerrors.NewSystemError(err, message.E_EX_9001)
 	}
@@ -132,5 +135,24 @@ func (r *tempRepositoryImpl) CreateOneTx(temp *entity.Temp) (*entity.Temp, error
 		input := &types.TransactWriteItem{Put: put}
 		r.accessor.AppendTransactWriteItem(input)
 	*/
+	return temp, nil
+}
+
+// CreateOne implements TempRepository.
+func (r *tempRepositoryImpl) CreateOne(temp *entity.Temp) (*entity.Temp, error) {
+	// ID採番
+	id := id.GenerateId()
+	temp.ID = id
+	r.log.Debug("CreateOne Table name: %s", r.tableName)
+	r.log.Debug("CreateOne Temp id: %s", id)
+
+	// DynamoDBTemplateを使ったコード
+	err := r.dynamodbTemplate.CreateOne(r.tableName, temp)
+	if err != nil {
+		if errors.Is(err, mydynamodb.ErrKeyDuplicaiton) {
+			return nil, myerrors.NewBusinessError(message.W_EX_8007, id)
+		}
+		return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+	}
 	return temp, nil
 }

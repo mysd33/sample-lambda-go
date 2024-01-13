@@ -15,8 +15,8 @@ import (
 
 // TodoAsyncController は、Todo業務のControllerインタフェースです。
 type TodoAsyncController interface {
-	// RegisterAll は、SQSメッセージとして受け取ったTodoのリストを全て登録します。
-	RegisterAll(sqsMessage events.SQSMessage) error
+	// RegisterAllAsync は、SQSメッセージとして受け取ったTodoのリストを全て登録します。
+	RegisterAllAsync(sqsMessage events.SQSMessage) error
 }
 
 func New(log logging.Logger,
@@ -35,8 +35,8 @@ type todoAsyncControllerImpl struct {
 	service            service.TodoAsyncService
 }
 
-// RegisterAll implements TodoAsyncController.
-func (c *todoAsyncControllerImpl) RegisterAll(sqsMessage events.SQSMessage) error {
+// RegisterAllAsync implements TodoAsyncController.
+func (c *todoAsyncControllerImpl) RegisterAllAsync(sqsMessage events.SQSMessage) error {
 	body := sqsMessage.Body
 	c.log.Debug("Message: %s", body)
 
