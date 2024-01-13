@@ -3,6 +3,7 @@ package controller
 
 import (
 	"app/internal/app/errortest/service"
+	"app/internal/pkg/message"
 
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
@@ -36,13 +37,13 @@ func (c *errorTestControllerImpl) Execute(ctx *gin.Context) (any, error) {
 
 	if errorType == "validation" {
 		// 入力チェックエラーのハンドリング
-		return nil, errors.NewValidationErrorWithMessage("△△は必須入力です")
+		return nil, errors.NewValidationError(message.W_EX_5002, "△△")
 	}
 	if errorType == "validation2" {
 		var request Request
 		if err := ctx.ShouldBindJSON(&request); err != nil {
 			// 入力チェックエラーのハンドリング
-			return nil, errors.NewValidationError(err)
+			return nil, errors.NewValidationErrorWithCause(err, message.W_EX_5001)
 		}
 	}
 

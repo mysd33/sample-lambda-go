@@ -71,12 +71,12 @@ func (c *bffControllerImpl) FindTodo(ctx *gin.Context) (any, error) {
 	// 入力チェック
 	if userId == "" {
 		// 入力チェックエラーのハンドリング
-		return nil, myerrors.NewValidationErrorWithMessage("クエリパラメータuserIdが未指定です")
+		return nil, myerrors.NewValidationError(message.W_EX_5002, "user_id")
 	}
 	todoId := ctx.Query("todo_id")
 	if todoId == "" {
 		// 入力チェックエラーのハンドリング
-		return nil, myerrors.NewValidationErrorWithMessage("クエリパラメータtodoIdが未指定です")
+		return nil, myerrors.NewValidationError(message.W_EX_5002, "todo_id")
 	}
 	// サービスの実行（DynamoDBトランザクション管理なし）
 	user, todo, err := c.service.FindTodo(userId, todoId)
@@ -93,7 +93,7 @@ func (c *bffControllerImpl) RegisterUser(ctx *gin.Context) (any, error) {
 	var request RequestRegisterUser
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		// 入力チェックエラーのハンドリング
-		return nil, myerrors.NewValidationError(err)
+		return nil, myerrors.NewValidationErrorWithCause(err, message.W_EX_5001)
 	}
 
 	// サービスの実行
@@ -106,7 +106,7 @@ func (c *bffControllerImpl) RegisterTodo(ctx *gin.Context) (any, error) {
 	var request RequestRegisterTodo
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		// 入力チェックエラーのハンドリング
-		return nil, myerrors.NewValidationError(err)
+		return nil, myerrors.NewValidationErrorWithCause(err, message.W_EX_5001)
 	}
 
 	// サービスの実行
@@ -119,7 +119,7 @@ func (c *bffControllerImpl) RegisterTodosAsync(ctx *gin.Context) (any, error) {
 	var request RequestRegisterTodoAsync
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		// 入力チェックエラーのハンドリング
-		return nil, myerrors.NewValidationError(err)
+		return nil, myerrors.NewValidationErrorWithCause(err, message.W_EX_5001)
 	}
 	todoTitles := request.TodoTitles
 

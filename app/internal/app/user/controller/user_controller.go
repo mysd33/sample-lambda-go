@@ -3,6 +3,7 @@ package controller
 
 import (
 	"app/internal/app/user/service"
+	"app/internal/pkg/message"
 
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
@@ -41,7 +42,7 @@ func (c *userControllerImpl) Find(ctx *gin.Context) (any, error) {
 	// 入力チェック
 	if userId == "" {
 		// 入力チェックエラーのハンドリング
-		return nil, errors.NewValidationErrorWithMessage("クエリパラメータuserIdが未指定です")
+		return nil, errors.NewValidationError(message.W_EX_5002, "user_id")
 	}
 
 	// RDBトランザクション開始してサービスの実行
@@ -55,7 +56,7 @@ func (c *userControllerImpl) Register(ctx *gin.Context) (any, error) {
 	var request Request
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		// 入力チェックエラーのハンドリング
-		return nil, errors.NewValidationError(err)
+		return nil, errors.NewValidationErrorWithCause(err, message.W_EX_5001)
 	}
 
 	// RDBトランザクション開始してサービスの実行

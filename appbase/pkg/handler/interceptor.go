@@ -116,7 +116,7 @@ func (i *defaultHandlerInterceptor) logError(err error) {
 		systemError     *myerrors.SystemError
 	)
 	if errors.As(err, &validationError) {
-		i.log.Debug(validationError.Error())
+		i.log.WarnWithCodableError(validationError)
 	} else if errors.As(err, &businessError) {
 		i.log.WarnWithCodableError(businessError)
 	} else if errors.As(err, &systemError) {

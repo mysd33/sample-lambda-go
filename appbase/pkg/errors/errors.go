@@ -18,27 +18,33 @@ import (
 // CodableErrorは、エラーコード定義付きのエラーインタフェースです。
 type CodableError interface {
 	error
+	// ErrorCode は、エラーコード（メッセージID）を返します。
 	ErrorCode() string
+	// Argsは、エラーメッセージの置換文字列(args）を返します
 	Args() []any
 }
 
 // ValidationError は、入力エラーの構造体です。
 type ValidationError struct {
-	// TODO:
-	cause error
+	cause     error
+	errorCode string
+	args      []any
 }
 
-// NewValidationError は、原因となるエラー（cause）をラップし、ValidationError構造体を作成します。
-func NewValidationError(cause error) *ValidationError {
-	return &ValidationError{cause: cerrors.WithStack(cause)}
+// NewValidationError は、ッセージIDにもなるエラーコード（errorCode）とメッセージの置換文字列(args）を渡し
+// ValidationError構造体を作成します。
+func NewValidationError(errorCode string, args ...any) *ValidationError {
+	// スタックトレース出力のため、cockloachdb/errorのスタックトレース付きのcauseエラー作成
+	cause := cerrors.NewWithDepthf(1, "code:%s, error:%v", errorCode, args)
+	return &ValidationError{cause: cause, errorCode: errorCode, args: args}
 }
 
-// NewValidationErrorWithMessage は、メッセージをもとにBusinessError構造体を作成します。
-func NewValidationErrorWithMessage(format string, args ...any) *ValidationError {
-	return &ValidationError{
-		// cockloachdb/errorのスタックトレース付きのcauseエラー作成
-		cause: cerrors.Errorf(format, args...),
-	}
+// NewValidationErrorWithCause は、原因となるエラー（cause）をラップし、
+// メッセージIDにもなるエラーコード（errorCode）とメッセージの置換文字列(args）を渡しValidationError構造体を作成します。
+func NewValidationErrorWithCause(cause error, errorCode string, args ...any) *ValidationError {
+	// 誤ったエラーのラップを確認
+	requiredNotCodableError(cause)
+	return &ValidationError{cause: cerrors.WithStackDepth(cause, 1), errorCode: errorCode, args: args}
 }
 
 // Error は、エラーを返却します。
@@ -63,6 +69,16 @@ func (e *ValidationError) Unwrap() error {
 	return e.cause
 }
 
+// Args implements CodableError.
+func (e *ValidationError) Args() []any {
+	return e.args
+}
+
+// ErrorCode implements CodableError.
+func (e *ValidationError) ErrorCode() string {
+	return e.errorCode
+}
+
 // BusinessError 業務エラーの構造体です。
 type BusinessError struct {
 	cause     error
@@ -70,7 +86,8 @@ type BusinessError struct {
 	args      []any
 }
 
-// NewBusinessError は、BusinessError構造体を作成します。
+// NewBusinessError は、ッセージIDにもなるエラーコード（errorCode）とメッセージの置換文字列(args）を渡し
+// BusinessError構造体を作成します。
 func NewBusinessError(errorCode string, args ...any) *BusinessError {
 	// スタックトレース出力のため、cockloachdb/errorのスタックトレース付きのcauseエラー作成
 	cause := cerrors.NewWithDepthf(1, "code:%s, error:%v", errorCode, args)
@@ -82,7 +99,7 @@ func NewBusinessError(errorCode string, args ...any) *BusinessError {
 // BusinessError構造体を作成します。
 func NewBusinessErrorWithCause(cause error, errorCode string, args ...any) *BusinessError {
 	// 誤ったエラーのラップを確認
-	requiredNotBusinessAndSystemError(cause)
+	requiredNotCodableError(cause)
 	// causeはスタックトレース付与
 	return &BusinessError{cause: cerrors.WithStackDepth(cause, 1), errorCode: errorCode, args: args}
 }
@@ -102,12 +119,12 @@ func (e *BusinessError) Unwrap() error {
 	return e.cause
 }
 
-// ErrorCode は、エラーコード（メッセージID）を返します。
+// ErrorCode implements CodableError.
 func (e *BusinessError) ErrorCode() string {
 	return e.errorCode
 }
 
-// Argsは、エラーメッセージの置換文字列(args）を返します
+// Args implements CodableError.
 func (e *BusinessError) Args() []any {
 	return e.args
 }
@@ -124,7 +141,7 @@ type SystemError struct {
 // SystemError構造体を作成します。
 func NewSystemError(cause error, errorCode string, args ...any) *SystemError {
 	// 誤ったエラーのラップを確認
-	requiredNotBusinessAndSystemError(cause)
+	requiredNotCodableError(cause)
 	// causeはスタックトレース付与
 	return &SystemError{cause: cerrors.WithStackDepth(cause, 1), errorCode: errorCode, args: args}
 }
@@ -144,26 +161,33 @@ func (e *SystemError) Unwrap() error {
 	return e.cause
 }
 
-// ErrorCode は、エラーコード（メッセージID）を返します。
+// ErrorCode implements CodableError.
 func (e *SystemError) ErrorCode() string {
 	return e.errorCode
 }
 
-// Argsは、エラーメッセージの置換文字列(args）を返します
+// Args implements CodableError.
 func (e *SystemError) Args() []any {
 	return e.args
 }
 
-// CauseがBusinessError、SystemErrorでないことを確認
-func requiredNotBusinessAndSystemError(cause error) {
+// Causeが、ValidationError、BusinessError、SystemErrorでないことを確認
+func requiredNotCodableError(cause error) {
 	if cause == nil {
 		return
 	}
+	var ve *ValidationError
 	var be *BusinessError
 	var se *SystemError
-	// causeがBusinessError、SystemErrorの場合は、
+	// causeが、ValidationError、BusinessError、SystemErrorの場合は、
 	// コーディングミスで二重でラップしてしまっている判断して、開発中は異常終了させている
-	if errors.As(cause, &be) {
+	if errors.As(cause, &ve) {
+		if !env.IsProd() {
+			// 異常終了
+			panic(fmt.Sprintf("誤ってValidationErrorを二重でラップしています:%+v", ve))
+		}
+		log.Printf("誤ってValidationErrorを二重でラップしています:%+v", ve)
+	} else if errors.As(cause, &be) {
 		if !env.IsProd() {
 			// 異常終了
 			panic(fmt.Sprintf("誤ってBusinessErrorを二重でラップしています:%+v", be))

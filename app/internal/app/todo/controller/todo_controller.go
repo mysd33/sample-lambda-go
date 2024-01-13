@@ -52,7 +52,7 @@ func (c *todoControllerImpl) Find(ctx *gin.Context) (any, error) {
 	// 入力チェック
 	if todoId == "" {
 		// 入力チェックエラーのハンドリング
-		return nil, myerrors.NewValidationErrorWithMessage("クエリパラメータtodoIdが未指定です")
+		return nil, myerrors.NewValidationError(message.W_EX_5002, "todo_id")
 	}
 	// DynamoDBトランザクション管理してサービスの実行
 	return c.transactionManager.ExecuteTransaction(func() (any, error) {
@@ -65,7 +65,7 @@ func (c *todoControllerImpl) Register(ctx *gin.Context) (any, error) {
 	var request Request
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		// 入力チェックエラーのハンドリング
-		return nil, myerrors.NewValidationError(err)
+		return nil, myerrors.NewValidationErrorWithCause(err, message.W_EX_5001)
 	}
 	// クエリパラメータの取得
 	transaction := ctx.Query("tx")
