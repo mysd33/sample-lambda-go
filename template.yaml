@@ -45,12 +45,12 @@ Mappings:
   AppConfigExtentionsLayerMap:
     #Tokyo
     ap-northeast-1:
-      x86: arn:aws:lambda:ap-northeast-1:980059726660:layer:AWS-AppConfig-Extension:84
-      arm: arn:aws:lambda:ap-northeast-1:980059726660:layer:AWS-AppConfig-Extension-Arm64:37
+      x86: arn:aws:lambda:ap-northeast-1:980059726660:layer:AWS-AppConfig-Extension:98           
+      arm: arn:aws:lambda:ap-northeast-1:980059726660:layer:AWS-AppConfig-Extension-Arm64:51           
     #Osaka
     ap-northeast-3:
-      x86: arn:aws:lambda:ap-northeast-3:706869817123:layer:AWS-AppConfig-Extension:86
-      arm: arn:aws:lambda:ap-northeast-3:706869817123:layer:AWS-AppConfig-Extension-Arm64:1
+      x86: arn:aws:lambda:ap-northeast-3:706869817123:layer:AWS-AppConfig-Extension:101           
+      arm: arn:aws:lambda:ap-northeast-3:706869817123:layer:AWS-AppConfig-Extension-Arm64:16           
 Conditions:
   TracingEnabled: !Equals
     - !Ref TracingValue
