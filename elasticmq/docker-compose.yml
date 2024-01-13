@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  elasticmq:
+    image: softwaremill/elasticmq-native
+    container_name: elasticmq
+    volumes:
+      - ./custom.conf:/opt/elasticmq.conf
+    ports:
+      - 9324:9324
+      - 9325:9325

@@ -432,7 +432,7 @@ testdb> \q
 * DynamoDB LocalのDockerコンテナを起動
 ```sh
 cd dynamodb-local
-docker-compose up
+docker compose up
 ```
 
 * dynamodb-adminでtodoテーブルを作成    
@@ -457,11 +457,7 @@ docker-compose up
 ```sh
 cd ..
 cd elasticmq
-# Windowsの場合
-docker run --name elasticmq -p 9324:9324 -p 9325:9325 -v %cd%\custom.conf:/opt/elasticmq.conf softwaremill/elasticmq-native
-
-# Linuxの場合
-docker run --name elasticmq -p 9324:9324 -p 9325:9325 -v `pwd`/custom.conf:/opt/elasticmq.conf softwaremill/elasticmq-native
+docker compose up
 ```
 
 * ブラウザで、[http://localhost:9325](http://localhost:9325)にアクセスするとキューの状態が確認できる
