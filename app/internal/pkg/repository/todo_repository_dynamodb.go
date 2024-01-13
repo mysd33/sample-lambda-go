@@ -25,7 +25,8 @@ const (
 // NewTodoRepositoryForDynamoDB は、TodoRepositoryを作成します。
 func NewTodoRepositoryForDynamoDB(dynamoDBTempalte transaction.TransactionalDynamoDBTemplate,
 	accessor transaction.TransactionalDynamoDBAccessor,
-	log logging.Logger, config config.Config) TodoRepository {
+	log logging.Logger, config config.Config,
+	id id.IDGenerator) TodoRepository {
 	// テーブル名の取得
 	tableName := tables.DynamoDBTableName(config.Get(TODO_TABLE_NAME, "todo"))
 	// テーブル定義の設定
@@ -40,6 +41,7 @@ func NewTodoRepositoryForDynamoDB(dynamoDBTempalte transaction.TransactionalDyna
 		config:           config,
 		tableName:        tableName,
 		primaryKey:       primaryKey,
+		id:               id,
 	}
 }
 
@@ -51,6 +53,7 @@ type todoRepositoryImplByDynamoDB struct {
 	config           config.Config
 	tableName        tables.DynamoDBTableName
 	primaryKey       *tables.PKKeyPair
+	id               id.IDGenerator
 }
 
 func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, error) {
@@ -106,7 +109,7 @@ func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, er
 
 func (tr *todoRepositoryImplByDynamoDB) CreateOne(todo *entity.Todo) (*entity.Todo, error) {
 	// ID採番
-	todoId := id.GenerateId()
+	todoId := tr.id.GenerateUUID()
 	//todoId := "dummy"
 	todo.ID = todoId
 	// DynamoDBTemplateを使ったコード
@@ -144,7 +147,7 @@ func (tr *todoRepositoryImplByDynamoDB) CreateOne(todo *entity.Todo) (*entity.To
 // CreateOneTx implements TodoRepository.
 func (tr *todoRepositoryImplByDynamoDB) CreateOneTx(todo *entity.Todo) (*entity.Todo, error) {
 	// ID採番
-	todoId := id.GenerateId()
+	todoId := tr.id.GenerateUUID()
 	//todoId := "dummy"
 	todo.ID = todoId
 	// DynamoDBTemplateを使ったコード

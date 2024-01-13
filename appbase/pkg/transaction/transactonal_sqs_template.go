@@ -20,10 +20,12 @@ const (
 )
 
 // NewSQSTemplateは、SQSTemplateを作成します。
-func NewSQSTemplate(log logging.Logger, config config.Config, sqsAccessor TransactionalSQSAccessor) async.SQSTemplate {
+func NewSQSTemplate(log logging.Logger, config config.Config, id id.IDGenerator,
+	sqsAccessor TransactionalSQSAccessor) async.SQSTemplate {
 	return &defaultTransactionalSQSTemplate{
 		log:         log,
 		config:      config,
+		id:          id,
 		sqsAccessor: sqsAccessor,
 	}
 }
@@ -32,6 +34,7 @@ func NewSQSTemplate(log logging.Logger, config config.Config, sqsAccessor Transa
 type defaultTransactionalSQSTemplate struct {
 	log         logging.Logger
 	config      config.Config
+	id          id.IDGenerator
 	sqsAccessor TransactionalSQSAccessor
 }
 
@@ -72,7 +75,7 @@ func (t *defaultTransactionalSQSTemplate) SendToFIFOQueue(queueName string, msg 
 		return errors.WithStack(err)
 	}
 	// メッセージ重複排除IDの作成
-	msgDeduplicationId := id.GenerateId()
+	msgDeduplicationId := t.id.GenerateUUID()
 	input := &sqs.SendMessageInput{
 		MessageBody:            aws.String(string(byteMessage)),
 		MessageGroupId:         aws.String(msgGroupId),

@@ -20,7 +20,7 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	// リポジトリの作成（DynamoDBの場合）
 	//userRepository := repository.NewUserRepositoryForDynamoDB(ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig())
 	// リポジトリの作成（RDBの場合）
-	userRepository := repository.NewUserRepositoryForRDB(ac.GetRDBAccessor(), ac.GetLogger())
+	userRepository := repository.NewUserRepositoryForRDB(ac.GetRDBAccessor(), ac.GetLogger(), ac.GetIDGenerator())
 	// サービスの作成
 	userService := service.New(ac.GetLogger(), ac.GetConfig(), userRepository)
 	// コントローラの作成

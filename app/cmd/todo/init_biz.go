@@ -19,7 +19,8 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 		panic(err)
 	}
 	// リポジトリの作成
-	todoRepository := repository.NewTodoRepositoryForDynamoDB(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig())
+	todoRepository := repository.NewTodoRepositoryForDynamoDB(ac.GetDynamoDBTemplate(),
+		ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig(), ac.GetIDGenerator())
 	// サービスの作成
 	todoService := service.New(ac.GetLogger(), ac.GetConfig(), todoRepository)
 	// コントローラの作成

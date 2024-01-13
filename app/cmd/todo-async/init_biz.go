@@ -18,8 +18,10 @@ func initBiz(ac component.ApplicationContext) handler.AsyncControllerFunc {
 		panic(err)
 	}
 	// リポジトリの作成
-	tempRepository := repository.NewTempRepository(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig())
-	todoRepository := repository.NewTodoRepositoryForDynamoDB(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig())
+	tempRepository := repository.NewTempRepository(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(),
+		ac.GetLogger(), ac.GetConfig(), ac.GetIDGenerator())
+	todoRepository := repository.NewTodoRepositoryForDynamoDB(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(),
+		ac.GetLogger(), ac.GetConfig(), ac.GetIDGenerator())
 	// サービスの作成
 	todoAsyncService := service.New(ac.GetLogger(), ac.GetConfig(), tempRepository, todoRepository)
 	// コントローラの作成

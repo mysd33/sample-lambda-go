@@ -32,7 +32,7 @@ func TestRegisterAllAsync(t *testing.T) {
 		// TODO: テーブル作成
 		// TODO: tempテーブルのテストデータ登録（仮置きのコード）
 		value := "[\"Buy Milk\",\"Study English\"]"
-		tempRepository := repository.NewTempRepository(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig())
+		tempRepository := repository.NewTempRepository(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig(), ac.GetIDGenerator())
 		testData, err := tempRepository.CreateOne(&entity.Temp{Value: value})
 		tempId := testData.ID
 		if err != nil {

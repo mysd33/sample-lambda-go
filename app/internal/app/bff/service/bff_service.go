@@ -30,6 +30,7 @@ type BffService interface {
 // New は、BffServiceを作成します。
 func New(log logging.Logger,
 	config config.Config,
+	id id.IDGenerator,
 	userRepository repository.UserRepository,
 	todoRepository repository.TodoRepository,
 	tempRepository repository.TempRepository,
@@ -38,6 +39,7 @@ func New(log logging.Logger,
 	return &bffServiceImpl{
 		log:                    log,
 		config:                 config,
+		id:                     id,
 		userRepository:         userRepository,
 		todoRepository:         todoRepository,
 		tempRepository:         tempRepository,
@@ -49,6 +51,7 @@ func New(log logging.Logger,
 type bffServiceImpl struct {
 	log                    logging.Logger
 	config                 config.Config
+	id                     id.IDGenerator
 	userRepository         repository.UserRepository
 	todoRepository         repository.TodoRepository
 	tempRepository         repository.TempRepository
@@ -130,7 +133,7 @@ func (bs *bffServiceImpl) RegisterTodosAsyncByFIFO(todoTitles []string, dbtx str
 	// TODOリストの登録を非同期処理実行依頼
 	asyncMessage := &entity.AsyncMessage{TempId: tempId}
 	// メッセージグループIDの生成
-	msgGroupId := id.GenerateId()
+	msgGroupId := bs.id.GenerateUUID()
 	bs.asyncMessageRepository.SendToFIFOQueue(asyncMessage, msgGroupId)
 	return nil
 

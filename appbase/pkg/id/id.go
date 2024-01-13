@@ -8,13 +8,32 @@ import (
 	"github.com/teris-io/shortid"
 )
 
-// GenerateId は、UUIDでIDを採番します。
-func GenerateId() string {
-	uuidObj, _ := uuid.NewUUID()
+// IDGenerator は、ID生成機能を提供するインターフェースです。
+type IDGenerator interface {
+	// GenerateUUID は、UUIDでIDを採番します。
+	GenerateUUID() string
+	// GenerateShortID は、ShortIDでIDを採番します。
+	GenerateShortID() string
+}
+
+// defaultIDGenerator は、IDGeneratorのデフォルト実装です。
+type defaultIDGenerator struct{}
+
+// NewIDGenerator は、IDGeneratorを作成します。
+func NewIDGenerator() IDGenerator {
+	return &defaultIDGenerator{}
+}
+
+// GenerateUUID implements IDGenerator.
+func (*defaultIDGenerator) GenerateUUID() string {
+	uuidObj, err := uuid.NewUUID()
+	if err != nil {
+		panic(err)
+	}
 	return uuidObj.String()
 }
 
-// GenerateShortId は、ShortIDでIDを採番します。
-func GenerateShortId() string {
+// GenerateShortID implements IDGenerator.
+func (*defaultIDGenerator) GenerateShortID() string {
 	return shortid.MustGenerate()
 }

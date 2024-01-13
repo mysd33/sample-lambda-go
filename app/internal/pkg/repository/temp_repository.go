@@ -34,7 +34,8 @@ type TempRepository interface {
 // NewTempRepository は、TempRepositoryを生成します。
 func NewTempRepository(dynamoDBTempalte transaction.TransactionalDynamoDBTemplate,
 	accessor transaction.TransactionalDynamoDBAccessor,
-	log logging.Logger, config config.Config) TempRepository {
+	log logging.Logger, config config.Config,
+	id id.IDGenerator) TempRepository {
 	// テーブル名の取得
 	tableName := tables.DynamoDBTableName(config.Get(TEMP_TABLE_NAME, "temp"))
 	// テーブル定義の設定
@@ -49,6 +50,7 @@ func NewTempRepository(dynamoDBTempalte transaction.TransactionalDynamoDBTemplat
 		config:           config,
 		tableName:        tableName,
 		primaryKey:       primaryKey,
+		id:               id,
 	}
 }
 
@@ -60,6 +62,7 @@ type tempRepositoryImpl struct {
 	config           config.Config
 	tableName        tables.DynamoDBTableName
 	primaryKey       *tables.PKKeyPair
+	id               id.IDGenerator
 }
 
 // FindOne implements TempRepository.
@@ -110,7 +113,7 @@ func (r *tempRepositoryImpl) FindOne(id string) (*entity.Temp, error) {
 // CreateOneTx implements TempRepository.
 func (r *tempRepositoryImpl) CreateOneTx(temp *entity.Temp) (*entity.Temp, error) {
 	// ID採番
-	id := id.GenerateId()
+	id := r.id.GenerateUUID()
 	temp.ID = id
 	r.log.Debug("CreateOneTx Table name: %s", r.tableName)
 	r.log.Debug("CreateOneTx Temp id: %s", id)
@@ -141,7 +144,7 @@ func (r *tempRepositoryImpl) CreateOneTx(temp *entity.Temp) (*entity.Temp, error
 // CreateOne implements TempRepository.
 func (r *tempRepositoryImpl) CreateOne(temp *entity.Temp) (*entity.Temp, error) {
 	// ID採番
-	id := id.GenerateId()
+	id := r.id.GenerateUUID()
 	temp.ID = id
 	r.log.Debug("CreateOne Table name: %s", r.tableName)
 	r.log.Debug("CreateOne Temp id: %s", id)

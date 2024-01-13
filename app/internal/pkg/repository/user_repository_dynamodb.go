@@ -20,11 +20,14 @@ const (
 )
 
 // NewUserRepositoryForDynamoDB は、DynamoDB保存のためのUserRepository実装を作成します。
-func NewUserRepositoryForDynamoDB(accessor mydynamodb.DynamoDBAccessor, log logging.Logger, config config.Config) UserRepository {
+func NewUserRepositoryForDynamoDB(accessor mydynamodb.DynamoDBAccessor,
+	log logging.Logger, config config.Config,
+	id id.IDGenerator) UserRepository {
 	return &UserRepositoryImplByDynamoDB{
 		accessor: accessor,
 		log:      log,
 		config:   config,
+		id:       id,
 	}
 }
 
@@ -33,6 +36,7 @@ type UserRepositoryImplByDynamoDB struct {
 	accessor mydynamodb.DynamoDBAccessor
 	log      logging.Logger
 	config   config.Config
+	id       id.IDGenerator
 }
 
 func (ur *UserRepositoryImplByDynamoDB) FindOne(userId string) (*entity.User, error) {
@@ -70,7 +74,7 @@ func (ur *UserRepositoryImplByDynamoDB) FindOne(userId string) (*entity.User, er
 
 func (ur *UserRepositoryImplByDynamoDB) CreateOne(user *entity.User) (*entity.User, error) {
 	// ID採番
-	userId := id.GenerateId()
+	userId := ur.id.GenerateUUID()
 	user.ID = userId
 	userTable := ur.config.Get(USERS_TABLE_NAME, "users")
 	av, err := attributevalue.MarshalMap(user)

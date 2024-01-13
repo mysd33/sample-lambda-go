@@ -23,7 +23,8 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	// リポジトリの作成
 	userRepository := repository.NewUserRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger(), ac.GetConfig())
 	todoRepository := repository.NewTodoRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger(), ac.GetConfig())
-	tempRepository := repository.NewTempRepository(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig())
+	tempRepository := repository.NewTempRepository(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(),
+		ac.GetLogger(), ac.GetConfig(), ac.GetIDGenerator())
 	// Configからキュー名を取得する
 	sampleQueueName := ac.GetConfig().Get("SampleQueueName", "SampleQueue")
 	ac.GetLogger().Debug("SampleQueueName:%s", sampleQueueName)
@@ -31,7 +32,7 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	ac.GetLogger().Debug("SampleFIFOQueueName:%s", sampleFifoQueueName)
 	asyncMessageRepository := repository.NewAsyncMessageRepository(ac.GetSQSTemplate(), sampleQueueName, sampleFifoQueueName)
 	// サービスの作成
-	bffService := service.New(ac.GetLogger(), ac.GetConfig(), userRepository, todoRepository, tempRepository, asyncMessageRepository)
+	bffService := service.New(ac.GetLogger(), ac.GetConfig(), ac.GetIDGenerator(), userRepository, todoRepository, tempRepository, asyncMessageRepository)
 	// コントローラの作成
 	bffController := controller.New(ac.GetLogger(), ac.GetDynamoDBTransactionManager(), bffService)
 	// ハンドラインタセプタの取得

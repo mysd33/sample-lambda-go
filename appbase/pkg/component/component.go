@@ -9,6 +9,7 @@ import (
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/handler"
 	"example.com/appbase/pkg/httpclient"
+	"example.com/appbase/pkg/id"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
 	"example.com/appbase/pkg/rdb"
@@ -18,6 +19,7 @@ import (
 
 // ApplicationContext は、フレームワークのコンポーネントを管理するインタフェースです。
 type ApplicationContext interface {
+	GetIDGenerator() id.IDGenerator
 	GetMessageSource() message.MessageSource
 	GetLogger() logging.Logger
 	GetConfig() config.Config
@@ -38,6 +40,7 @@ type ApplicationContext interface {
 // NewApplicationContext は、デフォルトのApplicationContextを作成します。
 func NewApplicationContext() ApplicationContext {
 	// 各種AP基盤の構造体を作成
+	id := createIDGenerator()
 	config := createConfig()
 	messageSource := createMessageSource()
 	apiResponseFormatter := createApiResponseFormatter(messageSource)
@@ -47,7 +50,7 @@ func NewApplicationContext() ApplicationContext {
 	queueMessageItemRepository := createQueueMessageItemRepository(config, logger, dynamoDBTempalte)
 	messageRegisterer := createMessageRegisterer(queueMessageItemRepository)
 	sqsAccessor := createTransactionalSQSAccessor(logger, config, messageRegisterer)
-	sqsTemplate := createSQSTemplate(logger, config, sqsAccessor)
+	sqsTemplate := createSQSTemplate(logger, config, id, sqsAccessor)
 	dynamoDBTransactionManager := createDynamoDBTransactionManager(logger, dynamodbAccessor, sqsAccessor, messageRegisterer)
 	dynamoDBTransactionManagerForDBOnly := createDynamoDBTransactionManagerForDBOnly(logger, dynamodbAccessor, messageRegisterer)
 	rdbAccessor := createRDBAccessor()
@@ -61,6 +64,7 @@ func NewApplicationContext() ApplicationContext {
 	validator.Setup()
 
 	return &defaultApplicationContext{
+		id:                                  id,
 		config:                              config,
 		messageSource:                       messageSource,
 		logger:                              logger,
@@ -80,6 +84,7 @@ func NewApplicationContext() ApplicationContext {
 }
 
 type defaultApplicationContext struct {
+	id                                  id.IDGenerator
 	config                              config.Config
 	messageSource                       message.MessageSource
 	logger                              logging.Logger
@@ -95,6 +100,11 @@ type defaultApplicationContext struct {
 	interceptor                         handler.HandlerInterceptor
 	apiLambdaHandler                    *handler.APILambdaHandler
 	asyncLambdaHandler                  *handler.AsyncLambdaHandler
+}
+
+// GetIDGenerator implements ApplicationContext.
+func (ac *defaultApplicationContext) GetIDGenerator() id.IDGenerator {
+	return ac.id
 }
 
 // GetConfig implements ApplicationContext.
@@ -172,6 +182,10 @@ func (ac *defaultApplicationContext) GetAsyncLambdaHandler() *handler.AsyncLambd
 	return ac.asyncLambdaHandler
 }
 
+func createIDGenerator() id.IDGenerator {
+	return id.NewIDGenerator()
+}
+
 func createMessageSource() message.MessageSource {
 	messageSource, err := message.NewMessageSource()
 	if err != nil {
@@ -221,8 +235,8 @@ func createTransactionalSQSAccessor(logger logging.Logger, config config.Config,
 	return accessor
 }
 
-func createSQSTemplate(logger logging.Logger, config config.Config, sqsAccessor transaction.TransactionalSQSAccessor) async.SQSTemplate {
-	return transaction.NewSQSTemplate(logger, config, sqsAccessor)
+func createSQSTemplate(logger logging.Logger, config config.Config, id id.IDGenerator, sqsAccessor transaction.TransactionalSQSAccessor) async.SQSTemplate {
+	return transaction.NewSQSTemplate(logger, config, id, sqsAccessor)
 }
 
 func createDynamoDBTransactionManager(logger logging.Logger,
