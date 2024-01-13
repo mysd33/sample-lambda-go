@@ -1,0 +1,9 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres    
+    container_name: postgres-local
+    environment:      
+      POSTGRES_PASSWORD: password      
+    ports:
+      - 5432:5432

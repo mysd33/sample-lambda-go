@@ -412,9 +412,11 @@ aws logs delete-log-group --log-group-name（返却された各ロググルー�
 
 * Postgres SQLのDockerコンテナを起動
 ```sh
-docker run --name test-postgres -p 5432:5432 -e POSTGRES_PASSWORD=password -d postgres
+cd postgres-local
+docker compose up -d
+
 #Postgresのコンテナにシェルで入って、psqlコマンドで接続
-docker exec -i -t test-postgres /bin/bash
+docker exec -i -t postgres-local /bin/bash
 > psql -U postgres
 
 # psqlで、testdbデータベースを作成
@@ -429,20 +431,15 @@ testdb> \dt
 testdb> \q
 ```
 
-* DynamoDB LocalのDockerコンテナを起動
+* [DynamoDB Local](https://docs.aws.amazon.com/ja_jp/amazondynamodb/latest/developerguide/DynamoDBLocal.html)と[dynamodb-admin](https://github.com/aaronshaf/dynamodb-admin)のDockerコンテナを起動
+
 ```sh
+cd ..
 cd dynamodb-local
-docker compose up
+docker compose up -d
 ```
 
-* dynamodb-adminでtodoテーブルを作成    
-    * [dynamodb-admin](https://github.com/aaronshaf/dynamodb-admin)をインストールし、起動する
-        * [dynamodb-adminのインストール＆起動方法](https://github.com/aaronshaf/dynamodb-admin#use-as-globally-installed-app)
-
-        ```
-        dynamodb-admin
-        ```
-
+* dynamodb-adminでtodoテーブルを作成        
     * ブラウザで[http://localhost:8001/](http://localhost:8001/)にアクセスし「Create Table」ボタンをクリック    
     * 以下のテーブルを作成
         * 「Table Name」…「todo」、「Hash Attribute Name」…「todo_id」、「Hash Attribute Type」…「String」で作成
@@ -457,7 +454,7 @@ docker compose up
 ```sh
 cd ..
 cd elasticmq
-docker compose up
+docker compose up -d
 ```
 
 * ブラウザで、[http://localhost:9325](http://localhost:9325)にアクセスするとキューの状態が確認できる
