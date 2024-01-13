@@ -1,5 +1,5 @@
 .aws-sam/
 *.bkp
 *.dtmp
-
 *.db
+minio/data/

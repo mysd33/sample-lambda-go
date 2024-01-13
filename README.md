@@ -457,8 +457,23 @@ cd elasticmq
 docker compose up -d
 ```
 
-* ブラウザで、[http://localhost:9325](http://localhost:9325)にアクセスするとキューの状態が確認できる
+* キューの確認
+    * ブラウザで、[http://localhost:9325](http://localhost:9325)にアクセスするとキューの状態が確認できる
     * custom.confの設定に基づき、SampleQueueと、SampleQueue-DLQという標準キュー、SampleFIFOQueue.fifoというFIFOキューが作成されていることが分かる
+
+* [MinIO](https://min.io/)のDockerコンテナを起動
+
+```sh
+cd ..
+cd minio
+docker compose up -d
+```
+
+* バケットの作成
+    * ブラウザで、[http://localhost:9001](http://localhost:9001)にアクセスするとMinIOのコンソールが表示される
+    * ログイン画面で、UsernameとPasswordに、それぞれ「minioadmin」を入力しログインする
+    * 「Object Browser」メニューから、「Create bucket」をクリックし、以下のバケットを作成する
+        * 「Bucket Name」…「xxxx」
 
 * sam local start-apiコマンドを実行
     * local-env.jsonファイルに記載されてた、環境変数で上書きして実行
