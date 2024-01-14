@@ -23,7 +23,7 @@ func initBiz(ac component.ApplicationContext) handler.AsyncControllerFunc {
 	todoRepository := repository.NewTodoRepositoryForDynamoDB(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(),
 		ac.GetLogger(), ac.GetConfig(), ac.GetIDGenerator())
 	// サービスの作成
-	todoAsyncService := service.New(ac.GetLogger(), ac.GetConfig(), tempRepository, todoRepository)
+	todoAsyncService := service.New(ac.GetLogger(), ac.GetConfig(), ac.GetObjectStorageAccessor(), tempRepository, todoRepository)
 	// コントローラの作成
 	controller := controller.New(ac.GetLogger(), ac.GetDynamoDBTransactionManager(), todoAsyncService)
 	// ハンドラインタセプタの取得

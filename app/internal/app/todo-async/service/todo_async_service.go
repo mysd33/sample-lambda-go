@@ -6,10 +6,16 @@ import (
 	"app/internal/pkg/message"
 	"app/internal/pkg/repository"
 	"encoding/json"
+	"fmt"
 
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
+	"example.com/appbase/pkg/objectstorage"
+)
+
+const (
+	S3_BUCKET_NAME = "S3_BUCKET_NAME"
 )
 
 // TodoAsyncService は、Todoの非同期処理を管理するServiceインタフェースです。
@@ -21,20 +27,23 @@ type TodoAsyncService interface {
 // NewTodoAsyncService は、TodoAsyncServiceを生成します。
 func New(log logging.Logger,
 	config config.Config,
+	obectStorageAccessor objectstorage.ObjectStorageAccessor,
 	tempRepository repository.TempRepository,
 	todoRepository repository.TodoRepository) TodoAsyncService {
 	return &todoAsyncServiceImpl{log: log,
-		config:         config,
-		tempRepository: tempRepository,
-		todoRepository: todoRepository,
+		config:                config,
+		objectstorageAccessor: obectStorageAccessor,
+		tempRepository:        tempRepository,
+		todoRepository:        todoRepository,
 	}
 }
 
 type todoAsyncServiceImpl struct {
-	log            logging.Logger
-	config         config.Config
-	tempRepository repository.TempRepository
-	todoRepository repository.TodoRepository
+	log                   logging.Logger
+	config                config.Config
+	objectstorageAccessor objectstorage.ObjectStorageAccessor
+	tempRepository        repository.TempRepository
+	todoRepository        repository.TodoRepository
 }
 
 // RegisterTodosAsync implements TodoAsyncService.
@@ -49,9 +58,23 @@ func (ts *todoAsyncServiceImpl) RegisterTodosAsync(asyncMesssage entity.AsyncMes
 		return err
 	}
 	ts.log.Debug("temp: %+v", temp)
-	var todoTitles []string
-	err = json.Unmarshal([]byte(temp.Value), &todoTitles)
+	bucketName, found := ts.config.GetWithContains(S3_BUCKET_NAME)
+	if !found {
+		// TODO: エラー処理
+		return errors.NewSystemError(fmt.Errorf("バケット%sが見つかりません", bucketName), message.E_EX_9001)
+	}
+	// S3からファイルを取得
+	filePath := temp.Value
+	data, err := ts.objectstorageAccessor.Download(bucketName, filePath)
 	if err != nil {
+		// TODO: エラー処理
+		return errors.NewSystemError(err, message.E_EX_9001)
+	}
+	// jsonファイルをアンマーシャルして、Todoのリストを取得
+	var todoTitles []string
+	err = json.Unmarshal(data, &todoTitles)
+	if err != nil {
+		// TODO: エラー処理
 		return errors.NewSystemError(err, message.E_EX_9001)
 	}
 	// TODO: todoTitlesをS3上のファイルから取得して登録するように変更
