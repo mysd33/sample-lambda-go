@@ -12,7 +12,7 @@
     * 標準キュー、FIFOキューの両方に対応
     * DynamoDBのトランザクション管理機能を利用した、メッセージ送達とDynamoDBトランザクションの整合性を担保する仕組みを実装
 
-* LambdaからのDynamoDB、SQSといった各種AWSリソースへのアクセスに対応
+* LambdaからのDynamoDB、SQS、S3といった各種AWSリソースへのアクセスに対応
     * AWS SDK for Go v2に対応
     * AWS SDKやX-Ray SDKの利用方法がv1の時と変更になっている
 
@@ -60,6 +60,7 @@
 * ローカル環境に、AWS CLI、AWS SAM CLI、Docker環境が必要
 
 ## 1. IAMの作成
+* TODO: LambdaのIAMロールにS3のアクセスのIAMポリシー追加
 ```sh
 #cfnフォルダに移動
 cd cfn
@@ -80,6 +81,8 @@ aws cloudformation create-stack --stack-name Demo-SG-Stack --template-body file:
 ```
 
 ## 4. VPC Endpointの作成とプライベートサブネットのルートテーブル更新
+* TODO: S3のVPCエンドポイントの追加
+
 * API GatewayのPrivate APIのためのVPC Endpointや、VPC内LambdaからDynamoDB、SQS、AppConfig等へアクセスするためのVPC Endpointを作成
 ```sh
 aws cloudformation validate-template --template-body file://cfn-vpe.yaml
