@@ -162,14 +162,21 @@ aws cloudformation validate-template --template-body file://cfn-sqs.yaml
 aws cloudformation create-stack --stack-name Demo-SQS-Stack --template-body file://cfn-sqs.yaml
 ```
 
-## 11. AppConfigの作成
+## 11. S3の作成
+* TODO:作成中
+```sh
+aws cloudformation validate-template --template-body file://cfn-s3.yaml
+aws cloudformation create-stack --stack-name Demo-S3-Stack --template-body file://cfn-s3.yaml
+```
+
+## 12. AppConfigの作成
 * AppConfigの基本リソースを作成する。
 ```sh
 aws cloudformation validate-template --template-body file://cfn-appconfig.yaml
 aws cloudformation create-stack --stack-name Demo-AppConfig-Stack --template-body file://cfn-appconfig.yaml
 ```
 
-## 12. AWS SAMでLambda/API Gatewayのデプロイ       
+## 13. AWS SAMでLambda/API Gatewayのデプロイ       
 * SAMビルド    
 ```sh
 # トップのフォルダに戻る
@@ -216,7 +223,7 @@ sam deploy
 make deploy
 ```
 
-## 13. AppConfigのデプロイ
+## 14. AppConfigのデプロイ
 * Hosted Configurationの設定バージョンの作成と初回デプロイする。
 ```sh
 #cfnフォルダに移動
@@ -233,7 +240,7 @@ aws cloudformation validate-template --template-body file://cfn-appconfig-sm-dep
 aws cloudformation create-stack --stack-name Demo-AppConfigSMDeploy-Stack --template-body file://cfn-appconfig-sm-deploy.yaml --parameters ParameterKey=SecretsManagerVersion,ParameterValue=（SecretsManagerVersionのバージョンID）
 ```
 
-## 14. APの実行確認
+## 15. APの実行確認
 * マネージドコンソールから、EC2(Bation)へSystems Manager Session Managerで接続して、curlコマンドで動作確認
     * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
 
@@ -322,7 +329,7 @@ curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Mil
 
 ```
 
-## 15. AppConfingの設定変更＆デプロイ
+## 16. AppConfingの設定変更＆デプロイ
 * cfn-appconfig-hosted-deploy.yaml内のホスト化された設定の内容を修正
 ```yaml
   AppConfigHostedConfigurationVersion:
@@ -359,7 +366,7 @@ aws cloudformation update-stack --stack-name Demo-AppConfigHostedDeploy-Stack --
 {"level":"info","ts":1699780051.3576484,"caller":"service/user_service.go:39","msg":"hoge_name=foo2"}
 ```
 
-## 16. AWSリソースの削除
+## 17. AWSリソースの削除
 * AppConfig Deploymentリソースの削除
 ```sh
 aws cloudformation delete-stack --stack-name Demo-AppConfigSMDeploy-Stack
@@ -380,6 +387,7 @@ make delete
 ```sh
 aws cloudformation delete-stack --stack-name Demo-AppConfig-Stack
 aws cloudformation delete-stack --stack-name Demo-Bastion-Stack
+aws cloudformation delete-stack --stack-name Demo-S3-Stack
 aws cloudformation delete-stack --stack-name Demo-SQS-Stack
 aws cloudformation delete-stack --stack-name Demo-DynamoDB-Stack
 aws cloudformation delete-stack --stack-name Demo-RDS-Stack
@@ -803,6 +811,7 @@ godoc
 | DynamoDBアクセス | AWS SDKを利用しDynamoDBへアクセスする汎化したAPIを提供する。 | ○ | com.example/appbase/pkg/dynamodb |
 | DynamoDBトランザクション管理機能 | オンラインAP制御機能と連携し、サービス（ビジネスロジック）の実行前後にDynamoDBのトランザクション開始・終了を機能を提供する。 | ○ | com.example/appbase/pkg/transaction<br/>com.example/appbase/pkg/domain |
 | 非同期実行依頼 | AWS SDKを利用してSQSへ非同期処理実行依頼メッセージを送信する汎化したAPIを提供する。また、業務APでDynamoDBアクセスを伴う場合、DynamoDBトランザクション管理機能を用いてDB更新とメッセージ送達のデータ整合性を担保する。 | ○ | com.example/appbase/pkg/async<br/>com.example/appbase/pkg/transaction |
+| オブジェクトストレージアクセス| AWS SDKを利用し、S3にアクセスする汎化したAPIを提供する。 | ○ | com.example/appbase/pkg/objectstorage |
 | HTTPクライアント| net/htttpを利用しREST APIの呼び出しを汎化したAPIを提供する。 | ○ | com.example/appbase/pkg/httpclient |
 | 分散トレーシング（X-Ray） | AWS X-Rayを利用して、サービス間の分散トレーシング・可視化を実現する。実現には、AWS SAMのtemplate.ymlで設定でAPI GatewayやLambdaのトレースを有効化する。またAWS SDKが提供するメソッドに、Lambdaのハンドラメソッドの引数のContextを引き渡すようにする。Contextは業務AP側で引き継いでメソッドの引数に引き渡さなくてもソフトウェアフレームワーク側で取得できるようにグローバル変数で管理する。 | ○ | com.example/appbase/pkg/apcontext |
 | ロギング | go.uber.org/zapの機能を利用し、プロファイル（環境区分）によって動作環境に応じたログレベルや出力先（ファイルや標準出力）、出力形式（タブ区切りやJSON）に切替可能とする。またメッセージIDをもとにログ出力可能な汎用的なAPIを提供する。 | ○ | com.example/appbase/pkg/logging |
@@ -814,5 +823,4 @@ godoc
 
 | 機能 | 機能概要と実現方式 | 拡張実装 | 拡張実装の格納パッケージ |
 | ---- | ---- | ---- | ---- |
-| オブジェクトストレージアクセス| AWS SDKを利用し、S3にアクセスする汎化したAPIを提供する。 | ○ | com.example/appbase/pkg/objectstorage |
 | API認証・認可| APIGatewayのCognitoオーサライザまたはLambdaオーサライザを利用し、APIの認証、認可を行う。 | ○ | 未定 |
