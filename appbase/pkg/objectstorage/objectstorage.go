@@ -14,6 +14,7 @@ import (
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
@@ -63,6 +64,11 @@ func NewObjectStorageAccessor(myCfg myconfig.Config, log logging.Logger) (Object
 		s3Endpoint := myCfg.Get(S3_LOCAL_ENDPOINT_NAME, "")
 		if s3Endpoint != "" {
 			o.BaseEndpoint = aws.String(s3Endpoint)
+			// MinIOの場合は、PathStyleをtrueにする
+			o.UsePathStyle = true
+			key := myCfg.Get("MINIO_ACCESS_KEY", "minioadmin")
+			secret := myCfg.Get("MINIO_SECRET_KEY", "minioadmin")
+			o.Credentials = aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(key, secret, ""))
 		}
 	})
 
@@ -91,12 +97,14 @@ type defaultObjectStorageAccessor struct {
 
 // Upload implements ObjectStorageAccessor.
 func (oa *defaultObjectStorageAccessor) Upload(bucketName string, objectKey string, objectBody []byte) error {
+	oa.log.Debug("Upload bucketName:%s, objectKey:%s", bucketName, objectKey)
 	reader := bytes.NewReader(objectBody)
 	return oa.UploadFromReader(bucketName, objectKey, reader)
 }
 
 // UploadFromReader implements ObjectStorageAccessor.
 func (oa *defaultObjectStorageAccessor) UploadFromReader(bucketName string, objectKey string, reader io.Reader) error {
+	oa.log.Debug("UploadFromReader bucketName:%s, objectKey:%s", bucketName, objectKey)
 	input := &s3.PutObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),

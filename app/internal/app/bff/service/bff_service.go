@@ -6,11 +6,18 @@ import (
 	"app/internal/pkg/message"
 	"app/internal/pkg/repository"
 	"encoding/json"
+	"fmt"
 
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/id"
 	"example.com/appbase/pkg/logging"
+	"example.com/appbase/pkg/objectstorage"
+)
+
+const (
+	S3_BUCKET_NAME = "S3_BUCKET_NAME"
+	tempFilePath   = "todoFiles/%s.json"
 )
 
 // TodoService は、Bff業務のServiceインタフェースです。
@@ -31,6 +38,7 @@ type BffService interface {
 func New(log logging.Logger,
 	config config.Config,
 	id id.IDGenerator,
+	obectStorageAccessor objectstorage.ObjectStorageAccessor,
 	userRepository repository.UserRepository,
 	todoRepository repository.TodoRepository,
 	tempRepository repository.TempRepository,
@@ -40,6 +48,7 @@ func New(log logging.Logger,
 		log:                    log,
 		config:                 config,
 		id:                     id,
+		obectStorageAccessor:   obectStorageAccessor,
 		userRepository:         userRepository,
 		todoRepository:         todoRepository,
 		tempRepository:         tempRepository,
@@ -52,6 +61,7 @@ type bffServiceImpl struct {
 	log                    logging.Logger
 	config                 config.Config
 	id                     id.IDGenerator
+	obectStorageAccessor   objectstorage.ObjectStorageAccessor
 	userRepository         repository.UserRepository
 	todoRepository         repository.TodoRepository
 	tempRepository         repository.TempRepository
@@ -91,18 +101,12 @@ func (bs *bffServiceImpl) FindTodo(userId string, todoId string) (*entity.User, 
 func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string, dbtx string) error {
 	bs.log.Debug("RegisterTodosAsync")
 	var tempId string
-	// TODO: todoTitlesをS3のファイルに入れて登録するように変更
 	if dbtx != "no" {
 		bs.log.Debug("業務のDB登録処理あり")
-		// TODO: Valueに、S3のパスを入れて登録するように変更
-		byteMessage, err := json.Marshal(todoTitles)
+		temp, err := bs.registerTemp(todoTitles)
 		if err != nil {
-			return errors.NewSystemError(err, message.E_EX_9001)
+			return err
 		}
-		value := string(byteMessage)
-		temp := &entity.Temp{Value: value}
-		// Tempテーブルの登録
-		bs.tempRepository.CreateOneTx(temp)
 		tempId = temp.ID
 	}
 	// TODOリストの登録を非同期処理実行依頼
@@ -115,18 +119,12 @@ func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string, dbtx string) e
 func (bs *bffServiceImpl) RegisterTodosAsyncByFIFO(todoTitles []string, dbtx string) error {
 	bs.log.Debug("RegisterTodosAsyncByFIFO")
 	var tempId string
-	// TODO: todoTitlesをS3上のファイルに入れて登録するように変更
 	if dbtx != "no" {
 		bs.log.Debug("業務のDB登録処理あり")
-		// TODO: Valueに、S3のパスを入れて登録するように変更
-		byteMessage, err := json.Marshal(todoTitles)
+		temp, err := bs.registerTemp(todoTitles)
 		if err != nil {
-			return errors.NewSystemError(err, message.E_EX_9001)
+			return err
 		}
-		value := string(byteMessage)
-		temp := &entity.Temp{Value: value}
-		// Tempテーブルの登録
-		bs.tempRepository.CreateOneTx(temp)
 		tempId = temp.ID
 	}
 
@@ -137,4 +135,30 @@ func (bs *bffServiceImpl) RegisterTodosAsyncByFIFO(todoTitles []string, dbtx str
 	bs.asyncMessageRepository.SendToFIFOQueue(asyncMessage, msgGroupId)
 	return nil
 
+}
+
+func (bs *bffServiceImpl) registerTemp(todoTitles []string) (*entity.Temp, error) {
+	// todoTitlesの内容をS3にファイルとして格納する
+	byteMessage, err := json.Marshal(todoTitles)
+	if err != nil {
+		// TODO: エラー処理
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
+	}
+	bucketName, found := bs.config.GetWithContains(S3_BUCKET_NAME)
+	if !found {
+		// TODO: エラー処理
+		return nil, errors.NewSystemError(fmt.Errorf("バケット%sが見つかりません", bucketName), message.E_EX_9001)
+	}
+
+	objectKey := fmt.Sprintf(tempFilePath, bs.id.GenerateUUID())
+	err = bs.obectStorageAccessor.Upload(bucketName, objectKey, byteMessage)
+	if err != nil {
+		// TODO: エラー処理
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
+	}
+	// Valueに、S3のパスを入れて登録するように変更
+	temp := &entity.Temp{Value: objectKey}
+	// Tempテーブルの登録
+	bs.tempRepository.CreateOneTx(temp)
+	return temp, nil
 }

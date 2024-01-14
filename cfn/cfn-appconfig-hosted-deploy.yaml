@@ -39,7 +39,7 @@ Resources:
               QUEUE_MESSAGE_TABLE_TTL_HOUR: 96
               GIN_DEBUG: true
               LOG_LEVEL: DEBUG              
-              RDB_SSL_MODE: require             
+              RDB_SSL_MODE: require                           
             - "\nRDB_ENDPOINT: "
             - Fn::ImportValue: !Sub ${StackPrefix}-RDSProxyEndpoint
             - "\nRDB_PORT: "
@@ -50,6 +50,9 @@ Resources:
             - Fn::ImportValue: !Sub ${StackPrefix}-UsersAPIBaseURL-${Stage}
             - "\nTODO_API_BASE_URL: "
             - Fn::ImportValue: !Sub ${StackPrefix}-TodoAPIBaseURL-${Stage}
+            - "\nS3_BUCKET_NAME: "
+            # TODO Import Value From S3 Stack
+            - "mysd33bucket123"             
 
   AppConfigHostedProfileDeployment:
     Type: AWS::AppConfig::Deployment

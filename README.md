@@ -481,7 +481,7 @@ docker compose up -d
     * ブラウザで、[http://localhost:9001](http://localhost:9001)にアクセスするとMinIOのコンソールが表示される
     * ログイン画面で、UsernameとPasswordに、それぞれ「minioadmin」を入力しログインする
     * 「Object Browser」メニューから、「Create bucket」をクリックし、以下のバケットを作成する
-        * 「Bucket Name」…「xxxx」
+        * 「Bucket Name」…「samplebucket123」
 
 * sam local start-apiコマンドを実行
     * local-env.jsonファイルに記載されてた、環境変数で上書きして実行

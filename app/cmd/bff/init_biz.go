@@ -32,7 +32,8 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	ac.GetLogger().Debug("SampleFIFOQueueName:%s", sampleFifoQueueName)
 	asyncMessageRepository := repository.NewAsyncMessageRepository(ac.GetSQSTemplate(), sampleQueueName, sampleFifoQueueName)
 	// サービスの作成
-	bffService := service.New(ac.GetLogger(), ac.GetConfig(), ac.GetIDGenerator(), userRepository, todoRepository, tempRepository, asyncMessageRepository)
+	bffService := service.New(ac.GetLogger(), ac.GetConfig(), ac.GetIDGenerator(), ac.GetObjectStorageAccessor(),
+		userRepository, todoRepository, tempRepository, asyncMessageRepository)
 	// コントローラの作成
 	bffController := controller.New(ac.GetLogger(), ac.GetDynamoDBTransactionManager(), bffService)
 	// ハンドラインタセプタの取得
