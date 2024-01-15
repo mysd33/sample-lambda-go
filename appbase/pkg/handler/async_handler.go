@@ -81,6 +81,7 @@ func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQS
 
 			// SQSのメッセージを1件取得しコントローラを呼び出し
 			err = h.doHandle(v, response, isFIFO, asyncControllerFunc)
+			// TODO: 「:=」で名前付き戻り値にErrorを戻さなくてよい？「=」のままでよい？
 			if err != nil {
 				// 失敗したメッセージIDをBatchItemFailuresに登録
 				response.BatchItemFailures = append(response.BatchItemFailures, events.SQSBatchItemFailure{ItemIdentifier: v.MessageId})
