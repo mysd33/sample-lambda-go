@@ -68,9 +68,6 @@ func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQS
 				response.BatchItemFailures = append(response.BatchItemFailures, events.SQSBatchItemFailure{ItemIdentifier: ""})
 			}
 		}()
-		// ctxをコンテキスト領域に格納
-		apcontext.Context = ctx
-
 		// FIFOの対応（FIFOの場合はメッセージグループID毎にメッセージのソート）
 		isFIFO := event.Records[0].Attributes[string(types.MessageSystemAttributeNameMessageGroupId)] != ""
 		h.log.Debug("isFIFO: %t", isFIFO)
@@ -79,8 +76,11 @@ func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQS
 			h.sortMessages(event.Records)
 		}
 		for _, v := range event.Records {
+			// ハンドラから受け取ったもとのContext（ctx）を毎回コンテキスト領域に格納しなおす
+			apcontext.Context = ctx
+
 			// SQSのメッセージを1件取得しコントローラを呼び出し
-			h.doHandle(v, response, isFIFO, asyncControllerFunc)
+			err = h.doHandle(v, response, isFIFO, asyncControllerFunc)
 			if err != nil {
 				// 失敗したメッセージIDをBatchItemFailuresに登録
 				response.BatchItemFailures = append(response.BatchItemFailures, events.SQSBatchItemFailure{ItemIdentifier: v.MessageId})
