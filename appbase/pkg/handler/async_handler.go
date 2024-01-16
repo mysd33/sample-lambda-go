@@ -57,14 +57,15 @@ func NewAsyncLambdaHandler(config config.Config,
 
 // Handleは、SQSトリガのLambdaのハンドラを実行します。
 func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQSTriggeredLambdaHandlerFunc {
-	return func(ctx context.Context, event events.SQSEvent) (response events.SQSEventResponse, err error) {
+	return func(ctx context.Context, event events.SQSEvent) (response events.SQSEventResponse, resultErr error) {
 		defer func() {
 			// パニックのリカバリ処理
 			if v := recover(); v != nil {
-				err = fmt.Errorf("recover from: %+v", v)
+				resultErr = fmt.Errorf("recover from: %+v", v)
 				// パニックのスタックトレース情報をログ出力
-				h.log.ErrorWithUnexpectedError(err)
-				// 全てのメッセージを失敗扱いにする
+				h.log.ErrorWithUnexpectedError(resultErr)
+				// 全てのメッセージを失敗扱いにするため、空の文字列ItemIdentifierを追加
+				// https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
 				response.BatchItemFailures = append(response.BatchItemFailures, events.SQSBatchItemFailure{ItemIdentifier: ""})
 			}
 		}()
@@ -80,10 +81,11 @@ func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQS
 			apcontext.Context = ctx
 
 			// SQSのメッセージを1件取得しコントローラを呼び出し
-			err = h.doHandle(v, response, isFIFO, asyncControllerFunc)
-			// TODO: 「:=」で名前付き戻り値にErrorを戻さなくてよい？「=」のままでよい？
+			err := h.doHandle(v, response, isFIFO, asyncControllerFunc)
 			if err != nil {
-				// 失敗したメッセージIDをBatchItemFailuresに登録
+				// 部分的なバッチで一部処理失敗した場合は、エラーは返却しない
+				// 失敗したメッセージ以降のメッセージIDをBatchItemFailuresに登録
+				// https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
 				response.BatchItemFailures = append(response.BatchItemFailures, events.SQSBatchItemFailure{ItemIdentifier: v.MessageId})
 			}
 		}
