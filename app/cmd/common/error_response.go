@@ -30,9 +30,15 @@ func (r *commonErrorResponse) ValidationErrorResponse(validationError *myerrors.
 }
 
 // BusinessErrorResponse implements api.ErrorResponse.
-func (r *commonErrorResponse) BusinessErrorResponse(businessError *myerrors.BusinessError) (int, any) {
-	return http.StatusBadRequest, r.errorResponseBody(businessError.ErrorCode(),
-		r.messageSource.GetMessage(businessError.ErrorCode(), businessError.Args()...))
+func (r *commonErrorResponse) BusinessErrorResponse(businessErrors *myerrors.BusinessErrors) (int, any) {
+	bizErrMsg := make(map[string]string, len(businessErrors.Errors()))
+	for _, businessError := range businessErrors.Errors() {
+		code := businessError.ErrorCode()
+		msg := r.messageSource.GetMessage(businessError.ErrorCode(), businessError.Args()...)
+		bizErrMsg[code] = msg
+	}
+
+	return http.StatusBadRequest, r.errorResponseBody("businessError", bizErrMsg)
 }
 
 // WarnErrorResponse implements api.ErrorResponse.
@@ -58,7 +64,7 @@ func (r *commonErrorResponse) UnExpectedErrorResponse(err error) (int, any) {
 		r.messageSource.GetMessage(mymessage.E_EX_9999))
 }
 
-func (*commonErrorResponse) errorResponseBody(label string, detail string) gin.H {
+func (*commonErrorResponse) errorResponseBody(label string, detail any) gin.H {
 	//TODO: 要件に応じてエラーレスポンスの形式を修正する。
 	return gin.H{"code": label, "detail": detail}
 }

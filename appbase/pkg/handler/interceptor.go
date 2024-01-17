@@ -112,13 +112,16 @@ func (i *defaultHandlerInterceptor) HandleAsync(asyncControllerFunc AsyncControl
 func (i *defaultHandlerInterceptor) logError(err error) {
 	var (
 		validationError *myerrors.ValidationError
-		businessError   *myerrors.BusinessError
+		businessErrors  *myerrors.BusinessErrors
 		systemError     *myerrors.SystemError
 	)
 	if errors.As(err, &validationError) {
 		i.log.WarnWithCodableError(validationError)
-	} else if errors.As(err, &businessError) {
-		i.log.WarnWithCodableError(businessError)
+	} else if errors.As(err, &businessErrors) {
+		// TODO: ビジネスエラーをまとめて1つのログで出力する検討
+		for _, businessError := range businessErrors.Errors() {
+			i.log.WarnWithCodableError(businessError)
+		}
 	} else if errors.As(err, &systemError) {
 		i.log.ErrorWithCodableError(systemError)
 	} else {

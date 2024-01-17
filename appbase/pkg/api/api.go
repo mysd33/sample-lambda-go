@@ -31,7 +31,7 @@ type defaultApiResponseFormatter struct {
 func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context, errorResponse ErrorResponse) {
 	var (
 		validationError *myerrors.ValidationError
-		businessError   *myerrors.BusinessError
+		businessErrors  *myerrors.BusinessErrors
 		systemError     *myerrors.SystemError
 	)
 	errs := ctx.Errors
@@ -44,8 +44,8 @@ func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context, error
 		// 各エラー内容に応じた応答メッセージの成形
 		if errors.As(err, &validationError) {
 			ctx.JSON(errorResponse.ValidationErrorResponse(validationError))
-		} else if errors.As(err, &businessError) {
-			ctx.JSON(errorResponse.BusinessErrorResponse(businessError))
+		} else if errors.As(err, &businessErrors) {
+			ctx.JSON(errorResponse.BusinessErrorResponse(businessErrors))
 		} else if errors.As(err, &systemError) {
 			ctx.JSON(errorResponse.SystemErrorResponse(systemError))
 		} else {
