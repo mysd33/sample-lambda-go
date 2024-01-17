@@ -187,6 +187,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x
     Properties:
+#      Handler: todo-async
       FunctionName: !Ref TodoAsyncFunctionName
       CodeUri: app/cmd/todo-async/
       Role: !ImportValue
@@ -204,6 +205,7 @@ Resources:
     Metadata:
       BuildMethod: go1.x
     Properties:
+#      Handler: todo-async-fifo
       FunctionName: !Ref TodoAsyncFifoFunctionName
       CodeUri: app/cmd/todo-async/
       Role: !ImportValue
