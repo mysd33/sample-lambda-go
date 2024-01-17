@@ -34,6 +34,11 @@ func (*errorTestServiceImpl) Execute(errorType string) error {
 	case "business2":
 		// Causeなしの場合
 		return errors.NewBusinessError(message.W_EX_8001, "fuga")
+	case "business3":
+		// 複数エラーの場合
+		err1 := errors.NewBusinessError(message.W_EX_8001, "fuga")
+		err2 := errors.NewBusinessError(message.W_EX_8001, "piyo")
+		return errors.NewBusinessErrors(err1, err2)
 	case "system":
 		//システムエラー
 		cause := fmt.Errorf("原因のエラーB")

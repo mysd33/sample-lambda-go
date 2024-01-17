@@ -528,6 +528,7 @@ curl -X POST http://127.0.0.1:3000/bff-api/v1/error/validation
 curl -X POST -H "Content-Type: application/json" -d '{}' http://127.0.0.1:3000/bff-api/v1/error/validation2
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/business
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/business2
+curl -X POST http://127.0.0.1:3000/bff-api/v1/error/business3
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/system
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/hogehoge
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/panic

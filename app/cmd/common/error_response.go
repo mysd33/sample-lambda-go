@@ -31,14 +31,14 @@ func (r *commonErrorResponse) ValidationErrorResponse(validationError *myerrors.
 
 // BusinessErrorResponse implements api.ErrorResponse.
 func (r *commonErrorResponse) BusinessErrorResponse(businessErrors *myerrors.BusinessErrors) (int, any) {
-	bizErrMsg := make(map[string]string, len(businessErrors.Errors()))
+	bizErrMsgs := make([]map[string]string, 0, len(businessErrors.Errors()))
 	for _, businessError := range businessErrors.Errors() {
-		code := businessError.ErrorCode()
-		msg := r.messageSource.GetMessage(businessError.ErrorCode(), businessError.Args()...)
-		bizErrMsg[code] = msg
+		bizErrMsg := make(map[string]string)
+		bizErrMsg["code"] = businessError.ErrorCode()
+		bizErrMsg["message"] = r.messageSource.GetMessage(businessError.ErrorCode(), businessError.Args()...)
+		bizErrMsgs = append(bizErrMsgs, bizErrMsg)
 	}
-
-	return http.StatusBadRequest, r.errorResponseBody("businessError", bizErrMsg)
+	return http.StatusBadRequest, r.errorResponseBody("businessError", bizErrMsgs)
 }
 
 // WarnErrorResponse implements api.ErrorResponse.

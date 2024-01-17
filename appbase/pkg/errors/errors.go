@@ -87,7 +87,7 @@ type BusinessErrors struct {
 }
 
 // NewBusinessErrors は、BusinessErrors構造体を作成します。
-func NewBusinessErrors(errors []*BusinessError) *BusinessErrors {
+func NewBusinessErrors(errors ...*BusinessError) *BusinessErrors {
 	return &BusinessErrors{errs: errors}
 }
 
@@ -206,7 +206,7 @@ func (e *BusinessError) Info(key string) any {
 // targetがBusinessErrorsの場合は、BusinessErrorsに自身を追加したものをtargetに設定します。
 func (e *BusinessError) As(target any) bool {
 	if t, ok := target.(**BusinessErrors); ok {
-		*t = NewBusinessErrors([]*BusinessError{e})
+		*t = NewBusinessErrors(e)
 		return true
 	}
 	if t, ok := target.(**BusinessError); ok {
