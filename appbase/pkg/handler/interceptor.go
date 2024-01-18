@@ -58,19 +58,6 @@ func (i *defaultHandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.Ha
 		}
 		// Controllerの実行
 		result, err := controllerFunc(ctx)
-		// TODO: トランザクションロールバック（TransactionCanceledException, TransactionConflictException）
-		// の場合に予期せぬエラーとならないよう各Controllerでハンドリングするか？
-		// Controllerでのハンドリング忘れのためセーフィティネット的にinterceptorで集約的にハンドリングするか？
-		/*
-			var txCanceledException *types.TransactionCanceledException
-			var txConflictException *types.TransactionConflictException
-			if errors.As(err, &txCanceledException) {
-				err = myerrors.NewBusinessErrorWithCause(err, message.W_FW_8002)
-			} else if errors.As(err, &txConflictException) {
-				err = myerrors.NewBusinessErrorWithCause(err, message.I_FW_8002)
-			}
-		*/
-
 		if err != nil {
 			// 集約エラーハンドリングによるログ出力
 			i.logError(err)

@@ -37,7 +37,11 @@ func (*errorTestServiceImpl) Execute(errorType string) error {
 	case "business3":
 		// 複数エラーの場合
 		err1 := errors.NewBusinessError(message.W_EX_8001, "fuga")
+		// 付加情報も付与できる
+		err1.AddInfo("info1", "hoge")
+		err1.AddInfo("info2", "foo")
 		err2 := errors.NewBusinessError(message.W_EX_8001, "piyo")
+		err2.AddInfo("info1", "bar")
 		return errors.NewBusinessErrors(err1, err2)
 	case "system":
 		//システムエラー

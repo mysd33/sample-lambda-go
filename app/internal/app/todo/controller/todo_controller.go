@@ -68,10 +68,10 @@ func (c *todoControllerImpl) Register(ctx *gin.Context) (any, error) {
 		return nil, myerrors.NewValidationErrorWithCause(err, message.W_EX_5001)
 	}
 	// クエリパラメータの取得
-	transaction := ctx.Query("tx")
+	tx := ctx.Query("tx")
 	var serviceFunc domain.ServiceFunc
 
-	if transaction != "" {
+	if tx != "" {
 		serviceFunc = func() (any, error) {
 			// トランザクション指定あり
 			return c.service.RegisterTx(request.TodoTitle)
@@ -86,15 +86,21 @@ func (c *todoControllerImpl) Register(ctx *gin.Context) (any, error) {
 	// DynamoDBトランザクション管理してサービスの実行
 	result, err := c.transactionManager.ExecuteTransaction(serviceFunc)
 	if err != nil {
-		// TODO: ロールバックの場合に、予期せぬエラーとならないよう各Controllerでハンドリングするか？
-		// 集約的にinterceptorで実施するか？
+		var bizErrs *myerrors.BusinessErrors
+		// トランザクションキャンセル時に、各Controllerでハンドリング
 		var txCanceledException *types.TransactionCanceledException
 		var txConflictException *types.TransactionConflictException
-		// 登録失敗の業務エラー
-		if errors.As(err, &txCanceledException) {
-			return nil, myerrors.NewBusinessError(message.W_EX_8003, request.TodoTitle)
+		// 業務エラーの場合にハンドリングしたい場合は、BusinessErrorsのみAsで判定すればよい
+		// BusinessError(単一の業務エラー)の場合もBusinessErrorsとして判定できるようになっている
+		if errors.As(err, &bizErrs) {
+			// 付加情報が付与できる
+			bizErrs.WithInfo("label1")
+		} else if errors.As(err, &txCanceledException) &&
+			transaction.ContainsConditionalCheckFailed(txCanceledException) {
+			// 登録失敗の業務エラーにするか、スキップするかはケースバイケース
+			return nil, myerrors.NewBusinessError(message.W_EX_8005)
 		} else if errors.As(err, &txConflictException) {
-			return nil, myerrors.NewBusinessError(message.W_EX_8004, request.TodoTitle)
+			return nil, myerrors.NewBusinessError(message.W_EX_8005)
 		}
 		return nil, err
 	}

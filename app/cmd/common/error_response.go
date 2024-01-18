@@ -36,9 +36,24 @@ func (r *commonErrorResponse) BusinessErrorResponse(businessErrors *myerrors.Bus
 		bizErrMsg := make(map[string]string)
 		bizErrMsg["code"] = businessError.ErrorCode()
 		bizErrMsg["message"] = r.messageSource.GetMessage(businessError.ErrorCode(), businessError.Args()...)
+		info1 := businessError.Info("info1")
+		if info1Str, ok := info1.(string); ok {
+			bizErrMsg["info1"] = info1Str
+		}
+		info2 := businessError.Info("info2")
+		if info2Str, ok := info2.(string); ok {
+			bizErrMsg["info2"] = info2Str
+		}
 		bizErrMsgs = append(bizErrMsgs, bizErrMsg)
 	}
-	return http.StatusBadRequest, r.errorResponseBody("businessError", bizErrMsgs)
+	var label string
+	info := businessErrors.Info()
+	if infoStr, ok := info.(string); ok {
+		label = infoStr
+	} else {
+		label = "businessError"
+	}
+	return http.StatusBadRequest, r.errorResponseBody(label, bizErrMsgs)
 }
 
 // WarnErrorResponse implements api.ErrorResponse.

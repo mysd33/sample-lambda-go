@@ -142,14 +142,19 @@ func (c *bffControllerImpl) RegisterTodosAsync(ctx *gin.Context) (any, error) {
 	}
 	// トランザクション管理してサービス実行
 	_, err := c.transactionManager.ExecuteTransaction(serviceFunc)
-	// TODO:トランザクションエラーのハンドリング
 	if err != nil {
-		// TODO: ロールバックの場合に、予期せぬエラーとならないよう各Controllerでハンドリングするか？
-		// 集約的にinterceptorで実施するか？
+		var bizErrs *myerrors.BusinessErrors
+		// トランザクションキャンセル時に、各Controllerでハンドリング
 		var txCanceledException *types.TransactionCanceledException
 		var txConflictException *types.TransactionConflictException
-		// 登録失敗の業務エラー
-		if errors.As(err, &txCanceledException) {
+		// 業務エラーの場合にハンドリングしたい場合は、BusinessErrorsのみAsで判定すればよい
+		// BusinessError(単一の業務エラー)の場合もBusinessErrorsとして判定できるようになっている
+		if errors.As(err, &bizErrs) {
+			// 付加情報が付与できる
+			bizErrs.WithInfo("label1")
+		} else if errors.As(err, &txCanceledException) &&
+			transaction.ContainsConditionalCheckFailed(txCanceledException) {
+			// 登録失敗の業務エラーにするか、スキップするかはケースバイケース
 			return nil, myerrors.NewBusinessError(message.W_EX_8005)
 		} else if errors.As(err, &txConflictException) {
 			return nil, myerrors.NewBusinessError(message.W_EX_8005)
