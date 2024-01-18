@@ -51,6 +51,7 @@ func NewSQSAccessor(log logging.Logger, myCfg myConfig.Config) (SQSAccessor, err
 		config:    myCfg,
 		log:       log,
 		sqsClient: sqlClient,
+		queueUrls: make(map[string]string),
 	}, nil
 }
 
@@ -59,20 +60,31 @@ type defaultSQSAccessor struct {
 	config    myConfig.Config
 	log       logging.Logger
 	sqsClient *sqs.Client
+	queueUrls map[string]string
 }
 
 // SendMessageSdk implements SQSAccessor.
 func (sa *defaultSQSAccessor) SendMessageSdk(queueName string, input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
 	// QueueのURLの取得・設定
-	queueUrlOutput, err := sa.sqsClient.GetQueueUrl(apcontext.Context, &sqs.GetQueueUrlInput{
-		QueueName: aws.String(queueName),
-	})
-	if err != nil {
-		return nil, errors.WithStack(err)
+	queueUrl, ok := sa.queueUrls[queueName]
+	if ok {
+		// キャッシュがある場合は、キャッシュから取得
+		sa.log.Debug("QueueURLキャッシュ:%s", queueUrl)
+		input.QueueUrl = &queueUrl
+	} else {
+		// キャッシュがない場合は、APIで取得
+		queueUrlOutput, err := sa.sqsClient.GetQueueUrl(apcontext.Context, &sqs.GetQueueUrlInput{
+			QueueName: aws.String(queueName),
+		})
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		sa.log.Debug("GetQueueURL:%s", *queueUrlOutput.QueueUrl)
+		// 送信先の設定
+		input.QueueUrl = queueUrlOutput.QueueUrl
+		// キャッシュへ格納
+		sa.queueUrls[queueName] = *queueUrlOutput.QueueUrl
 	}
-	sa.log.Debug("QueueURL=%s", *queueUrlOutput.QueueUrl)
-	// 送信先の設定
-	input.QueueUrl = queueUrlOutput.QueueUrl
 
 	if input.MessageGroupId != nil {
 		sa.log.Debug("MessageGroupId=%s, MessageDeduplicationId=%s, Message=%s",
