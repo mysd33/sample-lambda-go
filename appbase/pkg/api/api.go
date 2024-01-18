@@ -4,11 +4,13 @@ api パッケージは、REST APIに関する機能を提供するパッケー�
 package api
 
 import (
-	"errors"
 	"net/http"
 
+	"example.com/appbase/pkg/constant"
 	myerrors "example.com/appbase/pkg/errors"
+	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
+	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,11 +21,12 @@ type ApiResponseFormatter interface {
 }
 
 // NewApiResponseFormatter は、ApiResponseFormatterを作成します。
-func NewApiResponseFormatter(messageSource message.MessageSource) ApiResponseFormatter {
-	return &defaultApiResponseFormatter{messageSource: messageSource}
+func NewApiResponseFormatter(log logging.Logger, messageSource message.MessageSource) ApiResponseFormatter {
+	return &defaultApiResponseFormatter{log: log, messageSource: messageSource}
 }
 
 type defaultApiResponseFormatter struct {
+	log           logging.Logger
 	messageSource message.MessageSource
 }
 
@@ -52,11 +55,12 @@ func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context, error
 			ctx.JSON(errorResponse.UnExpectedErrorResponse(err))
 		}
 	} else {
-		//TODO: 定数化
-		result, ok := ctx.Get("result")
+		result, ok := ctx.Get(constant.CONTROLLER_RESULT)
 		if ok {
 			ctx.JSON(http.StatusOK, result)
 		}
-		//TODO: resultがない場合
+		// resultが取得できなかった場合の処理
+		f.log.Error(message.E_FW_9003)
+		ctx.JSON(errorResponse.UnExpectedErrorResponse(errors.New("no result")))
 	}
 }

@@ -45,8 +45,8 @@ func NewApplicationContext() ApplicationContext {
 	id := createIDGenerator()
 	config := createConfig()
 	messageSource := createMessageSource()
-	apiResponseFormatter := createApiResponseFormatter(messageSource)
 	logger := createLogger(messageSource, config)
+	apiResponseFormatter := createApiResponseFormatter(logger, messageSource)
 	dynamodbAccessor := createTransactionalDynamoDBAccessor(logger, config)
 	dynamoDBTempalte := createDynamoDBTemplate(logger, dynamodbAccessor)
 	queueMessageItemRepository := createQueueMessageItemRepository(config, logger, dynamoDBTempalte)
@@ -205,8 +205,8 @@ func createMessageSource() message.MessageSource {
 	return messageSource
 }
 
-func createApiResponseFormatter(messageSource message.MessageSource) api.ApiResponseFormatter {
-	return api.NewApiResponseFormatter(messageSource)
+func createApiResponseFormatter(logger logging.Logger, messageSource message.MessageSource) api.ApiResponseFormatter {
+	return api.NewApiResponseFormatter(logger, messageSource)
 }
 
 func createLogger(messageSource message.MessageSource, config config.Config) logging.Logger {

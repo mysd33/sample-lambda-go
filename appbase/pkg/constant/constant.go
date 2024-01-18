@@ -11,4 +11,5 @@ const (
 	QUEUE_MESSAGE_STATUS                 = "status"
 	QUEUE_MESSAGE_STATUS_COMPLETE        = "complete"
 	ASYNC_HANDLER_INFO_CTX_KEY           = apcontext.ContextKey("ASYNC_HANDLER_INFO")
+	CONTROLLER_RESULT                    = "result"
 )

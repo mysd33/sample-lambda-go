@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"example.com/appbase/pkg/config"
+	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/env"
 	myerrors "example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
@@ -79,8 +80,7 @@ func (i *defaultHandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.Ha
 		}
 
 		// 処理結果をContextに格納
-		// TODO: 定数化
-		ctx.Set("result", result)
+		ctx.Set(constant.CONTROLLER_RESULT, result)
 		i.log.Info(message.I_FW_0002, funcName)
 	}
 }
