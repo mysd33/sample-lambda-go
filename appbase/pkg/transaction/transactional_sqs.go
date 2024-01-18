@@ -112,7 +112,7 @@ func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Messag
 			queueMessageItem := &entity.QueueMessageItem{}
 			// (キュー名) + "_" + (メッセージID)をパーティションキーとする
 			queueMessageItem.MessageId = v.QueueName + "_" + *output.MessageId
-			// メッセージ重複排除IDは送信時は格納しない（処理済みフラグ代わりに使用しているため）
+			// ステータスは送信時は格納していない
 			// DeleteTime（delete_time）の値を設定
 			deleteTime, err := strconv.Atoi(*v.Input.MessageAttributes["delete_time"].StringValue)
 			if err != nil {

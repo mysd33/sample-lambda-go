@@ -9,7 +9,7 @@ import "example.com/appbase/pkg/transaction/entity"
 type MessageRegisterer interface {
 	// メッセージ情報を登録
 	RegisterMessage(queueMessage *entity.QueueMessageItem) error
-	// メッセージ情報のメッセージ重複排除IDを追加更新
+	// メッセージ情報のステータスを追加更新
 	UpdateMessage(queueMessage *entity.QueueMessageItem) error
 }
 

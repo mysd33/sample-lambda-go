@@ -156,7 +156,7 @@ func (h *AsyncLambdaHandler) sortMessages(sqsMsgs []events.SQSMessage) {
 func (h *AsyncLambdaHandler) checkMessageId(sqsMsg events.SQSMessage) (string, error) {
 	queueMessageTableId := h.getQueueMessageTableId(sqsMsg)
 	if h.unnecessaryToCheckTable(sqsMsg) {
-		// DBを確認しないため、メッセージ重複排除IDは空文字を返却
+		// DBを確認しないためステータス文字列は空文字を返却
 		h.log.Debug("メッセージ管理テーブルのチェック不要")
 		return "", nil
 	}

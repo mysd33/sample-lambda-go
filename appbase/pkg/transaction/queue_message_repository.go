@@ -59,7 +59,7 @@ func (r *defaultQueueMessageItemRepository) FindOne(messageId string, deleteTime
 				Value: messageId,
 			},
 		},
-		// TODO: なぜ、元ネタでは、delete_timeでのFilterしている？
+		// 念のため、delete_timeが一致してるかのFilterのチェック
 		WhereClauses: []*input.WhereClause{
 			{
 				Attribute: input.Attribute{
