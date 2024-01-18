@@ -4,6 +4,8 @@ logging パッケージは、ログ出力に関する機能を提供するパッ
 package logging
 
 import (
+	"fmt"
+
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/env"
 	"example.com/appbase/pkg/errors"
@@ -25,6 +27,8 @@ type Logger interface {
 	Warn(code string, args ...any)
 	// WarnWithCodableError は、エラーが持つメッセージID（エラーコード）、置き換え文字列に対応するメッセージで警告レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	WarnWithCodableError(err errors.CodableError)
+	// WarnWithMultiError は、複数のエラーを持つエラーを警告レベルのログに出力します。
+	WarnWithMultiCodableError(err errors.MultiCodableError)
 	// Error は、メッセージID（エラーコードcode）、置き換え文字列argsに対応するメッセージでエラーレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	Error(code string, args ...any)
 	// ErrorWithCodableError は、エラーが持つメッセージID（エラーコード）、置き換え文字列に対応するメッセージでエラーレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
@@ -100,6 +104,22 @@ func (z *zapLogger) WarnWithCodableError(err errors.CodableError) {
 		return
 	}
 	z.log.Warnf("%s[%v], %+v", code, args, err)
+}
+
+// WarnWithMultiCodableError implements Logger.
+func (z *zapLogger) WarnWithMultiCodableError(err errors.MultiCodableError) {
+	var logStrs []any
+	for _, e := range err.CodableErrors() {
+		code := e.ErrorCode()
+		args := e.Args()
+		message := z.messageSource.GetMessage(code, args...)
+		if message != "" {
+			logStrs = append(logStrs, fmt.Sprintf("%s, %+v\n", message, e))
+		} else {
+			logStrs = append(logStrs, fmt.Sprintf("%s[%v], %+v\n", code, args, e))
+		}
+	}
+	z.log.Warn(logStrs...)
 }
 
 // Error implements Logger.

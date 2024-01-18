@@ -25,6 +25,12 @@ type CodableError interface {
 	Args() []any
 }
 
+// MultiCodableError は、複数のCodableErrorを保持するインタフェースです。
+type MultiCodableError interface {
+	error
+	CodableErrors() []CodableError
+}
+
 // ValidationError は、入力エラーの構造体です。
 type ValidationError struct {
 	cause     error
@@ -102,9 +108,18 @@ func (e *BusinessErrors) Info() any {
 	return e.info
 }
 
-// Errors は、保持している業務エラーを返します。
-func (e *BusinessErrors) Errors() []*BusinessError {
+// BusinessErrors は、保持している業務エラーを返します。
+func (e *BusinessErrors) BusinessErrors() []*BusinessError {
 	return e.errs
+}
+
+// Errors implements MultiCodableError.
+func (e *BusinessErrors) CodableErrors() []CodableError {
+	errs := make([]CodableError, len(e.errs))
+	for i, err := range e.errs {
+		errs[i] = err
+	}
+	return errs
 }
 
 // Error は、エラーを返却します。errorインタフェースを実装します。

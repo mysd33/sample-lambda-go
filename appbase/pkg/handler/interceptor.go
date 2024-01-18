@@ -118,10 +118,7 @@ func (i *defaultHandlerInterceptor) logError(err error) {
 	if errors.As(err, &validationError) {
 		i.log.WarnWithCodableError(validationError)
 	} else if errors.As(err, &businessErrors) {
-		// TODO: ビジネスエラーをまとめて1つのログで出力する検討
-		for _, businessError := range businessErrors.Errors() {
-			i.log.WarnWithCodableError(businessError)
-		}
+		i.log.WarnWithMultiCodableError(businessErrors)
 	} else if errors.As(err, &systemError) {
 		i.log.ErrorWithCodableError(systemError)
 	} else {

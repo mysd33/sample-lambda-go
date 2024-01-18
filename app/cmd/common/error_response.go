@@ -31,8 +31,8 @@ func (r *commonErrorResponse) ValidationErrorResponse(validationError *myerrors.
 
 // BusinessErrorResponse implements api.ErrorResponse.
 func (r *commonErrorResponse) BusinessErrorResponse(businessErrors *myerrors.BusinessErrors) (int, any) {
-	bizErrMsgs := make([]map[string]string, 0, len(businessErrors.Errors()))
-	for _, businessError := range businessErrors.Errors() {
+	bizErrMsgs := make([]map[string]string, 0, len(businessErrors.BusinessErrors()))
+	for _, businessError := range businessErrors.BusinessErrors() {
 		bizErrMsg := make(map[string]string)
 		bizErrMsg["code"] = businessError.ErrorCode()
 		bizErrMsg["message"] = r.messageSource.GetMessage(businessError.ErrorCode(), businessError.Args()...)
