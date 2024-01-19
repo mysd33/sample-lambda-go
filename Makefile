@@ -57,8 +57,10 @@ unit_test:
 
 integration_test:
 	cd dynamodb-local & docker-compose up -d
+	cd minio & docker-compose up -d
 	cd app & go test -v ./cmd/...
-	cd dynamodb-local & docker-compose stop
+	cd minio & docker-compose stop
+	cd dynamodb-local & docker-compose stop	
 
 local_invoke_%:
 	sam local invoke --env-vars local-env.json --event events\event-${@:local_invoke_%=%}.json ${@:local_invoke_%=%}

@@ -31,13 +31,16 @@ func TestRegisterAllAsync(t *testing.T) {
 	t.Run("RegisterAllAsyncのテスト", func(t *testing.T) {
 		// TODO: テーブル作成
 		// TODO: tempテーブルのテストデータ登録（仮置きのコード）
-		value := "[\"Buy Milk\",\"Study English\"]"
+		value := "todoFiles/fef300f7-b37d-11ee-9c20-0242ac110006.json"
 		tempRepository := repository.NewTempRepository(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig(), ac.GetIDGenerator())
 		testData, err := tempRepository.CreateOne(&entity.Temp{Value: value})
 		tempId := testData.ID
 		if err != nil {
 			t.Errorf("テストデータ登録エラー: %v", err)
 		}
+		// TODO: S3バケット作成
+		// TODO: jsonファイル作成
+
 		// 入力メッセージの作成
 		sqsMessage := events.SQSMessage{
 			Body: fmt.Sprintf("{\"tempId\":\"%s\"}", tempId),
