@@ -39,7 +39,7 @@
         ![X-Rayの可視化の例2](image/xray-dynamodb.png)
     * REST APIの呼び出しの可視化の例
         ![X-Rayの可視化の例3](image/xray-bff.png)
-    * SQS呼び出しの可視化の例
+    * SQS、S3等の呼び出しの可視化の例
         ![X-Rayの可視化の例4](image/xray-sqs-delayed.png)
 
 * RDS Proxyの利用時の注意（ピン留め）
@@ -60,7 +60,6 @@
 * ローカル環境に、AWS CLI、AWS SAM CLI、Docker環境が必要
 
 ## 1. IAMの作成
-* TODO: LambdaのIAMロールにS3のアクセスのIAMポリシー追加
 ```sh
 #cfnフォルダに移動
 cd cfn
@@ -81,8 +80,6 @@ aws cloudformation create-stack --stack-name Demo-SG-Stack --template-body file:
 ```
 
 ## 4. VPC Endpointの作成とプライベートサブネットのルートテーブル更新
-* TODO: S3のVPCエンドポイントの追加
-
 * API GatewayのPrivate APIのためのVPC Endpointや、VPC内LambdaからDynamoDB、SQS、AppConfig等へアクセスするためのVPC Endpointを作成
 ```sh
 aws cloudformation validate-template --template-body file://cfn-vpe.yaml
@@ -166,7 +163,6 @@ aws cloudformation create-stack --stack-name Demo-SQS-Stack --template-body file
 ```
 
 ## 11. S3の作成
-* TODO:作成中
 ```sh
 aws cloudformation validate-template --template-body file://cfn-s3.yaml
 aws cloudformation create-stack --stack-name Demo-S3-Stack --template-body file://cfn-s3.yaml
@@ -236,9 +232,13 @@ aws cloudformation create-stack --stack-name Demo-AppConfigHostedDeploy-Stack --
 ```
 
 * SecretManagerの設定を初回デプロイする。
-    * Hosted Configurationの設定のデプロイが完了に実施すること
-    * パラメータのSecretsManagerVersionのバージョンIDは、マネコン等で確認してパラメータに設定する
+    * 同一のアプリケーション、環境に対してのデプロイは並列実行できないため、Hosted Configurationの設定のデプロイが完了後に実施すること
+    * パラメータのSecretsManagerVersionのバージョンIDは、CLIまたはマネコンで確認してパラメータに設定する
 ```sh
+# シークレットのバージョンIDを確認
+aws secretsmanager list-secret-version-ids --secret-id Demo-RDS-Secrets --query Versions[?contains(VersionStages,`AWSCURRENT`)].VersionId
+
+# CloudFormationの実行
 aws cloudformation validate-template --template-body file://cfn-appconfig-sm-deploy.yaml
 aws cloudformation create-stack --stack-name Demo-AppConfigSMDeploy-Stack --template-body file://cfn-appconfig-sm-deploy.yaml --parameters ParameterKey=SecretsManagerVersion,ParameterValue=（SecretsManagerVersionのバージョンID）
 ```
@@ -390,6 +390,8 @@ make delete
 ```sh
 aws cloudformation delete-stack --stack-name Demo-AppConfig-Stack
 aws cloudformation delete-stack --stack-name Demo-Bastion-Stack
+#aws s3 rm s3://(バケット名) --recursive
+aws s3 rm s3://mysd33bucket123demo --recursive
 aws cloudformation delete-stack --stack-name Demo-S3-Stack
 aws cloudformation delete-stack --stack-name Demo-SQS-Stack
 aws cloudformation delete-stack --stack-name Demo-DynamoDB-Stack
@@ -403,13 +405,8 @@ aws cloudformation delete-stack --stack-name Demo-IAM-Stack
 
 ## 18. CloudWatch Logsのロググループ削除
 * マネージドコンソールからCloudWatchのロググループを削除する。
-    * 特に、/aws/lambda/bff-function、/aws/lambda/todo-function、/aws/lambda/user-functionは、次回スタック作成時にエラーになってしまうので削除する。本来は、sam delete時にスタックとともに当該ロググループが削除されるはずだが、AppConfigのLambda拡張機能の導入により、Lambda拡張機能終了時のログが残ってしまうようになってしまったため、明示的な削除が必要となっている。
+
 ```
-aws logs delete-log-group --log-group-name /aws/lambda/bff-function
-aws logs delete-log-group --log-group-name /aws/lambda/todo-function
-aws logs delete-log-group --log-group-name /aws/lambda/user-function
-aws logs delete-log-group --log-group-name /aws/lambda/todo-async-function
-aws logs delete-log-group --log-group-name /aws/lambda/todo-async-fifo-function
 aws logs delete-log-group --log-group-name /aws/apigateway/welcome
 aws logs delete-log-group --log-group-name /aws/rds/proxy/demo-rds-proxy
 aws logs delete-log-group --log-group-name /aws/rds/cluster/aurora-postgresql-cluster/postgresql
@@ -685,7 +682,7 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
 > サポートされた時を想定して、ここでは「go1.x」ランタイムの場合に実際に試した手順を参考に記載する。 
 
 * サンプルAPを一時的にgo1.xのランタイムに切り替える場合
-    * template.yamlのRuntimeを「go1.x」に変更、Handlerの値を「bootstrap」から任意のAP名に変更して、クリーン(make clean)して再ビルド(make)すればよい。  
+    * template.yamlのRuntimeを「go1.x」に変更、Handlerの値を「bootstrap」から任意のAP名に変更して、クリーンして再ビルド(makeコマンドでOK)すればよい。  
     * Runtimeの修正例:  
         ![go1.xへのテンプレート変更](image/template_go1x_1.png)
 

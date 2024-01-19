@@ -24,6 +24,17 @@ Resources:
       RouteTableIds:
         - Fn::ImportValue: !Sub ${StackPrefix}-PrivateRouteTableId
 
+# S3 VPC Endpoint
+  S3VPCEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:      
+      VpcEndpointType: Gateway
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcId: 
+        Fn::ImportValue: !Sub ${StackPrefix}-VPC-ID
+      RouteTableIds:
+        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateRouteTableId        
+
 # SQS VPC Endpoint
   SQSVPCEndpoint:
     Type: AWS::EC2::VPCEndpoint

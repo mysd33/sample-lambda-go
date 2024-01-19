@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: AppConfig Deployment Template for CloudFormation Demo. Depends on cfn-appconfig.yaml, cfn-rds.yaml, template.yaml.
+Description: AppConfig Deployment Template for CloudFormation Demo. Depends on cfn-appconfig.yaml, cfn-rds.yaml, cfn-s3.yaml, template.yaml.
 #Metadata: 
 Parameters: 
   StackPrefix:
@@ -50,9 +50,8 @@ Resources:
             - Fn::ImportValue: !Sub ${StackPrefix}-UsersAPIBaseURL-${Stage}
             - "\nTODO_API_BASE_URL: "
             - Fn::ImportValue: !Sub ${StackPrefix}-TodoAPIBaseURL-${Stage}
-            - "\nS3_BUCKET_NAME: "
-            # TODO Import Value From S3 Stack
-            - "mysd33bucket123"             
+            - "\nS3_BUCKET_NAME: "            
+            - Fn::ImportValue: !Sub ${StackPrefix}-S3BucketName
 
   AppConfigHostedProfileDeployment:
     Type: AWS::AppConfig::Deployment

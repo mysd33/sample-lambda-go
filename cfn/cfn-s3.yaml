@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: S3 Template for CloudFormation Demo. 
+#Metadata: 
+
+Parameters:
+  StackPrefix:
+    Description: Stack Resource Name Prefix
+    Type: String
+    Default: Demo 
+  BucketName:
+    Description: S3 Bucket Name
+    Type: String
+    Default: mysd33bucket123demo
+#Mappings: 
+#Conditions: 
+Resources: 
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      Tags:
+        - Key: Name
+          Value: !Sub Bucket-${BucketName}
+Outputs:
+  S3BucketName:
+    Description: S3 Bucket Name
+    Value: !Ref S3Bucket
+    Export:
+      Name: !Sub ${StackPrefix}-S3BucketName
