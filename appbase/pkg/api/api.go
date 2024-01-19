@@ -58,6 +58,7 @@ func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context, error
 		result, ok := ctx.Get(constant.CONTROLLER_RESULT)
 		if ok {
 			ctx.JSON(http.StatusOK, result)
+			return
 		}
 		// resultが取得できなかった場合の処理
 		f.log.Error(message.E_FW_9003)
