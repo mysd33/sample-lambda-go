@@ -60,8 +60,7 @@ func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context, error
 			ctx.JSON(http.StatusOK, result)
 			return
 		}
-		// resultが取得できなかった場合の処理
+		// resultが取得できなかった場合にエラーログを出力
 		f.log.Error(message.E_FW_9003)
-		ctx.JSON(errorResponse.UnExpectedErrorResponse(errors.New("no result")))
 	}
 }
