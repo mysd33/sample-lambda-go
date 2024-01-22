@@ -61,7 +61,7 @@ func (ts *todoAsyncServiceImpl) RegisterTodosAsync(asyncMesssage entity.AsyncMes
 	bucketName, found := ts.config.GetWithContains(S3_BUCKET_NAME)
 	if !found {
 		// TODO: エラー処理
-		return errors.NewSystemError(fmt.Errorf("バケット%sが見つかりません", bucketName), message.E_EX_9001)
+		return errors.NewSystemError(fmt.Errorf("バケットの設定[%s]が見つかりません", S3_BUCKET_NAME), message.E_EX_9001)
 	}
 	// S3からファイルを取得
 	filePath := temp.Value
