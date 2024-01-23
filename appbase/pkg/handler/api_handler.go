@@ -15,13 +15,7 @@ import (
 	"example.com/appbase/pkg/message"
 	"github.com/aws/aws-lambda-go/events"
 	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
-	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
-)
-
-var (
-	NoRouteError  = errors.New("NOT FOUND")
-	NoMethodError = errors.New("METHOD NOT ALLOWED")
 )
 
 // APITriggeredLambdaHandlerFunc は、APIGatewayトリガのLambdaのハンドラを表す関数です。
@@ -69,13 +63,13 @@ func (h *APILambdaHandler) GetDefaultGinEngine(errorResponse api.ErrorResponse) 
 	// 404エラー
 	engine.NoRoute(func(ctx *gin.Context) {
 		h.log.Debug("%s is not found", ctx.Request.URL.Path)
-		ctx.JSON(errorResponse.WarnErrorResponse(NoRouteError))
+		ctx.Error(api.NoRouteError)
 	})
 	// 405エラー
 	engine.HandleMethodNotAllowed = true
 	engine.NoMethod(func(ctx *gin.Context) {
 		h.log.Debug("%s Method %s is not allowed", ctx.Request.Method, ctx.Request.URL.Path)
-		ctx.JSON(errorResponse.WarnErrorResponse(NoMethodError))
+		ctx.Error(api.NoMethodError)
 	})
 	return engine
 }

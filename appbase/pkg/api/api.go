@@ -14,6 +14,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var (
+	NoRouteError  = errors.New("NOT FOUND")
+	NoMethodError = errors.New("METHOD NOT ALLOWED")
+)
+
 // ApiResponseFormatterは、レスポンスデータを作成するインタフェース
 type ApiResponseFormatter interface {
 	// ReturnResponseBody は、処理結果resultまたはエラーerrに対応するレスポンスボディを返却します。
@@ -51,6 +56,10 @@ func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context, error
 			ctx.JSON(errorResponse.BusinessErrorResponse(businessErrors))
 		} else if errors.As(err, &systemError) {
 			ctx.JSON(errorResponse.SystemErrorResponse(systemError))
+		} else if errors.Is(err, NoRouteError) {
+			ctx.JSON(errorResponse.WarnErrorResponse(NoRouteError))
+		} else if errors.Is(err, NoMethodError) {
+			ctx.JSON(errorResponse.WarnErrorResponse(NoMethodError))
 		} else {
 			ctx.JSON(errorResponse.UnExpectedErrorResponse(err))
 		}
@@ -60,7 +69,9 @@ func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context, error
 			ctx.JSON(http.StatusOK, result)
 			return
 		}
-		// resultが取得できなかった場合にエラーログを出力
-		f.log.Error(message.E_FW_9003)
+		// resultが取得できなかった場合には予期せぬエラーとしてログを出力し、エラーを返却する
+		err := errors.New("result is not found")
+		f.log.ErrorWithUnexpectedError(err)
+		ctx.JSON(errorResponse.UnExpectedErrorResponse(err))
 	}
 }

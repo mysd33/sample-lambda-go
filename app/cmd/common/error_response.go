@@ -7,7 +7,6 @@ import (
 
 	"example.com/appbase/pkg/api"
 	myerrors "example.com/appbase/pkg/errors"
-	"example.com/appbase/pkg/handler"
 	"example.com/appbase/pkg/message"
 	"github.com/gin-gonic/gin"
 )
@@ -58,9 +57,9 @@ func (r *commonErrorResponse) BusinessErrorResponse(businessErrors *myerrors.Bus
 
 // WarnErrorResponse implements api.ErrorResponse.
 func (r *commonErrorResponse) WarnErrorResponse(err error) (int, any) {
-	if errors.Is(err, handler.NoRouteError) {
+	if errors.Is(err, api.NoRouteError) {
 		return http.StatusNotFound, r.errorResponseBody(err.Error(), "")
-	} else if errors.Is(err, handler.NoMethodError) {
+	} else if errors.Is(err, api.NoMethodError) {
 		return http.StatusMethodNotAllowed, r.errorResponseBody(err.Error(), "")
 	} else {
 		return http.StatusBadRequest, r.errorResponseBody(err.Error(), "")
