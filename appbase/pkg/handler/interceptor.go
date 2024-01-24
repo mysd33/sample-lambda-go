@@ -22,10 +22,10 @@ const (
 type HandlerInterceptor interface {
 	// Handleは、同期処理のControllerに割り込み、集約例外ハンドリング等の共通処理を実施します。
 	Handle(controllerFunc ControllerFunc) gin.HandlerFunc
-
-	//TODO: APIの在り方検討中
 	// HandleAsyncは、非同期処理のControllerに割り込み、集約例外ハンドリング等の共通処理を実施します。
 	HandleAsync(asyncControllerFunc AsyncControllerFunc) AsyncControllerFunc
+	// HandleSimpleは、その他のトリガのControllerに割り込み、集約例外ハンドリング等の共通処理を実施します。
+	HandleSimple(simpleControllerFunc SimpleControllerFunc) SimpleControllerFunc
 }
 
 // HandlerInterceptor は、Handlerのインタセプタの構造体です。
@@ -85,6 +85,29 @@ func (i *defaultHandlerInterceptor) HandleAsync(asyncControllerFunc AsyncControl
 		}
 		// Controllerの実行
 		err := asyncControllerFunc(sqsMessage)
+		// 集約エラーハンドリングによるログ出力
+		if err != nil {
+			i.logError(err)
+			return err
+		}
+		i.log.Info(message.I_FW_0002, funcName)
+		return nil
+	}
+}
+
+// HandleSimple implements HandlerInterceptor.
+func (i *defaultHandlerInterceptor) HandleSimple(simpleControllerFunc SimpleControllerFunc) SimpleControllerFunc {
+	return func(event any) error {
+		fv := reflect.ValueOf(simpleControllerFunc)
+		funcName := runtime.FuncForPC(fv.Pointer()).Name()
+		i.log.Info(message.I_FW_0001, funcName)
+
+		// Configの最新読み込み
+		if err := i.config.Reload(); err != nil {
+			return err
+		}
+		// Controllerの実行
+		err := simpleControllerFunc(event)
 		// 集約エラーハンドリングによるログ出力
 		if err != nil {
 			i.logError(err)

@@ -13,3 +13,6 @@ type ControllerFunc func(ctx *gin.Context) (any, error)
 
 // AsyncControllerFunc は、非同期処理のControllerで実行する関数です。
 type AsyncControllerFunc func(sqsMessage events.SQSMessage) error
+
+// SimpleControllerFunc は、その他のトリガのControllerで実行する関数です。
+type SimpleControllerFunc func(event any) error
