@@ -5,7 +5,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -61,7 +60,7 @@ func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQS
 		defer func() {
 			// パニックのリカバリ処理
 			if v := recover(); v != nil {
-				resultErr = fmt.Errorf("recover from: %+v", v)
+				resultErr = errors.Errorf("recover from: %+v", v)
 				// パニックのスタックトレース情報をログ出力
 				h.log.ErrorWithUnexpectedError(resultErr)
 				// 全てのメッセージを失敗扱いにするため、空の文字列ItemIdentifierを追加

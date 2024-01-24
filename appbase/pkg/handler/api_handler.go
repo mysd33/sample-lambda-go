@@ -15,6 +15,7 @@ import (
 	"example.com/appbase/pkg/message"
 	"github.com/aws/aws-lambda-go/events"
 	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
+	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -54,7 +55,7 @@ func (h *APILambdaHandler) GetDefaultGinEngine(errorResponse api.ErrorResponse) 
 		},
 		// パニック時のカスタムリカバリ処理
 		gin.CustomRecovery(func(c *gin.Context, recover any) {
-			err := fmt.Errorf("recover from: %+v", recover)
+			err := errors.Errorf("recover from: %+v", recover)
 			h.log.ErrorWithUnexpectedError(err)
 			// エラーをContextに格納
 			c.Error(err)
@@ -82,7 +83,7 @@ func (h *APILambdaHandler) Handle(ginLambda *ginadapter.GinLambda) APITriggeredL
 		defer func() {
 			if v := recover(); v != nil {
 				// パニックのスタックトレース情報をログ出力
-				h.log.ErrorWithUnexpectedError(fmt.Errorf("recover from: %+v", v))
+				h.log.ErrorWithUnexpectedError(errors.Errorf("recover from: %+v", v))
 
 				response = h.createErrorResponse()
 				// errはnilにままにして{"message":"Internal Server Error"} のレスポンスが返却されないようにする
