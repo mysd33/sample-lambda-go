@@ -10,6 +10,7 @@ import (
 	"io"
 	"math"
 	"os"
+	"strings"
 
 	"example.com/appbase/pkg/apcontext"
 	myconfig "example.com/appbase/pkg/config"
@@ -32,12 +33,19 @@ const (
 
 // ObjectStorageAccessor は、オブジェクトストレージへアクセスするためのインタフェースです。
 type ObjectStorageAccessor interface {
-	// ListObjectesは、フォルダ（プレフィックス）配下のオブジェクトストレージのオブジェクト一覧を取得します。
-	ListObjects(bucketName string, folderName string) ([]types.Object, error)
+	// ListObjectesは、フォルダ配下のオブジェクトストレージのオブジェクト一覧を取得します。
+	ListObjects(bucketName string, folderPath string) ([]types.Object, error)
 	// ExistsObject は、オブジェクトストレージにオブジェクトが存在するか確認します。
 	ExistsObject(bucketName string, objectKey string) (bool, error)
+	// GetObjectSize は、オブジェクトストレージのオブジェクトのサイズを取得します。
+	GetSize(bucketName string, objectKey string) (int64, error)
+	// GetObjectMetadata は、オブジェクトストレージのオブジェクトのメタデータを取得します。
+	GetObjectMetadata(bucketName string, objectKey string) (*s3.HeadObjectOutput, error)
 	// Upload は、オブジェクトストレージへbyteスライスのデータをアップロードします。
 	Upload(bucketName string, objectKey string, objectBody []byte) error
+	// UploadWithOwnerFullControl は、 bucket-owner-full-controlのACLを付与しオブジェクトストレージへbyteスライスのデータをアップロードします。
+	//（使用しないが参考実装）
+	UPloadWithOwnerFullControl(bucketName string, objectKey string, objectBody []byte) error
 	// UploadFromReader は、オブジェクトストレージへReaderから読み込んだデータをアップロードします。
 	// readerは、クローズは、呼び出し元にて行う必要があります。
 	UploadFromReader(bucketName string, objectKey string, reader io.Reader) error
@@ -49,13 +57,23 @@ type ObjectStorageAccessor interface {
 	Download(bucketName string, objectKey string) ([]byte, error)
 	// DownloadToReader は、オブジェクトストレージからデータをReaderでダウンロードします。
 	DownloadToReader(bucketName string, objectKey string) (io.ReadCloser, error)
-	// DownloadLargeObject は、オブジェクトストレージから大きなデータをマルチパートダウンロードして指定のパスのファイルに保存します。
+	// DownloadLargeObject は、オブジェクトストレージから大きなデータをマルチパートダウンロードして指定のローカルファイルに保存します。
 	// 5MiBより小さい場合には、このメソッドは使用できません。
 	DownloadLargeObject(bucketName string, objectKey string, filePath string) error
+	// ReadAt は、オブジェクトストレージから指定のオフセットからバイトスライス分読み込みます。
+	ReadAt(bucketName string, objectKey string, p []byte, offset int64) (int, error)
 	// Delele は、オブジェクトストレージからデータを削除します。
 	Delele(bucketName string, objectKey string) error
-	// CopyToFolder は、オブジェクトストレージのオブジェクトを指定フォルダにコピーします。
-	CopyToFolder(bucketName string, objectKey string, folderName string) error
+	// DeleteFolder は、オブジェクトストレージのフォルダごと削除します。
+	// なお、エラーが発生した時点で中断されるため、削除されないファイルが残る可能性があります。
+	DeleteFolder(bucketName string, folderPath string) error
+	// Copy は、オブジェクトストレージのオブジェクトを指定フォルダにコピーします。
+	// 例えば、objectKey = input/xxxx/hoge.txt、output= output とした場合、output/hoge.txtにコピーします。
+	Copy(bucketName string, objectKey string, targetFolderPath string) error
+	// CopyFolder は、オブジェクトストレージのフォルダごと指定フォルダにコピーします。
+	// nestedがtrueの場合、サブフォルダ含めてコピーします。falseの場合、直下のファイルのみコピーします。
+	// なお、エラーが発生した時点で中断されるため、途中までコピーされたファイルが残る可能性があります。
+	CopyFolder(bucketName string, srcFolderPath string, targetFolderPath string, nested bool) error
 }
 
 // NewObjectStorageAccessor は、ObjectStorageAccessorを作成します。
@@ -109,11 +127,11 @@ type defaultObjectStorageAccessor struct {
 }
 
 // ListObjects implements ObjectStorageAccessor.
-func (a *defaultObjectStorageAccessor) ListObjects(bucketName string, folderName string) ([]types.Object, error) {
-	a.log.Debug("ListObjects bucketName:%s", bucketName)
+func (a *defaultObjectStorageAccessor) ListObjects(bucketName string, folderPath string) ([]types.Object, error) {
+	a.log.Debug("ListObjects bucketName:%s, folderPath:%s", bucketName, folderPath)
 	input := &s3.ListObjectsV2Input{
 		Bucket:  aws.String(bucketName),
-		Prefix:  aws.String(folderName),
+		Prefix:  aws.String(folderPath),
 		MaxKeys: aws.Int32(math.MaxInt32),
 	}
 	output, err := a.s3Client.ListObjectsV2(apcontext.Context, input)
@@ -127,20 +145,40 @@ func (a *defaultObjectStorageAccessor) ListObjects(bucketName string, folderName
 // ExistsObject implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) ExistsObject(bucketName string, objectKey string) (bool, error) {
 	a.log.Debug("ExistsObject bucketName:%s, objectKey:%s", bucketName, objectKey)
-	input := &s3.HeadObjectInput{
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(objectKey),
-	}
-	_, err := a.s3Client.HeadObject(apcontext.Context, input)
+	_, err := a.GetObjectMetadata(bucketName, objectKey)
 	if err != nil {
 		var notFound *types.NotFound
 		if errors.As(err, &notFound) {
 			a.log.Debug("Object not found. bucketName:%s, objectKey:%s", bucketName, objectKey)
 			return false, nil
 		}
-		return false, errors.WithStack(err)
+		return false, err
 	}
 	return true, nil
+}
+
+// GetSize implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) GetSize(bucketName string, objectKey string) (int64, error) {
+	a.log.Debug("GetSize bucketName:%s, objectKey:%s", bucketName, objectKey)
+	output, err := a.GetObjectMetadata(bucketName, objectKey)
+	if err != nil {
+		return 0, err
+	}
+	return *output.ContentLength, nil
+}
+
+// GetObjectMetadata implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) GetObjectMetadata(bucketName string, objectKey string) (*s3.HeadObjectOutput, error) {
+	a.log.Debug("GetObjectMetadata bucketName:%s, objectKey:%s", bucketName, objectKey)
+	input := &s3.HeadObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(objectKey),
+	}
+	output, err := a.s3Client.HeadObject(apcontext.Context, input)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return output, nil
 }
 
 // Upload implements ObjectStorageAccessor.
@@ -148,6 +186,23 @@ func (a *defaultObjectStorageAccessor) Upload(bucketName string, objectKey strin
 	a.log.Debug("Upload bucketName:%s, objectKey:%s", bucketName, objectKey)
 	reader := bytes.NewReader(objectBody)
 	return a.UploadFromReader(bucketName, objectKey, reader)
+}
+
+// UPloadWithOwnerFullControl implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) UPloadWithOwnerFullControl(bucketName string, objectKey string, objectBody []byte) error {
+	a.log.Debug("UPloadWithOwnerFullControl bucketName:%s, objectKey:%s", bucketName, objectKey)
+	reader := bytes.NewReader(objectBody)
+	input := &s3.PutObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(objectKey),
+		Body:   reader,
+		ACL:    types.ObjectCannedACLBucketOwnerFullControl,
+	}
+	_, err := a.s3Client.PutObject(apcontext.Context, input)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 // UploadFromReader implements ObjectStorageAccessor.
@@ -228,6 +283,26 @@ func (a *defaultObjectStorageAccessor) DownloadLargeObject(bucketName string, ob
 	return nil
 }
 
+// ReadAt implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) ReadAt(bucketName string, objectKey string, p []byte, offset int64) (int, error) {
+	a.log.Debug("ReadAt bucketName:%s, objectKey:%s, offset:%d", bucketName, objectKey, offset)
+	input := &s3.GetObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(objectKey),
+		Range:  aws.String(fmt.Sprintf("bytes=%d-%d", offset, offset+int64(len(p)))),
+	}
+	output, err := a.s3Client.GetObject(apcontext.Context, input)
+	if err != nil {
+		return 0, errors.WithStack(err)
+	}
+	defer output.Body.Close()
+	n, err := io.ReadFull(output.Body, p)
+	if err != nil {
+		return n, errors.WithStack(err)
+	}
+	return n, nil
+}
+
 // Delele implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) Delele(bucketName string, objectKey string) error {
 	a.log.Debug("Delete bucketName:%s, objectKey:%s", bucketName, objectKey)
@@ -242,17 +317,72 @@ func (a *defaultObjectStorageAccessor) Delele(bucketName string, objectKey strin
 	return nil
 }
 
-// CopyToFolder implements ObjectStorageAccessor.
-func (a *defaultObjectStorageAccessor) CopyToFolder(bucketName string, objectKey string, folderName string) error {
-	a.log.Debug("CopyToFolder bucketName:%s, objectKey:%s, folderName:%s", bucketName, objectKey, folderName)
+// DeleteFolder implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) DeleteFolder(bucketName string, folderPath string) error {
+	a.log.Debug("DeleteFolder bucketName:%s, folderPath:%s", bucketName, folderPath)
+	// コピー元フォルダに存在するオブジェクトを取得
+	objects, err := a.ListObjects(bucketName, folderPath)
+	if err != nil {
+		return err
+	}
+	for _, object := range objects {
+		err = a.Delele(bucketName, *object.Key)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Copy implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) Copy(bucketName string, objectKey string, targetFolderPath string) error {
+	a.log.Debug("Copy bucketName:%s, objectKey:%s, targetFolderPath:%s", bucketName, objectKey, targetFolderPath)
+	i := strings.LastIndex(objectKey, "/")
+	fileName := objectKey[i+1:]
+	a.log.Debug("fileName:%s", fileName)
 	input := &s3.CopyObjectInput{
 		Bucket:     aws.String(bucketName),
-		CopySource: aws.String(fmt.Sprintf("%v/%v", bucketName, objectKey)),
-		Key:        aws.String(fmt.Sprintf("%v/%v", folderName, objectKey)),
+		CopySource: aws.String(fmt.Sprintf("%s/%s", bucketName, objectKey)),
+		Key:        aws.String(fmt.Sprintf("%s/%s", targetFolderPath, fileName)),
 	}
 	_, err := a.s3Client.CopyObject(apcontext.Context, input)
 	if err != nil {
 		return errors.WithStack(err)
+	}
+	return nil
+}
+
+// CopyFolder implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) CopyFolder(bucketName string, srcFolderPath string, targetFolderPath string, nested bool) error {
+	a.log.Debug("CopyFolder bucketName:%s, srcFolderPath:%s, targetFolderPath:%s, nested:%v", bucketName, srcFolderPath, targetFolderPath, nested)
+	srcFolderPath = strings.Trim(srcFolderPath, "/")
+	// コピー元フォルダに存在するオブジェクトを取得
+	objects, err := a.ListObjects(bucketName, srcFolderPath)
+	if err != nil {
+		return err
+	}
+	// 対象のオブジェクトに対して繰り返し処理
+	for _, object := range objects {
+		a.log.Debug("object.Key:%s", *object.Key)
+		// コピー元フォルダ名を除いたパスを取得
+		lastPath := strings.TrimPrefix(*object.Key, srcFolderPath)
+		// nestedならすべてコピーする
+		// nestedでないなら直下のファイルのみ（lastPathに"/"が含まれていない）コピーする
+		if nested || !strings.Contains(lastPath, "/") {
+			// サブフォルダの場合は、フォルダ名を付与してコピーする
+			i := strings.LastIndex(lastPath, "/")
+			var actualTargetFolderName string
+			if i > 0 {
+				actualTargetFolderName = targetFolderPath + lastPath[:i]
+			} else {
+				actualTargetFolderName = targetFolderPath
+			}
+			err = a.Copy(bucketName, *object.Key, actualTargetFolderName)
+			if err != nil {
+				return err
+			}
+
+		}
 	}
 	return nil
 }
