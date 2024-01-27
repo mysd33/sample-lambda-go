@@ -242,7 +242,10 @@ type SystemError struct {
 // メッセージIDにもなるエラーコード（errorCode）とメッセージの置換文字列(args）を渡し
 // SystemError構造体を作成します。
 func NewSystemError(cause error, errorCode string, args ...any) *SystemError {
-	// TODO: causeがnilでないことのチェック
+	// causeがnilの場合
+	if cause == nil {
+		cause = cerrors.NewWithDepthf(1, "code:%s, error:%v", errorCode, args)
+	}
 	// 誤ったエラーのラップを確認
 	requiredNotCodableError(cause)
 	// causeはスタックトレース付与

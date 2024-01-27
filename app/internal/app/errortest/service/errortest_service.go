@@ -28,14 +28,14 @@ func (*errorTestServiceImpl) Execute(errorType string) error {
 	// 指定されたエラーの種類によって、Errorを返却する
 	switch errorType {
 	case "business":
-		// Causeありの場合
+		// 業務エラー（Causeありの場合）
 		cause := fmt.Errorf("原因のエラーA")
 		return errors.NewBusinessErrorWithCause(cause, message.W_EX_8001, "hoge")
 	case "business2":
-		// Causeなしの場合
+		// 業務エラー（Causeなしの場合）
 		return errors.NewBusinessError(message.W_EX_8001, "fuga")
 	case "business3":
-		// 複数エラーの場合
+		// 複数業務エラーの場合
 		err1 := errors.NewBusinessError(message.W_EX_8001, "fuga")
 		// 付加情報も付与できる
 		err1.AddInfo("info1", "hoge")
@@ -44,9 +44,11 @@ func (*errorTestServiceImpl) Execute(errorType string) error {
 		err2.AddInfo("info1", "bar")
 		return errors.NewBusinessErrors(err1, err2)
 	case "system":
-		//システムエラー
+		// システムエラー（Causeアリの場合）
 		cause := fmt.Errorf("原因のエラーB")
 		return errors.NewSystemError(cause, message.E_EX_9002, "foo")
+	case "system2":
+		return errors.NewSystemError(nil, message.E_EX_9002, "bar")
 	case "panic":
 		panic("パニック発生")
 	default:
