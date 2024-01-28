@@ -53,6 +53,53 @@ func Test_defaultObjectStorageAccessor_ExistsObject(t *testing.T) {
 */
 
 /*
+func Test_defaultObjectStorageAccessor_UploadFromReader(t *testing.T) {
+	myCfg := config.NewTestConfig(map[string]string{
+		//"S3_LOCAL_ENDPOINT": "http://host.docker.internal:9000",
+	})
+	messageSource, _ := message.NewMessageSource()
+	logger, _ := logging.NewLogger(messageSource, myCfg)
+	objectStorageAccessor, _ := NewObjectStorageAccessor(
+		myCfg,
+		logger,
+	)
+
+	//file, _ := os.Open("C:\\tmp\\todolist.csv")
+	file, _ := os.Open("C:\\tmp\\IMG_4438.JPG")
+	defer file.Close()
+
+	type args struct {
+		bucketName string
+		objectKey  string
+		reader     io.Reader
+	}
+	tests := []struct {
+		name    string
+		a       ObjectStorageAccessor
+		args    args
+		wantErr bool
+	}{
+		// Add test cases.
+		//{"test1", objectStorageAccessor, args{"samplebucket123", "test.csv", file}, false},
+		//{"test2", objectStorageAccessor, args{"samplebucket123", "test.jpg", file}, false},
+		//{"test1", objectStorageAccessor, args{"mysd33bucket123", "test.csv", file}, false},
+		{"test2", objectStorageAccessor, args{"mysd33bucket123", "test.jpg", file}, false},
+	}
+	for _, tt := range tests {
+		//  テスト用にX-Rayのセグメント開始
+		ctx, seg := xray.BeginSegment(context.Background(), "objectstorage_test")
+		apcontext.Context = ctx
+		defer seg.Close(nil)
+
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.a.UploadFromReader(tt.args.bucketName, tt.args.objectKey, tt.args.reader); (err != nil) != tt.wantErr {
+				t.Errorf("defaultObjectStorageAccessor.UploadLargeObject() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}*/
+
+/*
 func Test_defaultObjectStorageAccessor_Copy(t *testing.T) {
 	myCfg := config.NewTestConfig(map[string]string{
 		"S3_LOCAL_ENDPOINT": "http://host.docker.internal:9000",

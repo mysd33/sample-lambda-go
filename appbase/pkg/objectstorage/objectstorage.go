@@ -27,8 +27,6 @@ import (
 
 const (
 	S3_LOCAL_ENDPOINT_NAME = "S3_LOCAL_ENDPOINT"
-	// TODO: パートサイズのパラメータ化
-	partMiBs int64 = 5 // 5MiB
 )
 
 // ObjectStorageAccessor は、オブジェクトストレージへアクセスするためのインタフェースです。
@@ -45,23 +43,21 @@ type ObjectStorageAccessor interface {
 	Upload(bucketName string, objectKey string, objectBody []byte) error
 	// UploadWithOwnerFullControl は、 bucket-owner-full-controlのACLを付与しオブジェクトストレージへbyteスライスのデータをアップロードします。
 	//（使用しないが参考実装）
-	UPloadWithOwnerFullControl(bucketName string, objectKey string, objectBody []byte) error
+	UploadWithOwnerFullControl(bucketName string, objectKey string, objectBody []byte) error
 	// UploadFromReader は、オブジェクトストレージへReaderから読み込んだデータをアップロードします。
 	// readerは、クローズは、呼び出し元にて行う必要があります。
+	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行います。
 	UploadFromReader(bucketName string, objectKey string, reader io.Reader) error
-	// UploadLargeObject は、オブジェクトストレージへReaderから読み込んだ大きなデータをマルチパートアップロードします。
-	// 5MiBより小さい場合には、このメソッドは使用できません。
-	// readerは、クローズは、呼び出し元にて行う必要があります。
-	UploadLargeObject(bucketName string, objectKey string, reader io.Reader) error
+	// ReadAt は、オブジェクトストレージから指定のオフセットからバイトスライス分読み込みます。
+	ReadAt(bucketName string, objectKey string, p []byte, offset int64) (int, error)
 	// Download は、オブジェクトストレージからデータをbyteスライスのデータでダウンロードします。
 	Download(bucketName string, objectKey string) ([]byte, error)
 	// DownloadToReader は、オブジェクトストレージからデータをReaderでダウンロードします。
+	// readerは、クローズは、呼び出し元にて行う必要があります。
 	DownloadToReader(bucketName string, objectKey string) (io.ReadCloser, error)
-	// DownloadLargeObject は、オブジェクトストレージから大きなデータをマルチパートダウンロードして指定のローカルファイルに保存します。
-	// 5MiBより小さい場合には、このメソッドは使用できません。
-	DownloadLargeObject(bucketName string, objectKey string, filePath string) error
-	// ReadAt は、オブジェクトストレージから指定のオフセットからバイトスライス分読み込みます。
-	ReadAt(bucketName string, objectKey string, p []byte, offset int64) (int, error)
+	// DownloadToFile は、オブジェクトストレージから大きなデータを指定のローカルファイルに保存します。
+	// サイズが5MiBを超える場合は、透過的にマルチパートダウンロードを行います。
+	DownloadToFile(bucketName string, objectKey string, filePath string) error
 	// Delele は、オブジェクトストレージからデータを削除します。
 	Delele(bucketName string, objectKey string) error
 	// DeleteFolder は、オブジェクトストレージのフォルダごと削除します。
@@ -103,11 +99,14 @@ func NewObjectStorageAccessor(myCfg myconfig.Config, log logging.Logger) (Object
 		}
 	})
 
+	// パートサイズのパラメータ化
+	partMiBs := myCfg.GetInt("PART_SIZE_MiB", 5)
+
 	uploader := manager.NewUploader(client, func(u *manager.Uploader) {
-		u.PartSize = partMiBs * 1024 * 1024
+		u.PartSize = int64(partMiBs) * 1024 * 1024
 	})
 	downloader := manager.NewDownloader(client, func(d *manager.Downloader) {
-		d.PartSize = partMiBs * 1024 * 1024
+		d.PartSize = int64(partMiBs) * 1024 * 1024
 	})
 
 	return &defaultObjectStorageAccessor{
@@ -188,8 +187,8 @@ func (a *defaultObjectStorageAccessor) Upload(bucketName string, objectKey strin
 	return a.UploadFromReader(bucketName, objectKey, reader)
 }
 
-// UPloadWithOwnerFullControl implements ObjectStorageAccessor.
-func (a *defaultObjectStorageAccessor) UPloadWithOwnerFullControl(bucketName string, objectKey string, objectBody []byte) error {
+// UploadWithOwnerFullControl implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) UploadWithOwnerFullControl(bucketName string, objectKey string, objectBody []byte) error {
 	a.log.Debug("UPloadWithOwnerFullControl bucketName:%s, objectKey:%s", bucketName, objectKey)
 	reader := bytes.NewReader(objectBody)
 	input := &s3.PutObjectInput{
@@ -198,7 +197,7 @@ func (a *defaultObjectStorageAccessor) UPloadWithOwnerFullControl(bucketName str
 		Body:   reader,
 		ACL:    types.ObjectCannedACLBucketOwnerFullControl,
 	}
-	_, err := a.s3Client.PutObject(apcontext.Context, input)
+	_, err := a.uploader.Upload(apcontext.Context, input)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -213,26 +212,31 @@ func (a *defaultObjectStorageAccessor) UploadFromReader(bucketName string, objec
 		Key:    aws.String(objectKey),
 		Body:   reader,
 	}
-	_, err := a.s3Client.PutObject(apcontext.Context, input)
+	_, err := a.uploader.Upload(apcontext.Context, input)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 	return nil
 }
 
-// UploadLargeObject implements ObjectStorageAccessor.
-func (a *defaultObjectStorageAccessor) UploadLargeObject(bucketName string, objectKey string, reader io.Reader) error {
-	a.log.Debug("UploadLargeObject bucketName:%s, objectKey:%s", bucketName, objectKey)
-	input := &s3.PutObjectInput{
+// ReadAt implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) ReadAt(bucketName string, objectKey string, p []byte, offset int64) (int, error) {
+	a.log.Debug("ReadAt bucketName:%s, objectKey:%s, offset:%d", bucketName, objectKey, offset)
+	input := &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
-		Body:   reader,
+		Range:  aws.String(fmt.Sprintf("bytes=%d-%d", offset, offset+int64(len(p)))),
 	}
-	_, err := a.uploader.Upload(apcontext.Context, input)
+	output, err := a.s3Client.GetObject(apcontext.Context, input)
 	if err != nil {
-		return errors.WithStack(err)
+		return 0, errors.WithStack(err)
 	}
-	return nil
+	defer output.Body.Close()
+	n, err := io.ReadFull(output.Body, p)
+	if err != nil {
+		return n, errors.WithStack(err)
+	}
+	return n, nil
 }
 
 // Download implements ObjectStorageAccessor.
@@ -264,8 +268,8 @@ func (a *defaultObjectStorageAccessor) DownloadToReader(bucketName string, objec
 	return output.Body, nil
 }
 
-// DownloadLargeObject implements ObjectStorageAccessor.
-func (a *defaultObjectStorageAccessor) DownloadLargeObject(bucketName string, objectKey string, filePath string) error {
+// DownloadToFile implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) DownloadToFile(bucketName string, objectKey string, filePath string) error {
 	a.log.Debug("DownloadLargeObject bucketName:%s, objectKey:%s, filePath", bucketName, objectKey, filePath)
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
@@ -281,26 +285,6 @@ func (a *defaultObjectStorageAccessor) DownloadLargeObject(bucketName string, ob
 		return errors.WithStack(err)
 	}
 	return nil
-}
-
-// ReadAt implements ObjectStorageAccessor.
-func (a *defaultObjectStorageAccessor) ReadAt(bucketName string, objectKey string, p []byte, offset int64) (int, error) {
-	a.log.Debug("ReadAt bucketName:%s, objectKey:%s, offset:%d", bucketName, objectKey, offset)
-	input := &s3.GetObjectInput{
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(objectKey),
-		Range:  aws.String(fmt.Sprintf("bytes=%d-%d", offset, offset+int64(len(p)))),
-	}
-	output, err := a.s3Client.GetObject(apcontext.Context, input)
-	if err != nil {
-		return 0, errors.WithStack(err)
-	}
-	defer output.Body.Close()
-	n, err := io.ReadFull(output.Body, p)
-	if err != nil {
-		return n, errors.WithStack(err)
-	}
-	return n, nil
 }
 
 // Delele implements ObjectStorageAccessor.
