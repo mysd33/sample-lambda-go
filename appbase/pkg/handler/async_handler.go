@@ -79,6 +79,12 @@ func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQS
 			// ハンドラから受け取ったもとのContext（ctx）を毎回コンテキスト領域に格納しなおす
 			apcontext.Context = ctx
 
+			// リクエストID等をログの付加情報として追加
+			h.log.ClearInfo()
+			lc := apcontext.GetLambdaContext(ctx)
+			h.log.AddInfo("AWS RequestID", lc.AwsRequestID)
+			h.log.AddInfo("SQS MessageId", v.MessageId)
+
 			// SQSのメッセージを1件取得しコントローラを呼び出し
 			err := h.doHandle(v, response, isFIFO, asyncControllerFunc)
 			if err != nil {

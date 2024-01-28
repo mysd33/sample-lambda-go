@@ -19,6 +19,10 @@ const (
 
 // Loggerは、ログ出力のインタフェースです
 type Logger interface {
+	// AddInfo は、ログに付加情報を追加します。
+	AddInfo(key string, value string)
+	// ClearInfo は、ログに付加情報をクリアします。
+	ClearInfo()
 	// Debug は、メッセージのテンプレートtemplate, 置き換え文字列argsに対してfmt.Sprintfしたメッセージでデバッグレベルのログを出力します。
 	Debug(template string, args ...any)
 	// Info は、メッセージID（messages）、置き換え文字列argsに対応するメッセージで、情報レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
@@ -54,18 +58,32 @@ func NewLogger(messageSource message.MessageSource, mycfg config.Config) (Logger
 			config.Level = al
 		}
 	}
-
 	z, err := config.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		return nil, err
 	}
-	return &zapLogger{log: z.Sugar(), messageSource: messageSource}, nil
+	sugerredLogger := z.Sugar()
+	return &zapLogger{originalLog: sugerredLogger,
+		log:           sugerredLogger,
+		messageSource: messageSource,
+	}, nil
 }
 
 // zapLoggerは、Zapを使ったLogger実装です。
 type zapLogger struct {
+	originalLog   *zap.SugaredLogger
 	log           *zap.SugaredLogger
 	messageSource message.MessageSource
+}
+
+// AddInfo implements Logger.
+func (z *zapLogger) AddInfo(key string, value string) {
+	z.log = z.log.With(key, value)
+}
+
+// ClearInfo implements Logger.
+func (z *zapLogger) ClearInfo() {
+	z.log = z.originalLog
 }
 
 // Debug implements Logger.

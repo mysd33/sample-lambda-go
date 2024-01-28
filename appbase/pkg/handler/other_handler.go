@@ -43,6 +43,11 @@ func (h *SimpleLambdaHandler) Handle(simpleControllerFunc SimpleControllerFunc) 
 		}()
 		// ctxをコンテキスト領域に格納
 		apcontext.Context = ctx
+		// リクエストIDをログの付加情報として追加
+		h.log.ClearInfo()
+		lc := apcontext.GetLambdaContext(ctx)
+		h.log.AddInfo("AWS RequestID", lc.AwsRequestID)
+
 		resultErr = simpleControllerFunc(event)
 		return
 	}

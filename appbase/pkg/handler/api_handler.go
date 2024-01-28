@@ -91,6 +91,13 @@ func (h *APILambdaHandler) Handle(ginLambda *ginadapter.GinLambda) APITriggeredL
 		}()
 		// ctxをコンテキスト領域に格納
 		apcontext.Context = ctx
+
+		// リクエストIDをログの付加情報として追加
+		h.log.ClearInfo()
+		lc := apcontext.GetLambdaContext(ctx)
+		h.log.AddInfo("AWS RequestID", lc.AwsRequestID)
+		h.log.AddInfo("API Gateway RequestID", request.RequestContext.RequestID)
+
 		// AWS Lambda Go API Proxyでginと統合
 		// https://github.com/awslabs/aws-lambda-go-api-proxy
 		response, err = ginLambda.ProxyWithContext(ctx, request)
