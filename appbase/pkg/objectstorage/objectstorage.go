@@ -40,8 +40,10 @@ type ObjectStorageAccessor interface {
 	// GetObjectMetadata は、オブジェクトストレージのオブジェクトのメタデータを取得します。
 	GetObjectMetadata(bucketName string, objectKey string) (*s3.HeadObjectOutput, error)
 	// Upload は、オブジェクトストレージへbyteスライスのデータをアップロードします。
+	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行います。
 	Upload(bucketName string, objectKey string, objectBody []byte) error
 	// UploadWithOwnerFullControl は、 bucket-owner-full-controlのACLを付与しオブジェクトストレージへbyteスライスのデータをアップロードします。
+	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行います。
 	//（使用しないが参考実装）
 	UploadWithOwnerFullControl(bucketName string, objectKey string, objectBody []byte) error
 	// UploadFromReader は、オブジェクトストレージへReaderから読み込んだデータをアップロードします。
@@ -51,9 +53,11 @@ type ObjectStorageAccessor interface {
 	// ReadAt は、オブジェクトストレージから指定のオフセットからバイトスライス分読み込みます。
 	ReadAt(bucketName string, objectKey string, p []byte, offset int64) (int, error)
 	// Download は、オブジェクトストレージからデータをbyteスライスのデータでダウンロードします。
+	// マルチパートダウンロードは行いません。
 	Download(bucketName string, objectKey string) ([]byte, error)
 	// DownloadToReader は、オブジェクトストレージからデータをReaderでダウンロードします。
 	// readerは、クローズは、呼び出し元にて行う必要があります。
+	// マルチパートダウンロードは行いません。
 	DownloadToReader(bucketName string, objectKey string) (io.ReadCloser, error)
 	// DownloadToFile は、オブジェクトストレージから大きなデータを指定のローカルファイルに保存します。
 	// サイズが5MiBを超える場合は、透過的にマルチパートダウンロードを行います。
