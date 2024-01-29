@@ -288,6 +288,22 @@ func (a *defaultObjectStorageAccessor) ReadAt(bucketName string, objectKey strin
 // Download implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) Download(bucketName string, objectKey string) ([]byte, error) {
 	a.log.Debug("Download bucketName:%s, objectKey:%s", bucketName, objectKey)
+	// GetObjectを使用する方法だと、コメントアウト部分のコードの通り、1回のリクエスト呼び出しでデータ取得できるが、
+	// 本サンプルでは、Downloaderを使用してマルチパート対応した方法を使用している。
+	// その代わり、HeadObjectを呼び出し、サイズ情報を取得しバッファを確保してからダウンロードする必要があるので、
+	// APIの呼び出しが2回になる。
+	/*
+		body, err := a.DownloadAsReader(bucketName, objectKey)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		defer body.Close()
+		data, err := io.ReadAll(body)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		return data, nil
+	*/
 	metadata, err := a.GetMetadata(bucketName, objectKey)
 	if err != nil {
 		return nil, err
