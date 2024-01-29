@@ -26,7 +26,13 @@ import (
 )
 
 const (
-	S3_LOCAL_ENDPOINT_NAME = "S3_LOCAL_ENDPOINT"
+	S3_LOCAL_ENDPOINT_NAME         = "S3_LOCAL_ENDPOINT"
+	S3_MINIO_ACCESS_KEY_NAME       = "S3_MINIO_ACCESS_KEY"
+	S3_MINIO_SECRET_KEY_NAME       = "S3_MINIO_SECRET_KEY"
+	S3_UPLOAD_PART_SIZE_MiB_NAME   = "S3_UPLOAD_PART_SIZE_MiB"
+	S3_DOWNLOAD_PART_SIZE_MiB_NAME = "S3_DOWNLOAD_PART_SIZE_MiB"
+	S3_UPLOAD_CONCURRENCY          = "S3_UPLOAD_CONCURRENCY"
+	S3_DOWNLOAD_CONCURRENCY        = "S3_DOWNLOAD_CONCURRENCY"
 )
 
 // ObjectStorageAccessor は、オブジェクトストレージへアクセスするためのインタフェースです。
@@ -97,20 +103,28 @@ func NewObjectStorageAccessor(myCfg myconfig.Config, log logging.Logger) (Object
 			o.BaseEndpoint = aws.String(s3Endpoint)
 			// MinIOの場合は、PathStyleをtrueにする
 			o.UsePathStyle = true
-			key := myCfg.Get("MINIO_ACCESS_KEY", "minioadmin")
-			secret := myCfg.Get("MINIO_SECRET_KEY", "minioadmin")
+			key := myCfg.Get(S3_MINIO_ACCESS_KEY_NAME, "minioadmin")
+			secret := myCfg.Get(S3_MINIO_SECRET_KEY_NAME, "minioadmin")
 			o.Credentials = aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(key, secret, ""))
 		}
 	})
 
-	// パートサイズのパラメータ化
-	partMiBs := myCfg.GetInt("PART_SIZE_MiB", 5)
+	// パートサイズのパラメータ取得
+	uploadPartMiBs := myCfg.GetInt(S3_UPLOAD_PART_SIZE_MiB_NAME, 5)
+	downloadPartMiBs := myCfg.GetInt(S3_DOWNLOAD_PART_SIZE_MiB_NAME, 5)
+	// 並列実行数のパラメータ取得
+	uploadConcurrency := myCfg.GetInt(S3_UPLOAD_CONCURRENCY, 5)
+	downloadConCurrency := myCfg.GetInt(S3_DOWNLOAD_CONCURRENCY, 5)
 
+	// https://aws.github.io/aws-sdk-go-v2/docs/sdk-utilities/s3/#configuration-options
 	uploader := manager.NewUploader(client, func(u *manager.Uploader) {
-		u.PartSize = int64(partMiBs) * 1024 * 1024
+		u.PartSize = int64(uploadPartMiBs) * 1024 * 1024
+		u.Concurrency = uploadConcurrency
 	})
+	// https://aws.github.io/aws-sdk-go-v2/docs/sdk-utilities/s3/#configuration-options-1
 	downloader := manager.NewDownloader(client, func(d *manager.Downloader) {
-		d.PartSize = int64(partMiBs) * 1024 * 1024
+		d.PartSize = int64(downloadPartMiBs) * 1024 * 1024
+		d.Concurrency = downloadConCurrency
 	})
 
 	return &defaultObjectStorageAccessor{
@@ -216,6 +230,7 @@ func (a *defaultObjectStorageAccessor) UploadFromReader(bucketName string, objec
 		Key:    aws.String(objectKey),
 		Body:   reader,
 	}
+	// https://aws.github.io/aws-sdk-go-v2/docs/sdk-utilities/s3/
 	_, err := a.uploader.Upload(apcontext.Context, input)
 	if err != nil {
 		return errors.WithStack(err)
@@ -284,6 +299,7 @@ func (a *defaultObjectStorageAccessor) DownloadToFile(bucketName string, objectK
 		return errors.WithStack(err)
 	}
 	defer f.Close()
+	// https://aws.github.io/aws-sdk-go-v2/docs/sdk-utilities/s3/
 	_, err = a.downloader.Download(apcontext.Context, f, input)
 	if err != nil {
 		return errors.WithStack(err)
