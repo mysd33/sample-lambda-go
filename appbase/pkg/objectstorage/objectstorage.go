@@ -37,35 +37,45 @@ const (
 
 // ObjectStorageAccessor は、オブジェクトストレージへアクセスするためのインタフェースです。
 type ObjectStorageAccessor interface {
-	// ListObjectesは、フォルダ配下のオブジェクトストレージのオブジェクト一覧を取得します。
-	ListObjects(bucketName string, folderPath string) ([]types.Object, error)
-	// ExistsObject は、オブジェクトストレージにオブジェクトが存在するか確認します。
-	ExistsObject(bucketName string, objectKey string) (bool, error)
+	// Listは、フォルダ配下のオブジェクトストレージのオブジェクト一覧を取得します。
+	List(bucketName string, folderPath string) ([]types.Object, error)
+	// Exists は、オブジェクトストレージにオブジェクトが存在するか確認します。
+	Exists(bucketName string, objectKey string) (bool, error)
 	// GetObjectSize は、オブジェクトストレージのオブジェクトのサイズを取得します。
 	GetSize(bucketName string, objectKey string) (int64, error)
-	// GetObjectMetadata は、オブジェクトストレージのオブジェクトのメタデータを取得します。
-	GetObjectMetadata(bucketName string, objectKey string) (*s3.HeadObjectOutput, error)
+	// GetMetadata は、オブジェクトストレージのオブジェクトのメタデータを取得します。
+	GetMetadata(bucketName string, objectKey string) (*s3.HeadObjectOutput, error)
 	// Upload は、オブジェクトストレージへbyteスライスのデータをアップロードします。
-	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行いますが、オンメモリのため大きなサイズは推奨されないメソッドです。
+	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行いますが、オンメモリのためあまり大きなサイズは推奨されないメソッドです。
 	Upload(bucketName string, objectKey string, objectBody []byte) error
 	// UploadWithOwnerFullControl は、 bucket-owner-full-controlのACLを付与しオブジェクトストレージへbyteスライスのデータをアップロードします。
-	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行いますが、オンメモリのため大きなサイズは推奨されないメソッドです。
+	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行いますが、オンメモリのためあまり大きなサイズは推奨されないメソッドです。
 	//（使用しないが参考実装）
 	UploadWithOwnerFullControl(bucketName string, objectKey string, objectBody []byte) error
+	// UploadString は、オブジェクトストレージへ文字列のデータをアップロードします。
+	UploadString(bucketName string, objectKey string, objectBody string) error
 	// UploadFromReader は、オブジェクトストレージへReaderから読み込んだデータをアップロードします。
 	// readerは、クローズは、呼び出し元にて行う必要があります。
 	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行います。
 	UploadFromReader(bucketName string, objectKey string, reader io.Reader) error
+	// UploadFile は、オブジェクトストレージへローカルファイルをアップロードします。
+	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行います。
+	UploadFile(bucketName string, objectKey string, filePath string) error
 	// ReadAt は、オブジェクトストレージから指定のオフセットからバイトスライス分読み込みます。
 	ReadAt(bucketName string, objectKey string, p []byte, offset int64) (int, error)
 	// Download は、オブジェクトストレージからデータをbyteスライスのデータでダウンロードします。
-	// マルチパートダウンロードは行いません。オンメモリのため大きなサイズは推奨されないメソッドです。
+	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行いますが、オンメモリのためあまり大きなサイズは推奨されないメソッドです。
 	Download(bucketName string, objectKey string) ([]byte, error)
-	// DownloadToReader は、オブジェクトストレージからデータをReaderでダウンロードします。
-	// readerは、クローズは、呼び出し元にて行う必要があります。
-	// マルチパートダウンロードは行いません。オンメモリのため大きなサイズは推奨されないメソッドです。
-	DownloadToReader(bucketName string, objectKey string) (io.ReadCloser, error)
-	// DownloadToFile は、オブジェクトストレージから大きなデータを指定のローカルファイルに保存します。
+	// DownloadAsString は、オブジェクトストレージからデータをダウンロードし、文字列として返却します。
+	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行いますが、オンメモリのためあまり大きなサイズは推奨されないメソッドです。
+	DownloadAsString(bucketName string, objectKey string) (string, error)
+	// DownloadAsReader は、オブジェクトストレージからデータをダウンロードし、Readerとして返却します。
+	// readerは、クローズは、呼び出し元にて行う必要があります。Readerで返却可能ですが、マルチパートダウンロードは行いません。
+	DownloadAsReader(bucketName string, objectKey string) (io.ReadCloser, error)
+	// DownloadToWriter は、オブジェクトストレージからデータをダウンロードし、指定のWriterに保存します。
+	// サイズが5MiBを超える場合は、透過的にマルチパートダウンロードを行います。
+	DownloadToWriter(bucketName string, objectKey string, writer io.WriterAt) error
+	// DownloadToFile は、オブジェクトストレージから大きなデータをダウンロードし、指定のローカルファイルに保存します。
 	// サイズが5MiBを超える場合は、透過的にマルチパートダウンロードを行います。
 	DownloadToFile(bucketName string, objectKey string, filePath string) error
 	// Delele は、オブジェクトストレージからデータを削除します。
@@ -143,8 +153,8 @@ type defaultObjectStorageAccessor struct {
 	downloader *manager.Downloader
 }
 
-// ListObjects implements ObjectStorageAccessor.
-func (a *defaultObjectStorageAccessor) ListObjects(bucketName string, folderPath string) ([]types.Object, error) {
+// List implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) List(bucketName string, folderPath string) ([]types.Object, error) {
 	a.log.Debug("ListObjects bucketName:%s, folderPath:%s", bucketName, folderPath)
 	input := &s3.ListObjectsV2Input{
 		Bucket:  aws.String(bucketName),
@@ -159,10 +169,10 @@ func (a *defaultObjectStorageAccessor) ListObjects(bucketName string, folderPath
 	return output.Contents, nil
 }
 
-// ExistsObject implements ObjectStorageAccessor.
-func (a *defaultObjectStorageAccessor) ExistsObject(bucketName string, objectKey string) (bool, error) {
+// Exists implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) Exists(bucketName string, objectKey string) (bool, error) {
 	a.log.Debug("ExistsObject bucketName:%s, objectKey:%s", bucketName, objectKey)
-	_, err := a.GetObjectMetadata(bucketName, objectKey)
+	_, err := a.GetMetadata(bucketName, objectKey)
 	if err != nil {
 		var notFound *types.NotFound
 		if errors.As(err, &notFound) {
@@ -177,15 +187,15 @@ func (a *defaultObjectStorageAccessor) ExistsObject(bucketName string, objectKey
 // GetSize implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) GetSize(bucketName string, objectKey string) (int64, error) {
 	a.log.Debug("GetSize bucketName:%s, objectKey:%s", bucketName, objectKey)
-	output, err := a.GetObjectMetadata(bucketName, objectKey)
+	output, err := a.GetMetadata(bucketName, objectKey)
 	if err != nil {
 		return 0, err
 	}
 	return *output.ContentLength, nil
 }
 
-// GetObjectMetadata implements ObjectStorageAccessor.
-func (a *defaultObjectStorageAccessor) GetObjectMetadata(bucketName string, objectKey string) (*s3.HeadObjectOutput, error) {
+// GetMetadata implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) GetMetadata(bucketName string, objectKey string) (*s3.HeadObjectOutput, error) {
 	a.log.Debug("GetObjectMetadata bucketName:%s, objectKey:%s", bucketName, objectKey)
 	input := &s3.HeadObjectInput{
 		Bucket: aws.String(bucketName),
@@ -222,6 +232,12 @@ func (a *defaultObjectStorageAccessor) UploadWithOwnerFullControl(bucketName str
 	return nil
 }
 
+// UploadString implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) UploadString(bucketName string, objectKey string, objectBody string) error {
+	a.log.Debug("UploadFromString bucketName:%s, objectKey:%s", bucketName, objectKey)
+	return a.Upload(bucketName, objectKey, []byte(objectBody))
+}
+
 // UploadFromReader implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) UploadFromReader(bucketName string, objectKey string, reader io.Reader) error {
 	a.log.Debug("UploadFromReader bucketName:%s, objectKey:%s", bucketName, objectKey)
@@ -236,6 +252,17 @@ func (a *defaultObjectStorageAccessor) UploadFromReader(bucketName string, objec
 		return errors.WithStack(err)
 	}
 	return nil
+}
+
+// UploadFile implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) UploadFile(bucketName string, objectKey string, filePath string) error {
+	a.log.Debug("UploadFromFile bucketName:%s, objectKey:%s, filePath:%s", bucketName, objectKey, filePath)
+	f, err := os.Open(filePath)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	defer f.Close()
+	return a.UploadFromReader(bucketName, objectKey, f)
 }
 
 // ReadAt implements ObjectStorageAccessor.
@@ -261,20 +288,31 @@ func (a *defaultObjectStorageAccessor) ReadAt(bucketName string, objectKey strin
 // Download implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) Download(bucketName string, objectKey string) ([]byte, error) {
 	a.log.Debug("Download bucketName:%s, objectKey:%s", bucketName, objectKey)
-	body, err := a.DownloadToReader(bucketName, objectKey)
+	metadata, err := a.GetMetadata(bucketName, objectKey)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
-	defer body.Close()
-	data, err := io.ReadAll(body)
+	buf := make([]byte, *metadata.ContentLength)
+	w := manager.NewWriteAtBuffer(buf)
+	err = a.DownloadToWriter(bucketName, objectKey, w)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return nil, err
 	}
-	return data, nil
+	return buf, nil
 }
 
-// DownloadToReader implements ObjectStorageAccessor.
-func (a *defaultObjectStorageAccessor) DownloadToReader(bucketName string, objectKey string) (io.ReadCloser, error) {
+// DownloadAsString implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) DownloadAsString(bucketName string, objectKey string) (string, error) {
+	a.log.Debug("DownloadToString bucketName:%s, objectKey:%s", bucketName, objectKey)
+	data, err := a.Download(bucketName, objectKey)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// DownloadAsReader implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) DownloadAsReader(bucketName string, objectKey string) (io.ReadCloser, error) {
 	a.log.Debug("DownloadToReader bucketName:%s, objectKey:%s", bucketName, objectKey)
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
@@ -287,24 +325,30 @@ func (a *defaultObjectStorageAccessor) DownloadToReader(bucketName string, objec
 	return output.Body, nil
 }
 
-// DownloadToFile implements ObjectStorageAccessor.
-func (a *defaultObjectStorageAccessor) DownloadToFile(bucketName string, objectKey string, filePath string) error {
-	a.log.Debug("DownloadLargeObject bucketName:%s, objectKey:%s, filePath", bucketName, objectKey, filePath)
+// DownloadToWriter implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) DownloadToWriter(bucketName string, objectKey string, writer io.WriterAt) error {
+	a.log.Debug("DownloadToWriter bucketName:%s, objectKey:%s", bucketName, objectKey)
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
 	}
+	// https://aws.github.io/aws-sdk-go-v2/docs/sdk-utilities/s3/
+	_, err := a.downloader.Download(apcontext.Context, writer, input)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
+}
+
+// DownloadToFile implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) DownloadToFile(bucketName string, objectKey string, filePath string) error {
+	a.log.Debug("DownloadLargeObject bucketName:%s, objectKey:%s, filePath", bucketName, objectKey, filePath)
 	f, err := os.Create(filePath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 	defer f.Close()
-	// https://aws.github.io/aws-sdk-go-v2/docs/sdk-utilities/s3/
-	_, err = a.downloader.Download(apcontext.Context, f, input)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
+	return a.DownloadToWriter(bucketName, objectKey, f)
 }
 
 // Delele implements ObjectStorageAccessor.
@@ -325,7 +369,7 @@ func (a *defaultObjectStorageAccessor) Delele(bucketName string, objectKey strin
 func (a *defaultObjectStorageAccessor) DeleteFolder(bucketName string, folderPath string) error {
 	a.log.Debug("DeleteFolder bucketName:%s, folderPath:%s", bucketName, folderPath)
 	// コピー元フォルダに存在するオブジェクトを取得
-	objects, err := a.ListObjects(bucketName, folderPath)
+	objects, err := a.List(bucketName, folderPath)
 	if err != nil {
 		return err
 	}
@@ -361,7 +405,7 @@ func (a *defaultObjectStorageAccessor) CopyFolder(bucketName string, srcFolderPa
 	a.log.Debug("CopyFolder bucketName:%s, srcFolderPath:%s, targetFolderPath:%s, nested:%v", bucketName, srcFolderPath, targetFolderPath, nested)
 	srcFolderPath = strings.Trim(srcFolderPath, "/")
 	// コピー元フォルダに存在するオブジェクトを取得
-	objects, err := a.ListObjects(bucketName, srcFolderPath)
+	objects, err := a.List(bucketName, srcFolderPath)
 	if err != nil {
 		return err
 	}
