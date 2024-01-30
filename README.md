@@ -523,9 +523,11 @@ curl http://127.0.0.1:3000/bff-api/v1/todo?user_id=（ユーザID）\&todo_id=(T
 # BFF (エラー電文動作確認)
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/validation
 curl -X POST -H "Content-Type: application/json" -d '{}' http://127.0.0.1:3000/bff-api/v1/error/validation2
+curl -X POST http://127.0.0.1:3000/bff-api/v1/error/validation3
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/business
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/business2
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/business3
+curl -X POST http://127.0.0.1:3000/bff-api/v1/error/business4
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/system
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/system2
 curl -X POST http://127.0.0.1:3000/bff-api/v1/error/hogehoge

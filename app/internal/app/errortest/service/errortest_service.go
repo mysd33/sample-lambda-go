@@ -35,6 +35,9 @@ func (*errorTestServiceImpl) Execute(errorType string) error {
 		// 業務エラー（Causeなしの場合）
 		return errors.NewBusinessError(message.W_EX_8001, "fuga")
 	case "business3":
+		// 業務エラー（Causeがnilの場合）
+		return errors.NewBusinessErrorWithCause(nil, message.W_EX_8001, "foo")
+	case "business4":
 		// 複数業務エラーの場合
 		err1 := errors.NewBusinessError(message.W_EX_8001, "fuga")
 		// 付加情報も付与できる
@@ -43,6 +46,7 @@ func (*errorTestServiceImpl) Execute(errorType string) error {
 		err2 := errors.NewBusinessError(message.W_EX_8001, "piyo")
 		err2.AddInfo("info1", "bar")
 		return errors.NewBusinessErrors(err1, err2)
+
 	case "system":
 		// システムエラー（Causeアリの場合）
 		cause := fmt.Errorf("原因のエラーB")

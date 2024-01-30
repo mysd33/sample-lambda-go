@@ -37,15 +37,19 @@ func (c *errorTestControllerImpl) Execute(ctx *gin.Context) (any, error) {
 	errorType := ctx.Param("errortype")
 
 	if errorType == "validation" {
-		// 入力チェックエラーのハンドリング
+		// 入力チェックエラーのハンドリング（Causeなしの場合）
 		return nil, myerrors.NewValidationError(message.W_EX_5002, "△△")
 	}
 	if errorType == "validation2" {
 		var request Request
 		if err := ctx.ShouldBindJSON(&request); err != nil {
-			// 入力チェックエラーのハンドリング
+			// 入力チェックエラーのハンドリング（Causeありの場合）
 			return nil, myerrors.NewValidationErrorWithCause(err, message.W_EX_5001)
 		}
+	}
+	if errorType == "validation3" {
+		// 入力チェックエラーのハンドリング(Causeがnilの場合)
+		return nil, myerrors.NewValidationErrorWithCause(nil, message.W_EX_5001)
 	}
 
 	err := c.service.Execute(errorType)

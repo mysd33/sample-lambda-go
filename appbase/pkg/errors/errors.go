@@ -42,6 +42,9 @@ type ValidationError struct {
 // ValidationError構造体を作成します。
 func NewValidationError(errorCode string, args ...any) *ValidationError {
 	// スタックトレース出力のため、cockloachdb/errorのスタックトレース付きのcauseエラー作成
+
+	// TODO: うまくスタックトレースが出力されないので対処が必要
+	// TODO: argsを%vにしてしまうと、Error()の出力がargsの情報になってしまう。
 	cause := cerrors.NewWithDepthf(1, "code:%s, error:%v", errorCode, args)
 	return &ValidationError{cause: cause, errorCode: errorCode, args: args}
 }
@@ -49,9 +52,19 @@ func NewValidationError(errorCode string, args ...any) *ValidationError {
 // NewValidationErrorWithCause は、原因となるエラー（cause）をラップし、
 // メッセージIDにもなるエラーコード（errorCode）とメッセージの置換文字列(args）を渡しValidationError構造体を作成します。
 func NewValidationErrorWithCause(cause error, errorCode string, args ...any) *ValidationError {
+
+	// TODO: うまくスタックトレースが出力されないので対処が必要
+	if cause == nil {
+		// nilの場合、ダミーのエラーを作成
+		// TODO: argsを%vにしてしまうと、Error()の出力がargsの情報になってしまう。
+		cause = cerrors.NewWithDepthf(1, "code:%s, error:%v", errorCode, args)
+	} else {
+		cause = cerrors.WithStackDepth(cause, 1)
+	}
+
 	// 誤ったエラーのラップを確認
 	requiredNotCodableError(cause)
-	return &ValidationError{cause: cerrors.WithStackDepth(cause, 1), errorCode: errorCode, args: args}
+	return &ValidationError{cause: cause, errorCode: errorCode, args: args}
 }
 
 // Error は、エラーを返却します。
@@ -172,10 +185,17 @@ func NewBusinessError(errorCode string, args ...any) *BusinessError {
 // メッセージIDにもなるエラーコード（errorCode）とメッセージの置換文字列(args）を渡し
 // BusinessError構造体を作成します。
 func NewBusinessErrorWithCause(cause error, errorCode string, args ...any) *BusinessError {
+	if cause == nil {
+		// nilの場合、ダミーのエラーを作成
+		// TODO: argsを%vにしてしまうと、Error()の出力がargsの情報になってしまう。
+		cause = cerrors.NewWithDepthf(1, "code:%s, error:%v", errorCode, args)
+	} else {
+		cause = cerrors.WithStackDepth(cause, 1)
+	}
 	// 誤ったエラーのラップを確認
 	requiredNotCodableError(cause)
 	// causeはスタックトレース付与
-	return &BusinessError{cause: cerrors.WithStackDepth(cause, 1), errorCode: errorCode, args: args}
+	return &BusinessError{cause: cause, errorCode: errorCode, args: args}
 }
 
 // Error は、エラーを返却します。errorインタフェースを実装します。
@@ -242,14 +262,17 @@ type SystemError struct {
 // メッセージIDにもなるエラーコード（errorCode）とメッセージの置換文字列(args）を渡し
 // SystemError構造体を作成します。
 func NewSystemError(cause error, errorCode string, args ...any) *SystemError {
-	// causeがnilの場合
 	if cause == nil {
+		// nilの場合、ダミーのエラーを作成
+		// TODO: argsを%vにしてしまうと、Error()の出力がargsの情報になってしまう。
 		cause = cerrors.NewWithDepthf(1, "code:%s, error:%v", errorCode, args)
+	} else {
+		cause = cerrors.WithStackDepth(cause, 1)
 	}
 	// 誤ったエラーのラップを確認
 	requiredNotCodableError(cause)
 	// causeはスタックトレース付与
-	return &SystemError{cause: cerrors.WithStackDepth(cause, 1), errorCode: errorCode, args: args}
+	return &SystemError{cause: cause, errorCode: errorCode, args: args}
 }
 
 // Error は、エラーを返却します。errorインタフェースを実装します。
