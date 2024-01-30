@@ -47,7 +47,9 @@ func NewAPILambdaHandler(config config.Config,
 func (h *APILambdaHandler) GetDefaultGinEngine(errorResponse api.ErrorResponse) *gin.Engine {
 	// ginをLoggerとCustomerRecoverのミドルウェアがアタッチされた状態で作成
 	engine := gin.New()
-	engine.Use(gin.Logger(),
+	engine.Use(
+		// TODO: GinがErrorに入れたものをログ出力するので同じようなログが2回出力されている模様
+		gin.Logger(),
 		func(ctx *gin.Context) {
 			ctx.Next()
 			// レスポンスの生成

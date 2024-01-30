@@ -4,7 +4,6 @@ erros パッケージは、エラー情報を扱うパッケージです。
 package errors
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -42,8 +41,6 @@ type ValidationError struct {
 // ValidationError構造体を作成します。
 func NewValidationError(errorCode string, args ...any) *ValidationError {
 	// スタックトレース出力のため、cockloachdb/errorのスタックトレース付きのcauseエラー作成
-
-	// TODO: うまくスタックトレースが出力されないので対処が必要
 	// TODO: argsを%vにしてしまうと、Error()の出力がargsの情報になってしまう。
 	cause := cerrors.NewWithDepthf(1, "code:%s, error:%v", errorCode, args)
 	return &ValidationError{cause: cause, errorCode: errorCode, args: args}
@@ -52,8 +49,6 @@ func NewValidationError(errorCode string, args ...any) *ValidationError {
 // NewValidationErrorWithCause は、原因となるエラー（cause）をラップし、
 // メッセージIDにもなるエラーコード（errorCode）とメッセージの置換文字列(args）を渡しValidationError構造体を作成します。
 func NewValidationErrorWithCause(cause error, errorCode string, args ...any) *ValidationError {
-
-	// TODO: うまくスタックトレースが出力されないので対処が必要
 	if cause == nil {
 		// nilの場合、ダミーのエラーを作成
 		// TODO: argsを%vにしてしまうと、Error()の出力がargsの情報になってしまう。
@@ -67,21 +62,24 @@ func NewValidationErrorWithCause(cause error, errorCode string, args ...any) *Va
 	return &ValidationError{cause: cause, errorCode: errorCode, args: args}
 }
 
-// Error は、エラーを返却します。
-func (e *ValidationError) Error() string {
-	//Causeのツリーをたどってgo-playground/validatorのエラーを取得
+// ErrorDetails は、エラー詳細を返します。
+func (e *ValidationError) ErrorDetails() map[string]string {
+	// Causeのツリーをたどってgo-playground/validatorのエラーを取得
 	var gPValidationErrors validator.ValidationErrors
 	if errors.As(e.cause, &gPValidationErrors) {
 		if myvalidator.Translator != nil {
-			//TODO: バリデーションエラーメッセージの整形（暫定でそのままJSON文字列）
+			//TODO: バリデーションエラーメッセージの整形（暫定でそのまま出力）
 			//エラーメッセージの日本語化
-			translated := gPValidationErrors.Translate(myvalidator.Translator)
-			bytes, _ := json.Marshal(translated)
-			return fmt.Sprintf("入力エラー:%s", string(bytes))
+			return gPValidationErrors.Translate(myvalidator.Translator)
 		}
 	}
+	// ValidationErrorsがない場合は、空のmapを返却
+	return make(map[string]string)
+}
 
-	return fmt.Sprintf("入力エラー:%s", e.cause.Error())
+// Error は、エラーを返却します。
+func (e *ValidationError) Error() string {
+	return fmt.Sprintf("入力エラー[%s], cause:%+v", e.errorCode, e.cause)
 }
 
 // Unwrap は、原因となるエラーにUnwrapします。

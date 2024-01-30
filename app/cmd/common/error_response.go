@@ -25,7 +25,10 @@ type commonErrorResponse struct {
 
 // ValidationErrorResponse implements api.ErrorResponse.
 func (r *commonErrorResponse) ValidationErrorResponse(validationError *myerrors.ValidationError) (int, any) {
-	return http.StatusBadRequest, r.errorResponseBody("validationError", validationError.Error())
+	detail := make(map[string]any)
+	detail["message"] = r.messageSource.GetMessage(validationError.ErrorCode(), validationError.Args()...)
+	detail["errorDetails"] = validationError.ErrorDetails()
+	return http.StatusBadRequest, r.errorResponseBody(validationError.ErrorCode(), detail)
 }
 
 // BusinessErrorResponse implements api.ErrorResponse.
