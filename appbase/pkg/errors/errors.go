@@ -77,7 +77,7 @@ func (e *ValidationError) ErrorDetails() map[string]string {
 
 // Error は、エラーを返却します。
 func (e *ValidationError) Error() string {
-	return fmt.Sprintf("入力エラー[%s], cause:%+v", e.errorCode, e.cause)
+	return fmt.Sprintf("入力エラー[%s] details:%v cause:%+v", e.errorCode, e.ErrorDetails(), e.cause)
 }
 
 // Unwrap は、原因となるエラーにUnwrapします。
