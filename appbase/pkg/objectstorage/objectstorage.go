@@ -62,6 +62,7 @@ type ObjectStorageAccessor interface {
 	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行います。
 	UploadFile(bucketName string, objectKey string, filePath string) error
 	// ReadAt は、オブジェクトストレージから指定のオフセットからバイトスライス分読み込みます。
+	// io.ReaderAtと似たインタフェースを提供しています。
 	ReadAt(bucketName string, objectKey string, p []byte, offset int64) (int, error)
 	// Download は、オブジェクトストレージからデータをbyteスライスのデータでダウンロードします。
 	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行いますが、オンメモリのためあまり大きなサイズは推奨されないメソッドです。
