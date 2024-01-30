@@ -40,9 +40,8 @@ type ValidationError struct {
 // NewValidationError は、ッセージIDにもなるエラーコード（errorCode）とメッセージの置換文字列(args）を渡し
 // ValidationError構造体を作成します。
 func NewValidationError(errorCode string, args ...any) *ValidationError {
-	// スタックトレース出力のため、cockloachdb/errorのスタックトレース付きのcauseエラー作成
-	// TODO: argsを%vにしてしまうと、Error()の出力がargsの情報になってしまう。
-	cause := cerrors.NewWithDepthf(1, "code:%s, error:%v", errorCode, args)
+	// スタックトレース出力のため、cockloachdb/errorのダミーのcauseエラー作成
+	cause := cerrors.NewWithDepthf(1, "code:%s, args:%v", errorCode, args)
 	return &ValidationError{cause: cause, errorCode: errorCode, args: args}
 }
 
@@ -51,8 +50,7 @@ func NewValidationError(errorCode string, args ...any) *ValidationError {
 func NewValidationErrorWithCause(cause error, errorCode string, args ...any) *ValidationError {
 	if cause == nil {
 		// nilの場合、ダミーのエラーを作成
-		// TODO: argsを%vにしてしまうと、Error()の出力がargsの情報になってしまう。
-		cause = cerrors.NewWithDepthf(1, "code:%s, error:%v", errorCode, args)
+		cause = cerrors.NewWithDepthf(1, "code:%s, args:%v", errorCode, args)
 	} else {
 		cause = cerrors.WithStackDepth(cause, 1)
 	}
@@ -68,7 +66,7 @@ func (e *ValidationError) ErrorDetails() map[string]string {
 	var gPValidationErrors validator.ValidationErrors
 	if errors.As(e.cause, &gPValidationErrors) {
 		if myvalidator.Translator != nil {
-			//TODO: バリデーションエラーメッセージの整形（暫定でそのまま出力）
+			//TODO: バリデーションエラーメッセージの整形（現状、そのままmapで出力）
 			//エラーメッセージの日本語化
 			return gPValidationErrors.Translate(myvalidator.Translator)
 		}
@@ -174,8 +172,9 @@ type BusinessError struct {
 // NewBusinessError は、メッセージIDにもなるエラーコード（errorCode）とメッセージの置換文字列(args）を渡し
 // BusinessError構造体を作成します。
 func NewBusinessError(errorCode string, args ...any) *BusinessError {
+	// ダミーのエラーを作成
+	cause := cerrors.NewWithDepthf(1, "code:%s, args:%v", errorCode, args)
 	// スタックトレース出力のため、cockloachdb/errorのスタックトレース付きのcauseエラー作成
-	cause := cerrors.NewWithDepthf(1, "code:%s, error:%v", errorCode, args)
 	return &BusinessError{cause: cause, errorCode: errorCode, args: args}
 }
 
@@ -185,8 +184,7 @@ func NewBusinessError(errorCode string, args ...any) *BusinessError {
 func NewBusinessErrorWithCause(cause error, errorCode string, args ...any) *BusinessError {
 	if cause == nil {
 		// nilの場合、ダミーのエラーを作成
-		// TODO: argsを%vにしてしまうと、Error()の出力がargsの情報になってしまう。
-		cause = cerrors.NewWithDepthf(1, "code:%s, error:%v", errorCode, args)
+		cause = cerrors.NewWithDepthf(1, "code:%s, args:%v", errorCode, args)
 	} else {
 		cause = cerrors.WithStackDepth(cause, 1)
 	}
@@ -262,8 +260,7 @@ type SystemError struct {
 func NewSystemError(cause error, errorCode string, args ...any) *SystemError {
 	if cause == nil {
 		// nilの場合、ダミーのエラーを作成
-		// TODO: argsを%vにしてしまうと、Error()の出力がargsの情報になってしまう。
-		cause = cerrors.NewWithDepthf(1, "code:%s, error:%v", errorCode, args)
+		cause = cerrors.NewWithDepthf(1, "code:%s, args:%v", errorCode, args)
 	} else {
 		cause = cerrors.WithStackDepth(cause, 1)
 	}
