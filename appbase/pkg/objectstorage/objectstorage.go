@@ -305,15 +305,16 @@ func (a *defaultObjectStorageAccessor) Download(bucketName string, objectKey str
 		}
 		return data, nil
 	*/
-	metadata, err := a.GetMetadata(bucketName, objectKey)
+	size, err := a.GetSize(bucketName, objectKey)
 	if err != nil {
 		return nil, err
 	}
-	buf := make([]byte, *metadata.ContentLength)
+	buf := make([]byte, size)
 	w := manager.NewWriteAtBuffer(buf)
 	err = a.DownloadToWriter(bucketName, objectKey, w)
 	if err != nil {
 		return nil, err
+
 	}
 	return buf, nil
 }
