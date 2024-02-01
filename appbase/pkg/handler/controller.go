@@ -4,6 +4,8 @@ handler パッケージは、Lambdaのハンドラメソッドに関する機能
 package handler
 
 import (
+	"context"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/gin-gonic/gin"
 )
@@ -15,4 +17,4 @@ type ControllerFunc func(ctx *gin.Context) (any, error)
 type AsyncControllerFunc func(sqsMessage events.SQSMessage) error
 
 // SimpleControllerFunc は、その他のトリガのControllerで実行する関数です。
-type SimpleControllerFunc func(event any) error
+type SimpleControllerFunc func(ctx context.Context, event any) (any, error)

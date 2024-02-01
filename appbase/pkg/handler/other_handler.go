@@ -48,7 +48,7 @@ func (h *SimpleLambdaHandler) Handle(simpleControllerFunc SimpleControllerFunc) 
 		lc := apcontext.GetLambdaContext(ctx)
 		h.log.AddInfo("AWS RequestID", lc.AwsRequestID)
 
-		resultErr = simpleControllerFunc(event)
+		response, resultErr = simpleControllerFunc(ctx, event)
 		return
 	}
 }

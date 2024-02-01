@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"reflect"
 	"runtime"
@@ -97,24 +98,24 @@ func (i *defaultHandlerInterceptor) HandleAsync(asyncControllerFunc AsyncControl
 
 // HandleSimple implements HandlerInterceptor.
 func (i *defaultHandlerInterceptor) HandleSimple(simpleControllerFunc SimpleControllerFunc) SimpleControllerFunc {
-	return func(event any) error {
+	return func(ctx context.Context, event any) (any, error) {
 		fv := reflect.ValueOf(simpleControllerFunc)
 		funcName := runtime.FuncForPC(fv.Pointer()).Name()
 		i.log.Info(message.I_FW_0001, funcName)
 
 		// Configの最新読み込み
 		if err := i.config.Reload(); err != nil {
-			return err
+			return nil, err
 		}
 		// Controllerの実行
-		err := simpleControllerFunc(event)
+		result, err := simpleControllerFunc(ctx, event)
 		// 集約エラーハンドリングによるログ出力
 		if err != nil {
 			i.logError(err)
-			return err
+			return nil, err
 		}
 		i.log.Info(message.I_FW_0002, funcName)
-		return nil
+		return result, nil
 	}
 }
 

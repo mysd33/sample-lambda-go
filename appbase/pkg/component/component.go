@@ -37,6 +37,7 @@ type ApplicationContext interface {
 	GetInterceptor() handler.HandlerInterceptor
 	GetAPILambdaHandler() *handler.APILambdaHandler
 	GetAsyncLambdaHandler() *handler.AsyncLambdaHandler
+	GetSimpleLambdaHandler() *handler.SimpleLambdaHandler
 }
 
 // NewApplicationContext は、デフォルトのApplicationContextを作成します。
@@ -62,6 +63,7 @@ func NewApplicationContext() ApplicationContext {
 	interceptor := createHanderInterceptor(config, logger)
 	apiLambdaHandler := createAPILambdaHandler(config, logger, messageSource, apiResponseFormatter)
 	asyncLambdaHandler := createAsyncLambdaHandler(config, logger, queueMessageItemRepository)
+	simpleLambdaHandler := createSimpleLambdaHandler(config, logger)
 
 	// Validatorの日本語化
 	validator.Setup()
@@ -84,6 +86,7 @@ func NewApplicationContext() ApplicationContext {
 		interceptor:                         interceptor,
 		apiLambdaHandler:                    apiLambdaHandler,
 		asyncLambdaHandler:                  asyncLambdaHandler,
+		simpleLambdaHandler:                 simpleLambdaHandler,
 	}
 }
 
@@ -105,6 +108,7 @@ type defaultApplicationContext struct {
 	interceptor                         handler.HandlerInterceptor
 	apiLambdaHandler                    *handler.APILambdaHandler
 	asyncLambdaHandler                  *handler.AsyncLambdaHandler
+	simpleLambdaHandler                 *handler.SimpleLambdaHandler
 }
 
 // GetIDGenerator implements ApplicationContext.
@@ -190,6 +194,11 @@ func (ac *defaultApplicationContext) GetAPILambdaHandler() *handler.APILambdaHan
 // GetAsyncLambdaHandler implements ApplicationContext.
 func (ac *defaultApplicationContext) GetAsyncLambdaHandler() *handler.AsyncLambdaHandler {
 	return ac.asyncLambdaHandler
+}
+
+// GetSimpleLambdaHandler implements ApplicationContext.
+func (ac *defaultApplicationContext) GetSimpleLambdaHandler() *handler.SimpleLambdaHandler {
+	return ac.simpleLambdaHandler
 }
 
 func createIDGenerator() id.IDGenerator {
@@ -293,6 +302,10 @@ func createAPILambdaHandler(config config.Config, logger logging.Logger, message
 
 func createAsyncLambdaHandler(config config.Config, logger logging.Logger, queueMessageItemRepository transaction.QueueMessageItemRepository) *handler.AsyncLambdaHandler {
 	return handler.NewAsyncLambdaHandler(config, logger, queueMessageItemRepository)
+}
+
+func createSimpleLambdaHandler(config config.Config, logger logging.Logger) *handler.SimpleLambdaHandler {
+	return handler.NewSimpleLambdaHandler(config, logger)
 }
 
 func createQueueMessageItemRepository(config config.Config, logger logging.Logger, dynamodbTemplate transaction.TransactionalDynamoDBTemplate) transaction.QueueMessageItemRepository {
