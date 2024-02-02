@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net/url"
 	"os"
 	"strings"
 
@@ -408,7 +409,7 @@ func (a *defaultObjectStorageAccessor) Copy(bucketName string, objectKey string,
 	a.log.Debug("fileName:%s", fileName)
 	input := &s3.CopyObjectInput{
 		Bucket:     aws.String(bucketName),
-		CopySource: aws.String(fmt.Sprintf("%s/%s", bucketName, objectKey)),
+		CopySource: aws.String(encodeURL(fmt.Sprintf("%s/%s", bucketName, objectKey))),
 		Key:        aws.String(fmt.Sprintf("%s/%s", targetFolderPath, fileName)),
 	}
 	_, err := a.s3Client.CopyObject(apcontext.Context, input)
@@ -416,6 +417,11 @@ func (a *defaultObjectStorageAccessor) Copy(bucketName string, objectKey string,
 		return errors.WithStack(err)
 	}
 	return nil
+}
+
+// encodeURL は、パスをURLエンコードします。
+func encodeURL(uri string) string {
+	return url.PathEscape(uri)
 }
 
 // CopyFolder implements ObjectStorageAccessor.
