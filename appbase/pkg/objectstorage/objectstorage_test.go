@@ -5,6 +5,57 @@ objectstorage パッケージは、オブジェクトストレージを扱うた
 package objectstorage
 
 //TODO: S3アクセスの挙動を実験するときに使用した仮のテストなのでコメントアウト
+/*
+func Test_defaultObjectStorageAccessor_List(t *testing.T) {
+	bucketName := "samplebucket123"
+	//bucketName := "mysd33bucket123"
+	myCfg := config.NewTestConfig(map[string]string{
+		"S3_LOCAL_ENDPOINT": "http://host.docker.internal:9000",
+	})
+	messageSource, _ := message.NewMessageSource()
+	logger, _ := logging.NewLogger(messageSource, myCfg)
+	objectStorageAccessor, _ := NewObjectStorageAccessor(
+		myCfg,
+		logger,
+	)
+
+	type args struct {
+		bucketName string
+		folderPath string
+	}
+	tests := []struct {
+		name string
+		a    ObjectStorageAccessor
+		args args
+		// TODO assert
+		//want    []types.Object
+		wantErr bool
+	}{
+		// Add test cases.
+		{"test1", objectStorageAccessor, args{bucketName, "input"}, false},
+	}
+	for _, tt := range tests {
+		//  テスト用にX-Rayのセグメント開始
+		ctx, seg := xray.BeginSegment(context.Background(), "objectstorage_test")
+		apcontext.Context = ctx
+		defer seg.Close(nil)
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.a.List(tt.args.bucketName, tt.args.folderPath)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("defaultObjectStorageAccessor.List() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			for _, v := range got {
+				fmt.Println(*v.Key)
+			}
+			// TODO assert
+			//if !reflect.DeepEqual(got, tt.want) {
+			//		t.Errorf("defaultObjectStorageAccessor.List() = %v, want %v", got, tt.want)
+			//}
+		})
+	}
+}*/
 
 /*
 func Test_defaultObjectStorageAccessor_ExistsObject(t *testing.T) {

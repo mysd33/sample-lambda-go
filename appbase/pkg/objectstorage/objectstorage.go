@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"math"
 	"net/url"
 	"os"
 	"strings"
@@ -159,16 +158,37 @@ type defaultObjectStorageAccessor struct {
 func (a *defaultObjectStorageAccessor) List(bucketName string, folderPath string) ([]types.Object, error) {
 	a.log.Debug("ListObjects bucketName:%s, folderPath:%s", bucketName, folderPath)
 	input := &s3.ListObjectsV2Input{
-		Bucket:  aws.String(bucketName),
-		Prefix:  aws.String(folderPath),
-		MaxKeys: aws.Int32(math.MaxInt32),
+		Bucket: aws.String(bucketName),
+		Prefix: aws.String(folderPath),
 	}
 	output, err := a.s3Client.ListObjectsV2(apcontext.Context, input)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	token := output.NextContinuationToken
+	if token == nil {
+		return output.Contents, nil
+	}
+	// ページネーション処理
+	objects := output.Contents
+	for {
+		input := &s3.ListObjectsV2Input{
+			Bucket:            aws.String(bucketName),
+			Prefix:            aws.String(folderPath),
+			ContinuationToken: token,
+		}
+		output, err := a.s3Client.ListObjectsV2(apcontext.Context, input)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		objects = append(objects, output.Contents...)
+		token = output.NextContinuationToken
+		if token == nil {
+			break
+		}
+	}
+	return objects, nil
 
-	return output.Contents, nil
 }
 
 // Exists implements ObjectStorageAccessor.
