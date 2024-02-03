@@ -197,6 +197,8 @@ func Test_defaultObjectStorageAccessor_Copy(t *testing.T) {
 
 /*
 func Test_defaultObjectStorageAccessor_CopyFolder(t *testing.T) {
+	bucketName := "samplebucket123"
+	bucketName := "mysd33bucket123"
 	myCfg := config.NewTestConfig(map[string]string{
 		"S3_LOCAL_ENDPOINT": "http://host.docker.internal:9000",
 	})
@@ -219,7 +221,7 @@ func Test_defaultObjectStorageAccessor_CopyFolder(t *testing.T) {
 		wantErr bool
 	}{
 		// Add test cases.
-		{"test1", objectStorageAccessor, args{"samplebucket123", "input", "output", true}, false},
+		{"test1", objectStorageAccessor, args{bucketName, "input", "output", true}, false},
 	}
 	for _, tt := range tests {
 		//  テスト用にX-Rayのセグメント開始
