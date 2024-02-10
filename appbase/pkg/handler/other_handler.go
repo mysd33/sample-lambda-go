@@ -15,6 +15,18 @@ import (
 // SimpleLambdaHandlerFunc は、その他のトリガのLambdaのハンドラを表す関数です。
 type SimpleLambdaHandlerFunc func(ctx context.Context, event any) (any, error)
 
+// SimpleLambdaHandlerGenericFunc は、その他のトリガのLambdaのハンドラを表すジェネリクス対応関数です。
+// Lambdaハンドラの引数がany型の場合、map[string]any型にマッピングされてしまうため
+// 型パラメータで指定した型に変換できるようにするための関数です。
+type SimpleLambdaHandlerGenericFunc[T any] func(ctx context.Context, event T) (any, error)
+
+// SimpleLambdaHandlerGenericFuncAdapter は、SimpleLambdaHandlerFuncを型パラメータで指定したジェネリクス関数に変換します。
+func SimpleLambdaHandlerGenericFuncAdapter[T any](f SimpleLambdaHandlerFunc) SimpleLambdaHandlerGenericFunc[T] {
+	return func(ctx context.Context, event T) (any, error) {
+		return f(ctx, event)
+	}
+}
+
 // SimpleLambdaHandler は、その他のトリガのLambdaのハンドラを表す構造体です。
 type SimpleLambdaHandler struct {
 	config config.Config
