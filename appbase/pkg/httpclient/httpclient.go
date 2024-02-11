@@ -82,7 +82,7 @@ func (c *defaultHttpClient) Get(url string, header http.Header, params map[strin
 		}
 		return response, nil
 	}, func(result *http.Response, err error) bool {
-		// レスポンスがエラーの場合は、リトライを行う
+		// エラーの場合は、リトライを行う
 		if err != nil {
 			return true
 		}
@@ -122,7 +122,7 @@ func (c *defaultHttpClient) Post(url string, header http.Header, bbody []byte) (
 		}
 		return response, nil
 	}, func(result *http.Response, err error) bool {
-		// レスポンスがエラーの場合は、リトライを行う
+		// エラーの場合は、リトライを行う
 		if err != nil {
 			return true
 		}

@@ -67,12 +67,9 @@ func (r *defaultRetryer[T]) DoWithContext(ctx context.Context, retryableFunc Ret
 	// リトライ処理
 	for {
 		// 対象処理の実行
-		if result, err = retryableFunc(); err != nil {
-			// 正常終了
-			return result, nil
-		}
+		result, err = retryableFunc()
 		if !checkRetryable(result, err) {
-			// リトライ不能なエラーの場合は、エラーを返却し終了
+			// リトライ対象でない場合は、終了
 			return result, err
 		}
 		// リトライ間隔分待機する

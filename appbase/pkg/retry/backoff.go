@@ -69,6 +69,10 @@ type ExponentialBackoff struct {
 
 // Next implements Backoff.
 func (b *ExponentialBackoff) Next() time.Duration {
+	// 最大リトライ回数を超えている場合は、リトライ処理を停止
+	if b.retryTimes >= b.maxRetryTimes {
+		return STOP
+	}
 	// ジッターを含めたリトライ間隔を取得
 	interval := b.getRandomizedInterval(b.nextInterval)
 	// リトライ回数をインクリメント

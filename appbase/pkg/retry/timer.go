@@ -15,7 +15,7 @@ func (t *defaultTimer) C() <-chan time.Time {
 
 // durationで指定した期間の後、発火するタイマーを開始します。
 func (t *defaultTimer) Start(duration time.Duration) {
-	if t.timer != nil {
+	if t.timer == nil {
 		t.timer = time.NewTimer(duration)
 	} else {
 		t.timer.Reset(duration)
