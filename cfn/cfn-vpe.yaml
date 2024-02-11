@@ -64,7 +64,22 @@ Resources:
       SecurityGroupIds: 
         - Fn::ImportValue: !Sub ${StackPrefix}-VPCEndpointSecurityGroup-ID                      
       PrivateDnsEnabled: true
-      
+
+# VPC Endpont for Lambda Insights(CloudWatch Logs)
+  CloudWatchLogsLambdaInsightsVPCEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:      
+      VpcEndpointType: Interface
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.logs
+      SubnetIds:
+        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetOneId
+        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetTwoId
+      VpcId: 
+        Fn::ImportValue: !Sub ${StackPrefix}-VPC-ID          
+      SecurityGroupIds: 
+        - Fn::ImportValue: !Sub ${StackPrefix}-VPCEndpointSecurityGroup-ID
+      PrivateDnsEnabled: true 
+
 # VPC Endpoint for API Gateway
   PrivateAPIVPCEndpoint:
     Type: AWS::EC2::VPCEndpoint
@@ -79,6 +94,7 @@ Resources:
       SecurityGroupIds: 
         - Fn::ImportValue: !Sub ${StackPrefix}-PrivateAPISecurityGroup-ID
       PrivateDnsEnabled: true        
+        
 Outputs:
   PrivateAPIVPCEndpointID:
     Description: Private API VPC Endpoint ID

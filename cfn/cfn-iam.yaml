@@ -109,6 +109,7 @@ Resources:
       ManagedPolicyArns:        
         - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole       
         - arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess
+        - arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy
       Tags:
         - Key: Name
           Value: !Sub ${StackPrefix}-LambdaRole
