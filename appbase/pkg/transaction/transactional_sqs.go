@@ -4,10 +4,12 @@ transaction パッケージは、トランザクション管理に関する機�
 package transaction
 
 import (
+	"context"
 	"maps"
 	"strconv"
 	"time"
 
+	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/async"
 	myConfig "example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/constant"
@@ -34,15 +36,15 @@ type Message struct {
 // TransactionalSQSDBAccessorは、トランザクション管理可能なSQSアクセス用インタフェースです。
 type TransactionalSQSAccessor interface {
 	async.SQSAccessor
-	// StartTransaction は、トランザクションを開始します。
-	StartTransaction(transaction Transaction)
 	// AppendMessage は、送信するメッセージをトランザクション管理したい場合に対象をメッセージを追加します
+	// なお、メッセージの送信は、TransactionManagerのExecuteTransaction関数で実行されるdomain.ServiceFunc関数が終了する際にtransactionWriteItemsSDKを実施します。
 	AppendTransactMessage(queueName string, input *sqs.SendMessageInput) error
+	// AppendTransactMessageWithContext は、goroutine向けに渡されたContextを利用して、送信するメッセージをトランザクション管理したい場合に対象をメッセージを追加します
+	// なお、メッセージの送信は、TransactionManagerのExecuteTransactionWithContext関数で実行されるdomain.ServiceFuncWithContext関数が終了する際にtransactionWriteItemsSDKを実施します。
+	AppendTransactMessageWithContext(ctx context.Context, queueName string, input *sqs.SendMessageInput) error
 	// TransactSendMessages は、トランザクション管理されたメッセージを送信します。
 	// メッセージの送信は、TransactionManagerTransactionManagerが実行するため非公開にしています。
 	TransactSendMessages(inputs []*Message, hasDBTranaction bool) error
-	// EndTransactionは、トランザクションを終了します。
-	EndTransaction()
 }
 
 // NewTransactionalSQSAccessor は、TransactionalSQSAccessorを作成します。
@@ -68,7 +70,6 @@ type defaultTransactionalSQSAccessor struct {
 	config            myConfig.Config
 	sqsAccessor       async.SQSAccessor
 	messageRegisterer MessageRegisterer
-	transaction       Transaction
 	ttl               int
 }
 
@@ -77,15 +78,26 @@ func (sa *defaultTransactionalSQSAccessor) SendMessageSdk(queueName string, inpu
 	return sa.sqsAccessor.SendMessageSdk(queueName, input)
 }
 
-// StartTransaction implements TransactionalSQSAccessor.
-func (sa *defaultTransactionalSQSAccessor) StartTransaction(transaction Transaction) {
-	sa.transaction = transaction
-}
-
 // AppendTransactMessage implements TransactionalSQSAccessor.
 func (sa *defaultTransactionalSQSAccessor) AppendTransactMessage(queueName string, input *sqs.SendMessageInput) error {
 	sa.log.Debug("AppendTransactMessage")
-	sa.transaction.AppendTransactMessage(&Message{QueueName: queueName, Input: input})
+	return sa.AppendTransactMessageWithContext(apcontext.Context, queueName, input)
+}
+
+// AppendTransactMessageWithContext implements TransactionalSQSAccessor.
+func (sa *defaultTransactionalSQSAccessor) AppendTransactMessageWithContext(ctx context.Context, queueName string, input *sqs.SendMessageInput) error {
+	sa.log.Debug("AppendTransactMessageWithContext")
+	value := ctx.Value(TRANSACTION_CTX_KEY)
+	if value == nil {
+		// TODO: エラー処理
+		return errors.New("トランザクションが開始されていません")
+	}
+	transaction, ok := value.(Transaction)
+	if !ok {
+		// TODO: エラー処理
+		return errors.New("トランザクションが開始されていません")
+	}
+	transaction.AppendTransactMessage(&Message{QueueName: queueName, Input: input})
 	return nil
 }
 
@@ -126,11 +138,6 @@ func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Messag
 	}
 
 	return nil
-}
-
-// EndTransaction implements TransactionalSQSAccessor.
-func (sa *defaultTransactionalSQSAccessor) EndTransaction() {
-	sa.transaction = nil
 }
 
 // addDeleteTime は、業務テーブルでのDynamoDBトランザクション処理がある場合に削除時間をメッセージに追加します。

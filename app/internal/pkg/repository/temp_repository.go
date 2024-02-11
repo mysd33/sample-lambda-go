@@ -136,7 +136,10 @@ func (r *tempRepositoryImpl) CreateOneTx(temp *entity.Temp) (*entity.Temp, error
 		}
 		// TransactWriteItemの追加
 		input := &types.TransactWriteItem{Put: put}
-		r.accessor.AppendTransactWriteItem(input)
+		err := r.accessor.AppendTransactWriteItem(input)
+		if err != nil {
+			return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+		}
 	*/
 	return temp, nil
 }

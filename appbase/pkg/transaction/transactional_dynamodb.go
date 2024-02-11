@@ -4,6 +4,8 @@ transaction パッケージは、トランザクション管理に関する機�
 package transaction
 
 import (
+	"context"
+
 	"example.com/appbase/pkg/apcontext"
 	myConfig "example.com/appbase/pkg/config"
 	myDynamoDB "example.com/appbase/pkg/dynamodb"
@@ -17,16 +19,15 @@ import (
 // TransactionalDynamoDBAccessorは、トランザクション管理可能なDynamoDBアクセス用インタフェースです。
 type TransactionalDynamoDBAccessor interface {
 	myDynamoDB.DynamoDBAccessor
-	// StartTransaction は、トランザクションを開始します。
-	StartTransaction(transaction Transaction)
 	// AppendTransactWriteItem は、トランザクション書き込みしたい場合に対象のTransactWriteItemを追加します。
 	// なお、TransactWriteItemsの実行は、TransactionManagerのExecuteTransaction関数で実行されるdomain.ServiceFunc関数が終了する際にtransactionWriteItemsSDKを実施します。
-	AppendTransactWriteItem(item *types.TransactWriteItem)
+	AppendTransactWriteItem(item *types.TransactWriteItem) error
+	// AppendTransactWriteItemWithContext は、goroutine向けに渡されたContextを利用して、トランザクション書き込みしたい場合に対象のTransactWriteItemを追加します。
+	// なお、TransactWriteItemsの実行は、TransactionManagerのExecuteTransactionWithContext関数で実行されるdomain.ServiceFuncWithContext関数が終了する際にtransactionWriteItemsSDKを実施します。
+	AppendTransactWriteItemWithContext(ctx context.Context, item *types.TransactWriteItem) error
 	// TransactWriteItemsSDK は、AWS SDKによるTransactWriteItemsをラップします。
 	// なお、TransactWriteItemsの実行は、TransactionManagerが実行するため非公開にしています。
 	TransactWriteItemsSDK(items []types.TransactWriteItem) (*dynamodb.TransactWriteItemsOutput, error)
-	// EndTransactionは、トランザクションを終了します。
-	EndTransaction()
 }
 
 // NewTransactionalDynamoDBAccessor は、TransactionalDynamoDBAccessorを作成します。
@@ -41,7 +42,6 @@ func NewTransactionalDynamoDBAccessor(log logging.Logger, myCfg myConfig.Config)
 type defaultTransactionalDynamoDBAccessor struct {
 	log              logging.Logger
 	dynamodbAccessor myDynamoDB.DynamoDBAccessor
-	transaction      Transaction
 }
 
 // GetDynamoDBClient implements TransactionalDynamoDBAccessor.
@@ -89,17 +89,27 @@ func (da *defaultTransactionalDynamoDBAccessor) BatchWriteItemSdk(input *dynamod
 	return da.dynamodbAccessor.BatchWriteItemSdk(input)
 }
 
-// StartTransaction implements TransactionalDynamoDBAccessor.
-func (da *defaultTransactionalDynamoDBAccessor) StartTransaction(transaction Transaction) {
-	// TODO: 本当はここがスレッド毎にトランザクション管理できるとgoroutineセーフにできるが、現状難しい
-	da.transaction = transaction
+// AppendTransactWriteItem implements TransactionalDynamoDBAccessor.
+func (da *defaultTransactionalDynamoDBAccessor) AppendTransactWriteItem(item *types.TransactWriteItem) error {
+	da.log.Debug("AppendTransactWriteItem")
+	return da.AppendTransactWriteItemWithContext(apcontext.Context, item)
 }
 
-// AppendTransactWriteItem implements TransactionalDynamoDBAccessor.
-func (da *defaultTransactionalDynamoDBAccessor) AppendTransactWriteItem(item *types.TransactWriteItem) {
-	// TODO: 本当はここがスレッド毎にトランザクション管理できるとgoroutineセーフにできるが、現状難しい
-	da.log.Debug("AppendTransactWriteItem")
-	da.transaction.AppendTransactWriteItem(item)
+// AppendTransactWriteItemWithContext implements TransactionalDynamoDBAccessor.
+func (da *defaultTransactionalDynamoDBAccessor) AppendTransactWriteItemWithContext(ctx context.Context, item *types.TransactWriteItem) error {
+	da.log.Debug("AppendTransactWriteItemWithContext")
+	value := ctx.Value(TRANSACTION_CTX_KEY)
+	if value == nil {
+		// TODO: エラー処理
+		return errors.New("トランザクションが開始されていません")
+	}
+	transaction, ok := value.(Transaction)
+	if !ok {
+		// TODO: エラー処理
+		return errors.New("トランザクションが開始されていません")
+	}
+	transaction.AppendTransactWriteItem(item)
+	return nil
 }
 
 // TransactWriteItemsSDK implements TransactionalDynamoDBAccessor.
@@ -119,9 +129,4 @@ func (da *defaultTransactionalDynamoDBAccessor) TransactWriteItemsSDK(items []ty
 		da.log.Debug("TransactWriteItems(%d番目)[%s]消費キャパシティユニット:%f", i+1, *v.TableName, *v.CapacityUnits)
 	}
 	return output, nil
-}
-
-// EndTransaction implements DynamoDBAccessor.
-func (da *defaultTransactionalDynamoDBAccessor) EndTransaction() {
-	da.transaction = nil
 }

@@ -4,6 +4,8 @@ transaction パッケージは、トランザクション管理に関する機�
 package transaction
 
 import (
+	"context"
+
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/domain"
@@ -15,10 +17,21 @@ import (
 	"github.com/cockroachdb/errors"
 )
 
+const (
+	TRANSACTION_CTX_KEY = "TRANSACTION"
+)
+
 // TransactionManager はトランザクションを管理するインタフェースです
 type TransactionManager interface {
 	// ExecuteTransaction は、Serviceの関数serviceFuncの実行前後でDynamoDBトランザクション実行します。
 	ExecuteTransaction(serviceFunc domain.ServiceFunc) (any, error)
+	// ExecuteTransactionWithContext は、goroutine向けに、渡されたContextを利用して、
+	// Serviceの関数serviceFuncの実行前後でDynamoDBトランザクション実行します。
+	// goroutineで実施する場合は、この関数を利用してください。また、ServiceFuncWithContextで渡されるContextを引き継いで
+	// TransactionalDynamoDBAccessor.AppendTransactWriteItemWithContext、
+	// TransactionalSQSAccessor.AppendTransactMessageWithContextの引数に渡して利用してください。
+	// そうしないと、トランザクションデータが正しく伝番されません。
+	ExecuteTransactionWithContext(context context.Context, serviceFunc domain.ServiceFuncWithContext) (any, error)
 }
 
 // NewTransactionManager は、TransactionManagerを作成します
@@ -54,9 +67,25 @@ type defaultTransactionManager struct {
 }
 
 // ExecuteTransaction implements TransactionManager.
-func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.ServiceFunc) (result any, err error) {
+func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.ServiceFunc) (any, error) {
+	return tm.ExecuteTransactionWithContext(apcontext.Context, func(ctx context.Context) (any, error) {
+		// トランザクション付きのContextを設定
+		apcontext.Context = ctx
+		return serviceFunc()
+	})
+}
+
+// ExecuteTransactionWithContext implements TransactionManager.
+func (tm *defaultTransactionManager) ExecuteTransactionWithContext(ctx context.Context,
+	serviceFunc domain.ServiceFuncWithContext) (result any, err error) {
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	// 新しいトランザクションを作成
 	transction := newTrasaction(tm.log, tm.messageRegsiterer)
+	// トランザクション付きのContextを作成
+	ctxWithTx := context.WithValue(ctx, TRANSACTION_CTX_KEY, transction)
+
 	// トランザクションを開始
 	transction.Start(tm.dynamodbAccessor, tm.sqsAccessor)
 
@@ -77,7 +106,7 @@ func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.Servi
 	}()
 
 	// サービスの実行
-	result, err = serviceFunc()
+	result, err = serviceFunc(ctxWithTx)
 
 	return
 }
@@ -123,10 +152,6 @@ func (t *defaultTransaction) Start(dynamodbAccessor TransactionalDynamoDBAccesso
 	t.log.Debug("トランザクション開始")
 	t.dynamodbAccessor = dynamodbAccessor
 	t.sqsAccessor = sqsAccessor
-	dynamodbAccessor.StartTransaction(t)
-	if sqsAccessor != nil {
-		sqsAccessor.StartTransaction(t)
-	}
 }
 
 // AppendTransactWriteItem implements Transaction.
@@ -168,13 +193,6 @@ func (t *defaultTransaction) Commit() (*dynamodb.TransactWriteItemsOutput, error
 		t.log.Debug("トランザクション処理なし")
 		return nil, err
 	}
-	// 処理結果がどんな場合でもDynamoDBAccessorとSQSAccessorのトランザクションを開放
-	defer func() {
-		t.dynamodbAccessor.EndTransaction()
-		if t.sqsAccessor != nil {
-			t.sqsAccessor.EndTransaction()
-		}
-	}()
 
 	// DynamoDBトランザクション実行
 	output, err := t.dynamodbAccessor.TransactWriteItemsSDK(t.transactWriteItems)
@@ -214,10 +232,6 @@ func (t *defaultTransaction) Commit() (*dynamodb.TransactWriteItemsOutput, error
 // Rollback implements Transaction.
 func (t *defaultTransaction) Rollback() {
 	t.log.Debug("業務処理エラーでトランザクションロールバック")
-	t.dynamodbAccessor.EndTransaction()
-	if t.sqsAccessor != nil {
-		t.sqsAccessor.EndTransaction()
-	}
 }
 
 // transactUpdateQueueMessageItem は、メッセージ管理テーブルのアイテムの重複メッセージIDを登録する更新トランザクションを追加します。

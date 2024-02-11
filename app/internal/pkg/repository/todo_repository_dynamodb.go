@@ -168,7 +168,10 @@ func (tr *todoRepositoryImplByDynamoDB) CreateOneTx(todo *entity.Todo) (*entity.
 		}
 		// TransactWriteItemの追加
 		input := &types.TransactWriteItem{Put: put}
-		tr.accessor.AppendTransactWriteItem(input)
+		err := tr.accessor.AppendTransactWriteItem(input)
+		if err != nil {
+			return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+		}
 	*/
 	return todo, nil
 }

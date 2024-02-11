@@ -93,8 +93,7 @@ func (t *defaultTransactionalDynamoDBTemplate) CreateOneWithTransaction(tableNam
 		},
 	}
 	// TransactWriteItemの追加
-	t.transactionalDynamoDBAccessor.AppendTransactWriteItem(&item)
-	return nil
+	return t.transactionalDynamoDBAccessor.AppendTransactWriteItem(&item)
 }
 
 // UpdateOneWithTransaction implements TransactinalDynamoDBTemplate.
@@ -122,8 +121,7 @@ func (t *defaultTransactionalDynamoDBTemplate) UpdateOneWithTransaction(tableNam
 		},
 	}
 	// TransactWriteItemの追加
-	t.transactionalDynamoDBAccessor.AppendTransactWriteItem(&item)
-	return nil
+	return t.transactionalDynamoDBAccessor.AppendTransactWriteItem(&item)
 }
 
 // DeleteOneWithTransaction implements TransactinalDynamoDBTemplate.
@@ -148,6 +146,5 @@ func (t *defaultTransactionalDynamoDBTemplate) DeleteOneWithTransaction(tableNam
 		},
 	}
 	// TransactWriteItemの追加
-	t.transactionalDynamoDBAccessor.AppendTransactWriteItem(&item)
-	return nil
+	return t.transactionalDynamoDBAccessor.AppendTransactWriteItem(&item)
 }
