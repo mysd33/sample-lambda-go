@@ -76,9 +76,9 @@ func NewHttpClient(config config.Config, log logging.Logger) HttpClient {
 
 // Get implements HttpClient.
 func (c *defaultHttpClient) Get(url string, header http.Header, params map[string]string) (*ResponseData, error) {
-	// リトライ処理の実行
+	// リトライ対応のGet処理の実行
 	response, err := c.retryer.Do(
-		c.doGet(url, header, params),
+		c.doGet(apcontext.Context, url, header, params),
 		c.checkRetryable(),
 		c.retryOptions()...,
 	)
@@ -90,9 +90,9 @@ func (c *defaultHttpClient) Get(url string, header http.Header, params map[strin
 
 // GetWithContext implements HttpClient.
 func (c *defaultHttpClient) GetWithContext(ctx context.Context, url string, header http.Header, params map[string]string) (*ResponseData, error) {
-	// リトライ処理の実行
+	// リトライ対応のGet処理の実行
 	response, err := c.retryer.DoWithContext(ctx,
-		c.doGet(url, header, params),
+		c.doGet(ctx, url, header, params),
 		c.checkRetryable(),
 		c.retryOptions()...,
 	)
@@ -104,9 +104,9 @@ func (c *defaultHttpClient) GetWithContext(ctx context.Context, url string, head
 
 // Post implements HttpClient.
 func (c *defaultHttpClient) Post(url string, header http.Header, bbody []byte) (*ResponseData, error) {
-	// リトライ処理の実行
+	// リトライ対応のPost処理の実行
 	response, err := c.retryer.Do(
-		c.doPost(url, header, bbody),
+		c.doPost(apcontext.Context, url, header, bbody),
 		c.checkRetryable(),
 		c.retryOptions()...,
 	)
@@ -118,9 +118,9 @@ func (c *defaultHttpClient) Post(url string, header http.Header, bbody []byte) (
 
 // PostWithContext implements HttpClient.
 func (c *defaultHttpClient) PostWithContext(ctx context.Context, url string, header http.Header, bbody []byte) (*ResponseData, error) {
-	// リトライ処理の実行
+	// リトライ対応のPost処理の実行
 	response, err := c.retryer.DoWithContext(ctx,
-		c.doPost(url, header, bbody),
+		c.doPost(ctx, url, header, bbody),
 		c.checkRetryable(),
 		c.retryOptions()...,
 	)
@@ -131,12 +131,18 @@ func (c *defaultHttpClient) PostWithContext(ctx context.Context, url string, hea
 }
 
 // doGet は、GETメソッドを実行します。
-func (c *defaultHttpClient) doGet(url string, header http.Header, params map[string]string) retry.RetryableFunc[*http.Response] {
+func (c *defaultHttpClient) doGet(ctx context.Context, url string, header http.Header, params map[string]string) retry.RetryableFunc[*http.Response] {
 	return func() (*http.Response, error) {
-		// TODO: headerの設定
-
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return nil, err
+		}
+		// ヘッダー情報の設定
+		if header != nil {
+			req.Header = header
+		}
 		// Getメソッドの実行（X-Ray対応）
-		response, err := ctxhttp.Get(apcontext.Context, xray.Client(nil), url)
+		response, err := ctxhttp.Do(ctx, xray.Client(nil), req)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -145,12 +151,19 @@ func (c *defaultHttpClient) doGet(url string, header http.Header, params map[str
 }
 
 // doPost は、POSTメソッドを実行します。
-func (c *defaultHttpClient) doPost(url string, header http.Header, bbody []byte) retry.RetryableFunc[*http.Response] {
+func (c *defaultHttpClient) doPost(ctx context.Context, url string, header http.Header, bbody []byte) retry.RetryableFunc[*http.Response] {
 	return func() (*http.Response, error) {
-		// TODO: headerの設定
+		req, err := http.NewRequest("POST", url, bytes.NewReader(bbody))
+		if err != nil {
+			return nil, err
+		}
+		// ヘッダー情報の設定
+		if header != nil {
+			req.Header = header
+		}
+		req.Header.Set("Content-Type", "application/json")
 
-		// Postメソッドの実行（X-Ray対応）
-		response, err := ctxhttp.Post(apcontext.Context, xray.Client(nil), url, "application/json", bytes.NewReader(bbody))
+		response, err := ctxhttp.Do(ctx, xray.Client(nil), req)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
