@@ -59,7 +59,7 @@ func NewApplicationContext() ApplicationContext {
 	dynamoDBTransactionManagerForDBOnly := createDynamoDBTransactionManagerForDBOnly(logger, dynamodbAccessor, messageRegisterer)
 	rdbAccessor := createRDBAccessor()
 	rdbTransactionManager := rdb.NewTransactionManager(logger, config, rdbAccessor)
-	httpclient := createHttpClient(logger)
+	httpclient := createHttpClient(config, logger)
 	interceptor := createHanderInterceptor(config, logger)
 	apiLambdaHandler := createAPILambdaHandler(config, logger, messageSource, apiResponseFormatter)
 	asyncLambdaHandler := createAsyncLambdaHandler(config, logger, queueMessageItemRepository)
@@ -288,8 +288,8 @@ func createRDBAccessor() rdb.RDBAccessor {
 	return rdb.NewRDBAccessor()
 }
 
-func createHttpClient(logger logging.Logger) httpclient.HttpClient {
-	return httpclient.NewHttpClient(logger)
+func createHttpClient(config config.Config, logger logging.Logger) httpclient.HttpClient {
+	return httpclient.NewHttpClient(config, logger)
 }
 
 func createHanderInterceptor(config config.Config, logger logging.Logger) handler.HandlerInterceptor {
