@@ -22,8 +22,14 @@ const (
 
 // SQSTemplate は、SQSにメッセージを送信するための高次のインタフェースです。
 type SQSTemplate interface {
+	// SendToStandardQueue は、標準のキューにメッセージを送信します。
 	SendToStandardQueue(queueName string, msg any) error
+	// SendToStandardQueueWithContext は、goroutine向けに渡されたContextを利用して、標準のキューにメッセージを送信します。
+	SendToStandardQueueWithContext(ctx context.Context, queueName string, msg any) error
+	// SendToFIFOQueue は、FIFOキューにメッセージを送信します。
 	SendToFIFOQueue(queueName string, msg any, msgGroupId string) error
+	// SendToFIFOQueueWithContext は、goroutine向けに渡されたContextを利用して、FIFOキューにメッセージを送信します。
+	SendToFIFOQueueWithContext(ctx context.Context, queueName string, msg any, msgGroupId string) error
 }
 
 // SQSAccessor は、AWS SDKを使ったSQSアクセスの実装をラップしカプセル化する低次のインタフェースです。

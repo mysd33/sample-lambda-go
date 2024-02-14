@@ -4,6 +4,7 @@ transaction パッケージは、トランザクション管理に関する機�
 package transaction
 
 import (
+	"context"
 	"encoding/json"
 
 	"example.com/appbase/pkg/async"
@@ -40,11 +41,30 @@ type defaultTransactionalSQSTemplate struct {
 
 // SendToStandardQueue implements async.SQSTemplate.
 func (t *defaultTransactionalSQSTemplate) SendToStandardQueue(queueName string, msg any) error {
+	input, err := t.newSendMessageInputToStandardQueue(msg)
+	if err != nil {
+		return err
+	}
+	// トランザクション管理して非同期実行依頼メッセージを追加
+	return t.sqsAccessor.AppendTransactMessage(queueName, input)
+}
 
+// SendToStandardQueueWithContext implements async.SQSTemplate.
+func (t *defaultTransactionalSQSTemplate) SendToStandardQueueWithContext(ctx context.Context, queueName string, msg any) error {
+	input, err := t.newSendMessageInputToStandardQueue(msg)
+	if err != nil {
+		return err
+	}
+	// トランザクション管理して非同期実行依頼メッセージを追加
+	return t.sqsAccessor.AppendTransactMessageWithContext(ctx, queueName, input)
+}
+
+// newSendMessageInputToStandardQueueは、標準キューへ送信するためのSendMessageInputを作成します。
+func (t *defaultTransactionalSQSTemplate) newSendMessageInputToStandardQueue(msg any) (*sqs.SendMessageInput, error) {
 	// 構造体をjson文字列としてメッセージ送信
 	byteMessage, err := json.Marshal(msg)
 	if err != nil {
-		return errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 	var input *sqs.SendMessageInput
 	// DelaySecondsが設定されていれば上書き
@@ -59,20 +79,34 @@ func (t *defaultTransactionalSQSTemplate) SendToStandardQueue(queueName string, 
 			DelaySeconds: int32(delaySeconds),
 		}
 	}
-	// トランザクション管理して非同期実行依頼メッセージを追加
-	err = t.sqsAccessor.AppendTransactMessage(queueName, input)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
+	return input, nil
 }
 
 // SendToFIFOQueue implements async.SQSTemplate.
 func (t *defaultTransactionalSQSTemplate) SendToFIFOQueue(queueName string, msg any, msgGroupId string) error {
+	input, err := t.newSendMessageInputToFIFOQueue(msg, msgGroupId)
+	if err != nil {
+		return err
+	}
+	// トランザクション管理して非同期実行依頼メッセージを追加
+	return t.sqsAccessor.AppendTransactMessage(queueName, input)
+}
+
+// SendToFIFOQueueWithContext implements async.SQSTemplate.
+func (t *defaultTransactionalSQSTemplate) SendToFIFOQueueWithContext(ctx context.Context, queueName string, msg any, msgGroupId string) error {
+	input, err := t.newSendMessageInputToFIFOQueue(msg, msgGroupId)
+	if err != nil {
+		return err
+	}
+	// トランザクション管理して非同期実行依頼メッセージを追加
+	return t.sqsAccessor.AppendTransactMessageWithContext(ctx, queueName, input)
+}
+
+func (t *defaultTransactionalSQSTemplate) newSendMessageInputToFIFOQueue(msg any, msgGroupId string) (*sqs.SendMessageInput, error) {
 	// 構造体をjson文字列としてメッセージ送信
 	byteMessage, err := json.Marshal(msg)
 	if err != nil {
-		return errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 	// メッセージ重複排除IDの作成
 	msgDeduplicationId := t.id.GenerateUUID()
@@ -81,10 +115,5 @@ func (t *defaultTransactionalSQSTemplate) SendToFIFOQueue(queueName string, msg 
 		MessageGroupId:         aws.String(msgGroupId),
 		MessageDeduplicationId: aws.String(msgDeduplicationId),
 	}
-	// トランザクション管理して非同期実行依頼メッセージを追加
-	err = t.sqsAccessor.AppendTransactMessage(queueName, input)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
+	return input, nil
 }
