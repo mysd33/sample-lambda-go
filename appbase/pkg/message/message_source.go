@@ -60,9 +60,9 @@ func (ms *defaultMessageSource) GetMessage(id string, args ...any) string {
 	} else if val, ok := ms.fwMessages[id]; ok {
 		template = val
 	}
-	// idに対応するメッセージが取得できない場合はそのまま出力
+	// idに対応するメッセージが取得できない場合は空列で返す
 	if template == "" {
-		return fmt.Sprint(id, args)
+		return ""
 	}
 	// 置き換え文字列がない場合
 	if len(args) == 0 {

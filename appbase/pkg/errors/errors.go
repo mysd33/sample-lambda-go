@@ -77,7 +77,7 @@ func (e *ValidationError) ErrorDetails() map[string]string {
 
 // Error は、エラーを返却します。
 func (e *ValidationError) Error() string {
-	return fmt.Sprintf("入力エラー[%s] details:%v cause:%+v", e.errorCode, e.ErrorDetails(), e.cause)
+	return fmt.Sprintf("入力エラー[%s] details:%v", e.errorCode, e.ErrorDetails())
 }
 
 // Unwrap は、原因となるエラーにUnwrapします。
@@ -94,6 +94,10 @@ func (e *ValidationError) Args() []any {
 func (e *ValidationError) ErrorCode() string {
 	return e.errorCode
 }
+
+// Format は、%+vを正しく動作させるため、fmt.Formatterのインタフェースを実装します。
+// https://github.com/cockroachdb/errors#Making-v-work-with-your-type
+func (e *ValidationError) Format(s fmt.State, verb rune) { cerrors.FormatError(e, s, verb) }
 
 // BusinessErrors 業務エラーを複数保持する構造体です。
 type BusinessErrors struct {
@@ -196,7 +200,7 @@ func NewBusinessErrorWithCause(cause error, errorCode string, args ...any) *Busi
 
 // Error は、エラーを返却します。errorインタフェースを実装します。
 func (e *BusinessError) Error() string {
-	return fmt.Sprintf("業務エラー[%s], cause:%+v", e.errorCode, e.cause)
+	return fmt.Sprintf("業務エラー[%s]", e.errorCode)
 }
 
 // Format は、%+vを正しく動作させるため、fmt.Formatterのインタフェースを実装します。
@@ -272,7 +276,7 @@ func NewSystemError(cause error, errorCode string, args ...any) *SystemError {
 
 // Error は、エラーを返却します。errorインタフェースを実装します。
 func (e *SystemError) Error() string {
-	return fmt.Sprintf("システムエラー[%s], cause:%+v", e.errorCode, e.cause)
+	return fmt.Sprintf("システムエラー[%s]", e.errorCode)
 }
 
 // Format は、%+vを正しく動作させるため、fmt.Formatterのインタフェースを実装します。
