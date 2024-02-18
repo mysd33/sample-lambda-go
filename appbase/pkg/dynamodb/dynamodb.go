@@ -10,6 +10,7 @@ import (
 	myConfig "example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/env"
 	"example.com/appbase/pkg/logging"
+	"example.com/appbase/pkg/sdkhttpclient"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -24,12 +25,13 @@ const (
 
 // CreateDynamoDBClient は、DynamoDBClientを作成します。
 func CreateDynamoDBClient(myCfg myConfig.Config) (*dynamodb.Client, error) {
-	//TODO: カスタムHTTPClientの作成
+	// カスタムHTTPClientの作成
+	sdkHTTPClient := sdkhttpclient.NewHTTPClient(myCfg)
 
 	// AWS SDK for Go v2 Migration
 	// https://github.com/aws/aws-sdk-go-v2
 	// https://aws.github.io/aws-sdk-go-v2/docs/migrating/
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithHTTPClient(sdkHTTPClient))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

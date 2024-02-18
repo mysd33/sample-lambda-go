@@ -9,6 +9,7 @@ import (
 	"example.com/appbase/pkg/apcontext"
 	myConfig "example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/logging"
+	"example.com/appbase/pkg/sdkhttpclient"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
@@ -40,8 +41,13 @@ type SQSAccessor interface {
 
 // NewSQSAccessor は、SQSAccessorを作成します。
 func NewSQSAccessor(log logging.Logger, myCfg myConfig.Config) (SQSAccessor, error) {
-	// TODO: カスタムHTTPClientの作成
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+	// カスタムHTTPClientの作成
+	sdkHTTPClient := sdkhttpclient.NewHTTPClient(myCfg)
+
+	// AWS SDK for Go v2 Migration
+	// https://github.com/aws/aws-sdk-go-v2
+	// https://aws.github.io/aws-sdk-go-v2/docs/migrating/
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithHTTPClient(sdkHTTPClient))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
