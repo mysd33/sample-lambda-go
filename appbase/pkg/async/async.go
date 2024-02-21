@@ -28,9 +28,18 @@ type SQSTemplate interface {
 	// SendToStandardQueueWithContext は、goroutine向けに渡されたContextを利用して、標準のキューにメッセージを送信します。
 	SendToStandardQueueWithContext(ctx context.Context, queueName string, msg any) error
 	// SendToFIFOQueue は、FIFOキューにメッセージを送信します。
+	// SQS側の設定でコンテンツに基づく重複排除を設定すると重複排除IDは自動で設定されます。
 	SendToFIFOQueue(queueName string, msg any, msgGroupId string) error
+	// SendToFIFOQueueRandomDedupId は、ランダム値による重複排除IDを生成し指定してFIFOキューにメッセージを送信します。
+	// SQS側の設定でコンテンツに基づく重複排除を設定しない場合などに使用します。
+	SendToFIFOQueueRandomDedupId(queueName string, msg any, msgGroupId string) error
 	// SendToFIFOQueueWithContext は、goroutine向けに渡されたContextを利用して、FIFOキューにメッセージを送信します。
+	// SQS側の設定でコンテンツに基づく重複排除を設定すると重複排除IDは自動で設定されます。
 	SendToFIFOQueueWithContext(ctx context.Context, queueName string, msg any, msgGroupId string) error
+	// SendToFIFOQueueRandomDedupIdWithContext は、goroutine向けに渡されたContextを利用して、
+	// ランダム値による重複排除IDを生成し指定してFIFOキューにメッセージを送信します。
+	// SQS側の設定でコンテンツに基づく重複排除を設定しない場合などに使用します。
+	SendToFIFOQueueRandomDedupIdWithContext(ctx context.Context, queueName string, msg any, msgGroupId string) error
 }
 
 // SQSAccessor は、AWS SDKを使ったSQSアクセスの実装をラップしカプセル化する低次のインタフェースです。

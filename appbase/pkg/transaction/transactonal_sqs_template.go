@@ -92,6 +92,16 @@ func (t *defaultTransactionalSQSTemplate) SendToFIFOQueue(queueName string, msg 
 	return t.sqsAccessor.AppendTransactMessage(queueName, input)
 }
 
+// SendToFIFOQueueRandomDedupId implements async.SQSTemplate.
+func (t *defaultTransactionalSQSTemplate) SendToFIFOQueueRandomDedupId(queueName string, msg any, msgGroupId string) error {
+	input, err := t.newSendMessageInputToFIFOQueueWithDedupId(msg, msgGroupId)
+	if err != nil {
+		return err
+	}
+	// トランザクション管理して非同期実行依頼メッセージを追加
+	return t.sqsAccessor.AppendTransactMessage(queueName, input)
+}
+
 // SendToFIFOQueueWithContext implements async.SQSTemplate.
 func (t *defaultTransactionalSQSTemplate) SendToFIFOQueueWithContext(ctx context.Context, queueName string, msg any, msgGroupId string) error {
 	input, err := t.newSendMessageInputToFIFOQueue(msg, msgGroupId)
@@ -102,7 +112,30 @@ func (t *defaultTransactionalSQSTemplate) SendToFIFOQueueWithContext(ctx context
 	return t.sqsAccessor.AppendTransactMessageWithContext(ctx, queueName, input)
 }
 
+// SendToFIFOQueueRandomDedupIdWithContext implements async.SQSTemplate.
+func (t *defaultTransactionalSQSTemplate) SendToFIFOQueueRandomDedupIdWithContext(ctx context.Context, queueName string, msg any, msgGroupId string) error {
+	input, err := t.newSendMessageInputToFIFOQueueWithDedupId(msg, msgGroupId)
+	if err != nil {
+		return err
+	}
+	// トランザクション管理して非同期実行依頼メッセージを追加
+	return t.sqsAccessor.AppendTransactMessageWithContext(ctx, queueName, input)
+}
+
 func (t *defaultTransactionalSQSTemplate) newSendMessageInputToFIFOQueue(msg any, msgGroupId string) (*sqs.SendMessageInput, error) {
+	// 構造体をjson文字列としてメッセージ送信
+	byteMessage, err := json.Marshal(msg)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	input := &sqs.SendMessageInput{
+		MessageBody:    aws.String(string(byteMessage)),
+		MessageGroupId: aws.String(msgGroupId),
+	}
+	return input, nil
+}
+
+func (t *defaultTransactionalSQSTemplate) newSendMessageInputToFIFOQueueWithDedupId(msg any, msgGroupId string) (*sqs.SendMessageInput, error) {
 	// 構造体をjson文字列としてメッセージ送信
 	byteMessage, err := json.Marshal(msg)
 	if err != nil {
