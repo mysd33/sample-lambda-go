@@ -13,7 +13,7 @@ import (
 
 // Request はダミーのリクエスト
 type Request struct {
-	Name string `json:"name" binding:"required"`
+	Name string `label:"名前" json:"name" binding:"required"`
 }
 
 // ErrorController は、エラーをテストするためのControllerインタフェースです。

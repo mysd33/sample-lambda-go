@@ -27,7 +27,11 @@ type commonErrorResponse struct {
 func (r *commonErrorResponse) ValidationErrorResponse(validationError *myerrors.ValidationError) (int, any) {
 	detail := make(map[string]any)
 	detail["message"] = r.messageSource.GetMessage(validationError.ErrorCode(), validationError.Args()...)
-	detail["errorDetails"] = validationError.ErrorDetails()
+	vErrDetails := make([]string, 0, len(validationError.ErrorDetails()))
+	for _, v := range validationError.ErrorDetails() {
+		vErrDetails = append(vErrDetails, v)
+	}
+	detail["errorDetails"] = vErrDetails
 	return http.StatusBadRequest, r.errorResponseBody(validationError.ErrorCode(), detail)
 }
 

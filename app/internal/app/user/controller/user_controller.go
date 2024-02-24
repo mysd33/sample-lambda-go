@@ -13,7 +13,7 @@ import (
 
 // Request は、REST APIで受け取るリクエストデータの構造体です。
 type Request struct {
-	Name string `json:"user_name" binding:"required"`
+	Name string `label:"ユーザ名" json:"user_name" binding:"required"`
 }
 
 // UserController は、ユーザ管理業務のContollerインタフェースです。

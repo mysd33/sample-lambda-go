@@ -17,7 +17,7 @@ import (
 // Request は、REST APIで受け取るリクエストデータの構造体です。
 type Request struct {
 	// TodoTitle は、Todoのタイトルです。
-	TodoTitle string `json:"todo_title" binding:"required"`
+	TodoTitle string `label:"タイトル" json:"todo_title" binding:"required"`
 }
 
 // TodoController は、Todo業務のControllerインタフェースです。
