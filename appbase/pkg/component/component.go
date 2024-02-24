@@ -38,6 +38,7 @@ type ApplicationContext interface {
 	GetAPILambdaHandler() *handler.APILambdaHandler
 	GetAsyncLambdaHandler() *handler.AsyncLambdaHandler
 	GetSimpleLambdaHandler() *handler.SimpleLambdaHandler
+	GetValidationManager() validator.ValidationManager
 }
 
 // NewApplicationContext は、デフォルトのApplicationContextを作成します。
@@ -64,9 +65,7 @@ func NewApplicationContext() ApplicationContext {
 	apiLambdaHandler := createAPILambdaHandler(config, logger, messageSource, apiResponseFormatter)
 	asyncLambdaHandler := createAsyncLambdaHandler(config, logger, queueMessageItemRepository)
 	simpleLambdaHandler := createSimpleLambdaHandler(config, logger)
-
-	// Validatorの日本語化
-	validator.Setup()
+	validationManager := createValidationManager(logger)
 
 	return &defaultApplicationContext{
 		id:                                  id,
@@ -87,6 +86,7 @@ func NewApplicationContext() ApplicationContext {
 		apiLambdaHandler:                    apiLambdaHandler,
 		asyncLambdaHandler:                  asyncLambdaHandler,
 		simpleLambdaHandler:                 simpleLambdaHandler,
+		validationManager:                   validationManager,
 	}
 }
 
@@ -109,6 +109,7 @@ type defaultApplicationContext struct {
 	apiLambdaHandler                    *handler.APILambdaHandler
 	asyncLambdaHandler                  *handler.AsyncLambdaHandler
 	simpleLambdaHandler                 *handler.SimpleLambdaHandler
+	validationManager                   validator.ValidationManager
 }
 
 // GetIDGenerator implements ApplicationContext.
@@ -199,6 +200,11 @@ func (ac *defaultApplicationContext) GetAsyncLambdaHandler() *handler.AsyncLambd
 // GetSimpleLambdaHandler implements ApplicationContext.
 func (ac *defaultApplicationContext) GetSimpleLambdaHandler() *handler.SimpleLambdaHandler {
 	return ac.simpleLambdaHandler
+}
+
+// GetValidationManager implements ApplicationContext.
+func (ac *defaultApplicationContext) GetValidationManager() validator.ValidationManager {
+	return ac.validationManager
 }
 
 func createIDGenerator() id.IDGenerator {
@@ -314,4 +320,8 @@ func createQueueMessageItemRepository(config config.Config, logger logging.Logge
 
 func createMessageRegisterer(queueMessageItemRepository transaction.QueueMessageItemRepository) transaction.MessageRegisterer {
 	return transaction.NewMessageRegisterer(queueMessageItemRepository)
+}
+
+func createValidationManager(logger logging.Logger) validator.ValidationManager {
+	return validator.NewValidationManager(logger.Debug)
 }
