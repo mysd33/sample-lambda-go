@@ -29,12 +29,16 @@ type Logger interface {
 	Info(code string, args ...any)
 	// Warn は、メッセージID（エラーコードcode）、置き換え文字列argsに対応するメッセージで警告レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	Warn(code string, args ...any)
+	// WarnWithError は、エラーおよび、メッセージID（エラーコードcode）、置き換え文字列argsに対応するメッセージで警告レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
+	WarnWithError(err error, code string, args ...any)
 	// WarnWithCodableError は、エラーが持つメッセージID（エラーコード）、置き換え文字列に対応するメッセージで警告レベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	WarnWithCodableError(err errors.CodableError)
 	// WarnWithMultiError は、複数のエラーを持つエラーを警告レベルのログに出力します。
 	WarnWithMultiCodableError(err errors.MultiCodableError)
 	// Error は、メッセージID（エラーコードcode）、置き換え文字列argsに対応するメッセージでエラーレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	Error(code string, args ...any)
+	// ErrorWithCodableError は、エラーおよび、メッセージID（エラーコード）、置き換え文字列に対応するメッセージでエラーレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
+	ErrorWithError(err error, code string, args ...any)
 	// ErrorWithCodableError は、エラーが持つメッセージID（エラーコード）、置き換え文字列に対応するメッセージでエラーレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	ErrorWithCodableError(err errors.CodableError)
 	// 	ErrorWithUnexpectedError は、予期せぬエラーをログに出力します。
@@ -111,10 +115,8 @@ func (z *zapLogger) Warn(code string, args ...any) {
 	z.log.Warnf("メッセージ未取得：%s %v", code, args)
 }
 
-// WarnWithCodableError implements Logger.
-func (z *zapLogger) WarnWithCodableError(err errors.CodableError) {
-	code := err.ErrorCode()
-	args := err.Args()
+// WarnWithError implements Logger.
+func (z *zapLogger) WarnWithError(err error, code string, args ...any) {
 	message := z.messageSource.GetMessage(code, args...)
 	// エラーのスタックトレース付きのWarnログ出力
 	if message != "" {
@@ -122,6 +124,13 @@ func (z *zapLogger) WarnWithCodableError(err errors.CodableError) {
 		return
 	}
 	z.log.Warnf("メッセージ未取得：%s %v, %+v", code, args, err)
+}
+
+// WarnWithCodableError implements Logger.
+func (z *zapLogger) WarnWithCodableError(err errors.CodableError) {
+	code := err.ErrorCode()
+	args := err.Args()
+	z.WarnWithError(err, code, args...)
 }
 
 // WarnWithMultiCodableError implements Logger.
@@ -150,10 +159,8 @@ func (z *zapLogger) Error(code string, args ...any) {
 	z.log.Error(code, args)
 }
 
-// ErrorWithCodableError implements Logger.
-func (z *zapLogger) ErrorWithCodableError(err errors.CodableError) {
-	code := err.ErrorCode()
-	args := err.Args()
+// ErrorWithError implements Logger.
+func (z *zapLogger) ErrorWithError(err error, code string, args ...any) {
 	message := z.messageSource.GetMessage(code, args...)
 	// エラーのスタックトレース付きのErrorログ出力
 	if message != "" {
@@ -161,6 +168,13 @@ func (z *zapLogger) ErrorWithCodableError(err errors.CodableError) {
 		return
 	}
 	z.log.Errorf("メッセージ未取得：%s %v, %+v", code, args, err)
+}
+
+// ErrorWithCodableError implements Logger.
+func (z *zapLogger) ErrorWithCodableError(err errors.CodableError) {
+	code := err.ErrorCode()
+	args := err.Args()
+	z.ErrorWithError(err, code, args...)
 }
 
 // Error implements Logger.

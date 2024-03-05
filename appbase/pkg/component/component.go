@@ -7,6 +7,7 @@ import (
 	"example.com/appbase/pkg/api"
 	"example.com/appbase/pkg/async"
 	"example.com/appbase/pkg/config"
+	"example.com/appbase/pkg/date"
 	"example.com/appbase/pkg/handler"
 	"example.com/appbase/pkg/httpclient"
 	"example.com/appbase/pkg/id"
@@ -39,6 +40,7 @@ type ApplicationContext interface {
 	GetAsyncLambdaHandler() *handler.AsyncLambdaHandler
 	GetSimpleLambdaHandler() *handler.SimpleLambdaHandler
 	GetValidationManager() validator.ValidationManager
+	GetDateManager() date.DateManager
 }
 
 // NewApplicationContext は、デフォルトのApplicationContextを作成します。
@@ -48,6 +50,7 @@ func NewApplicationContext() ApplicationContext {
 	config := createConfig()
 	messageSource := createMessageSource()
 	logger := createLogger(messageSource, config)
+	dateManager := createDateManager(config, logger)
 	apiResponseFormatter := createApiResponseFormatter(logger, messageSource)
 	dynamodbAccessor := createTransactionalDynamoDBAccessor(logger, config)
 	dynamoDBTempalte := createDynamoDBTemplate(logger, dynamodbAccessor)
@@ -72,6 +75,7 @@ func NewApplicationContext() ApplicationContext {
 		config:                              config,
 		messageSource:                       messageSource,
 		logger:                              logger,
+		dateManager:                         dateManager,
 		dynamoDBAccessor:                    dynamodbAccessor,
 		dynamoDBTransactionManager:          dynamoDBTransactionManager,
 		dynamoDBTransactionManagerForDBOnly: dynamoDBTransactionManagerForDBOnly,
@@ -95,6 +99,7 @@ type defaultApplicationContext struct {
 	config                              config.Config
 	messageSource                       message.MessageSource
 	logger                              logging.Logger
+	dateManager                         date.DateManager
 	dynamoDBAccessor                    transaction.TransactionalDynamoDBAccessor
 	dynamoDBTransactionManager          transaction.TransactionManager
 	dynamoDBTransactionManagerForDBOnly transaction.TransactionManager
@@ -120,6 +125,21 @@ func (ac *defaultApplicationContext) GetIDGenerator() id.IDGenerator {
 // GetConfig implements ApplicationContext.
 func (ac *defaultApplicationContext) GetConfig() config.Config {
 	return ac.config
+}
+
+// GetMessageSource implements ApplicationContext.
+func (ac *defaultApplicationContext) GetMessageSource() message.MessageSource {
+	return ac.messageSource
+}
+
+// GetLogger implements ApplicationContext.
+func (ac *defaultApplicationContext) GetLogger() logging.Logger {
+	return ac.logger
+}
+
+// GetDateManager implements ApplicationContext.
+func (ac *defaultApplicationContext) GetDateManager() date.DateManager {
+	return ac.dateManager
 }
 
 // GetDynamoDBAccessor implements ApplicationContext.
@@ -177,16 +197,6 @@ func (ac *defaultApplicationContext) GetInterceptor() handler.HandlerInterceptor
 	return ac.interceptor
 }
 
-// GetLogger implements ApplicationContext.
-func (ac *defaultApplicationContext) GetLogger() logging.Logger {
-	return ac.logger
-}
-
-// GetMessageSource implements ApplicationContext.
-func (ac *defaultApplicationContext) GetMessageSource() message.MessageSource {
-	return ac.messageSource
-}
-
 // GetAPILambdaHandler implements ApplicationContext.
 func (ac *defaultApplicationContext) GetAPILambdaHandler() *handler.APILambdaHandler {
 	return ac.apiLambdaHandler
@@ -220,10 +230,6 @@ func createMessageSource() message.MessageSource {
 	return messageSource
 }
 
-func createApiResponseFormatter(logger logging.Logger, messageSource message.MessageSource) api.ApiResponseFormatter {
-	return api.NewApiResponseFormatter(logger, messageSource)
-}
-
 func createLogger(messageSource message.MessageSource, config config.Config) logging.Logger {
 	logger, err := logging.NewLogger(messageSource, config)
 	if err != nil {
@@ -240,6 +246,10 @@ func createConfig() config.Config {
 		panic(err)
 	}
 	return cfg
+}
+
+func createDateManager(config config.Config, logger logging.Logger) date.DateManager {
+	return date.NewDateManager(config, logger)
 }
 
 func createTransactionalDynamoDBAccessor(logger logging.Logger, config config.Config) transaction.TransactionalDynamoDBAccessor {
@@ -300,6 +310,10 @@ func createHttpClient(config config.Config, logger logging.Logger) httpclient.Ht
 
 func createHanderInterceptor(config config.Config, logger logging.Logger) handler.HandlerInterceptor {
 	return handler.NewHandlerInterceptor(config, logger)
+}
+
+func createApiResponseFormatter(logger logging.Logger, messageSource message.MessageSource) api.ApiResponseFormatter {
+	return api.NewApiResponseFormatter(logger, messageSource)
 }
 
 func createAPILambdaHandler(config config.Config, logger logging.Logger, messageSource message.MessageSource, apiResponseFormatter api.ApiResponseFormatter) *handler.APILambdaHandler {
