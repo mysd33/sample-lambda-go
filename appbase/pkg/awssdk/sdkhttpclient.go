@@ -1,4 +1,4 @@
-package sdkhttpclient
+package awssdk
 
 import (
 	"net"

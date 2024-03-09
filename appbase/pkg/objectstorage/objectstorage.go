@@ -13,9 +13,9 @@ import (
 	"strings"
 
 	"example.com/appbase/pkg/apcontext"
+	"example.com/appbase/pkg/awssdk"
 	myconfig "example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/logging"
-	"example.com/appbase/pkg/sdkhttpclient"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -97,7 +97,7 @@ type ObjectStorageAccessor interface {
 // NewObjectStorageAccessor は、ObjectStorageAccessorを作成します。
 func NewObjectStorageAccessor(myCfg myconfig.Config, log logging.Logger) (ObjectStorageAccessor, error) {
 	// カスタムHTTPClientの作成
-	sdkHTTPClient := sdkhttpclient.NewHTTPClient(myCfg)
+	sdkHTTPClient := awssdk.NewHTTPClient(myCfg)
 
 	// AWS SDK for Go v2 Migration
 	// https://github.com/aws/aws-sdk-go-v2
