@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 
 	"example.com/appbase/pkg/errors"
+	myerrors "example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/transaction"
 	"github.com/aws/aws-lambda-go/events"
@@ -52,5 +53,12 @@ func (c *todoAsyncControllerImpl) RegisterAllAsync(sqsMessage events.SQSMessage)
 		err := c.service.RegisterTodosAsync(asyncMessage)
 		return nil, err
 	})
+	if transaction.IsTransactionConditionalCheckFailed(err) {
+		// 登録失敗の業務エラーにするか、スキップするかはケースバイケース
+		return myerrors.NewBusinessErrorWithCause(err, message.W_EX_8008)
+	} else if transaction.IsTransactionConflict(err) {
+		// 登録失敗の業務エラーにするか、スキップするかはケースバイケース
+		return myerrors.NewBusinessErrorWithCause(err, message.W_EX_8008)
+	}
 	return err
 }

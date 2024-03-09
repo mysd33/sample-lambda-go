@@ -10,7 +10,6 @@ import (
 	myerrors "example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/transaction"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/gin-gonic/gin"
 )
 
@@ -87,20 +86,17 @@ func (c *todoControllerImpl) Register(ctx *gin.Context) (any, error) {
 	result, err := c.transactionManager.ExecuteTransaction(serviceFunc)
 	if err != nil {
 		var bizErrs *myerrors.BusinessErrors
-		// トランザクションキャンセル時に、各Controllerでハンドリング
-		var txCanceledException *types.TransactionCanceledException
-		var txConflictException *types.TransactionConflictException
 		// 業務エラーの場合にハンドリングしたい場合は、BusinessErrorsのみAsで判定すればよい
 		// BusinessError(単一の業務エラー)の場合もBusinessErrorsとして判定できるようになっている
 		if errors.As(err, &bizErrs) {
 			// 付加情報が付与できる
 			bizErrs.WithInfo("label1")
-		} else if errors.As(err, &txCanceledException) &&
-			transaction.ContainsConditionalCheckFailed(txCanceledException) {
+		} else if transaction.IsTransactionConditionalCheckFailed(err) {
 			// 登録失敗の業務エラーにするか、スキップするかはケースバイケース
-			return nil, myerrors.NewBusinessError(message.W_EX_8005)
-		} else if errors.As(err, &txConflictException) {
-			return nil, myerrors.NewBusinessError(message.W_EX_8005)
+			return nil, myerrors.NewBusinessErrorWithCause(err, message.W_EX_8004, request.TodoTitle)
+		} else if transaction.IsTransactionConflict(err) {
+			// 登録失敗の業務エラーにするか、スキップするかはケースバイケース
+			return nil, myerrors.NewBusinessErrorWithCause(err, message.W_EX_8004, request.TodoTitle)
 		}
 		return nil, err
 	}
