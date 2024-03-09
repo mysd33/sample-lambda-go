@@ -574,14 +574,9 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
                         "AWSTraceHeader": "Parent=0000000000000000;Sampled=0"                        
                     },
                     "messageAttributes": {                        
-                        # DB更新を伴う場合は、messageAttributes内に、delete_timeの値の追加
+                        # delete_timeの値の追加
                         "delete_time": {
                             "StringValue": "1704413117",
-                            "DataType": "String"
-                        },
-                        # DB更新を伴わない場合は、messageAttributes内に、needs_table_checkの追加 
-                        "needs_table_check": {
-                            "StringValue": "false",
                             "DataType": "String"
                         }
                     },
@@ -644,16 +639,11 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
                         "SequenceNumber": "0"                                      
                     },                    
                     "messageAttributes": {
-                        # DB更新を伴う場合は、messageAttributes内に、delete_timeの値の追加
+                        # delete_timeの値の追加
                         "delete_time": {
                             "StringValue": "1704413117",
                             "DataType": "String"
-                        },
-                        # DB更新を伴わない場合は、messageAttributes内に、needs_table_checkの追加 
-                        "needs_table_check": {
-                            "StringValue": "false",
-                            "DataType": "String"
-                        }                                                
+                        }                                              
                     },
                     …
                 }

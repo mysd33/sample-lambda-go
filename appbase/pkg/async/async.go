@@ -115,10 +115,11 @@ func (sa *defaultSQSAccessor) SendMessageSdk(queueName string, input *sqs.SendMe
 	}
 
 	if input.MessageGroupId != nil {
-		sa.log.Debug("MessageGroupId=%s, MessageDeduplicationId=%s, Message=%s",
-			*input.MessageGroupId,
-			*input.MessageDeduplicationId,
-			*input.MessageBody)
+		if input.MessageDeduplicationId != nil {
+			sa.log.Debug("MessageGroupId=%s, MessageDeduplicationId=%s, Message=%s", *input.MessageGroupId, *input.MessageDeduplicationId, *input.MessageBody)
+		} else {
+			sa.log.Debug("MessageGroupId=%s, Message=%s", *input.MessageGroupId, *input.MessageBody)
+		}
 	} else {
 		sa.log.Debug("Message=%s", *input.MessageBody)
 	}

@@ -82,25 +82,25 @@ func (tm *defaultTransactionManager) ExecuteTransactionWithContext(ctx context.C
 		ctx = apcontext.Context
 	}
 	// 新しいトランザクションを作成
-	transction := newTrasaction(tm.log, tm.messageRegsiterer)
+	transaction := newTrasaction(tm.log, tm.messageRegsiterer)
 	// トランザクション付きのContextを作成
-	ctxWithTx := context.WithValue(ctx, TRANSACTION_CTX_KEY, transction)
+	ctxWithTx := context.WithValue(ctx, TRANSACTION_CTX_KEY, transaction)
 
 	// トランザクションを開始
-	transction.Start(tm.dynamodbAccessor, tm.sqsAccessor)
+	transaction.Start(tm.dynamodbAccessor, tm.sqsAccessor)
 
 	defer func() {
 		if r := recover(); r != nil {
 			// panic発生時トランザクションをロールバック
-			transction.Rollback()
+			transaction.Rollback()
 			// 上位にpanicをリスロー
 			panic(r)
 		} else if err != nil {
 			// Serviceの実行エラー時トランザクションをロールバック
-			transction.Rollback()
+			transaction.Rollback()
 		} else {
 			// Serviceの実行成功時トランザクションをコミット
-			_, err = transction.Commit()
+			_, err = transaction.Commit()
 			// TODO: TransactWriteItemsOutputの利用（ログ出力等）
 		}
 	}()
@@ -173,10 +173,8 @@ func (t *defaultTransaction) CheckTransactWriteItems() bool {
 func (t *defaultTransaction) Commit() (*dynamodb.TransactWriteItemsOutput, error) {
 	var err error
 	if t.sqsAccessor != nil {
-		// 業務テーブルのDBトランザクションがあるかチェック
-		hasDbTrancation := t.CheckTransactWriteItems()
 		// SQSのメッセージの送信とメッセージのDBトランザクション管理
-		err = t.sqsAccessor.TransactSendMessages(t.messages, hasDbTrancation)
+		err = t.sqsAccessor.TransactSendMessages(t.messages)
 		if err != nil {
 			t.log.Debug("SQSのメッセージ送信失敗でロールバック")
 			return nil, errors.WithStack(err)

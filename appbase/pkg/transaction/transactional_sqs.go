@@ -43,8 +43,8 @@ type TransactionalSQSAccessor interface {
 	// なお、メッセージの送信は、TransactionManagerのExecuteTransactionWithContext関数で実行されるdomain.ServiceFuncWithContext関数が終了する際にtransactionWriteItemsSDKを実施します。
 	AppendTransactMessageWithContext(ctx context.Context, queueName string, input *sqs.SendMessageInput) error
 	// TransactSendMessages は、トランザクション管理されたメッセージを送信します。
-	// メッセージの送信は、TransactionManagerTransactionManagerが実行するため非公開にしています。
-	TransactSendMessages(inputs []*Message, hasDBTranaction bool) error
+	// なお、TransactSendMessagesの実行は、TransactionManagerが実行するため業務ロジックで利用する必要はありません。
+	TransactSendMessages(inputs []*Message) error
 }
 
 // NewTransactionalSQSAccessor は、TransactionalSQSAccessorを作成します。
@@ -102,14 +102,12 @@ func (sa *defaultTransactionalSQSAccessor) AppendTransactMessageWithContext(ctx 
 }
 
 // TransactSendMessages implements TransactionalSQSAccessor.
-func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Message, hasDbTrancation bool) error {
+func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Message) error {
 	sa.log.Debug("TransactSendMessages: %d件", len(inputs))
 
 	for _, v := range inputs {
-		// 業務テーブルでのDynamoDBトランザクション処理がある場合は、メッセージに削除時間を追加する
-		sa.addDeleteTime(v, hasDbTrancation)
-		// 業務テーブルでのDynamoDBトランザクション処理がない場合は、メッセージにフラグ情報を追加する。
-		sa.addIsTableCheckFlag(v, hasDbTrancation)
+		// メッセージに削除時間を追加する
+		sa.addDeleteTime(v)
 		// SQSへメッセージ送信
 		output, err := sa.SendMessageSdk(v.QueueName, v.Input)
 		if err != nil {
@@ -118,33 +116,28 @@ func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Messag
 		}
 		sa.log.Debug("Send Message Id=%s", *output.MessageId)
 
-		// 業務テーブルでのDynamoDBトランザクション処理がある場合
-		if hasDbTrancation {
-			// メッセージ管理テーブル用のアイテムのトランザクション登録処理を追加
-			queueMessageItem := &entity.QueueMessageItem{}
-			// (キュー名) + "_" + (メッセージID)をパーティションキーとする
-			queueMessageItem.MessageId = v.QueueName + "_" + *output.MessageId
-			// ステータスは送信時は格納していない
-			// DeleteTime（delete_time）の値を設定
-			deleteTime, err := strconv.Atoi(*v.Input.MessageAttributes["delete_time"].StringValue)
-			if err != nil {
-				return errors.WithStack(err)
-			}
-			queueMessageItem.DeleteTime = deleteTime
-			if err := sa.messageRegisterer.RegisterMessage(queueMessageItem); err != nil {
-				return errors.WithStack(err)
-			}
+		// メッセージ管理テーブル用のアイテムのトランザクション登録処理を追加
+		queueMessageItem := &entity.QueueMessageItem{}
+		// (キュー名) + "_" + (メッセージID)をパーティションキーとする
+		queueMessageItem.MessageId = v.QueueName + "_" + *output.MessageId
+		// ステータスは送信時は格納していない
+		// DeleteTime（delete_time）の値を設定
+		deleteTime, err := strconv.Atoi(*v.Input.MessageAttributes["delete_time"].StringValue)
+		if err != nil {
+			return errors.WithStack(err)
 		}
+		queueMessageItem.DeleteTime = deleteTime
+		if err := sa.messageRegisterer.RegisterMessage(queueMessageItem); err != nil {
+			return errors.WithStack(err)
+		}
+
 	}
 
 	return nil
 }
 
-// addDeleteTime は、業務テーブルでのDynamoDBトランザクション処理がある場合に削除時間をメッセージに追加します。
-func (sa *defaultTransactionalSQSAccessor) addDeleteTime(v *Message, hasDbTrancation bool) {
-	if !hasDbTrancation {
-		return
-	}
+// addDeleteTime は、削除時間をメッセージに追加します。
+func (sa *defaultTransactionalSQSAccessor) addDeleteTime(v *Message) {
 	nowTime := time.Now()
 	delTimeStr := strconv.FormatInt(nowTime.Add(time.Duration(sa.ttl)*time.Hour).Unix(), 10)
 	deleteTime := map[string]types.MessageAttributeValue{
@@ -160,22 +153,4 @@ func (sa *defaultTransactionalSQSAccessor) addDeleteTime(v *Message, hasDbTranca
 		maps.Copy(v.Input.MessageAttributes, deleteTime)
 	}
 
-}
-
-// addIsTableCheckFlag は、業務テーブルでのDynamoDBトランザクション処理がない場合にメッセージにフラグ情報を追加します。
-func (*defaultTransactionalSQSAccessor) addIsTableCheckFlag(v *Message, hasDbTrancation bool) {
-	if hasDbTrancation {
-		return
-	}
-	needsTableChecked := map[string]types.MessageAttributeValue{
-		constant.QUEUE_MESSAGE_NEEDS_TABLE_CHECK_NAME: {
-			DataType:    aws.String("String"),
-			StringValue: aws.String("false"),
-		},
-	}
-	if v.Input.MessageAttributes == nil {
-		v.Input.MessageAttributes = needsTableChecked
-	} else {
-		maps.Copy(v.Input.MessageAttributes, needsTableChecked)
-	}
 }

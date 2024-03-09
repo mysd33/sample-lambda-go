@@ -26,7 +26,7 @@ type TransactionalDynamoDBAccessor interface {
 	// なお、TransactWriteItemsの実行は、TransactionManagerのExecuteTransactionWithContext関数で実行されるdomain.ServiceFuncWithContext関数が終了する際にtransactionWriteItemsSDKを実施します。
 	AppendTransactWriteItemWithContext(ctx context.Context, item *types.TransactWriteItem) error
 	// TransactWriteItemsSDK は、AWS SDKによるTransactWriteItemsをラップします。
-	// なお、TransactWriteItemsの実行は、TransactionManagerが実行するため非公開にしています。
+	// なお、TransactWriteItemsの実行は、TransactionManagerが実行するため業務ロジックで利用する必要はありません。
 	TransactWriteItemsSDK(items []types.TransactWriteItem) (*dynamodb.TransactWriteItemsOutput, error)
 }
 
