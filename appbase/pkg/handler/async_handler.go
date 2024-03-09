@@ -160,11 +160,6 @@ func (h *AsyncLambdaHandler) sortMessages(sqsMsgs []events.SQSMessage) {
 // checkMessagId は、キューメッセージ管理テーブルにメッセージIDが存在するか確認する
 func (h *AsyncLambdaHandler) checkMessageId(sqsMsg events.SQSMessage) (string, error) {
 	queueMessageTableId := h.getQueueMessageTableId(sqsMsg)
-	if h.unnecessaryToCheckTable(sqsMsg) {
-		// DBを確認しないためステータス文字列は空文字を返却
-		h.log.Debug("メッセージ管理テーブルのチェック不要")
-		return "", nil
-	}
 	h.log.Debug("キューメッセージテーブルID: %s", queueMessageTableId)
 	deleteTime, err := strconv.Atoi(*sqsMsg.MessageAttributes[constant.QUEUE_MESSAGE_DELETE_TIME_NAME].StringValue)
 	if err != nil {
@@ -196,11 +191,6 @@ func (h *AsyncLambdaHandler) checkMessageId(sqsMsg events.SQSMessage) (string, e
 
 // addAsyncInfoToContext は、非同期処理情報をContextに格納します。
 func (h *AsyncLambdaHandler) addAsyncInfoToContext(sqsMsg events.SQSMessage, isFIFO bool) error {
-	if h.unnecessaryToCheckTable(sqsMsg) {
-		// DBを確認を必要としないため、非同期処理情報格納しない
-		h.log.Debug("メッセージ管理テーブルの更新不要のため非同期処理情報のContext格納なし")
-		return nil
-	}
 	// メッセージ削除時間を設定
 	deleteTime, err := strconv.Atoi(*sqsMsg.MessageAttributes[constant.QUEUE_MESSAGE_DELETE_TIME_NAME].StringValue)
 	if err != nil {
@@ -214,12 +204,6 @@ func (h *AsyncLambdaHandler) addAsyncInfoToContext(sqsMsg events.SQSMessage, isF
 		},
 	)
 	return nil
-}
-
-// unnecessaryToCheckTable は、キューメッセージ管理テーブルを確認する不要であるかを判定します。
-func (*AsyncLambdaHandler) unnecessaryToCheckTable(sqsMsg events.SQSMessage) bool {
-	needsTableCheckFlag := sqsMsg.MessageAttributes[constant.QUEUE_MESSAGE_NEEDS_TABLE_CHECK_NAME].StringValue
-	return needsTableCheckFlag != nil && *needsTableCheckFlag == "false"
 }
 
 // getQueueMessageTableId は、キューメッセージ管理テーブルのキーを作成します。

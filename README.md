@@ -863,7 +863,7 @@ godoc
 | ---- | ---- | ---- | ---- |
 | DI | ソフトウェアフレームワーク機能の各コンポーネントの依存関係の注入、インスタンス管理を実施する。 | ○ | com.example/appbase/pkg/component |
 | オンラインAP実行制御 | APIの要求受信、ビジネスロジック実行、応答返却まで一連の定型的な処理を実行を制御する共通機能を提供する。AWS Lambda Go API Proxyを利用して、Lambda SDKとginを統合し実現する。 | ○ | com.example/appbase/pkg/handler<br/>com.example/appbase/pkg/api |
-| 非同期AP実行制御 | SQSからの要求受信、ビジネスロジック実行、応答返却まで一連の定型的な処理を実行を制御する共通機能を提供する。Lambda SDKを利用して実現する。また、非同期実行依頼側の業務APでDynamoDBアクセスを伴う場合、DynamoDBトランザクション管理機能を用いてDB更新とメッセージ送達のデータ整合性を担保する。 | ○ | com.example/appbase/pkg/handler<br/>com.example/appbase/pkg/transaction |
+| 非同期AP実行制御 | SQSからの要求受信、ビジネスロジック実行、応答返却まで一連の定型的な処理を実行を制御する共通機能を提供する。Lambda SDKを利用して実現する。また、非同期実行依頼側の業務APでDynamoDBアクセスを伴う場合、DynamoDBトランザクション管理機能を用いてDB更新とメッセージ送達のデータ整合性を担保する。なお、FIFOキューの場合は、メッセージ重複排除IDにより5分以内の同一メッセージの送信を防止するとともに、メッセージ管理テーブルにより非同期処理の完了ステータスをチェックすることで二重実行防止が可能となっている。（なお、処理中のステータスチェックまではしないため、Lambdaが万が一通常より長時間処理となり処理中に可視性タイムアウトを迎え同一メッセージを重複受信する恐れがある場合は、Lambda関数のタイムアウト（デフォルト3秒）と可視性タイムアウト（デフォルト30秒）の時間を調整する必要もある。） | ○ | com.example/appbase/pkg/handler<br/>com.example/appbase/pkg/transaction |
 | 入力チェック| APIのリクエストデータの入力チェックを実施する、ginのバインディング機能でgo-playground/validator/v10を使ったバリデーションを実現する。バリデーションエラーメッセージの日本語化に対応する。 | ○ | com.example/appbase/pkg/validator |
 | エラー（例外） | エラーコード（メッセージID）やメッセージを管理可能な共通的なビジネスエラー、システムエラー用のGoのErrorオブジェクトを提供する。 | ○ | com.example/appbase/pkg/errors |
 | 集約例外ハンドリング | オンラインAP制御機能、トランザクション管理機能と連携し、エラー（例外）発生時、エラーログの出力、DBのロールバック、エラー画面やエラー電文の返却といった共通的なエラーハンドリングを実施する。 | ○ | com.example/appbase/pkg/handler<br/>com.example/appbase/pkg/transaction |
