@@ -678,7 +678,7 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
 
 ## AWS SDKのClientLogMode
 
-* AWS SDKのClientLogMode[https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/logging/#clientlogmode]に対応している
+* [AWS SDKのClientLogMode](https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/logging/#clientlogmode)に対応している
 * ソフトウェアフレームワーク機能によるプロパティファイル（configs/（プロファイル名）/config.yaml）または、AppConfigのホスト化された設定によりが可能
     * AWSSDK_CLIENT_LOG_MODEに、カンマ区切りでログモードを指定することで、ログの出力を制御できる
 
