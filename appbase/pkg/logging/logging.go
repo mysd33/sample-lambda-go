@@ -11,6 +11,7 @@ import (
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/message"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 const (
@@ -48,17 +49,17 @@ type Logger interface {
 // NewLogger は、Loggerを作成します。
 func NewLogger(messageSource message.MessageSource, mycfg config.Config) (Logger, error) {
 	var config zap.Config
+	// 本番相当の環境の場合
 	if env.IsStragingOrProd() {
-		// 本番相当の場合
 		config = zap.NewProductionConfig()
+		// ログの時刻をISO8601形式で出力
+		config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	} else {
 		config = zap.NewDevelopmentConfig()
 	}
 	// 個別にログレベルが設定されている場合はログレベル上書き
-	level := mycfg.Get(LOG_LEVEL_NAME, "")
-	if level != "" {
-		al, err := zap.ParseAtomicLevel(level)
-		if err == nil {
+	if level, found := mycfg.GetWithContains(LOG_LEVEL_NAME); found {
+		if al, err := zap.ParseAtomicLevel(level); err == nil {
 			config.Level = al
 		}
 	}
