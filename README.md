@@ -676,6 +676,73 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
         aws sqs delete-message --queue-url http://localhost:9324/000000000000/SampleFIFOQueue.fifo --endpoint-url http://localhost:9324 --receipt-handle (ReceiptHandleの値)
         ```
 
+## AWS SDKのClientLogMode
+
+* AWS SDKのClientLogMode[https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/logging/#clientlogmode]に対応している
+* ソフトウェアフレームワーク機能によるプロパティファイル（configs/（プロファイル名）/config.yaml）または、AppConfigのホスト化された設定によりが可能
+    * AWSSDK_CLIENT_LOG_MODEに、カンマ区切りでログモードを指定することで、ログの出力を制御できる
+
+* config.yamlでの設定例
+```yaml
+AWSSDK_CLIENT_LOG_MODE: "LogSigning,LogRetries,LogRequestWithBody,LogResponseWithBody,LogDeprecatedUsage,LogRequestEventMessage,LogResponseEventMessage"
+```
+
+* 設定後のDynamoDBアクセスでのログの例
+    * リクエストの署名、リクエスト、レスポンスのデバッグログが出力されている
+
+```sh
+SDK 2024/03/09 14:14:13 DEBUG Request Signature:
+---[ CANONICAL STRING  ]-----------------------------
+POST
+/
+accept-encoding:identity
+amz-sdk-invocation-id:45ebb81c-ca25-4d6c-af46-e5d3631be68f
+amz-sdk-request:attempt=1; max=3
+content-length:264
+content-type:application/x-amz-json-1.0
+host:host.docker.internal:8000
+x-amz-date:20240309T051413Z
+x-amz-target:DynamoDB_20120810.PutItem
+
+accept-encoding;amz-sdk-invocation-id;amz-sdk-request;content-length;content-type;host;x-amz-date;x-amz-target
+3632327c19662e8f924a4f107cb7f798d77b1d3d091a6f4ca48d2fc811bec37a
+---[ STRING TO SIGN ]--------------------------------
+AWS4-HMAC-SHA256
+20240309T051413Z
+20240309/ap-northeast-1/dynamodb/aws4_request
+93d5240153452cb92468a6b764bc6bcca32547c5a9075322da0db219e81f154a
+-----------------------------------------------------
+```
+
+```sh
+SDK 2024/03/09 14:14:13 DEBUG Request
+POST / HTTP/1.1
+Host: host.docker.internal:8000
+User-Agent: aws-sdk-go-v2/1.24.1 os/linux lang/go#1.21.4 md/GOOS#linux md/GOARCH#amd64 api/dynamodb#1.26.7
+Content-Length: 264
+Accept-Encoding: identity
+Amz-Sdk-Invocation-Id: 45ebb81c-ca25-4d6c-af46-e5d3631be68f
+Amz-Sdk-Request: attempt=1; max=3
+Authorization: AWS4-HMAC-SHA256 Credential=AKIAJYAKKINDAXTEZWWA/20240309/ap-northeast-1/dynamodb/aws4_request, SignedHeaders=accept-encoding;amz-sdk-invocation-id;amz-sdk-request;content-length;content-type;host;x-amz-date;x-amz-target, Signature=236532a84d1508b8176dec783c18e87594bd0f7ea443ead187449930ff36263e
+Content-Type: application/x-amz-json-1.0
+X-Amz-Date: 20240309T051413Z
+X-Amz-Target: DynamoDB_20120810.PutItem
+X-Amzn-Trace-Id: Parent=0000000000000000;Sampled=0
+{"ConditionExpression":"attribute_not_exists(#partition_key)","ExpressionAttributeNames":{"#partition_key":"todo_id"},"Item":{"todo_id":{"S":"de67c546-ddd3-11ee-a41c-0242ac110004"},"todo_title":{"S":"Buy Milk"}},"ReturnConsumedCapacity":"TOTAL","TableName":"todo"}
+```
+
+```sh
+SDK 2024/03/09 14:14:13 DEBUG Response
+HTTP/1.1 200 OK
+Content-Length: 61
+Content-Type: application/x-amz-json-1.0
+Date: Sat, 09 Mar 2024 05:14:13 GMT
+Server: Jetty(11.0.11)
+X-Amz-Crc32: 539703220
+X-Amzn-Requestid: 1c53023f-b61b-424e-b665-62ca6cdf3f2a
+{"ConsumedCapacity":{"TableName":"todo","CapacityUnits":1.0}}
+```
+
 ## sam localでのリモートデバッグ実行
 * [AWSの開発者ガイド](https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/serverless-sam-cli-using-debugging.html#serverless-sam-cli-running-locally)の記載にある通り、[delve](https://github.com/go-delve/delve)といったサードパーティのデバッガを使用することで、VSCodeでの sam localのリモートデバッグ実行可能である。
     * [参考サイト](https://simple-minds-think-alike.moritamorie.com/entry/golang-lambda-vscode-debug)をもとにした手順で実施可能
@@ -822,6 +889,7 @@ godoc
 | プロパティ管理 | APから環境依存のパラメータを切り出し、プロファイル（環境区分）によって動作環境に応じたパラメータ値に置き換え可能とする。AWS AppConfigおよびAppConfig Agent Lambdaエクステンションを利用してAPの再デプロイせずとも設定変更を反映できる。また、変更が少ない静的な設定値やローカルでのAP実行用に、spf13/viperの機能を利用して、OS環境変数、yamlによる設定ファイルを読み込み反映する。なお、AppConfigに同等のプロパティがある場合には優先的に反映する。 | ○ | com.example/appbase/pkg/env<br/>com.example/appbase/pkg/config |
 | メッセージ管理 | go標準のembededでログ等に出力するメッセージを設定ファイルで一元管理する。 | ○ | com.example/appbase/pkg/message |
 | ID生成 | google/uuidを使用したUUID等を生成する。 | ○ | com.example/appbase/pkg/id |
+| システム時刻首都行く | go標準のtimeパッケージを使用してシステムの現在時刻を取得する。テスト用にプロパティから取得した固定の時刻を返却するように設定切り替え可能とする。 | ○ | com.example/appbase/pkg/date |
 
 * 以下は、今後追加を検討中。
 

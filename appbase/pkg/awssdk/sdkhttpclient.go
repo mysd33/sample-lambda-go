@@ -1,3 +1,4 @@
+// awssdk パッケージは、AWS SDKを利用する際のユーティリティを提供します。
 package awssdk
 
 import (

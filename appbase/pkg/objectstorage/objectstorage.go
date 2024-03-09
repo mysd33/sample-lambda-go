@@ -98,11 +98,18 @@ type ObjectStorageAccessor interface {
 func NewObjectStorageAccessor(myCfg myconfig.Config, log logging.Logger) (ObjectStorageAccessor, error) {
 	// カスタムHTTPClientの作成
 	sdkHTTPClient := awssdk.NewHTTPClient(myCfg)
-
+	// ClientLogModeの取得
+	clientLogMode, found := awssdk.GetClientLogMode(myCfg)
 	// AWS SDK for Go v2 Migration
 	// https://github.com/aws/aws-sdk-go-v2
 	// https://aws.github.io/aws-sdk-go-v2/docs/migrating/
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithHTTPClient(sdkHTTPClient))
+	var cfg aws.Config
+	var err error
+	if found {
+		cfg, err = config.LoadDefaultConfig(context.TODO(), config.WithHTTPClient(sdkHTTPClient), config.WithClientLogMode(clientLogMode))
+	} else {
+		cfg, err = config.LoadDefaultConfig(context.TODO(), config.WithHTTPClient(sdkHTTPClient))
+	}
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

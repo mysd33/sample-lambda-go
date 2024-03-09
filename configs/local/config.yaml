@@ -17,3 +17,4 @@ SQS_LOCAL_ENDPOINT: "http://host.docker.internal:9324"
 S3_LOCAL_ENDPOINT: "http://host.docker.internal:9000"
 S3_BUCKET_NAME: "samplebucket123"
 #LOG_LEVEL: INFO
+#AWSSDK_CLIENT_LOG_MODE: "LogSigning,LogRetries,LogRequestWithBody,LogResponseWithBody,LogDeprecatedUsage,LogRequestEventMessage,LogResponseEventMessage"
