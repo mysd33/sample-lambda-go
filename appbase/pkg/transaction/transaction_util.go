@@ -9,11 +9,17 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
+const (
+	reasonCodeNone                   = "None"
+	reasonCodeConditionalCheckFailed = "ConditionalCheckFailed"
+	reasonCodeTransactionConflict    = "TransactionConflict"
+)
+
 // IsTransactionConditionalCheckFailed は、エラーの原因がトランザクション実行中にConditionCheckに失敗
 // （TransactionCanceledExceptionが発生しConditionalCheckFailedのみが含まれている）かどうかを判定します。
 func IsTransactionConditionalCheckFailed(err error) bool {
 	var txCanceledException *types.TransactionCanceledException
-	return errors.As(err, &txCanceledException) && containsOnlyConditionalCheckFailed(txCanceledException)
+	return errors.As(err, &txCanceledException) && containsOnlyTargetCancellationReason(txCanceledException, reasonCodeConditionalCheckFailed)
 }
 
 // IsTransactionConflict は、エラーの原因がトランザクション実行中にトランザクションの競合が発生
@@ -24,46 +30,24 @@ func IsTransactionConflict(err error) bool {
 	var txCanceledException *types.TransactionCanceledException
 	var txConflictException *types.TransactionConflictException
 	if errors.As(err, &txCanceledException) {
-		return containsOnlyTransactionConflict(txCanceledException)
-	} else if errors.As(err, &txConflictException) {
-		return true
+		return containsOnlyTargetCancellationReason(txCanceledException, reasonCodeTransactionConflict)
 	}
-	return false
+	return errors.As(err, &txConflictException)
 }
 
-// containsOnlyConditionalCheckFailed は、TransactionCanceledExceptionの原因に
-// ConditionalCheckFailedが含まれている場合はtrueを返します。
-// ただし、ConditionalCheckFailed以外のエラーが含まれている場合は、falseを返します。
-func containsOnlyConditionalCheckFailed(txCanceledException *types.TransactionCanceledException) bool {
-	conditionalCheckFailed := false
+// containsOnlyTargetCancellationReason は、TransactionCanceledExceptionの原因に指定された原因が含まれているかを判定します。
+// 指定された原因以外のエラーが含まれている場合は、falseを返します。
+func containsOnlyTargetCancellationReason(txCanceledException *types.TransactionCanceledException, targetReason string) bool {
+	contains := false
 	for _, reason := range txCanceledException.CancellationReasons {
-		// https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/dynamodb/types#TransactionCanceledException
-		if *reason.Code == "None" {
+		if *reason.Code == reasonCodeNone {
 			continue
-		} else if *reason.Code != "ConditionalCheckFailed" {
-			// ConditionalCheckFailed以外のエラーが含まれている場合は、falseを返す
+		} else if *reason.Code != targetReason {
+			//	対象の原因以外のエラーが含まれている場合は、falseを返す
 			return false
 		}
-		// ConditionalCheckFailedが含まれている場合は、trueにする
-		conditionalCheckFailed = true
+		// 対象の原因が含まれている場合は、trueにする
+		contains = true
 	}
-	return conditionalCheckFailed
-}
-
-// containsOnlyTransactionConflict は、TransactionCanceledExceptionの原因に
-// TransactionConflictが含まれているかを判定します。
-// TransactionConflict以外のエラーが含まれている場合は、falseを返します。
-func containsOnlyTransactionConflict(txCanceledException *types.TransactionCanceledException) bool {
-	transactionConflict := false
-	for _, reason := range txCanceledException.CancellationReasons {
-		if *reason.Code == "None" {
-			continue
-		} else if *reason.Code != "TransactionConflict" {
-			//	TransactionConflict以外のエラーが含まれている場合は、falseを返す
-			return false
-		}
-		// TransactionConflictが含まれている場合は、trueにする
-		transactionConflict = true
-	}
-	return transactionConflict
+	return contains
 }
