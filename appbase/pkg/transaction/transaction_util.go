@@ -37,6 +37,8 @@ func IsTransactionConflict(err error) bool {
 
 // containsOnlyTargetCancellationReason は、TransactionCanceledExceptionの原因に指定された原因が含まれているかを判定します。
 // 指定された原因以外のエラーが含まれている場合は、falseを返します。
+// トランザクションのキャンセルの原因については以下のドキュメントを参照してください。
+// https://docs.aws.amazon.com/ja_jp/amazondynamodb/latest/APIReference/API_TransactWriteItems.html
 func containsOnlyTargetCancellationReason(txCanceledException *types.TransactionCanceledException, targetReason string) bool {
 	contains := false
 	for _, reason := range txCanceledException.CancellationReasons {
