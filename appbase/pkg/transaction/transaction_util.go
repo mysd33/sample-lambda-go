@@ -43,6 +43,7 @@ func containsOnlyTargetCancellationReason(txCanceledException *types.Transaction
 	contains := false
 	for _, reason := range txCanceledException.CancellationReasons {
 		if *reason.Code == reasonCodeNone {
+			// Noneの場合は、スキップ
 			continue
 		} else if *reason.Code != targetReason {
 			//	対象の原因以外のエラーが含まれている場合は、falseを返す
