@@ -10,30 +10,31 @@ import (
 )
 
 // IsTransactionConditionalCheckFailed は、エラーの原因がトランザクション実行中にConditionCheckに失敗
-// （TransactionCanceledExceptionが発生しConditionalCheckFailedが含まれている）かどうかを判定します。
+// （TransactionCanceledExceptionが発生しConditionalCheckFailedのみが含まれている）かどうかを判定します。
 func IsTransactionConditionalCheckFailed(err error) bool {
 	var txCanceledException *types.TransactionCanceledException
-	return errors.As(err, &txCanceledException) && containsConditionalCheckFailed(txCanceledException)
+	return errors.As(err, &txCanceledException) && containsOnlyConditionalCheckFailed(txCanceledException)
 }
 
 // IsTransactionConflict は、エラーの原因がトランザクション実行中にトランザクションの競合が発生
-// （TransactionCanceledExceptionが発生しTransactionConflictが含まれている）
+// （TransactionCanceledExceptionが発生しTransactionConflictのみが含まれている）
 // または、通常のDB操作中に、他のトランザクションが実行されてトランザクションの競合が発生した
 // （TransactionConflictExceptionが発生） かどうかを判定します。
 func IsTransactionConflict(err error) bool {
 	var txCanceledException *types.TransactionCanceledException
 	var txConflictException *types.TransactionConflictException
 	if errors.As(err, &txCanceledException) {
-		return containsTransactionConflict(txCanceledException)
+		return containsOnlyTransactionConflict(txCanceledException)
 	} else if errors.As(err, &txConflictException) {
 		return true
 	}
 	return false
 }
 
-// containsConditionalCheckFailed は、TransactionCanceledExceptionの原因に
+// containsOnlyConditionalCheckFailed は、TransactionCanceledExceptionの原因に
 // ConditionalCheckFailedが含まれている場合はtrueを返します。
-func containsConditionalCheckFailed(txCanceledException *types.TransactionCanceledException) bool {
+// ただし、ConditionalCheckFailed以外のエラーが含まれている場合は、falseを返します。
+func containsOnlyConditionalCheckFailed(txCanceledException *types.TransactionCanceledException) bool {
 	conditionalCheckFailed := false
 	for _, reason := range txCanceledException.CancellationReasons {
 		// https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/dynamodb/types#TransactionCanceledException
@@ -49,16 +50,17 @@ func containsConditionalCheckFailed(txCanceledException *types.TransactionCancel
 	return conditionalCheckFailed
 }
 
-// containsTransactionConflict は、TransactionCanceledExceptionの原因に
+// containsOnlyTransactionConflict は、TransactionCanceledExceptionの原因に
 // TransactionConflictが含まれているかを判定します。
-func containsTransactionConflict(txCanceledException *types.TransactionCanceledException) bool {
+// TransactionConflict以外のエラーが含まれている場合は、falseを返します。
+func containsOnlyTransactionConflict(txCanceledException *types.TransactionCanceledException) bool {
 	transactionConflict := false
 	for _, reason := range txCanceledException.CancellationReasons {
 		if *reason.Code == "None" {
 			continue
 		} else if *reason.Code != "TransactionConflict" {
-			//	TransactionConflict以外のエラーが含まれている場合は、trueを返す
-			return true
+			//	TransactionConflict以外のエラーが含まれている場合は、falseを返す
+			return false
 		}
 		// TransactionConflictが含まれている場合は、trueにする
 		transactionConflict = true
