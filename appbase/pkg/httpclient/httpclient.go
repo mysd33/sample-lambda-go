@@ -18,6 +18,7 @@ import (
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/logging"
+	"example.com/appbase/pkg/message"
 	"example.com/appbase/pkg/retry"
 )
 
@@ -137,10 +138,19 @@ func (c *defaultHttpClient) doGet(ctx context.Context, url string, header http.H
 		if err != nil {
 			return nil, err
 		}
+		// URLにクエリパラメータの追加
+		if params != nil {
+			qparam := req.URL.Query()
+			for key, val := range params {
+				qparam.Add(key, val)
+			}
+			req.URL.RawQuery = qparam.Encode()
+		}
 		// ヘッダー情報の設定
 		if header != nil {
 			req.Header = header
 		}
+		c.log.Info(message.I_FW_0005, "GET", url)
 		// Getメソッドの実行（X-Ray対応）
 		response, err := ctxhttp.Do(ctx, xray.Client(nil), req)
 		if err != nil {
@@ -162,7 +172,8 @@ func (c *defaultHttpClient) doPost(ctx context.Context, url string, header http.
 			req.Header = header
 		}
 		req.Header.Set("Content-Type", "application/json")
-
+		c.log.Info(message.I_FW_0005, "POST", url)
+		// POSTメソッドの実行（X-Ray対応）
 		response, err := ctxhttp.Do(ctx, xray.Client(nil), req)
 		if err != nil {
 			return nil, errors.WithStack(err)
