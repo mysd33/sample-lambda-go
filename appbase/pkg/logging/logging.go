@@ -42,8 +42,13 @@ type Logger interface {
 	ErrorWithError(err error, code string, args ...any)
 	// ErrorWithCodableError は、エラーが持つメッセージID（エラーコード）、置き換え文字列に対応するメッセージでエラーレベルのログを出力します。codeに対応するメッセージがない場合はそのまま出力します。
 	ErrorWithCodableError(err errors.CodableError)
-	// 	ErrorWithUnexpectedError は、予期せぬエラーをログに出力します。
+	// ErrorWithUnexpectedError は、予期せぬエラーをログに出力します。
 	ErrorWithUnexpectedError(err error)
+	// Sync は、バッファリングされたログをフラッシュします。Zapによるデフォルトの出力（標準エラー出力）ではバッファリングを実施していませんが、
+	// ZapのAPIでカスタマイズすることで、バッファリングする出力に変更することも可能なので、呼び出さないとログが完全に出力されないことがあります。
+	// プロセス終了の最後にこのメソッドを呼ぶことを推奨します。本ソフトウェアフレームワークを利用すると、
+	// AP処理実行制御機能がLambdaのハンドラ関数の最後に自動的に必ず呼び出すようになっています。
+	Sync() error
 }
 
 // NewLogger は、Loggerを作成します。
@@ -182,4 +187,9 @@ func (z *zapLogger) ErrorWithCodableError(err errors.CodableError) {
 func (z *zapLogger) ErrorWithUnexpectedError(err error) {
 	message := z.messageSource.GetMessage(message.E_FW_9999)
 	z.log.Errorf("%s, %+v", message, err)
+}
+
+// Sync implements Logger.
+func (z *zapLogger) Sync() error {
+	return z.log.Sync()
 }

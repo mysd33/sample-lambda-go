@@ -81,8 +81,8 @@ func (h *APILambdaHandler) GetDefaultGinEngine(errorResponse api.ErrorResponse) 
 func (h *APILambdaHandler) Handle(ginLambda *ginadapter.GinLambda) APITriggeredLambdaHandlerFunc {
 	// Handleは、APIGatewayトリガーのLambdaHandlerFuncです。
 	return func(ctx context.Context, request events.APIGatewayProxyRequest) (response events.APIGatewayProxyResponse, err error) {
-		// パニックのリカバリ処理
 		defer func() {
+			// パニックのリカバリ処理
 			if v := recover(); v != nil {
 				// パニックのスタックトレース情報をログ出力
 				h.log.ErrorWithUnexpectedError(errors.Errorf("recover from: %+v", v))
@@ -90,6 +90,8 @@ func (h *APILambdaHandler) Handle(ginLambda *ginadapter.GinLambda) APITriggeredL
 				response = h.createErrorResponse()
 				// errはnilにままにして{"message":"Internal Server Error"} のレスポンスが返却されないようにする
 			}
+			// ログのフラッシュ
+			h.log.Sync()
 		}()
 		// ctxをコンテキスト領域に格納
 		apcontext.Context = ctx

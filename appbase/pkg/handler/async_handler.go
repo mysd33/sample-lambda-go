@@ -67,6 +67,8 @@ func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQS
 				// https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
 				response.BatchItemFailures = append(response.BatchItemFailures, events.SQSBatchItemFailure{ItemIdentifier: ""})
 			}
+			// ログのフラッシュ
+			h.log.Sync()
 		}()
 		// FIFOの対応（FIFOの場合はメッセージグループID毎にメッセージのソート）
 		isFIFO := event.Records[0].Attributes[string(types.MessageSystemAttributeNameMessageGroupId)] != ""

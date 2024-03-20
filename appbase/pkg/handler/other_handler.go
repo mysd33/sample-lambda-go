@@ -45,13 +45,15 @@ func NewSimpleLambdaHandler(config config.Config,
 // Handle は、その他のトリガのLambdaのハンドラを実行します。
 func (h *SimpleLambdaHandler) Handle(simpleControllerFunc SimpleControllerFunc) SimpleLambdaHandlerFunc {
 	return func(ctx context.Context, event any) (response any, resultErr error) {
-		// パニックのリカバリ処理
 		defer func() {
+			// パニックのリカバリ処理
 			if v := recover(); v != nil {
 				resultErr = errors.Errorf("recover from: %+v", v)
 				// パニックのスタックトレース情報をログ出力
 				h.log.ErrorWithUnexpectedError(resultErr)
 			}
+			// ログのフラッシュ
+			h.log.Sync()
 		}()
 		// ctxをコンテキスト領域に格納
 		apcontext.Context = ctx
