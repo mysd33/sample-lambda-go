@@ -9,7 +9,6 @@ import (
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/awssdk"
 	myConfig "example.com/appbase/pkg/config"
-	"example.com/appbase/pkg/env"
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -81,11 +80,12 @@ func NewDynamoDBAccessor(log logging.Logger, myCfg myConfig.Config) (DynamoDBAcc
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	return &defaultDynamoDBAccessor{log: log, dynamodbClient: dynamodbClient}, nil
+	return &defaultDynamoDBAccessor{log: log, config: myCfg, dynamodbClient: dynamodbClient}, nil
 }
 
 type defaultDynamoDBAccessor struct {
 	log            logging.Logger
+	config         myConfig.Config
 	dynamodbClient *dynamodb.Client
 }
 
@@ -96,7 +96,7 @@ func (da *defaultDynamoDBAccessor) GetDynamoDBClient() *dynamodb.Client {
 
 // GetItemSdk implements DynamoDBAccessor.
 func (da *defaultDynamoDBAccessor) GetItemSdk(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
-	if !env.IsStragingOrProd() {
+	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
 	output, err := da.dynamodbClient.GetItem(apcontext.Context, input)
@@ -111,7 +111,7 @@ func (da *defaultDynamoDBAccessor) GetItemSdk(input *dynamodb.GetItemInput) (*dy
 
 // QuerySdk implements DynamoDBAccessor.
 func (da *defaultDynamoDBAccessor) QuerySdk(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
-	if !env.IsStragingOrProd() {
+	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
 	output, err := da.dynamodbClient.Query(apcontext.Context, input)
@@ -144,7 +144,7 @@ func (da *defaultDynamoDBAccessor) QueryPagesSdk(input *dynamodb.QueryInput, fn 
 
 // PutItemSdk implements DynamoDBAccessor.
 func (da *defaultDynamoDBAccessor) PutItemSdk(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
-	if !env.IsStragingOrProd() {
+	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
 	output, err := da.dynamodbClient.PutItem(apcontext.Context, input)
@@ -160,7 +160,7 @@ func (da *defaultDynamoDBAccessor) PutItemSdk(input *dynamodb.PutItemInput) (*dy
 
 // UpdateItemSdk implements DynamoDBAccessor.
 func (da *defaultDynamoDBAccessor) UpdateItemSdk(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
-	if !env.IsStragingOrProd() {
+	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
 	output, err := da.dynamodbClient.UpdateItem(apcontext.Context, input)
@@ -175,7 +175,7 @@ func (da *defaultDynamoDBAccessor) UpdateItemSdk(input *dynamodb.UpdateItemInput
 
 // DeleteItemSdk implements DynamoDBAccessor.
 func (da *defaultDynamoDBAccessor) DeleteItemSdk(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
-	if !env.IsStragingOrProd() {
+	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
 	output, err := da.dynamodbClient.DeleteItem(apcontext.Context, input)
@@ -190,7 +190,7 @@ func (da *defaultDynamoDBAccessor) DeleteItemSdk(input *dynamodb.DeleteItemInput
 
 // BatchGetItemSdk implements DynamoDBAccessor.
 func (da *defaultDynamoDBAccessor) BatchGetItemSdk(input *dynamodb.BatchGetItemInput) (*dynamodb.BatchGetItemOutput, error) {
-	if !env.IsStragingOrProd() {
+	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
 	output, err := da.dynamodbClient.BatchGetItem(apcontext.Context, input)
@@ -205,7 +205,7 @@ func (da *defaultDynamoDBAccessor) BatchGetItemSdk(input *dynamodb.BatchGetItemI
 
 // BatchWriteItemSdk implements DynamoDBAccessor.
 func (da *defaultDynamoDBAccessor) BatchWriteItemSdk(input *dynamodb.BatchWriteItemInput) (*dynamodb.BatchWriteItemOutput, error) {
-	if !env.IsStragingOrProd() {
+	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
 	output, err := da.dynamodbClient.BatchWriteItem(apcontext.Context, input)

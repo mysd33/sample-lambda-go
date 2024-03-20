@@ -38,7 +38,8 @@ Resources:
               QUEUE_MESSAGE_TABLE_NAME: queue_message
               QUEUE_MESSAGE_TABLE_TTL_HOUR: 96
               GIN_DEBUG: true
-              LOG_LEVEL: DEBUG          
+              LOG_LEVEL: DEBUG              
+              DYNAMODB_RETURN_CONSUMED_CAPACITY: true
               #AWSSDK_CLIENT_LOG_MODE: LogSigning,LogRetries,LogRequestWithBody,LogResponseWithBody,LogDeprecatedUsage,LogRequestEventMessage,LogResponseEventMessage
               RDB_SSL_MODE: require                           
             - "\nRDB_ENDPOINT: "

@@ -6,7 +6,9 @@ package dynamodb
 import (
 	"strconv"
 
+	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/dynamodb/input"
+	"example.com/appbase/pkg/env"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -14,6 +16,20 @@ import (
 )
 
 // ユーティリティ関数
+
+const (
+	DYNAMODB_RETURN_CONSUMED_CAPACITY_NAME = "DYNAMODB_RETURN_CONSUMED_CAPACITY"
+)
+
+// ReturnConsumedCapacity は、ConsumedCapacityを返却するかどうかを返します。
+func ReturnConsumedCapacity(config config.Config) bool {
+	// 環境変数が存在する場合はその値を返却
+	if value, found := config.GetBoolWithContains(DYNAMODB_RETURN_CONSUMED_CAPACITY_NAME); found {
+		return value
+	}
+	// デフォルトでは開発時のみConsumedCapacityを返却する
+	return !env.IsStragingOrProd()
+}
 
 // CreatePkAttributeValue は、プライマリキーの完全一致による条件のAttributeValueのマップを作成します。
 func CreatePkAttributeValue(primaryKey input.PrimaryKey) (map[string]types.AttributeValue, error) {

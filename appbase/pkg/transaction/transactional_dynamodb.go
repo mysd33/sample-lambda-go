@@ -9,7 +9,6 @@ import (
 	"example.com/appbase/pkg/apcontext"
 	myConfig "example.com/appbase/pkg/config"
 	myDynamoDB "example.com/appbase/pkg/dynamodb"
-	"example.com/appbase/pkg/env"
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -36,11 +35,12 @@ func NewTransactionalDynamoDBAccessor(log logging.Logger, myCfg myConfig.Config)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	return &defaultTransactionalDynamoDBAccessor{log: log, dynamodbAccessor: dynamodbAccessor}, nil
+	return &defaultTransactionalDynamoDBAccessor{log: log, config: myCfg, dynamodbAccessor: dynamodbAccessor}, nil
 }
 
 type defaultTransactionalDynamoDBAccessor struct {
 	log              logging.Logger
+	config           myConfig.Config
 	dynamodbAccessor myDynamoDB.DynamoDBAccessor
 }
 
@@ -116,7 +116,7 @@ func (da *defaultTransactionalDynamoDBAccessor) AppendTransactWriteItemWithConte
 func (da *defaultTransactionalDynamoDBAccessor) TransactWriteItemsSDK(items []types.TransactWriteItem) (*dynamodb.TransactWriteItemsOutput, error) {
 	da.log.Debug("TransactWriteItemsSDK: %d件", len(items))
 	input := &dynamodb.TransactWriteItemsInput{TransactItems: items}
-	if !env.IsStragingOrProd() {
+	if myDynamoDB.ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
 	output, err := da.GetDynamoDBClient().TransactWriteItems(apcontext.Context, input)
@@ -124,9 +124,11 @@ func (da *defaultTransactionalDynamoDBAccessor) TransactWriteItemsSDK(items []ty
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	da.log.Debug("消費キャパシティユニット: %d件", len(output.ConsumedCapacity))
-	for i, v := range output.ConsumedCapacity {
-		da.log.Debug("TransactWriteItems(%d番目)[%s]消費キャパシティユニット:%f", i+1, *v.TableName, *v.CapacityUnits)
+	if output.ConsumedCapacity != nil && len(output.ConsumedCapacity) > 0 {
+		da.log.Debug("消費キャパシティユニット: %d件", len(output.ConsumedCapacity))
+		for i, v := range output.ConsumedCapacity {
+			da.log.Debug("TransactWriteItems(%d番目)[%s]消費キャパシティユニット:%f", i+1, *v.TableName, *v.CapacityUnits)
+		}
 	}
 	return output, nil
 }
