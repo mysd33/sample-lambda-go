@@ -247,7 +247,7 @@ func (t *defaultTransaction) transactUpdateQueueMessageItem() error {
 	queueMessageItem, ok := asyncHandlerInfo.(*entity.QueueMessageItem)
 	if ok {
 		// メッセージ管理テーブルのアイテムのステータスを完了に更新するトランザクションを追加
-		t.log.Debug("メッセージ管理テーブルに重複メッセージIDを登録する更新トランザクションを追加")
+		t.log.Debug("メッセージ管理テーブルにステータスを完了にする更新トランザクションを追加")
 		queueMessageItem.Status = constant.QUEUE_MESSAGE_STATUS_COMPLETE
 		return t.messageRegsiterer.UpdateMessage(queueMessageItem)
 	}
