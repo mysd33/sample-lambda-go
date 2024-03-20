@@ -47,9 +47,9 @@ type ApplicationContext interface {
 func NewApplicationContext() ApplicationContext {
 	// 各種AP基盤の構造体を作成
 	id := createIDGenerator()
-	config := createConfig()
 	messageSource := createMessageSource()
-	logger := createLogger(messageSource, config)
+	logger := createLogger(messageSource)
+	config := createConfig(logger)
 	dateManager := createDateManager(config, logger)
 	apiResponseFormatter := createApiResponseFormatter(logger, messageSource)
 	dynamodbAccessor := createTransactionalDynamoDBAccessor(logger, config)
@@ -230,8 +230,8 @@ func createMessageSource() message.MessageSource {
 	return messageSource
 }
 
-func createLogger(messageSource message.MessageSource, config config.Config) logging.Logger {
-	logger, err := logging.NewLogger(messageSource, config)
+func createLogger(messageSource message.MessageSource) logging.Logger {
+	logger, err := logging.NewLogger(messageSource)
 	if err != nil {
 		// 異常終了
 		panic(err)
@@ -239,8 +239,8 @@ func createLogger(messageSource message.MessageSource, config config.Config) log
 	return logger
 }
 
-func createConfig() config.Config {
-	cfg, err := config.NewConfig()
+func createConfig(logger logging.Logger) config.Config {
+	cfg, err := config.NewConfig(logger)
 	if err != nil {
 		// 異常終了
 		panic(err)

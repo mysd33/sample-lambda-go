@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"example.com/appbase/pkg/env"
+	"example.com/appbase/pkg/logging"
 )
 
 // Config は、設定ファイルを管理するインターフェースです。
@@ -22,18 +23,18 @@ type Config interface {
 
 // NewConfig は、設定ファイルをロードし、Configを作成します。
 
-func NewConfig() (Config, error) {
+func NewConfig(log logging.Logger) (Config, error) {
 	var cfgs []Config
 	if !env.IsLocalOrLocalTest() {
 		// ローカル実行（Env=Local,LocalTest）以外では、AppConfigから優先的に設定値を取得する
-		ac, err := newAppConfigConfig()
+		ac, err := newAppConfigConfig(log)
 		if err != nil {
 			return nil, err
 		}
 		cfgs = append(cfgs, ac)
 	}
 	// Viperを使って設定ファイルの設定値を取得する
-	vc, err := newViperConfig()
+	vc, err := newViperConfig(log)
 	if err != nil {
 		return nil, err
 	}

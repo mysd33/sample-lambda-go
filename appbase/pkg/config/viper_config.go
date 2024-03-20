@@ -5,24 +5,34 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"example.com/appbase/pkg/env"
+	"example.com/appbase/pkg/logging"
 	"github.com/cockroachdb/errors"
 	"github.com/spf13/cast"
 	"github.com/spf13/viper"
 )
 
+const (
+	CONFIG_BASE_PATH_NAME = "CONFIG_BASE_PATH"
+)
+
 // viperConfigは、spf13/viperによるConfig実装です。
 type viperConfig struct {
+	log logging.Logger
 }
 
 // NewViperConfig は、設定ファイルをロードし、viperConfigを作成します。
-func newViperConfig() (Config, error) {
+func newViperConfig(log logging.Logger) (Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	if env.IsLocalTest() {
-		// テストコード実行の場合のみパスを相対パスに変更
+	if configBasePath, found := os.LookupEnv(CONFIG_BASE_PATH_NAME); found {
+		// 環境変数の定義があればそれをベースパスとしてのConfigを読み取る
+		viper.AddConfigPath(fmt.Sprintf("%s/%s/", strings.TrimRight(configBasePath, "/"), strings.ToLower(env.GetEnv())))
+	} else if env.IsLocalTest() {
+		// テストコード実行の場合、テストコードからの相対パスに変更
 		// 環境ごとのConfigを読み取る
 		viper.AddConfigPath(fmt.Sprintf("../../../configs/%s/", strings.ToLower(env.GetEnv())))
 	} else {
@@ -37,7 +47,7 @@ func newViperConfig() (Config, error) {
 	if err := viper.ReadInConfig(); err != nil {
 		return nil, errors.Errorf("設定ファイル読み込みエラー:%w", err)
 	}
-	return &viperConfig{}, nil
+	return &viperConfig{log: log}, nil
 }
 
 // GetWithContains implements Config.

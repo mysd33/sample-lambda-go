@@ -5,13 +5,12 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
-	"log"
 	"maps"
 	"net/http"
 	"os"
 
+	"example.com/appbase/pkg/logging"
 	"github.com/cockroachdb/errors"
 	"gopkg.in/yaml.v3"
 )
@@ -23,28 +22,17 @@ const (
 
 // appConfigConfigは、AWS AppConfigによるConfig実装です。
 type appConfigConfig struct {
+	log logging.Logger
 	cfg map[string]string
 }
 
 // NewAppConfigConfig は、AWS AppConfigから設定をロードする、Configを作成します。
-func newAppConfigConfig() (Config, error) {
-	// Hosted ConfigurationのProfileからの設定読み込み
-	cfg, err := loadHostedAppConfig()
+func newAppConfigConfig(log logging.Logger) (Config, error) {
+	cfg, err := loadAppConfigConfig(log)
 	if err != nil {
 		return nil, err
 	}
-	// SecretManagerのProfileからの設定読み込み
-	smCfg, err := loadSecretManagerConfig()
-	if err != nil {
-		return nil, err
-	}
-	// TODO: ログ見直し
-	fmt.Printf("AppConfig設定(SM):%v\n", smCfg)
-	// 設定をマージ
-	maps.Copy(cfg, smCfg)
-	// TODO: ログ見直し
-	fmt.Printf("AppConfig設定:%v\n", cfg)
-	return &appConfigConfig{cfg: cfg}, nil
+	return &appConfigConfig{log: log, cfg: cfg}, nil
 }
 
 // GetWithContains implements Config.
@@ -89,26 +77,36 @@ func (c *appConfigConfig) Reload() error {
 	//Handlerメソッドの最初で取得するようにする実装しているが
 	//init関数のみで各コンポーネント作成時にConfigの値を利用するケースも考えると
 	//設定のバージョン不整合が発生してしまう可能性があるため注意が必要
-	cfg, err := loadHostedAppConfig()
+	cfg, err := loadAppConfigConfig(c.log)
 	if err != nil {
 		return err
 	}
-	smCfg, err := loadSecretManagerConfig()
-	if err != nil {
-		return err
-	}
-	// TODO: ログ見直し
-	fmt.Printf("AppConfig設定(SM):%v\n", smCfg)
-	// 設定をマージ
-	maps.Copy(cfg, smCfg)
 	c.cfg = cfg
-	// TODO: ログ見直し
-	fmt.Printf("AppConfig設定:%v\n", cfg)
 	return nil
 }
 
+// loadAppConfigConfig は、AWS AppConfigから設定をロードします。
+func loadAppConfigConfig(log logging.Logger) (map[string]string, error) {
+	// Hosted ConfigurationのProfileからの設定読み込み
+	cfg, err := loadHostedAppConfig(log)
+	if err != nil {
+		return nil, err
+	}
+	log.Debug("AppConfig設定(Hosted):%v\n", cfg)
+	// SecretManagerのProfileからの設定読み込み
+	smCfg, err := loadSecretManagerConfig(log)
+	if err != nil {
+		return nil, err
+	}
+	log.Debug("AppConfig設定(SM):%v\n", smCfg)
+	// 設定をマージ
+	maps.Copy(cfg, smCfg)
+	log.Debug("AppConfig設定(マージ):%v\n", cfg)
+	return cfg, nil
+}
+
 // loadHostedAppConfig は、AWS AppConfigからHosted Configurationの設定をロードします。
-func loadHostedAppConfig() (map[string]string, error) {
+func loadHostedAppConfig(log logging.Logger) (map[string]string, error) {
 	// Hosted Configurationのエンドポイントを環境変数から取得
 	hostedCfgUrl := os.Getenv(APPCONFIG_HOSTED_EXTENSION_URL_NAME)
 	// AppConfig Lambda ExtensionsのエンドポイントへアクセスしてHosted Configurationの設定データを取得
@@ -122,6 +120,7 @@ func loadHostedAppConfig() (map[string]string, error) {
 	if err != nil {
 		return nil, errors.Errorf("Hosted ConfigurtionのAppConfig読み込みエラー:%w", err)
 	}
+	log.Debug("Hosted ConfigurationのAppConfig読み込み(yaml)):%s\n", string(data))
 	// YAMLの設定データを読み込み
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, errors.Errorf("Hosted ConfigurtionのAppConfig読み込みエラー:%w", err)
@@ -130,7 +129,7 @@ func loadHostedAppConfig() (map[string]string, error) {
 }
 
 // loadSecretManagerConfig は、AWS AppConfigからSecretManagerの設定をロードします。
-func loadSecretManagerConfig() (map[string]string, error) {
+func loadSecretManagerConfig(log logging.Logger) (map[string]string, error) {
 	// SecretManagerのエンドポイントを環境変数から取得
 	smCfgUrl := os.Getenv(APPCONFIG_SM_EXTENSION_URL_NAME)
 	// AppConfig Lambda ExtensionsのエンドポイントへアクセスしてSecretManagerの設定データを取得
@@ -144,14 +143,10 @@ func loadSecretManagerConfig() (map[string]string, error) {
 	if err != nil {
 		return nil, errors.Errorf("SecretManagerのAppConfig読み込みエラー:%w", err)
 	}
-	// TODO: ログ見直し
-	log.Printf("SecretManagerのAppConfig読み込み:%s\n", string(data))
-
+	log.Debug("SecretManagerのAppConfig読み込み(json):%s\n", string(data))
 	// JSONの設定データを読み込み
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return nil, errors.Errorf("SecretManagerのAppConfig読み込みエラー:%w", err)
 	}
-	// TODO: ログ見直し
-	fmt.Printf("SecretManagerのAppConfig読み込みmap:%v\n", cfg)
 	return cfg, nil
 }

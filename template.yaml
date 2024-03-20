@@ -40,7 +40,11 @@ Parameters:
     Default: todo-async-function
   TodoAsyncFifoFunctionName:
     Type: String
-    Default: todo-async-fifo-function    
+    Default: todo-async-fifo-function  
+  LogLevel:
+    Type: String
+#    Default: INFO
+    Default: DEBUG
 Mappings:
   AppConfigExtentionsLayerMap:
     #Tokyo
@@ -93,6 +97,8 @@ Globals:
           Fn::ImportValue: !Sub ${StackPrefix}-AppConfigLambdaExtension${Stage}Path
         # Timezone
         TZ: Asia/Tokyo
+        # LogLevel
+        LOG_LEVEL: !Ref LogLevel
     # Deployment Configurtion
     AutoPublishAlias: live
     DeploymentPreference:

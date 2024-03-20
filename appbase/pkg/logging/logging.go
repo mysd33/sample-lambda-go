@@ -5,8 +5,8 @@ package logging
 
 import (
 	"fmt"
+	"os"
 
-	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/env"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/message"
@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	LOG_LEVEL_NAME = "LOG_LEVEL"
+	LOG_LEVEL_NAME  = "LOG_LEVEL"
+	LOG_FORMAT_NAME = "LOG_FORMAT"
 )
 
 // Loggerは、ログ出力のインタフェースです
@@ -52,29 +53,43 @@ type Logger interface {
 }
 
 // NewLogger は、Loggerを作成します。
-func NewLogger(messageSource message.MessageSource, mycfg config.Config) (Logger, error) {
+func NewLogger(messageSource message.MessageSource) (Logger, error) {
 	var config zap.Config
-	// 本番相当の環境の場合
 	if env.IsStragingOrProd() {
+		// 本番相当の環境の場合
 		config = zap.NewProductionConfig()
-		// ログの時刻をISO8601形式で出力
+		// ログの時刻をISO8601形式での出力に変更
 		config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	} else {
+		// 開発環境の場合
 		config = zap.NewDevelopmentConfig()
 	}
+	// TODO: 出力先を標準出力（バッファリング）に設定するか検討
+	// config.OutputPaths = []string{"stdout"}
+	// config.ErrorOutputPaths = []string{"stdout"}
+
 	// 個別にログレベルが設定されている場合はログレベル上書き
-	if level, found := mycfg.GetWithContains(LOG_LEVEL_NAME); found {
+	if level, found := os.LookupEnv(LOG_LEVEL_NAME); found {
 		if al, err := zap.ParseAtomicLevel(level); err == nil {
 			config.Level = al
 		}
 	}
+	// 個別のログフォーマットが設定されている場合はログフォーマット上書き
+	if format, found := os.LookupEnv(LOG_FORMAT_NAME); found {
+		if format == "json" || format == "console" {
+			config.Encoding = format
+		}
+	}
+	// ZapのLoggerをラップしているため、ログの呼び出し階層を調整
 	z, err := config.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		return nil, err
 	}
+	// SugarLoggerを使って、ログ出力を行う
 	sugerredLogger := z.Sugar()
-	return &zapLogger{originalLog: sugerredLogger,
-		log:           sugerredLogger,
+	return &zapLogger{
+		originalLog:   sugerredLogger, // AddInfoで付加情報を追加した場合に元のロガーに戻すため保持
+		log:           sugerredLogger, // 実際にログ出力するためのロガー
 		messageSource: messageSource,
 	}, nil
 }
