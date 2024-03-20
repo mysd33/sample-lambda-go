@@ -10,6 +10,7 @@ import (
 	"example.com/appbase/pkg/awssdk"
 	myConfig "example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/logging"
+	"example.com/appbase/pkg/message"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
@@ -123,10 +124,12 @@ func (sa *defaultSQSAccessor) SendMessageSdk(queueName string, input *sqs.SendMe
 	} else {
 		sa.log.Debug("Message=%s", *input.MessageBody)
 	}
+	sa.log.Info(message.I_FW_0006, queueName)
 	//　SQSへメッセージ送信する
 	output, err := sa.sqsClient.SendMessage(apcontext.Context, input)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	sa.log.Info(message.I_FW_0007, queueName, *output.MessageId)
 	return output, nil
 }
