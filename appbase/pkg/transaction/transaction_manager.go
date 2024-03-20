@@ -229,7 +229,11 @@ func (t *defaultTransaction) Commit() (*dynamodb.TransactWriteItemsOutput, error
 
 // Rollback implements Transaction.
 func (t *defaultTransaction) Rollback() {
-	t.log.Debug("業務処理エラーでトランザクションロールバック")
+	if t.CheckTransactWriteItems() {
+		t.log.Debug("業務処理エラーでトランザクションロールバック")
+	} else {
+		t.log.Debug("業務処理エラーだがトランザクション処理なし")
+	}
 }
 
 // transactUpdateQueueMessageItem は、メッセージ管理テーブルのアイテムの重複メッセージIDを登録する更新トランザクションを追加します。
