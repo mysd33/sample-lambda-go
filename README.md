@@ -627,15 +627,12 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
                     "attributes": {
                         "ApproximateFirstReceiveTimestamp": "1545082649185",    
                         "SentTimestamp": "1545082649183",           
-                        # メッセージ重複排除IDを修正
                         "MessageDeduplicationId": "049a0b4e-a882-11ee-80df-0242ac110005",
                         "SenderId": "AIDAIENQZJOLO23YVJ4VO",
                         # メッセージの受信回数（リトライ回数）を変更したい場合に適宜修正    
                         "ApproximateReceiveCount": "1",   
-                        "AWSTraceHeader": "Parent=0000000000000000;Sampled=0",
-                        # メッセージグループIDを修正
-                        "MessageGroupId": "049a0ab8-a882-11ee-80df-0242ac110005",                                
-                        # シーケンス番号を修正
+                        "AWSTraceHeader": "Parent=0000000000000000;Sampled=0",                        
+                        "MessageGroupId": "049a0ab8-a882-11ee-80df-0242ac110005",                                                        
                         "SequenceNumber": "0"                                      
                     },                    
                     "messageAttributes": {
