@@ -876,7 +876,7 @@ godoc
 | プロパティ管理 | APから環境依存のパラメータを切り出し、プロファイル（環境区分）によって動作環境に応じたパラメータ値に置き換え可能とする。AWS AppConfigおよびAppConfig Agent Lambdaエクステンションを利用してAPの再デプロイせずとも設定変更を反映できる。また、変更が少ない静的な設定値やローカルでのAP実行用に、spf13/viperの機能を利用して、OS環境変数、yamlによる設定ファイルを読み込み反映する。なお、AppConfigに同等のプロパティがある場合には優先的に反映する。 | ○ | com.example/appbase/pkg/env<br/>com.example/appbase/pkg/config |
 | メッセージ管理 | go標準のembededでログ等に出力するメッセージを設定ファイルで一元管理する。 | ○ | com.example/appbase/pkg/message |
 | ID生成 | google/uuidを使用したUUID等を生成する。 | ○ | com.example/appbase/pkg/id |
-| システム時刻首都行く | go標準のtimeパッケージを使用してシステムの現在時刻を取得する。テスト用にプロパティから取得した固定の時刻を返却するように設定切り替え可能とする。 | ○ | com.example/appbase/pkg/date |
+| システム日時取得 | go標準のtimeパッケージを使用してシステムの現在日時を取得する。テスト用にプロパティから取得した固定の日時を返却するように設定切り替え可能とする。 | ○ | com.example/appbase/pkg/date |
 
 * 以下は、今後追加を検討中。
 
