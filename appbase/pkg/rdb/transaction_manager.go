@@ -73,14 +73,15 @@ func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.Servi
 
 // rdbConnectは、RDBに接続します。
 func (tm *defaultTransactionManager) rdbConnect() (*sql.DB, error) {
+	// DBの認証情報は、SecretsManagerに管理されたものから取得されるが
+	// AppConfigを用いており、AppConfigAgentによりキャッシュされたものを取得するので
+	// APIのスロットリングの問題を防止できている
 	// RDBに作成したユーザ名
 	rdbUser, found := tm.config.GetWithContains(RDB_USER_NAME)
 	if !found {
 		return nil, errors.New("RDB_USER_NAMEが設定されていません")
 	}
 	tm.log.Debug("RDB_USER_NAME: %s", rdbUser)
-	// TODO: IAM認証でトークン取得による方法
-	//（スロットリングによる性能問題の恐れもあるので一旦様子見）
 	// RDBユーザのパスワード
 	rdbPassword, found := tm.config.GetWithContains(RDB_PASSWORD_NAME)
 	if !found {
