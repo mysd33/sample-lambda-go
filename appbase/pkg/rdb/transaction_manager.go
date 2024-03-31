@@ -73,9 +73,15 @@ func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.Servi
 
 // rdbConnectは、RDBに接続します。
 func (tm *defaultTransactionManager) rdbConnect() (*sql.DB, error) {
+	// TODO: IAM認証でのDB接続の実装
+	// https://qiita.com/k-sasaki-hisys-biz/items/12f680f9a97998322cc0#5-lambda%E3%81%AE%E4%BD%9C%E6%88%90
+	// https://docs.aws.amazon.com/ja_jp/AmazonRDS/latest/UserGuide/UsingWithRDS.IAMDBAuth.Connecting.Go.html#UsingWithRDS.IAMDBAuth.Connecting.GoV2
+
+	// AppConfig/SecretsManagerを利用してDB接続情報を取得する実装例
 	// DBの認証情報は、SecretsManagerに管理されたものから取得されるが
 	// AppConfigを用いており、AppConfigAgentによりキャッシュされたものを取得するので
 	// APIのスロットリングの問題を防止できている
+
 	// RDBに作成したユーザ名
 	rdbUser, found := tm.config.GetWithContains(RDB_USER_NAME)
 	if !found {
@@ -118,6 +124,7 @@ func (tm *defaultTransactionManager) rdbConnect() (*sql.DB, error) {
 		rdbSslMode)
 	db, err := xray.SQLContext("postgres", connectStr)
 
+	// X-Rayを使わない場合のDB接続取得の実装例
 	/*
 		connectStr := fmt.Sprintf(
 			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
