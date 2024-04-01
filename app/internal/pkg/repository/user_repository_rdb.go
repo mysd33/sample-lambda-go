@@ -29,9 +29,16 @@ type UserRepositoryImplByRDB struct {
 }
 
 func (ur *UserRepositoryImplByRDB) FindOne(userId string) (*entity.User, error) {
+
+	// RDS Proxy経由で接続する場合、１つのトランザクション内での呼び出しは、同じコネクションを使用する
+	// auto commit無効の場合は、トランザクションが終了（commit/rollback）するまで、接続の再利用は行われない
+	// このため、後述のプリペアドステートメントによるピン留めを過度に気にする必要はないかもしれない。
+	// https://pages.awscloud.com/rs/112-TZM-766/images/EV_amazon-rds-aws-lambda-update_Jul28-2020_RDS_Proxy.pdf
+	// pp.12-13
 	tx := ur.accessor.GetTransaction()
 	ctx := apcontext.Context
 	var user entity.User
+	
 	//プリペアードステートメントによる例
 	//X-RayのSQLトレースにも対応
 	//row := tx.QueryRowContext(ctx, "SELECT user_id, user_name FROM m_user WHERE user_id = $1", userId)
