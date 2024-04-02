@@ -42,19 +42,24 @@
     * SQS、S3等の呼び出しの可視化の例
         ![X-Rayの可視化の例4](image/xray-sqs-delayed.png)
 
-* RDS Proxyの利用時の注意（ピン留め）
-    * SQLを記載するにあたり、従来はプリペアドステートメントを使用するのが一般的であるが、RDS Proxyを使用する場合には、[ピン留め(Pinning)](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-managing.html#rds-proxy-pinning)という現象が発生してしまう。その間、コネクションが切断されるまで占有されつづけてしまい再利用できず、大量のリクエストを同時に処理する場合にはコネクション枯渇し性能面に影響が出る恐れがある。
-        * ピン留めが発生してるかについては、CloudWatch Logsでロググループ「/aws/
-        rds/proxy/demo-rds-proxy」を確認して、以下のような文言が出ていないか確認するとよい。
+* RDS Proxyの利用時の注意
+    * ピン留め
+        * SQLを記載するにあたり、従来はプリペアドステートメントを使用するのが一般的であるが、RDS Proxyを使用する場合には、[ピン留め(Pinning)](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-managing.html#rds-proxy-pinning)という現象が発生してしまう。その間、コネクションが切断されるまで占有されつづけてしまい再利用できず、大量のリクエストを同時に処理する場合にはコネクション枯渇し性能面に影響が出る恐れがある。
+            * ピン留めが発生してるかについては、CloudWatch Logsでロググループ「/aws/
+            rds/proxy/demo-rds-proxy」を確認して、以下のような文言が出ていないか確認するとよい。
 
-        ```
-        The client session was pinned to the database connection [dbConnection=…] for the remainder of the session. The proxy can't reuse this connection until the session ends. Reason: A parse message was detected.
-        ```
+            ```
+            The client session was pinned to the database connection [dbConnection=…] for the remainder of the session. The proxy can't reuse this connection until the session ends. Reason: A parse message was detected.
+            ```
 
-    * 本サンプルAPのRDBアクセス処理では、プリペアドステートメントを使用しないよう実装することで、ピン留めが発生しないようにしている。注意点として、SQLインジェクションが起きないようにエスケープ処理を忘れずに実装している。
+        * 本サンプルAPのRDBアクセス処理では、プリペアドステートメントを使用しないよう実装することで、ピン留めが発生しないようにしている。この際、注意点として、SQLインジェクションが起きないようにエスケープ処理を忘れずに実装している。
 
-    * なお、本サンプルAPのようにX-Ray SDKでSQLトレースする場合、[xray.SQLContext関数を利用する](https://docs.aws.amazon.com/ja_jp/xray/latest/devguide/xray-sdk-go-sqlclients.html)際に確立するDBコネクションでピン留めが発生する。
-        * xray.SQLContext関数を利用する際に、内部で発行されるSQL（"SELECT version(), current_user, current_database()"）がプリペアドステートメントを使用しているためピン留めが発生する。ピン留めの発生は回避できないとのこと。ただ、CloudWatchのRDS Proxyのログを見ても分かるが、直ちにコネクション切断されるため、ピン留めによる影響は小さいと想定される。（AWSサポート回答より）
+        * なお、本サンプルAPのようにX-Ray SDKでSQLトレースする場合、[xray.SQLContext関数を利用する](https://docs.aws.amazon.com/ja_jp/xray/latest/devguide/xray-sdk-go-sqlclients.html)際に確立するDBコネクションでピン留めが発生する。
+            * xray.SQLContext関数を利用する際に、内部で発行されるSQL（"SELECT version(), current_user, current_database()"）がプリペアドステートメントを使用しているためピン留めが発生する。ピン留めの発生は回避できないとのこと。ただ、CloudWatchのRDS Proxyのログを見ても分かるが、直ちにコネクション切断されるため、ピン留めによる影響は小さいと想定される。（AWSサポート回答より）
+    * RDBトランザクションの利用
+        * RDS Proxy経由で接続する場合、１つのトランザクション内での呼び出しは、同じコネクションを使用する。auto commit無効の場合は、トランザクションが終了（commit/rollback）するまで、接続の再利用は行われない。このため、前述のプリペアドステートメントによるピン留めを過度に気にする必要はないとも思える。いずれにしても、ピン留めを理解した上で、トランザクションとRDBコネクションの管理を統制することが大事である。
+            * https://pages.awscloud.com/rs/112-TZM-766/images/EV_amazon-rds-aws-lambda-update_Jul28-2020_RDS_Proxy.pdf
+	            * pp.12-13
 
 ## 事前準備
 * ローカル環境に、AWS CLI、AWS SAM CLI、Docker環境が必要
