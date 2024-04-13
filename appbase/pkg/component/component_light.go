@@ -66,15 +66,13 @@ type lightWeightApplicationContext struct {
 	simpleLambdaHandler *handler.SimpleLambdaHandler
 }
 
-// GetAPILambdaHandler implements ApplicationContext.
+// 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
 func (l *lightWeightApplicationContext) GetAPILambdaHandler() *handler.APILambdaHandler {
-	// 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装
 	panic("unimplemented")
 }
 
-// GetAsyncLambdaHandler implements ApplicationContext.
+// 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
 func (l *lightWeightApplicationContext) GetAsyncLambdaHandler() *handler.AsyncLambdaHandler {
-	// 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装
 	panic("unimplemented")
 }
 
@@ -88,27 +86,27 @@ func (l *lightWeightApplicationContext) GetDateManager() date.DateManager {
 	return l.dateManager
 }
 
-// GetDynamoDBAccessor implements ApplicationContext.
+// 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
 func (l *lightWeightApplicationContext) GetDynamoDBAccessor() transaction.TransactionalDynamoDBAccessor {
 	panic("unimplemented")
 }
 
-// GetDynamoDBTemplate implements ApplicationContext.
+// 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
 func (l *lightWeightApplicationContext) GetDynamoDBTemplate() transaction.TransactionalDynamoDBTemplate {
 	panic("unimplemented")
 }
 
-// GetDynamoDBTransactionManager implements ApplicationContext.
+// 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
 func (l *lightWeightApplicationContext) GetDynamoDBTransactionManager() transaction.TransactionManager {
 	panic("unimplemented")
 }
 
-// GetDynamoDBTransactionManagerForDBOnly implements ApplicationContext.
+// 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
 func (l *lightWeightApplicationContext) GetDynamoDBTransactionManagerForDBOnly() transaction.TransactionManager {
 	panic("unimplemented")
 }
 
-// GetHttpClient implements ApplicationContext.
+// 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
 func (l *lightWeightApplicationContext) GetHttpClient() httpclient.HttpClient {
 	return l.httpClient
 }
@@ -133,27 +131,27 @@ func (l *lightWeightApplicationContext) GetMessageSource() message.MessageSource
 	return l.messageSource
 }
 
-// GetObjectStorageAccessor implements ApplicationContext.
+// 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
 func (l *lightWeightApplicationContext) GetObjectStorageAccessor() objectstorage.ObjectStorageAccessor {
 	panic("unimplemented")
 }
 
-// GetRDBAccessor implements ApplicationContext.
+// 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
 func (l *lightWeightApplicationContext) GetRDBAccessor() rdb.RDBAccessor {
 	panic("unimplemented")
 }
 
-// GetRDBTransactionManager implements ApplicationContext.
+// 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
 func (l *lightWeightApplicationContext) GetRDBTransactionManager() rdb.TransactionManager {
 	panic("unimplemented")
 }
 
-// GetSQSAccessor implements ApplicationContext.
+// 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
 func (l *lightWeightApplicationContext) GetSQSAccessor() transaction.TransactionalSQSAccessor {
 	panic("unimplemented")
 }
 
-// GetSQSTemplate implements ApplicationContext.
+// 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
 func (l *lightWeightApplicationContext) GetSQSTemplate() async.SQSTemplate {
 	panic("unimplemented")
 }
@@ -163,7 +161,7 @@ func (l *lightWeightApplicationContext) GetSimpleLambdaHandler() *handler.Simple
 	return l.simpleLambdaHandler
 }
 
-// GetValidationManager implements ApplicationContext.
+// 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
 func (l *lightWeightApplicationContext) GetValidationManager() validator.ValidationManager {
 	panic("unimplemented")
 }
