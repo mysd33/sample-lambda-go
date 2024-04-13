@@ -1,5 +1,5 @@
 /*
-component パッケージはフレームワークのコンポーネントのインスタンスを管理するパッケージです。
+component パッケージはフレームワークのコンポーネントのインスタンスをDIし管理するパッケージです。
 */
 package component
 
@@ -21,25 +21,46 @@ import (
 
 // ApplicationContext は、フレームワークのコンポーネントを管理するインタフェースです。
 type ApplicationContext interface {
+	// GetIDGenerator は、ID生成機能のインタフェースIDGeneratorを取得します。
 	GetIDGenerator() id.IDGenerator
+	// GetMessageSource は、メッセージ管理機能のインタフェースMessageSourceを取得します。
 	GetMessageSource() message.MessageSource
+	// GetLogger は、ロギング機能のインタフェースLoggerを取得します。
 	GetLogger() logging.Logger
+	// GetConfig は、プロパティ管理機能のインタフェースConfigを取得します。
 	GetConfig() config.Config
+	// GetDynamoDBAccessor は、DynamoDBアクセス機能のインタフェースTransactionalDynamoDBAccessorを取得します。
 	GetDynamoDBAccessor() transaction.TransactionalDynamoDBAccessor
+	// GetDynamoDBTransactionManager は、DynamoDBトランザクション管理機能のインタフェースTransactionManagerを取得します。
 	GetDynamoDBTransactionManager() transaction.TransactionManager
+	// GetDynamoDBTransactionManagerForDBOnly は、DynamoDBトランザクション管理機能のインタフェースTransactionManagerを取得します。
+	// DynamoDBのみのトランザクションのみを行う場合に利用します。
 	GetDynamoDBTransactionManagerForDBOnly() transaction.TransactionManager
+	// GetDynamoDBTemplate は、トランザクション対応のDynamoDBアクセス機能の汎用インタフェースTransactionalDynamoDBTemplateを取得します。
 	GetDynamoDBTemplate() transaction.TransactionalDynamoDBTemplate
+	// GetSQSAccessor は、トランザクション対応の非同期実行依頼機能のインタフェースTransactionalSQSAccessorを取得します。
 	GetSQSAccessor() transaction.TransactionalSQSAccessor
+	// GetSQSTemplate は、非同期実行依頼機能の汎用インタフェースSQSTemplateを取得します。
 	GetSQSTemplate() async.SQSTemplate
+	// GetObjectStorageAccessor は、オブジェクトストレージアクセス機能のインタフェースObjectStorageAccessorを取得します。
 	GetObjectStorageAccessor() objectstorage.ObjectStorageAccessor
+	// GetRDBAccessor は、RDBアクセス機能のインタフェースRDBAccessorを取得します。
 	GetRDBAccessor() rdb.RDBAccessor
+	// GetRDBTransactionManager は、RDBトランザクション管理機能のインタフェースTransactionManagerを取得します。
 	GetRDBTransactionManager() rdb.TransactionManager
+	// GetHttpClient は、HTTPクライアント機能のインタフェースHttpClientを取得します。
 	GetHttpClient() httpclient.HttpClient
+	// GetInterceptor は、集約例外ハンドリング機能のインターセプタのインタフェースHandlerInterceptorを取得します。
 	GetInterceptor() handler.HandlerInterceptor
+	// GetAPILambdaHandler は、APIトリガのオンラインAP実行制御機能のインタフェースAPILambdaHandlerを取得します。
 	GetAPILambdaHandler() *handler.APILambdaHandler
+	// GetAsyncLambdaHandler は、SQSトリガの非同期AP実行制御機能のインタフェースAsyncLambdaHandlerを取得します。
 	GetAsyncLambdaHandler() *handler.AsyncLambdaHandler
+	// GetSimpleLambdaHandler は、その他トリガのAP実行制御機能のインタフェースSimpleLambdaHandlerを取得します。
 	GetSimpleLambdaHandler() *handler.SimpleLambdaHandler
+	// GetValidationManager は、入力チェック機能のインタフェースValidationManagerを取得します。
 	GetValidationManager() validator.ValidationManager
+	// GetDateManager は、日付管理機能のインタフェースDateManagerを取得します。
 	GetDateManager() date.DateManager
 }
 
