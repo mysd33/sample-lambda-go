@@ -18,150 +18,142 @@ import (
 	"example.com/appbase/pkg/validator"
 )
 
-// NewLightWeightApplicationContext は軽量なApplicationContextを作成します。
-// 重量級のAP基盤機能のインスタンス化を行わず、軽量なAP基盤機能のみを提供します。
+// NewStatisticsApplicationContext は、ログ分割・振分等の統計分析のログ形式変換向けの軽量なApplicationContextを作成します。
+// 重量級のAP基盤機能のインスタンス化を行わず、必要最低限の軽量なAP基盤機能のみを提供します。
 // Lambdaコールドスタート時の初期化処理時間を極力短くすることで、コスト削減、バーストリミットのリスクを減らし
-// ライトウエイトなApplicationContextに差し替えたい場合に利用します。
+// ライトウエイトなApplicationContextに差し替えるために利用します。
 // 提供するインタフェースは、以下のみです。
-// - GetIDGenerator
 // - GetConfig
 // - GetMessageSource
 // - GetLogger
 // - GetDateManager
-// - GetHttpClient
 // - GetInterceptor
 // - GetSimpleLambdaHandler
-func NewLightWeightApplicationContext() ApplicationContext {
+func NewStatisticsApplicationContext() ApplicationContext {
 	// 各種AP基盤の構造体を作成
-	id := createIDGenerator()
 	messageSource := createMessageSource()
 	logger := createLogger(messageSource)
 	config := createConfig(logger)
 	dateManager := createDateManager(config, logger)
-	httpclient := createHttpClient(config, logger)
 	interceptor := createHanderInterceptor(config, logger)
 	simpleLambdaHandler := createSimpleLambdaHandler(config, logger)
 
-	return &lightWeightApplicationContext{
-		id:                  id,
+	return &statisticsApplicationContext{
 		config:              config,
 		messageSource:       messageSource,
 		logger:              logger,
 		dateManager:         dateManager,
-		httpClient:          httpclient,
 		interceptor:         interceptor,
 		simpleLambdaHandler: simpleLambdaHandler,
 	}
 }
 
-// lightWeightApplicationContext は軽量なApplicationContext実装です。
-type lightWeightApplicationContext struct {
-	id                  id.IDGenerator
+// statisticsApplicationContext は統計分析処理方式向けの軽量なApplicationContext実装です。
+type statisticsApplicationContext struct {
 	config              config.Config
 	messageSource       message.MessageSource
 	logger              logging.Logger
 	dateManager         date.DateManager
-	httpClient          httpclient.HttpClient
 	interceptor         handler.HandlerInterceptor
 	simpleLambdaHandler *handler.SimpleLambdaHandler
 }
 
 // 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
-func (l *lightWeightApplicationContext) GetAPILambdaHandler() *handler.APILambdaHandler {
+func (l *statisticsApplicationContext) GetAPILambdaHandler() *handler.APILambdaHandler {
 	panic("unimplemented")
 }
 
 // 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
-func (l *lightWeightApplicationContext) GetAsyncLambdaHandler() *handler.AsyncLambdaHandler {
+func (l *statisticsApplicationContext) GetAsyncLambdaHandler() *handler.AsyncLambdaHandler {
 	panic("unimplemented")
 }
 
 // GetConfig implements ApplicationContext.
-func (l *lightWeightApplicationContext) GetConfig() config.Config {
+func (l *statisticsApplicationContext) GetConfig() config.Config {
 	return l.config
 }
 
 // GetDateManager implements ApplicationContext.
-func (l *lightWeightApplicationContext) GetDateManager() date.DateManager {
+func (l *statisticsApplicationContext) GetDateManager() date.DateManager {
 	return l.dateManager
 }
 
 // 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
-func (l *lightWeightApplicationContext) GetDynamoDBAccessor() transaction.TransactionalDynamoDBAccessor {
+func (l *statisticsApplicationContext) GetDynamoDBAccessor() transaction.TransactionalDynamoDBAccessor {
 	panic("unimplemented")
 }
 
 // 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
-func (l *lightWeightApplicationContext) GetDynamoDBTemplate() transaction.TransactionalDynamoDBTemplate {
+func (l *statisticsApplicationContext) GetDynamoDBTemplate() transaction.TransactionalDynamoDBTemplate {
 	panic("unimplemented")
 }
 
 // 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
-func (l *lightWeightApplicationContext) GetDynamoDBTransactionManager() transaction.TransactionManager {
+func (l *statisticsApplicationContext) GetDynamoDBTransactionManager() transaction.TransactionManager {
 	panic("unimplemented")
 }
 
 // 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
-func (l *lightWeightApplicationContext) GetDynamoDBTransactionManagerForDBOnly() transaction.TransactionManager {
+func (l *statisticsApplicationContext) GetDynamoDBTransactionManagerForDBOnly() transaction.TransactionManager {
 	panic("unimplemented")
 }
 
 // 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
-func (l *lightWeightApplicationContext) GetHttpClient() httpclient.HttpClient {
-	return l.httpClient
+func (l *statisticsApplicationContext) GetHttpClient() httpclient.HttpClient {
+	panic("unimplemented")
 }
 
-// GetIDGenerator implements ApplicationContext.
-func (l *lightWeightApplicationContext) GetIDGenerator() id.IDGenerator {
-	return l.id
+// 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
+func (l *statisticsApplicationContext) GetIDGenerator() id.IDGenerator {
+	panic("unimplemented")
 }
 
 // GetInterceptor implements ApplicationContext.
-func (l *lightWeightApplicationContext) GetInterceptor() handler.HandlerInterceptor {
+func (l *statisticsApplicationContext) GetInterceptor() handler.HandlerInterceptor {
 	return l.interceptor
 }
 
 // GetLogger implements ApplicationContext.
-func (l *lightWeightApplicationContext) GetLogger() logging.Logger {
+func (l *statisticsApplicationContext) GetLogger() logging.Logger {
 	return l.logger
 }
 
 // GetMessageSource implements ApplicationContext.
-func (l *lightWeightApplicationContext) GetMessageSource() message.MessageSource {
+func (l *statisticsApplicationContext) GetMessageSource() message.MessageSource {
 	return l.messageSource
 }
 
 // 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
-func (l *lightWeightApplicationContext) GetObjectStorageAccessor() objectstorage.ObjectStorageAccessor {
+func (l *statisticsApplicationContext) GetObjectStorageAccessor() objectstorage.ObjectStorageAccessor {
 	panic("unimplemented")
 }
 
 // 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
-func (l *lightWeightApplicationContext) GetRDBAccessor() rdb.RDBAccessor {
+func (l *statisticsApplicationContext) GetRDBAccessor() rdb.RDBAccessor {
 	panic("unimplemented")
 }
 
 // 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
-func (l *lightWeightApplicationContext) GetRDBTransactionManager() rdb.TransactionManager {
+func (l *statisticsApplicationContext) GetRDBTransactionManager() rdb.TransactionManager {
 	panic("unimplemented")
 }
 
 // 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
-func (l *lightWeightApplicationContext) GetSQSAccessor() transaction.TransactionalSQSAccessor {
+func (l *statisticsApplicationContext) GetSQSAccessor() transaction.TransactionalSQSAccessor {
 	panic("unimplemented")
 }
 
 // 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
-func (l *lightWeightApplicationContext) GetSQSTemplate() async.SQSTemplate {
+func (l *statisticsApplicationContext) GetSQSTemplate() async.SQSTemplate {
 	panic("unimplemented")
 }
 
 // GetSimpleLambdaHandler implements ApplicationContext.
-func (l *lightWeightApplicationContext) GetSimpleLambdaHandler() *handler.SimpleLambdaHandler {
+func (l *statisticsApplicationContext) GetSimpleLambdaHandler() *handler.SimpleLambdaHandler {
 	return l.simpleLambdaHandler
 }
 
 // 本ApplicatonContextを利用するLambdaでは不要な機能とし未実装のため、panicします。
-func (l *lightWeightApplicationContext) GetValidationManager() validator.ValidationManager {
+func (l *statisticsApplicationContext) GetValidationManager() validator.ValidationManager {
 	panic("unimplemented")
 }
