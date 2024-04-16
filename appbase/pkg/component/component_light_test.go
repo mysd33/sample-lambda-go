@@ -12,6 +12,7 @@ import (
 	"example.com/appbase/pkg/env"
 )
 
+// NewApplicationContext()のベンチマークテスト
 func BenchmarkNewApplicationContext(b *testing.B) {
 	env.SetTestEnvForBechMark(b)
 	b.ResetTimer()
@@ -20,6 +21,7 @@ func BenchmarkNewApplicationContext(b *testing.B) {
 	}
 }
 
+// NewStatisticsApplicationContext()のベンチマークテスト
 func BenchmarkNewStatisticsApplicationContext(b *testing.B) {
 	env.SetTestEnvForBechMark(b)
 	b.ResetTimer()
@@ -28,6 +30,7 @@ func BenchmarkNewStatisticsApplicationContext(b *testing.B) {
 	}
 }
 
+// NewAuthorizerApplicationContext()のベンチマークテスト
 func BenchmarkNewAuthorizerApplicationContext(b *testing.B) {
 	env.SetTestEnvForBechMark(b)
 	b.ResetTimer()
