@@ -74,3 +74,8 @@ func IsProd() bool {
 func SetTestEnv(t *testing.T) {
 	t.Setenv(ENV_NAME, ENV_LOCAL_TEST)
 }
+
+// SetTestEnvForBechMarkは、ベンチマークテスト実行時の動作環境名をを設定します。
+func SetTestEnvForBechMark(t *testing.B) {
+	t.Setenv(ENV_NAME, ENV_LOCAL_TEST)
+}
