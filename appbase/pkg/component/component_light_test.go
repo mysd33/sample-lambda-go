@@ -42,7 +42,6 @@ func BenchmarkNewAuthorizerApplicationContext(b *testing.B) {
 // ライトウェイトなApplicationContextを作成する処理時間の測定テスト
 func TestNewApplicationContextSpeed(t *testing.T) {
 	env.SetTestEnv(t)
-
 	start := time.Now()
 	NewApplicationContext()
 	fmt.Println("NewApplicationContext()処理時間:", time.Since(start))
@@ -54,10 +53,7 @@ func TestNewApplicationContextSpeed(t *testing.T) {
 	fmt.Println("NewAuthorizerApplicationContext()処理時間:", time.Since(start))
 
 	// NewApplicationContext()処理時間: 180.423ms
-	// →ひょっとしたら、RDB関連の初期化処理（初回、_ "github.com/lib/pq"で動作する処理）が重いかもしれないので
-	//  ベンチマークで何回も呼んでると、平均が短くなるのかもしれない
-	//
-	// ほとんどの不要な機能のインタンス化を減らすと、処理時間がかなり変わり効果あり
+	// → ログが出力される際に、Zapの初回ログ出力の際に遅くなっているものと思われる
 	// NewStatisticsApplicationContext()処理時間: 548.6µs
 	// NewAuthorizerApplicationContext()処理時間: 1.9484ms
 }
