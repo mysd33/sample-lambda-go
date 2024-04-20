@@ -35,14 +35,6 @@ type defaultApiResponseFormatter struct {
 	messageSource message.MessageSource
 }
 
-func convertErrors(errs []*gin.Error) []error {
-	var converted []error
-	for _, err := range errs {
-		converted = append(converted, err.Err)
-	}
-	return converted
-}
-
 // ReturnResponseBody implements ApiResponseFormatter.
 func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context, errorResponse ErrorResponse) {
 	var (
@@ -54,13 +46,7 @@ func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context, error
 
 	if len(errs) > 0 {
 		// エラーの場合
-		var err error
-		if len(errs) == 1 {
-			err = errs[0]
-		} else {
-			// 複数エラーがある場合は、エラーを結合
-			err = errors.Join(convertErrors(errs)...)
-		}
+		err := convertSingleError(errs)
 
 		// 各エラー内容に応じたレスポンスを作成
 		if errors.As(err, &validationError) {
@@ -90,4 +76,17 @@ func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context, error
 		// 予期せぬエラー扱いのレスポンスを返却
 		ctx.JSON(errorResponse.UnExpectedErrorResponse(err))
 	}
+}
+
+// convertSingleError は、エラーが複数あった場合にも1つのエラーに変換します。
+func convertSingleError(errs []*gin.Error) error {
+	if len(errs) == 1 {
+		return errs[0]
+	}
+	// 複数エラーがある場合は、エラーを結合
+	var converted []error
+	for _, err := range errs {
+		converted = append(converted, err.Err)
+	}
+	return errors.Join(converted...)
 }
