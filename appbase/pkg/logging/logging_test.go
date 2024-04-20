@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/message"
 	cerrors "github.com/cockroachdb/errors"
@@ -17,10 +16,9 @@ var logging_test_yaml []byte
 // テスト対象の構造体
 func sut() *zapLogger {
 	messageSource, _ := message.NewMessageSource()
-	config := config.NewTestConfig(map[string]string{})
 	// テスト用のメッセージ定義を読み込み
 	messageSource.Add(logging_test_yaml)
-	logger, _ := NewLogger(messageSource, config)
+	logger, _ := NewLogger(messageSource)
 	return logger.(*zapLogger)
 }
 

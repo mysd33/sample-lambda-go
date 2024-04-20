@@ -4,11 +4,11 @@ import (
 	"context"
 	"reflect"
 	"runtime"
+	"time"
 
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/env"
-	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
 	"github.com/aws/aws-lambda-go/events"
@@ -50,6 +50,11 @@ func (i *defaultHandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.Ha
 		fv := reflect.ValueOf(controllerFunc)
 		funcName := runtime.FuncForPC(fv.Pointer()).Name()
 		i.log.Info(message.I_FW_0001, funcName)
+		startTime := time.Now()
+		defer func() {
+			i.log.Info(message.I_FW_0002, funcName, time.Since(startTime))
+		}()
+
 		// Configの最新読み込み
 		if err := i.config.Reload(); err != nil {
 			// エラーをContextに格納
@@ -60,7 +65,7 @@ func (i *defaultHandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.Ha
 		result, err := controllerFunc(ctx)
 		if err != nil {
 			// 集約エラーハンドリングによるログ出力
-			i.logError(err)
+			logging.LogError(i.log, err)
 			// エラーをContextに格納
 			ctx.Error(err)
 			return
@@ -68,7 +73,6 @@ func (i *defaultHandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.Ha
 
 		// 処理結果をContextに格納
 		ctx.Set(constant.CONTROLLER_RESULT, result)
-		i.log.Info(message.I_FW_0002, funcName)
 	}
 }
 
@@ -78,6 +82,10 @@ func (i *defaultHandlerInterceptor) HandleAsync(asyncControllerFunc AsyncControl
 		fv := reflect.ValueOf(asyncControllerFunc)
 		funcName := runtime.FuncForPC(fv.Pointer()).Name()
 		i.log.Info(message.I_FW_0001, funcName)
+		startTime := time.Now()
+		defer func() {
+			i.log.Info(message.I_FW_0002, funcName, time.Since(startTime))
+		}()
 
 		// Configの最新読み込み
 		if err := i.config.Reload(); err != nil {
@@ -87,10 +95,9 @@ func (i *defaultHandlerInterceptor) HandleAsync(asyncControllerFunc AsyncControl
 		err := asyncControllerFunc(sqsMessage)
 		// 集約エラーハンドリングによるログ出力
 		if err != nil {
-			i.logError(err)
+			logging.LogError(i.log, err)
 			return err
 		}
-		i.log.Info(message.I_FW_0002, funcName)
 		return nil
 	}
 }
@@ -101,6 +108,10 @@ func (i *defaultHandlerInterceptor) HandleSimple(simpleControllerFunc SimpleCont
 		fv := reflect.ValueOf(simpleControllerFunc)
 		funcName := runtime.FuncForPC(fv.Pointer()).Name()
 		i.log.Info(message.I_FW_0001, funcName)
+		startTime := time.Now()
+		defer func() {
+			i.log.Info(message.I_FW_0002, funcName, time.Since(startTime))
+		}()
 
 		// Configの最新読み込み
 		if err := i.config.Reload(); err != nil {
@@ -110,28 +121,9 @@ func (i *defaultHandlerInterceptor) HandleSimple(simpleControllerFunc SimpleCont
 		result, err := simpleControllerFunc(ctx, event)
 		// 集約エラーハンドリングによるログ出力
 		if err != nil {
-			i.logError(err)
+			logging.LogError(i.log, err)
 			return nil, err
 		}
-		i.log.Info(message.I_FW_0002, funcName)
 		return result, nil
-	}
-}
-
-// logError は、エラー情報をログ出力します
-func (i *defaultHandlerInterceptor) logError(err error) {
-	var (
-		validationError *errors.ValidationError
-		businessErrors  *errors.BusinessErrors
-		systemError     *errors.SystemError
-	)
-	if errors.As(err, &validationError) {
-		i.log.WarnWithCodableError(validationError)
-	} else if errors.As(err, &businessErrors) {
-		i.log.WarnWithMultiCodableError(businessErrors)
-	} else if errors.As(err, &systemError) {
-		i.log.ErrorWithCodableError(systemError)
-	} else {
-		i.log.ErrorWithUnexpectedError(err)
 	}
 }
