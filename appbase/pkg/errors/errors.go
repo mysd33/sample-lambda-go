@@ -4,14 +4,13 @@ erros パッケージは、エラー情報を扱うパッケージです。
 package errors
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"unsafe"
 
 	"example.com/appbase/pkg/env"
 	myvalidator "example.com/appbase/pkg/validator"
-	cerrors "github.com/cockroachdb/errors"
+	"github.com/cockroachdb/errors"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -41,7 +40,7 @@ type ValidationError struct {
 // ValidationError構造体を作成します。
 func NewValidationError(errorCode string, args ...any) *ValidationError {
 	// スタックトレース出力のため、cockloachdb/errorのダミーのcauseエラー作成
-	cause := cerrors.NewWithDepthf(1, "code:%s, args:%v", errorCode, args)
+	cause := errors.NewWithDepthf(1, "code:%s, args:%v", errorCode, args)
 	return &ValidationError{cause: cause, errorCode: errorCode, args: args}
 }
 
@@ -50,9 +49,9 @@ func NewValidationError(errorCode string, args ...any) *ValidationError {
 func NewValidationErrorWithCause(cause error, errorCode string, args ...any) *ValidationError {
 	if cause == nil {
 		// nilの場合、ダミーのエラーを作成
-		cause = cerrors.NewWithDepthf(1, "code:%s, args:%v", errorCode, args)
+		cause = errors.NewWithDepthf(1, "code:%s, args:%v", errorCode, args)
 	} else {
-		cause = cerrors.WithStackDepth(cause, 1)
+		cause = errors.WithStackDepth(cause, 1)
 	}
 
 	// 誤ったエラーのラップを確認
@@ -97,7 +96,7 @@ func (e *ValidationError) ErrorCode() string {
 
 // Format は、%+vを正しく動作させるため、fmt.Formatterのインタフェースを実装します。
 // https://github.com/cockroachdb/errors#Making-v-work-with-your-type
-func (e *ValidationError) Format(s fmt.State, verb rune) { cerrors.FormatError(e, s, verb) }
+func (e *ValidationError) Format(s fmt.State, verb rune) { errors.FormatError(e, s, verb) }
 
 // BusinessErrors 業務エラーを複数保持する構造体です。
 type BusinessErrors struct {
@@ -163,7 +162,7 @@ func (e *BusinessErrors) Unwrap() []error {
 
 // Format は、%+vを正しく動作させるため、fmt.Formatterのインタフェースを実装します。
 // https://github.com/cockroachdb/errors#Making-v-work-with-your-type
-func (e *BusinessErrors) Format(s fmt.State, verb rune) { cerrors.FormatError(e, s, verb) }
+func (e *BusinessErrors) Format(s fmt.State, verb rune) { errors.FormatError(e, s, verb) }
 
 // BusinessError 業務エラーの構造体です。
 type BusinessError struct {
@@ -177,7 +176,7 @@ type BusinessError struct {
 // BusinessError構造体を作成します。
 func NewBusinessError(errorCode string, args ...any) *BusinessError {
 	// ダミーのエラーを作成
-	cause := cerrors.NewWithDepthf(1, "code:%s, args:%v", errorCode, args)
+	cause := errors.NewWithDepthf(1, "code:%s, args:%v", errorCode, args)
 	// スタックトレース出力のため、cockloachdb/errorのスタックトレース付きのcauseエラー作成
 	return &BusinessError{cause: cause, errorCode: errorCode, args: args}
 }
@@ -188,9 +187,9 @@ func NewBusinessError(errorCode string, args ...any) *BusinessError {
 func NewBusinessErrorWithCause(cause error, errorCode string, args ...any) *BusinessError {
 	if cause == nil {
 		// nilの場合、ダミーのエラーを作成
-		cause = cerrors.NewWithDepthf(1, "code:%s, args:%v", errorCode, args)
+		cause = errors.NewWithDepthf(1, "code:%s, args:%v", errorCode, args)
 	} else {
-		cause = cerrors.WithStackDepth(cause, 1)
+		cause = errors.WithStackDepth(cause, 1)
 	}
 	// 誤ったエラーのラップを確認
 	requiredNotCodableError(cause)
@@ -205,7 +204,7 @@ func (e *BusinessError) Error() string {
 
 // Format は、%+vを正しく動作させるため、fmt.Formatterのインタフェースを実装します。
 // https://github.com/cockroachdb/errors#Making-v-work-with-your-type
-func (e *BusinessError) Format(s fmt.State, verb rune) { cerrors.FormatError(e, s, verb) }
+func (e *BusinessError) Format(s fmt.State, verb rune) { errors.FormatError(e, s, verb) }
 
 // Unwrap は、原因となるエラーにUnwrapします。
 // https://github.com/cockroachdb/errors#building-your-own-error-types
@@ -264,9 +263,9 @@ type SystemError struct {
 func NewSystemError(cause error, errorCode string, args ...any) *SystemError {
 	if cause == nil {
 		// nilの場合、ダミーのエラーを作成
-		cause = cerrors.NewWithDepthf(1, "code:%s, args:%v", errorCode, args)
+		cause = errors.NewWithDepthf(1, "code:%s, args:%v", errorCode, args)
 	} else {
-		cause = cerrors.WithStackDepth(cause, 1)
+		cause = errors.WithStackDepth(cause, 1)
 	}
 	// 誤ったエラーのラップを確認
 	requiredNotCodableError(cause)
@@ -281,7 +280,7 @@ func (e *SystemError) Error() string {
 
 // Format は、%+vを正しく動作させるため、fmt.Formatterのインタフェースを実装します。
 // https://github.com/cockroachdb/errors#Making-v-work-with-your-type
-func (e *SystemError) Format(s fmt.State, verb rune) { cerrors.FormatError(e, s, verb) }
+func (e *SystemError) Format(s fmt.State, verb rune) { errors.FormatError(e, s, verb) }
 
 // Unwrap は、原因となるエラーにUnwrapします。
 // https://github.com/cockroachdb/errors#building-your-own-error-types

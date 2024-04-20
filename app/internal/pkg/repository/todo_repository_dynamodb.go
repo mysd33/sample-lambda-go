@@ -5,13 +5,12 @@ import (
 	"app/internal/pkg/entity"
 	"app/internal/pkg/message"
 	mytables "app/internal/pkg/repository/tables"
-	"errors"
 
 	"example.com/appbase/pkg/config"
 	mydynamodb "example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/dynamodb/input"
 	"example.com/appbase/pkg/dynamodb/tables"
-	myerrors "example.com/appbase/pkg/errors"
+	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/id"
 	"example.com/appbase/pkg/logging"
 
@@ -72,9 +71,9 @@ func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, er
 	if err != nil {
 		if errors.Is(err, mydynamodb.ErrRecordNotFound) {
 			// レコード未取得の場合
-			return nil, myerrors.NewBusinessError(message.W_EX_8002, todoId)
+			return nil, errors.NewBusinessError(message.W_EX_8002, todoId)
 		}
-		return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 
 	// 従来のDynamoDBAccessorを使ったコード
@@ -85,7 +84,7 @@ func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, er
 		todo := entity.Todo{ID: todoId}
 		key, err := todo.GetKey()
 		if err != nil {
-			return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+			return nil, errors.NewSystemError(err, message.E_EX_9001)
 		}
 		// Itemの取得
 		result, err := tr.accessor.GetItemSdk(&dynamodb.GetItemInput{
@@ -93,15 +92,15 @@ func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, er
 			Key:       key,
 		})
 		if err != nil {
-			return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+			return nil, errors.NewSystemError(err, message.E_EX_9001)
 		}
 		// レコード未取得の場合
 		if len(result.Item) == 0 {
-			return nil, myerrors.NewBusinessError(message.W_EX_8002, todoId)
+			return nil, errors.NewBusinessError(message.W_EX_8002, todoId)
 		}
 		err = attributevalue.UnmarshalMap(result.Item, &todo)
 		if err != nil {
-			return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+			return nil, errors.NewSystemError(err, message.E_EX_9001)
 		}
 	*/
 	return &todo, nil
@@ -117,9 +116,9 @@ func (tr *todoRepositoryImplByDynamoDB) CreateOne(todo *entity.Todo) (*entity.To
 	if err != nil {
 		if errors.Is(err, mydynamodb.ErrKeyDuplicaiton) {
 			// キーの重複の場合
-			return nil, myerrors.NewBusinessError(message.W_EX_8003, todoId)
+			return nil, errors.NewBusinessError(message.W_EX_8003, todoId)
 		}
-		return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	// 従来のDynamoDBAccessorを使ったコード
 	// AWS SDK for Go v2 Migration
@@ -128,7 +127,7 @@ func (tr *todoRepositoryImplByDynamoDB) CreateOne(todo *entity.Todo) (*entity.To
 	/*
 		av, err := attributevalue.MarshalMap(todo)
 		if err != nil {
-			return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+			return nil, errors.NewSystemError(err, message.E_EX_9001)
 		}
 		input := &dynamodb.PutItemInput{
 			Item:      av,
@@ -137,7 +136,7 @@ func (tr *todoRepositoryImplByDynamoDB) CreateOne(todo *entity.Todo) (*entity.To
 		// Itemの登録
 		_, err = tr.accessor.PutItemSdk(input)
 		if err != nil {
-			return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+			return nil, errors.NewSystemError(err, message.E_EX_9001)
 		}
 	*/
 	return todo, nil
@@ -153,14 +152,14 @@ func (tr *todoRepositoryImplByDynamoDB) CreateOneTx(todo *entity.Todo) (*entity.
 	// DynamoDBTemplateを使ったコード
 	err := tr.dynamodbTemplate.CreateOneWithTransaction(tr.tableName, todo)
 	if err != nil {
-		return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 
 	// 従来のDynamoDBAccessorを使ったコード
 	/*
 		av, err := attributevalue.MarshalMap(todo)
 		if err != nil {
-			return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+			return nil, errors.NewSystemError(err, message.E_EX_9001)
 		}
 		put := &types.Put{
 			Item:      av,
@@ -170,7 +169,7 @@ func (tr *todoRepositoryImplByDynamoDB) CreateOneTx(todo *entity.Todo) (*entity.
 		input := &types.TransactWriteItem{Put: put}
 		err := tr.accessor.AppendTransactWriteItem(input)
 		if err != nil {
-			return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+			return nil, errors.NewSystemError(err, message.E_EX_9001)
 		}
 	*/
 	return todo, nil

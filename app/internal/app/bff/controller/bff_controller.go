@@ -5,10 +5,9 @@ import (
 	"app/internal/app/bff/service"
 	"app/internal/pkg/entity"
 	"app/internal/pkg/message"
-	"errors"
 
 	"example.com/appbase/pkg/domain"
-	myerrors "example.com/appbase/pkg/errors"
+	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/transaction"
 	"github.com/gin-gonic/gin"
@@ -70,12 +69,12 @@ func (c *bffControllerImpl) FindTodo(ctx *gin.Context) (any, error) {
 	// 入力チェック
 	if userId == "" {
 		// 入力チェックエラーのハンドリング
-		return nil, myerrors.NewValidationError(message.W_EX_5002, "user_id")
+		return nil, errors.NewValidationError(message.W_EX_5002, "user_id")
 	}
 	todoId := ctx.Query("todo_id")
 	if todoId == "" {
 		// 入力チェックエラーのハンドリング
-		return nil, myerrors.NewValidationError(message.W_EX_5002, "todo_id")
+		return nil, errors.NewValidationError(message.W_EX_5002, "todo_id")
 	}
 	// サービスの実行（DynamoDBトランザクション管理なし）
 	user, todo, err := c.service.FindTodo(userId, todoId)
@@ -92,7 +91,7 @@ func (c *bffControllerImpl) RegisterUser(ctx *gin.Context) (any, error) {
 	var request RequestRegisterUser
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		// 入力チェックエラーのハンドリング
-		return nil, myerrors.NewValidationErrorWithCause(err, message.W_EX_5001)
+		return nil, errors.NewValidationErrorWithCause(err, message.W_EX_5001)
 	}
 
 	// サービスの実行
@@ -105,7 +104,7 @@ func (c *bffControllerImpl) RegisterTodo(ctx *gin.Context) (any, error) {
 	var request RequestRegisterTodo
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		// 入力チェックエラーのハンドリング
-		return nil, myerrors.NewValidationErrorWithCause(err, message.W_EX_5001)
+		return nil, errors.NewValidationErrorWithCause(err, message.W_EX_5001)
 	}
 
 	// サービスの実行
@@ -118,7 +117,7 @@ func (c *bffControllerImpl) RegisterTodosAsync(ctx *gin.Context) (any, error) {
 	var request RequestRegisterTodoAsync
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		// 入力チェックエラーのハンドリング
-		return nil, myerrors.NewValidationErrorWithCause(err, message.W_EX_5001)
+		return nil, errors.NewValidationErrorWithCause(err, message.W_EX_5001)
 	}
 	todoTitles := request.TodoTitles
 
@@ -142,7 +141,7 @@ func (c *bffControllerImpl) RegisterTodosAsync(ctx *gin.Context) (any, error) {
 	// トランザクション管理してサービス実行
 	_, err := c.transactionManager.ExecuteTransaction(serviceFunc)
 	if err != nil {
-		var bizErrs *myerrors.BusinessErrors
+		var bizErrs *errors.BusinessErrors
 		// 業務エラーの場合にハンドリングしたい場合は、BusinessErrorsのみAsで判定すればよい
 		// BusinessError(単一の業務エラー)の場合もBusinessErrorsとして判定できるようになっている
 		if errors.As(err, &bizErrs) {
@@ -150,10 +149,10 @@ func (c *bffControllerImpl) RegisterTodosAsync(ctx *gin.Context) (any, error) {
 			bizErrs.WithInfo("label1")
 		} else if transaction.IsTransactionConditionalCheckFailed(err) {
 			// 登録失敗の業務エラーにするか、スキップするかはケースバイケース
-			return nil, myerrors.NewBusinessErrorWithCause(err, message.W_EX_8005)
+			return nil, errors.NewBusinessErrorWithCause(err, message.W_EX_8005)
 		} else if transaction.IsTransactionConflict(err) {
 			// 登録失敗の業務エラーにするか、スキップするかはケースバイケース
-			return nil, myerrors.NewBusinessErrorWithCause(err, message.W_EX_8005)
+			return nil, errors.NewBusinessErrorWithCause(err, message.W_EX_8005)
 		}
 		return nil, err
 	}

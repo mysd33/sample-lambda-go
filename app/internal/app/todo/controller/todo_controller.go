@@ -4,10 +4,9 @@ package controller
 import (
 	"app/internal/app/todo/service"
 	"app/internal/pkg/message"
-	"errors"
 
 	"example.com/appbase/pkg/domain"
-	myerrors "example.com/appbase/pkg/errors"
+	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/transaction"
 	"github.com/gin-gonic/gin"
@@ -51,7 +50,7 @@ func (c *todoControllerImpl) Find(ctx *gin.Context) (any, error) {
 	// 入力チェック
 	if todoId == "" {
 		// 入力チェックエラーのハンドリング
-		return nil, myerrors.NewValidationError(message.W_EX_5002, "todo_id")
+		return nil, errors.NewValidationError(message.W_EX_5002, "todo_id")
 	}
 	// DynamoDBトランザクション管理してサービスの実行
 	return c.transactionManager.ExecuteTransaction(func() (any, error) {
@@ -64,7 +63,7 @@ func (c *todoControllerImpl) Register(ctx *gin.Context) (any, error) {
 	var request Request
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		// 入力チェックエラーのハンドリング
-		return nil, myerrors.NewValidationErrorWithCause(err, message.W_EX_5001)
+		return nil, errors.NewValidationErrorWithCause(err, message.W_EX_5001)
 	}
 	// クエリパラメータの取得
 	tx := ctx.Query("tx")
@@ -85,7 +84,7 @@ func (c *todoControllerImpl) Register(ctx *gin.Context) (any, error) {
 	// DynamoDBトランザクション管理してサービスの実行
 	result, err := c.transactionManager.ExecuteTransaction(serviceFunc)
 	if err != nil {
-		var bizErrs *myerrors.BusinessErrors
+		var bizErrs *errors.BusinessErrors
 		// 業務エラーの場合にハンドリングしたい場合は、BusinessErrorsのみAsで判定すればよい
 		// BusinessError(単一の業務エラー)の場合もBusinessErrorsとして判定できるようになっている
 		if errors.As(err, &bizErrs) {
@@ -93,10 +92,10 @@ func (c *todoControllerImpl) Register(ctx *gin.Context) (any, error) {
 			bizErrs.WithInfo("label1")
 		} else if transaction.IsTransactionConditionalCheckFailed(err) {
 			// 登録失敗の業務エラーにするか、スキップするかはケースバイケース
-			return nil, myerrors.NewBusinessErrorWithCause(err, message.W_EX_8004, request.TodoTitle)
+			return nil, errors.NewBusinessErrorWithCause(err, message.W_EX_8004, request.TodoTitle)
 		} else if transaction.IsTransactionConflict(err) {
 			// 登録失敗の業務エラーにするか、スキップするかはケースバイケース
-			return nil, myerrors.NewBusinessErrorWithCause(err, message.W_EX_8004, request.TodoTitle)
+			return nil, errors.NewBusinessErrorWithCause(err, message.W_EX_8004, request.TodoTitle)
 		}
 		return nil, err
 	}

@@ -5,11 +5,10 @@ import (
 	"app/internal/pkg/entity"
 	"app/internal/pkg/message"
 	"database/sql"
-	"errors"
 	"fmt"
 
 	"example.com/appbase/pkg/apcontext"
-	myerrors "example.com/appbase/pkg/errors"
+	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/id"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/rdb"
@@ -38,7 +37,7 @@ func (ur *UserRepositoryImplByRDB) FindOne(userId string) (*entity.User, error) 
 	tx := ur.accessor.GetTransaction()
 	ctx := apcontext.Context
 	var user entity.User
-	
+
 	//プリペアードステートメントによる例
 	//X-RayのSQLトレースにも対応
 	//row := tx.QueryRowContext(ctx, "SELECT user_id, user_name FROM m_user WHERE user_id = $1", userId)
@@ -53,9 +52,9 @@ func (ur *UserRepositoryImplByRDB) FindOne(userId string) (*entity.User, error) 
 	err := row.Scan(&user.ID, &user.Name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, myerrors.NewBusinessErrorWithCause(err, message.W_EX_8009, userId)
+			return nil, errors.NewBusinessErrorWithCause(err, message.W_EX_8009, userId)
 		}
-		return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	return &user, nil
 }
@@ -89,7 +88,7 @@ func (ur *UserRepositoryImplByRDB) CreateOne(user *entity.User) (*entity.User, e
 	_, err := tx.ExecContext(ctx, fmt.Sprintf("INSERT INTO m_user(user_id, user_name) VALUES(%s, %s)", userIdParam, userNameParam))
 
 	if err != nil {
-		return nil, myerrors.NewSystemError(err, message.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	return user, nil
 }

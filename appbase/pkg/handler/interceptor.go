@@ -2,14 +2,13 @@ package handler
 
 import (
 	"context"
-	"errors"
 	"reflect"
 	"runtime"
 
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/env"
-	myerrors "example.com/appbase/pkg/errors"
+	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
 	"github.com/aws/aws-lambda-go/events"
@@ -122,9 +121,9 @@ func (i *defaultHandlerInterceptor) HandleSimple(simpleControllerFunc SimpleCont
 // logError は、エラー情報をログ出力します
 func (i *defaultHandlerInterceptor) logError(err error) {
 	var (
-		validationError *myerrors.ValidationError
-		businessErrors  *myerrors.BusinessErrors
-		systemError     *myerrors.SystemError
+		validationError *errors.ValidationError
+		businessErrors  *errors.BusinessErrors
+		systemError     *errors.SystemError
 	)
 	if errors.As(err, &validationError) {
 		i.log.WarnWithCodableError(validationError)

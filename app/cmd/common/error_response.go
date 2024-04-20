@@ -2,11 +2,10 @@ package common
 
 import (
 	mymessage "app/internal/pkg/message"
-	"errors"
 	"net/http"
 
 	"example.com/appbase/pkg/api"
-	myerrors "example.com/appbase/pkg/errors"
+	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/message"
 	"github.com/gin-gonic/gin"
 )
@@ -24,7 +23,7 @@ type commonErrorResponse struct {
 }
 
 // ValidationErrorResponse implements api.ErrorResponse.
-func (r *commonErrorResponse) ValidationErrorResponse(validationError *myerrors.ValidationError) (int, any) {
+func (r *commonErrorResponse) ValidationErrorResponse(validationError *errors.ValidationError) (int, any) {
 	detail := make(map[string]any)
 	detail["message"] = r.messageSource.GetMessage(validationError.ErrorCode(), validationError.Args()...)
 	vErrDetails := make([]string, 0, len(validationError.ErrorDetails()))
@@ -36,7 +35,7 @@ func (r *commonErrorResponse) ValidationErrorResponse(validationError *myerrors.
 }
 
 // BusinessErrorResponse implements api.ErrorResponse.
-func (r *commonErrorResponse) BusinessErrorResponse(businessErrors *myerrors.BusinessErrors) (int, any) {
+func (r *commonErrorResponse) BusinessErrorResponse(businessErrors *errors.BusinessErrors) (int, any) {
 	bizErrMsgs := make([]map[string]string, 0, len(businessErrors.BusinessErrors()))
 	for _, businessError := range businessErrors.BusinessErrors() {
 		bizErrMsg := make(map[string]string)
@@ -74,7 +73,7 @@ func (r *commonErrorResponse) WarnErrorResponse(err error) (int, any) {
 }
 
 // SystemErrorResponse implements api.ErrorResponse.
-func (r *commonErrorResponse) SystemErrorResponse(systemError *myerrors.SystemError) (int, any) {
+func (r *commonErrorResponse) SystemErrorResponse(systemError *errors.SystemError) (int, any) {
 	return http.StatusInternalServerError, r.errorResponseBody(systemError.ErrorCode(),
 		r.messageSource.GetMessage(mymessage.E_EX_9001))
 }
