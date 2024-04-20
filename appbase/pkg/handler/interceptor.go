@@ -57,8 +57,10 @@ func (i *defaultHandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.Ha
 
 		// Configの最新読み込み
 		if err := i.config.Reload(); err != nil {
-			// エラーをContextに格納
-			ctx.Error(err)
+			// エラーログの出力
+			logging.LogError(i.log, err)
+			// エラーをその他のエラー（ginのエラーログ対象外）としてginのContextに格納
+			ctx.Error(err).SetType(gin.ErrorTypeNu)
 			return
 		}
 		// Controllerの実行
@@ -66,8 +68,8 @@ func (i *defaultHandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.Ha
 		if err != nil {
 			// 集約エラーハンドリングによるログ出力
 			logging.LogError(i.log, err)
-			// エラーをContextに格納
-			ctx.Error(err)
+			// エラーをPublicなエラー（ginのエラーログ対象外）としてginのContextに格納
+			ctx.Error(err).SetType(gin.ErrorTypePublic)
 			return
 		}
 
@@ -89,6 +91,7 @@ func (i *defaultHandlerInterceptor) HandleAsync(asyncControllerFunc AsyncControl
 
 		// Configの最新読み込み
 		if err := i.config.Reload(); err != nil {
+			logging.LogError(i.log, err)
 			return err
 		}
 		// Controllerの実行
@@ -115,6 +118,7 @@ func (i *defaultHandlerInterceptor) HandleSimple(simpleControllerFunc SimpleCont
 
 		// Configの最新読み込み
 		if err := i.config.Reload(); err != nil {
+			logging.LogError(i.log, err)
 			return nil, err
 		}
 		// Controllerの実行

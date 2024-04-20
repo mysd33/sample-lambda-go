@@ -48,7 +48,6 @@ func (h *APILambdaHandler) GetDefaultGinEngine(errorResponse api.ErrorResponse) 
 	// ginをLoggerとCustomerRecoverのミドルウェアがアタッチされた状態で作成
 	engine := gin.New()
 	engine.Use(
-		// TODO: GinがErrorに入れたものをログ出力するので同じようなログが2回出力されている模様
 		gin.Logger(),
 		func(ctx *gin.Context) {
 			ctx.Next()
@@ -57,22 +56,25 @@ func (h *APILambdaHandler) GetDefaultGinEngine(errorResponse api.ErrorResponse) 
 		},
 		// パニック時のカスタムリカバリ処理
 		gin.CustomRecovery(func(c *gin.Context, recover any) {
+			// パニックをエラーでラップ
 			err := errors.Errorf("recover from: %+v", recover)
 			h.log.ErrorWithUnexpectedError(err)
-			// エラーをContextに格納
-			c.Error(err)
+			// エラーをその他のエラー（ginのエラーログ対象外）として、ginのContextに格納
+			c.Error(err).SetType(gin.ErrorTypeNu)
 		}))
 
 	// 404エラー
 	engine.NoRoute(func(ctx *gin.Context) {
 		h.log.Debug("%s is not found", ctx.Request.URL.Path)
-		ctx.Error(api.NoRouteError)
+		// エラーをPublicなエラー（ginのエラーログ対象外）として、ginのContextに格納
+		ctx.Error(api.NoRouteError).SetType(gin.ErrorTypePublic)
 	})
 	// 405エラー
 	engine.HandleMethodNotAllowed = true
 	engine.NoMethod(func(ctx *gin.Context) {
 		h.log.Debug("%s Method %s is not allowed", ctx.Request.Method, ctx.Request.URL.Path)
-		ctx.Error(api.NoMethodError)
+		// エラーをPublicなエラー（ginのエラーログ対象外）として、ginのContextに格納
+		ctx.Error(api.NoMethodError).SetType(gin.ErrorTypePublic)
 	})
 	return engine
 }
