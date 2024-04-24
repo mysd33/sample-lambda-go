@@ -4,12 +4,14 @@ api パッケージは、REST APIに関する機能を提供するパッケー�
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"example.com/appbase/pkg/constant"
 	myerrors "example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/cockroachdb/errors"
 	"github.com/gin-gonic/gin"
 )
@@ -21,8 +23,10 @@ var (
 
 // ApiResponseFormatterは、レスポンスデータを作成するインタフェース
 type ApiResponseFormatter interface {
-	// ReturnResponseBody は、処理結果resultまたはエラーerrに対応するレスポンスボディを返却します。
+	// ReturnResponseBody は、ginのContextに対して処理結果resultまたはエラーerrに対応するレスポンスボディを設定します。
 	ReturnResponseBody(ctx *gin.Context, errorResponse ErrorResponse)
+	// CreateAPIGatewayProxyResponseForUnexpectedError は、予期せぬエラーによるAPIGatewayProxyResponseを作成します。
+	CreateAPIGatewayProxyResponseForUnexpectedError(err error, errorResponse ErrorResponse) (events.APIGatewayProxyResponse, error)
 }
 
 // NewApiResponseFormatter は、ApiResponseFormatterを作成します。
@@ -60,7 +64,7 @@ func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context, error
 		} else if errors.Is(err, NoMethodError) {
 			ctx.JSON(errorResponse.WarnErrorResponse(NoMethodError))
 		} else {
-			ctx.JSON(errorResponse.UnExpectedErrorResponse(err))
+			ctx.JSON(errorResponse.UnexpectedErrorResponse(err))
 		}
 	} else {
 		// 正常終了の場合
@@ -74,8 +78,21 @@ func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context, error
 		err := errors.New("result is not found")
 		f.log.ErrorWithUnexpectedError(err)
 		// 予期せぬエラー扱いのレスポンスを返却
-		ctx.JSON(errorResponse.UnExpectedErrorResponse(err))
+		ctx.JSON(errorResponse.UnexpectedErrorResponse(err))
 	}
+}
+
+// CreateAPIGatewayProxyResponseForUnexpectedError implements ApiResponseFormatter.
+func (f *defaultApiResponseFormatter) CreateAPIGatewayProxyResponseForUnexpectedError(err error, errorResponse ErrorResponse) (events.APIGatewayProxyResponse, error) {
+	statusCode, body := errorResponse.UnexpectedErrorResponse(err)
+	bbody, jerr := json.Marshal(body)
+	if jerr != nil {
+		return events.APIGatewayProxyResponse{}, jerr
+	}
+	return events.APIGatewayProxyResponse{
+		StatusCode: statusCode,
+		Body:       string(bbody),
+	}, nil
 }
 
 // convertSingleError は、エラーが複数あった場合にも1つのエラーに変換します。

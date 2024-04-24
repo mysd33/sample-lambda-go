@@ -21,14 +21,16 @@ func init() {
 
 	// ApplicationContextの作成
 	ac := component.NewApplicationContext()
+	// ErrorResponseの生成
+	er := common.NewCommonErrorResponse(ac.GetMessageSource())
 	// Ginのエンジンを作成
 	apiLambdaHandler := ac.GetAPILambdaHandler()
-	r := apiLambdaHandler.GetDefaultGinEngine(common.NewCommonErrorResponse(ac.GetMessageSource()))
+	r := apiLambdaHandler.GetDefaultGinEngine(er)
 	// 業務の初期化処理実行
 	initBiz(ac, r)
 	// ハンドラ関数の作成
 	ginLambda := ginadapter.New(r)
-	lambdaHandler = apiLambdaHandler.Handle(ginLambda)
+	lambdaHandler = apiLambdaHandler.Handle(ginLambda, er)
 }
 
 // Main関数

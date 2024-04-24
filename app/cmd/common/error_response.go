@@ -78,9 +78,9 @@ func (r *commonErrorResponse) SystemErrorResponse(systemError *errors.SystemErro
 		r.messageSource.GetMessage(mymessage.E_EX_9001))
 }
 
-// UnExpectedErrorResponse implements api.ErrorResponse.
-func (r *commonErrorResponse) UnExpectedErrorResponse(err error) (int, any) {
-	return http.StatusInternalServerError, r.errorResponseBody(mymessage.E_EX_9001,
+// UnexpectedErrorResponse implements api.ErrorResponse.
+func (r *commonErrorResponse) UnexpectedErrorResponse(err error) (int, any) {
+	return http.StatusInternalServerError, r.errorResponseBody(mymessage.E_EX_9999,
 		r.messageSource.GetMessage(mymessage.E_EX_9999))
 }
 

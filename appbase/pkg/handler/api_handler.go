@@ -5,8 +5,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/api"
@@ -80,17 +78,18 @@ func (h *APILambdaHandler) GetDefaultGinEngine(errorResponse api.ErrorResponse) 
 }
 
 // Handleは、APIGatewayトリガのLambdaのハンドラを実行します。
-func (h *APILambdaHandler) Handle(ginLambda *ginadapter.GinLambda) APITriggeredLambdaHandlerFunc {
+func (h *APILambdaHandler) Handle(ginLambda *ginadapter.GinLambda, errorResponse api.ErrorResponse) APITriggeredLambdaHandlerFunc {
 	// Handleは、APIGatewayトリガーのLambdaHandlerFuncです。
 	return func(ctx context.Context, request events.APIGatewayProxyRequest) (response events.APIGatewayProxyResponse, err error) {
 		defer func() {
 			// パニックのリカバリ処理
 			if v := recover(); v != nil {
+				perr := errors.Errorf("recover from: %+v", v)
 				// パニックのスタックトレース情報をログ出力
-				h.log.ErrorWithUnexpectedError(errors.Errorf("recover from: %+v", v))
-
-				response = h.createErrorResponse()
-				// errはnilにままにして{"message":"Internal Server Error"} のレスポンスが返却されないようにする
+				h.log.ErrorWithUnexpectedError(perr)
+				// エラーレスポンスの生成
+				// レスポンスの生成でエラーだと、{"message":"Internal Server Error"} のレスポンスが返却される
+				response, err = h.apiResponseFormatter.CreateAPIGatewayProxyResponseForUnexpectedError(perr, errorResponse)
 			}
 			// ログのフラッシュ
 			h.log.Sync()
@@ -106,21 +105,13 @@ func (h *APILambdaHandler) Handle(ginLambda *ginadapter.GinLambda) APITriggeredL
 
 		// AWS Lambda Go API Proxyでginと統合
 		// https://github.com/awslabs/aws-lambda-go-api-proxy
-		response, err = ginLambda.ProxyWithContext(ctx, request)
-		if err != nil {
-			h.log.ErrorWithUnexpectedError(err)
-			response = h.createErrorResponse()
-			// errはnilに戻して{"message":"Internal Server Error"} のレスポンスが返却されないようにする
-			err = nil
+		response, gerr := ginLambda.ProxyWithContext(ctx, request)
+		if gerr != nil {
+			h.log.ErrorWithUnexpectedError(gerr)
+			// エラーレスポンスの生成
+			// レスポンスの生成でエラーだと、{"message":"Internal Server Error"} のレスポンスが返却される
+			response, err = h.apiResponseFormatter.CreateAPIGatewayProxyResponseForUnexpectedError(gerr, errorResponse)
 		}
 		return
-	}
-}
-
-// TODO: エラーレスポンスの形式
-func (h *APILambdaHandler) createErrorResponse() events.APIGatewayProxyResponse {
-	return events.APIGatewayProxyResponse{
-		StatusCode: http.StatusInternalServerError,
-		Body:       fmt.Sprintf("{\"code\": %s, \"detail\": %s}", message.E_FW_9999, h.messageSource.GetMessage(message.E_FW_9999)),
 	}
 }

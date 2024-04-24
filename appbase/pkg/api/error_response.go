@@ -15,6 +15,6 @@ type ErrorResponse interface {
 	WarnErrorResponse(err error) (int, any)
 	// SystemErrorResponse は、システムエラーに対応するレスポンスを返却します。
 	SystemErrorResponse(systemError *errors.SystemError) (int, any)
-	// UnExpectedErrorResponse は、予期せぬエラーに対応するレスポンスを返却します。
-	UnExpectedErrorResponse(err error) (int, any)
+	// UnexpectedErrorResponse は、予期せぬエラーに対応するレスポンスを返却します。
+	UnexpectedErrorResponse(err error) (int, any)
 }
