@@ -39,7 +39,7 @@ func TestRegister(t *testing.T) {
 	messageSource, _ := message.NewMessageSource()
 	// テスト用のConfigを作成
 	cfg := config.NewTestConfig(map[string]string{"hoge_name": "fuga"})
-	log, _ := logging.NewLogger(messageSource, cfg)
+	log, _ := logging.NewLogger(messageSource)
 
 	//RepsitoryのMockへの入力値と戻り値の設定
 	mockRepository := new(MockUserRepository)

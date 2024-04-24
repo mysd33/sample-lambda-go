@@ -23,7 +23,7 @@ func Test_GetSystemDate_TestDate(t *testing.T) {
 		"TEST_DATE": testDateStr,
 	})
 	msg, _ := message.NewMessageSource()
-	logger, _ := logging.NewLogger(msg, config)
+	logger, _ := logging.NewLogger(msg)
 	d := NewDateManager(config, logger)
 	expected, _ := time.ParseInLocation(format, testDateStr, time.Local)
 	actual := d.GetSystemDate()
@@ -39,7 +39,7 @@ func Test_GetSystemDate_Now(t *testing.T) {
 	}
 	config := config.NewTestConfig(map[string]string{})
 	msg, _ := message.NewMessageSource()
-	logger, _ := logging.NewLogger(msg, config)
+	logger, _ := logging.NewLogger(msg)
 	d := NewDateManager(config, logger)
 
 	expected := time.Now()
