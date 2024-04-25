@@ -5,6 +5,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/api"
@@ -87,9 +88,9 @@ func (h *APILambdaHandler) Handle(ginLambda *ginadapter.GinLambda, errorResponse
 				perr := errors.Errorf("recover from: %+v", v)
 				// パニックのスタックトレース情報をログ出力
 				h.log.ErrorWithUnexpectedError(perr)
-				// エラーレスポンスの生成
-				// レスポンスの生成でエラーだと、{"message":"Internal Server Error"} のレスポンスが返却される
-				response, err = h.apiResponseFormatter.CreateAPIGatewayProxyResponseForUnexpectedError(perr, errorResponse)
+				// 想定外のエラーレスポンスの生成
+				response = h.createUnexpectedErrorResponse(perr, errorResponse)
+				// errがnilでないと{"message":"Internal Server Error"} のレスポンスが返却されるため、nilのまま
 			}
 			// ログのフラッシュ
 			h.log.Sync()
@@ -108,10 +109,26 @@ func (h *APILambdaHandler) Handle(ginLambda *ginadapter.GinLambda, errorResponse
 		response, gerr := ginLambda.ProxyWithContext(ctx, request)
 		if gerr != nil {
 			h.log.ErrorWithUnexpectedError(gerr)
-			// エラーレスポンスの生成
-			// レスポンスの生成でエラーだと、{"message":"Internal Server Error"} のレスポンスが返却される
-			response, err = h.apiResponseFormatter.CreateAPIGatewayProxyResponseForUnexpectedError(gerr, errorResponse)
+			// 想定外のエラーレスポンスの生成
+			response = h.createUnexpectedErrorResponse(gerr, errorResponse)
+			// errがnilでないと{"message":"Internal Server Error"} のレスポンスが返却されるため、nilのまま
 		}
 		return
+	}
+}
+
+// createUnexpectedErrorResponse は、予期せぬエラーによるAPIGatewayProxyResponseを作成します。
+func (h *APILambdaHandler) createUnexpectedErrorResponse(err error, errorResponse api.ErrorResponse) events.APIGatewayProxyResponse {
+	statusCode, body := errorResponse.UnexpectedErrorResponse(err)
+	bbody, jerr := json.Marshal(body)
+	if jerr != nil {
+		h.log.ErrorWithUnexpectedError(jerr)
+		return events.APIGatewayProxyResponse{
+			StatusCode: statusCode,
+		}
+	}
+	return events.APIGatewayProxyResponse{
+		StatusCode: statusCode,
+		Body:       string(bbody),
 	}
 }
