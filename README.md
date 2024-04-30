@@ -2,7 +2,8 @@
 ## 構成イメージ
 * オンラインリアルタイム処理方式
     * API GatewayをトリガにLambda実行
-    * Private APIで公開、VPC内にEC2で構築した、Bastionからアクセスする構成に対応
+    * フロントエンドは、Regional Public APIで公開し、バックエンドはPrivate APIで公開
+        * バックエンドは、動作確認用にVPC内にEC2で構築したBastionからのアクセスにも対応
     * LambdaからDynamoDBやRDS AuroraへのDBアクセスへのアクセスを実現
     * LambdaはVPC内Lambdaとして、RDS Aurora（RDS Proxy経由）でのアクセスも可能としている
 
@@ -12,15 +13,15 @@
     * 標準キュー、FIFOキューの両方に対応
     * DynamoDBのトランザクション管理機能を利用した、メッセージ送達とDynamoDBトランザクションの整合性を担保する仕組みを実装
 
-* LambdaからのDynamoDB、SQS、S3といった各種AWSリソースへのアクセスに対応
-    * AWS SDK for Go v2に対応
-    * AWS SDKやX-Ray SDKの利用方法がv1の時と変更になっている
+* LambdaからAWS SDKを用いたDynamoDB、SQS、S3等の各種AWSリソースへのアクセスに対応
+    * AWS SDK for Go v2に対応した実装
+        * v2では、AWS SDKやX-Ray SDKの利用方法がv1の時とAPIがかなり変更されている
 
 ![構成イメージ](image/demo.png)
 
 * Lambda間の呼び出しイメージ
-    * サンプルAP上、直接User API、Todo APIサービスを呼ぶこともできるがバックエンドサービス扱い
-    * BFFからバックエンドの各サービスへアクセスする、SQSを介してディレード実行するという呼び出し関係になっている    
+    * フロントエンド（BFF:Backend For Frontend）からバックエンドの各サービスへアクセスする、SQSを介してディレード実行するという呼び出し関係になっている
+    * User API、Todo APIサービスはバックエンドサービス扱いで、bationから直接アクセスできるようにもなっている
 
 ![呼び出しイメージ](image/demo2.png)
 
@@ -92,7 +93,7 @@ aws cloudformation create-stack --stack-name Demo-VPE-Stack --template-body file
 ```
 ## 5. NAT Gatewayの作成とプライベートサブネットのルートテーブル更新
 * VPC内Lambdaからインターネットに接続する場合に必要となる。
-    * hello-worldのサンプルAPでは[https://checkip.amazonaws.com](https://checkip.amazonaws.com)へアクセスしに行くため必要。
+* hello-worldのサンプルAPでは[https://checkip.amazonaws.com](https://checkip.amazonaws.com)へアクセスしに行くためのみに必要なので、もしhello-worldのサンプルAPの確認が不要な場合は、作成不要。
 
 ```sh
 aws cloudformation validate-template --template-body file://cfn-ngw.yaml
@@ -248,7 +249,7 @@ aws cloudformation validate-template --template-body file://cfn-appconfig-sm-dep
 aws cloudformation create-stack --stack-name Demo-AppConfigSMDeploy-Stack --template-body file://cfn-appconfig-sm-deploy.yaml --parameters ParameterKey=SecretsManagerVersion,ParameterValue=（SecretsManagerVersionのバージョンID）
 ```
 
-## 15. APの実行確認
+## 15. APの実行確認（バックエンド）
 * マネージドコンソールから、EC2(Bation)へSystems Manager Session Managerで接続して、curlコマンドで動作確認
     * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
 
@@ -297,6 +298,11 @@ curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/todo-api/v
 {"todo_id":"04a14ad3-f6a5-11ed-b40f-f2ead45b980a","todo_title":"ミルクを買う"}
 ```
 
+## 16. APの実行確認（フロントエンド）
+* 手元の端末のコンソールから、curlコマンドで動作確認
+    * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
+* Windowsではgit bash等で実行できるが日本語が文字化けするので、PostmanやTalend API Tester等のツールを使ったほうがよい
+
 * BFFサービスのAPI実行例
 ```sh
 # Userサービスを利用し、ユーザー情報を登録
@@ -322,6 +328,7 @@ curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v
 ```
 
 * ディレード処理の実行例
+    * 実行結果はDynamoDBを確認するとよい
 ```sh
 # BFFからの非同期実行依頼（標準キュー）
 # 業務のDB更新を伴う場合
@@ -851,9 +858,9 @@ cd app
 godoc
 ```
 
-- godoc起動中の状態で、[http://localhost:6060](http://localhost:6060)へアクセス
-    - 「example.com/」の「appbase」パッケージは、[http://localhost:6060/pkg/example.com/appbase/](http://localhost:6060/pkg/example.com/appbase/)に表示される。
-    - 「app」パッケージは、ほぼ全てが「internal」パッケージに配置しているため、デフォルトでは表示されない。m=allをクエリパラメータに指定して、[http://localhost:6060/pkg/app/?m=all](http://localhost:6060/pkg/app/?m=all)にアクセスするとよい。
+* godoc起動中の状態で、[http://localhost:6060](http://localhost:6060)へアクセス
+    * 「example.com/」の「appbase」パッケージは、[http://localhost:6060/pkg/example.com/appbase/](http://localhost:6060/pkg/example.com/appbase/)に表示される。
+    * 「app」パッケージは、ほぼ全てが「internal」パッケージに配置しているため、デフォルトでは表示されない。m=allをクエリパラメータに指定して、[http://localhost:6060/pkg/app/?m=all](http://localhost:6060/pkg/app/?m=all)にアクセスするとよい。
 
 ## ソフトウェアフレームワーク
 * 本サンプルアプリケーションでは、ソフトウェアフレームワーク実装例も同梱している。簡単のため、アプリケーションと同じプロジェクトでソース管理している。

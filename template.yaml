@@ -110,10 +110,6 @@ Globals:
       - !FindInMap [LambdaInsightsExtensionsLayerMap, !Ref AWS::Region , x86]
   Api:
     OpenApiVersion: 3.0.3
-    EndpointConfiguration:
-      Type: PRIVATE
-      VPCEndpointIds:
-        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateAPIVPCEndpoint-ID
     TracingEnabled: !If [TracingEnabled , true, false]
     MethodSettings:
       - DataTraceEnabled: true
@@ -146,6 +142,24 @@ Resources:
       Environment:
         Variables:
           PARAM1: VALUE
+# Bff Function
+  BffFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+#      Handler: bff    
+      FunctionName: !Ref BffFunctionName
+      CodeUri: app/cmd/bff/
+      Role: !ImportValue
+        Fn::Sub: ${StackPrefix}-LambdaRoleArn
+      Events:
+        Event:
+          Type: Api
+          Properties:
+            Path: /bff-api/{proxy+}
+            Method: ANY
+            RestApiId: !Ref BffApi          
 # User Function
   UsersFunction:
     Type: AWS::Serverless::Function
@@ -164,7 +178,7 @@ Resources:
             Path: /users-api/{proxy+}
             Method: ANY
             RestApiId: !Ref UserApi
-# Todo Function
+# Todo Function(API Triggered)
   TodoFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -182,24 +196,7 @@ Resources:
             Path: /todo-api/{proxy+}
             Method: ANY
             RestApiId: !Ref TodoApi   
-# Bff Function
-  BffFunction:
-    Type: AWS::Serverless::Function
-    Metadata:
-      BuildMethod: go1.x
-    Properties:
-#      Handler: bff    
-      FunctionName: !Ref BffFunctionName
-      CodeUri: app/cmd/bff/
-      Role: !ImportValue
-        Fn::Sub: ${StackPrefix}-LambdaRoleArn
-      Events:
-        Event:
-          Type: Api
-          Properties:
-            Path: /bff-api/{proxy+}
-            Method: ANY
-            RestApiId: !Ref BffApi
+# Todo Async Function(SQS Triggered)
   TodoAsyncFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -237,12 +234,24 @@ Resources:
             FunctionResponseTypes:
               - ReportBatchItemFailures              
 # API Gateway Private REST API
-# HelloWorld 
+# Bff API(Regional Public API)
+  BffApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: bff-api
+      StageName: !Ref Stage
+      EndpointConfiguration:
+        Type: REGIONAL
+# HelloWorld(Private API)
   HelloApi:
     Type: AWS::Serverless::Api
     Properties:
       Name: hello-world-api
-      StageName: !Ref Stage
+      StageName: !Ref Stage 
+      EndpointConfiguration:
+        Type: PRIVATE
+        VPCEndpointIds:
+          - Fn::ImportValue: !Sub ${StackPrefix}-PrivateAPIVPCEndpoint-ID
       Auth:
         ResourcePolicy:
           CustomStatements:
@@ -253,13 +262,17 @@ Resources:
               Condition:
                 StringEquals:
                   aws:SourceVpce: !ImportValue
-                    Fn::Sub: ${StackPrefix}-PrivateAPIVPCEndpoint-ID
-# User API 
+                    Fn::Sub: ${StackPrefix}-PrivateAPIVPCEndpoint-ID        
+# User API(Private API) 
   UserApi:
     Type: AWS::Serverless::Api
     Properties:
       Name: user-api
       StageName: !Ref Stage
+      EndpointConfiguration:
+        Type: PRIVATE
+        VPCEndpointIds:
+          - Fn::ImportValue: !Sub ${StackPrefix}-PrivateAPIVPCEndpoint-ID
       Auth:
         ResourcePolicy:
           CustomStatements:
@@ -273,12 +286,16 @@ Resources:
                 StringEquals:
                   aws:SourceVpce: !ImportValue
                     Fn::Sub: ${StackPrefix}-PrivateAPIVPCEndpoint-ID
-# Todo API
+# Todo API(Private API)
   TodoApi:
     Type: AWS::Serverless::Api
     Properties:
       Name: todo-api
       StageName: !Ref Stage
+      EndpointConfiguration:
+        Type: PRIVATE
+        VPCEndpointIds:
+          - Fn::ImportValue: !Sub ${StackPrefix}-PrivateAPIVPCEndpoint-ID      
       Auth:
         ResourcePolicy:
           CustomStatements:
@@ -292,25 +309,7 @@ Resources:
                 StringEquals:
                   aws:SourceVpce: !ImportValue
                     Fn::Sub: ${StackPrefix}-PrivateAPIVPCEndpoint-ID
-# Bff API
-  BffApi:
-    Type: AWS::Serverless::Api
-    Properties:
-      Name: bff-api
-      StageName: !Ref Stage
-      Auth:
-        ResourcePolicy:
-          CustomStatements:
-            - Effect: Allow
-              Principal: '*'
-              Action: execute-api:Invoke
-              Resource:
-                - !Sub execute-api:/${Stage}/POST/bff-api/*
-                - !Sub execute-api:/${Stage}/GET/bff-api/*
-              Condition:
-                StringEquals:
-                  aws:SourceVpce: !ImportValue
-                    Fn::Sub: ${StackPrefix}-PrivateAPIVPCEndpoint-ID
+
 # IAM Role for API Gateway Account
   APIGatewayRole:
     Type: AWS::IAM::Role
@@ -379,6 +378,15 @@ Resources:
       ResourceGroupName: !Ref ApplicationResourceGroup
       AutoConfigurationEnabled: 'true'
 Outputs:
+  BffAPI:
+    Description: API Gateway endpoint URL for Bff
+    Value: !Sub https://${BffApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/bff-api/v1/
+  BffFunction:
+    Description: Bff Lambda Function ARN
+    Value: !GetAtt BffFunction.Arn
+  BffFunctionDeploymentGroup:
+    Description: Bff Lambda Function DeploymentGroup ARN
+    Value: !Ref BffFunctionDeploymentGroup
   HelloWorldAPI:
     Description: API Gateway endpoint URL for HelloWorld
     Value: !Sub https://${HelloApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/hello
@@ -413,15 +421,6 @@ Outputs:
   TodoFunctionDeploymentGroup:
     Description: Todo Lambda Function DeploymentGroup ARN
     Value: !Ref TodoFunctionDeploymentGroup
-  BffAPI:
-    Description: API Gateway endpoint URL for Bff
-    Value: !Sub https://${BffApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/bff-api/v1/
-  BffFunction:
-    Description: Bff Lambda Function ARN
-    Value: !GetAtt BffFunction.Arn
-  BffFunctionDeploymentGroup:
-    Description: Bff Lambda Function DeploymentGroup ARN
-    Value: !Ref BffFunctionDeploymentGroup
   TodoAsyncFunction:
     Description: Todo Async Lambda Function ARN
     Value: !GetAtt TodoAsyncFunction.Arn
