@@ -86,12 +86,20 @@ type ObjectStorageAccessor interface {
 	// なお、エラーが発生した時点で中断されるため、削除されないファイルが残る可能性があります。
 	DeleteFolder(bucketName string, folderPath string) error
 	// Copy は、オブジェクトストレージのオブジェクトを指定フォルダにコピーします。
-	// 例えば、objectKey = input/xxxx/hoge.txt、output= output とした場合、output/hoge.txtにコピーします。
+	// 例えば、objectKey = input/xxxx/hoge.txt、targetFolderPath= output とした場合、output/hoge.txtにコピーします。
 	Copy(bucketName string, objectKey string, targetFolderPath string) error
+	// CopyAcrossBuckets は、オブジェクトストレージのオブジェクトを指定の別のバケットのフォルダにコピーします。
+	// 例えば、bucketName = inputBucket、objectKey = input/xxxx/hoge.txt、
+	// targetBucketName = outputBucket、targetFolderPath= output とした場合、outputBucketのoutput/hoge.txtにコピーします。
+	CopyAcrossBuckets(bucketName string, objectKey string, targetBucketName string, targetFolderPath string) error
 	// CopyFolder は、オブジェクトストレージのフォルダごと指定フォルダにコピーします。
 	// nestedがtrueの場合、サブフォルダ含めてコピーします。falseの場合、直下のファイルのみコピーします。
 	// なお、エラーが発生した時点で中断されるため、途中までコピーされたファイルが残る可能性があります。
 	CopyFolder(bucketName string, srcFolderPath string, targetFolderPath string, nested bool) error
+	// CopyFolderAcrossBuckets は、オブジェクトストレージのフォルダごと指定の別のバケットのフォルダにコピーします。
+	// nestedがtrueの場合、サブフォルダ含めてコピーします。falseの場合、直下のファイルのみコピーします。
+	// なお、エラーが発生した時点で中断されるため、途中までコピーされたファイルが残る可能性があります。
+	CopyFolderAcrossBuckets(bucketName string, srcFolderPath string, targetBucketName string, targetFolderPath string, nested bool) error
 }
 
 // NewObjectStorageAccessor は、ObjectStorageAccessorを作成します。
@@ -170,32 +178,45 @@ func (a *defaultObjectStorageAccessor) List(bucketName string, folderPath string
 		Bucket: aws.String(bucketName),
 		Prefix: aws.String(folderPath),
 	}
-	output, err := a.s3Client.ListObjectsV2(apcontext.Context, input)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	token := output.NextContinuationToken
-	if token == nil {
-		return output.Contents, nil
-	}
-	// ページネーション処理
-	objects := output.Contents
-	for {
-		input := &s3.ListObjectsV2Input{
-			Bucket:            aws.String(bucketName),
-			Prefix:            aws.String(folderPath),
-			ContinuationToken: token,
+	paginator := s3.NewListObjectsV2Paginator(a.s3Client, input)
+
+	var objects []types.Object
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(apcontext.Context)
+		if err != nil {
+			return nil, errors.WithStack(err)
 		}
+		objects = append(objects, page.Contents...)
+	}
+
+	/*
 		output, err := a.s3Client.ListObjectsV2(apcontext.Context, input)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
-		objects = append(objects, output.Contents...)
-		token = output.NextContinuationToken
+		token := output.NextContinuationToken
 		if token == nil {
-			break
+			return output.Contents, nil
 		}
-	}
+		// ページネーション処理
+		objects := output.Contents
+		for {
+			input := &s3.ListObjectsV2Input{
+				Bucket:            aws.String(bucketName),
+				Prefix:            aws.String(folderPath),
+				ContinuationToken: token,
+			}
+			output, err := a.s3Client.ListObjectsV2(apcontext.Context, input)
+			if err != nil {
+				return nil, errors.WithStack(err)
+			}
+			objects = append(objects, output.Contents...)
+			token = output.NextContinuationToken
+			if token == nil {
+				break
+			}
+		}
+	*/
 	return objects, nil
 
 }
@@ -433,11 +454,17 @@ func (a *defaultObjectStorageAccessor) DeleteFolder(bucketName string, folderPat
 // Copy implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) Copy(bucketName string, objectKey string, targetFolderPath string) error {
 	a.log.Debug("Copy bucketName:%s, objectKey:%s, targetFolderPath:%s", bucketName, objectKey, targetFolderPath)
+	return a.CopyAcrossBuckets(bucketName, objectKey, bucketName, targetFolderPath)
+}
+
+// CopyAcrossBuckets implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) CopyAcrossBuckets(bucketName string, objectKey string, targetBucketName string, targetFolderPath string) error {
+	a.log.Debug("CopyAcrossBuckets bucketName:%s, objectKey:%s, targetBucketName:%s, targetFolderPath:%s", bucketName, objectKey, targetBucketName, targetFolderPath)
 	i := strings.LastIndex(objectKey, "/")
 	fileName := objectKey[i+1:]
 	a.log.Debug("fileName:%s", fileName)
 	input := &s3.CopyObjectInput{
-		Bucket:     aws.String(bucketName),
+		Bucket:     aws.String(targetBucketName),
 		CopySource: aws.String(encodeURL(fmt.Sprintf("%s/%s", bucketName, objectKey))),
 		Key:        aws.String(fmt.Sprintf("%s/%s", targetFolderPath, fileName)),
 	}
@@ -448,15 +475,22 @@ func (a *defaultObjectStorageAccessor) Copy(bucketName string, objectKey string,
 	return nil
 }
 
-// encodeURL は、パスをURLエンコードします。
-func encodeURL(uri string) string {
-	return url.PathEscape(uri)
-}
-
 // CopyFolder implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) CopyFolder(bucketName string, srcFolderPath string, targetFolderPath string, nested bool) error {
 	a.log.Debug("CopyFolder bucketName:%s, srcFolderPath:%s, targetFolderPath:%s, nested:%v", bucketName, srcFolderPath, targetFolderPath, nested)
+	return a.CopyFolderAcrossBuckets(bucketName, srcFolderPath, bucketName, targetFolderPath, nested)
+}
+
+// CopyFolderAcrossBuckets implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) CopyFolderAcrossBuckets(bucketName string, srcFolderPath string, targetBucketName string, targetFolderPath string, nested bool) error {
+	a.log.Debug("CopyFolderAcrossBuckets bucketName:%s, srcFolderPath:%s, targetBucketName:%s, targetFolderPath:%s, nested:%v", bucketName, srcFolderPath, targetBucketName, targetFolderPath, nested)
 	srcFolderPath = strings.Trim(srcFolderPath, "/")
+	targetFolderPath = strings.Trim(targetFolderPath, "/")
+	// コピー元とコピー先が同じ場合は何もしない
+	if bucketName == targetBucketName && srcFolderPath == targetFolderPath {
+		return nil
+	}
+
 	// コピー元フォルダに存在するオブジェクトを取得
 	objects, err := a.List(bucketName, srcFolderPath)
 	if err != nil {
@@ -470,15 +504,21 @@ func (a *defaultObjectStorageAccessor) CopyFolder(bucketName string, srcFolderPa
 		// nestedならすべてコピーする
 		// nestedでないなら直下のファイルのみ（lastPathに"/"が含まれていない）コピーする
 		if nested || !strings.Contains(lastPath, "/") {
-			// サブフォルダの場合は、フォルダ名を付与してコピーする
-			i := strings.LastIndex(lastPath, "/")
-			var actualTargetFolderName string
-			if i > 0 {
-				actualTargetFolderName = targetFolderPath + lastPath[:i]
+			if *object.Size == 0 && strings.HasSuffix(*object.Key, "/") {
+				// サイズが0でキーがスラッシュで終わる場合はフォルダなので、サイズ0のファイルを作成し空フォルダのコピーも行う
+				err = a.Upload(targetBucketName, targetFolderPath+lastPath, []byte{})
 			} else {
-				actualTargetFolderName = targetFolderPath
+				i := strings.LastIndex(lastPath, "/")
+				var actualTargetFolderName string
+				if i > 0 {
+					// （スラッシュを含むので）サブフォルダの場合は、サブフォルダ名を付与
+					actualTargetFolderName = targetFolderPath + lastPath[:i]
+				} else {
+					// （スラッシュを含まないので）サブフォルダがない場合は、引数のフォルダ名をそのまま使用
+					actualTargetFolderName = targetFolderPath
+				}
+				err = a.CopyAcrossBuckets(bucketName, *object.Key, targetBucketName, actualTargetFolderName)
 			}
-			err = a.Copy(bucketName, *object.Key, actualTargetFolderName)
 			if err != nil {
 				return err
 			}
@@ -486,4 +526,9 @@ func (a *defaultObjectStorageAccessor) CopyFolder(bucketName string, srcFolderPa
 		}
 	}
 	return nil
+}
+
+// encodeURL は、パスをURLエンコードします。
+func encodeURL(uri string) string {
+	return url.PathEscape(uri)
 }
