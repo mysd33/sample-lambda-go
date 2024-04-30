@@ -506,6 +506,7 @@ func (a *defaultObjectStorageAccessor) CopyFolderAcrossBuckets(bucketName string
 		if nested || !strings.Contains(lastPath, "/") {
 			if *object.Size == 0 && strings.HasSuffix(*object.Key, "/") {
 				// サイズが0でキーがスラッシュで終わる場合はフォルダなので、サイズ0のファイルを作成し空フォルダのコピーも行う
+				a.log.Debug("Create empty folder. targetBucketName:%s, targetFolderPath:%s", targetBucketName, targetFolderPath+lastPath)
 				err = a.Upload(targetBucketName, targetFolderPath+lastPath, []byte{})
 			} else {
 				i := strings.LastIndex(lastPath, "/")

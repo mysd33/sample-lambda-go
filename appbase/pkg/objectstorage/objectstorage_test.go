@@ -4,16 +4,16 @@ objectstorage パッケージは、オブジェクトストレージを扱うた
 
 package objectstorage
 
-//TODO: S3アクセスの挙動を実験するときに使用した仮のテストなのでコメントアウト
+// TODO: S3アクセスの挙動を実験するときに使用した仮のテストなのでコメントアウト
 /*
 func Test_defaultObjectStorageAccessor_List(t *testing.T) {
-	bucketName := "samplebucket123"
-	//bucketName := "mysd33bucket123"
+	//bucketName := "samplebucket123"
+	bucketName := "mysd33bucket123"
 	myCfg := config.NewTestConfig(map[string]string{
-		"S3_LOCAL_ENDPOINT": "http://host.docker.internal:9000",
+		//	"S3_LOCAL_ENDPOINT": "http://host.docker.internal:9000",
 	})
 	messageSource, _ := message.NewMessageSource()
-	logger, _ := logging.NewLogger(messageSource, myCfg)
+	logger, _ := logging.NewLogger(messageSource)
 	objectStorageAccessor, _ := NewObjectStorageAccessor(
 		myCfg,
 		logger,
@@ -55,7 +55,8 @@ func Test_defaultObjectStorageAccessor_List(t *testing.T) {
 			//}
 		})
 	}
-}*/
+}
+*/
 
 /*
 func Test_defaultObjectStorageAccessor_ExistsObject(t *testing.T) {
@@ -152,15 +153,15 @@ func Test_defaultObjectStorageAccessor_UploadFromReader(t *testing.T) {
 
 /*
 func Test_defaultObjectStorageAccessor_Copy(t *testing.T) {
-	bucketName := "samplebucket123"
-	//bucketName := "mysd33bucket123"
+	//bucketName := "samplebucket123"
+	bucketName := "mysd33bucket123"
 
 	myCfg := config.NewTestConfig(map[string]string{
-		"S3_LOCAL_ENDPOINT": "http://host.docker.internal:9000",
+		//	"S3_LOCAL_ENDPOINT": "http://host.docker.internal:9000",
 	})
 
 	messageSource, _ := message.NewMessageSource()
-	logger, _ := logging.NewLogger(messageSource, myCfg)
+	logger, _ := logging.NewLogger(messageSource)
 	objectStorageAccessor, _ := NewObjectStorageAccessor(
 		myCfg,
 		logger,
@@ -198,12 +199,12 @@ func Test_defaultObjectStorageAccessor_Copy(t *testing.T) {
 /*
 func Test_defaultObjectStorageAccessor_CopyFolder(t *testing.T) {
 	bucketName := "samplebucket123"
-	bucketName := "mysd33bucket123"
+	//bucketName := "mysd33bucket123"
 	myCfg := config.NewTestConfig(map[string]string{
 		"S3_LOCAL_ENDPOINT": "http://host.docker.internal:9000",
 	})
 	messageSource, _ := message.NewMessageSource()
-	logger, _ := logging.NewLogger(messageSource, myCfg)
+	logger, _ := logging.NewLogger(messageSource)
 	objectStorageAccessor, _ := NewObjectStorageAccessor(
 		myCfg,
 		logger,
