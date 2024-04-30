@@ -416,7 +416,6 @@ aws cloudformation delete-stack --stack-name Demo-IAM-Stack
 ```
 
 ## 19. CloudWatch Logsのロググループ削除
-* マネージドコンソールからCloudWatchのロググループを削除する。
 
 ```
 aws logs delete-log-group --log-group-name /aws/apigateway/welcome
