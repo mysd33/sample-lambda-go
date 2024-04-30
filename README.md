@@ -344,7 +344,7 @@ curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Mil
 
 ```
 
-## 16. AppConfingの設定変更＆デプロイ
+## 17. AppConfingの設定変更＆デプロイ
 * cfn-appconfig-hosted-deploy.yaml内のホスト化された設定の内容を修正
 ```yaml
   AppConfigHostedConfigurationVersion:
@@ -381,7 +381,7 @@ aws cloudformation update-stack --stack-name Demo-AppConfigHostedDeploy-Stack --
 {"level":"info","ts":1699780051.3576484,"caller":"service/user_service.go:39","msg":"hoge_name=foo2"}
 ```
 
-## 17. AWSリソースの削除
+## 18. AWSリソースの削除
 * AppConfig Deploymentリソースの削除
 ```sh
 aws cloudformation delete-stack --stack-name Demo-AppConfigSMDeploy-Stack
@@ -415,7 +415,7 @@ aws cloudformation delete-stack --stack-name Demo-VPC-Stack
 aws cloudformation delete-stack --stack-name Demo-IAM-Stack 
 ```
 
-## 18. CloudWatch Logsのロググループ削除
+## 19. CloudWatch Logsのロググループ削除
 * マネージドコンソールからCloudWatchのロググループを削除する。
 
 ```
