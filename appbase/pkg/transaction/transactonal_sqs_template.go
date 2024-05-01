@@ -142,7 +142,10 @@ func (t *defaultTransactionalSQSTemplate) newSendMessageInputToFIFOQueueWithDedu
 		return nil, errors.WithStack(err)
 	}
 	// メッセージ重複排除IDの作成
-	msgDeduplicationId := t.id.GenerateUUID()
+	msgDeduplicationId, err := t.id.GenerateUUID()
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 	input := &sqs.SendMessageInput{
 		MessageBody:            aws.String(string(byteMessage)),
 		MessageGroupId:         aws.String(msgGroupId),

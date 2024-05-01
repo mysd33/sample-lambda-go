@@ -5,13 +5,14 @@ package id
 
 import (
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"github.com/teris-io/shortid"
 )
 
 // IDGenerator は、ID生成機能を提供するインターフェースです。
 type IDGenerator interface {
 	// GenerateUUID は、UUIDでIDを採番します。
-	GenerateUUID() string
+	GenerateUUID() (string, error)
 	// GenerateShortID は、ShortIDでIDを採番します。
 	GenerateShortID() string
 }
@@ -25,12 +26,12 @@ func NewIDGenerator() IDGenerator {
 }
 
 // GenerateUUID implements IDGenerator.
-func (*defaultIDGenerator) GenerateUUID() string {
+func (*defaultIDGenerator) GenerateUUID() (string, error) {
 	uuidObj, err := uuid.NewUUID()
 	if err != nil {
-		panic(err)
+		errors.WithStack(err)
 	}
-	return uuidObj.String()
+	return uuidObj.String(), nil
 }
 
 // GenerateShortID implements IDGenerator.

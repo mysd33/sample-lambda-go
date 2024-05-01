@@ -39,12 +39,15 @@ func TestRegister(t *testing.T) {
 	messageSource, _ := message.NewMessageSource()
 	// テスト用のConfigを作成
 	cfg := config.NewTestConfig(map[string]string{"hoge_name": "fuga"})
-	log, _ := logging.NewLogger(messageSource)
+	log, err := logging.NewLogger(messageSource)
+	assert.NoError(t, err)
 
 	//RepsitoryのMockへの入力値と戻り値の設定
 	mockRepository := new(MockUserRepository)
 	mockInputValue := entity.User{Name: inputUserName}
-	uuid := id.NewIDGenerator().GenerateUUID()
+	uuid, err := id.NewIDGenerator().GenerateUUID()
+	assert.NoError(t, err)
+
 	mockReturnValue := entity.User{ID: uuid, Name: expectedName}
 	mockRepository.On("CreateOne", &mockInputValue).Return(&mockReturnValue, nil)
 	var repository repository.UserRepository = mockRepository
