@@ -64,9 +64,9 @@ func NewLogger(messageSource message.MessageSource) (Logger, error) {
 		// 開発環境の場合
 		config = zap.NewDevelopmentConfig()
 	}
-	// TODO: 出力先を標準出力（バッファリング）に設定するか検討
-	// config.OutputPaths = []string{"stdout"}
-	// config.ErrorOutputPaths = []string{"stdout"}
+	// 出力先を標準出力（バッファリング）に設定
+	config.OutputPaths = []string{"stdout"}
+	config.ErrorOutputPaths = []string{"stdout"}
 
 	// 個別にログレベルが設定されている場合はログレベル上書き
 	if level, found := os.LookupEnv(LOG_LEVEL_NAME); found {
@@ -80,6 +80,8 @@ func NewLogger(messageSource message.MessageSource) (Logger, error) {
 			config.Encoding = format
 		}
 	}
+	// ログのスタックトレースを無効化
+	config.DisableStacktrace = true
 	// ZapのLoggerをラップしているため、ログの呼び出し階層を調整
 	z, err := config.Build(zap.AddCallerSkip(1))
 	if err != nil {
