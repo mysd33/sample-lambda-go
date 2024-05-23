@@ -358,5 +358,5 @@ func createMessageRegisterer(queueMessageItemRepository transaction.QueueMessage
 }
 
 func createValidationManager(logger logging.Logger) validator.ValidationManager {
-	return validator.NewValidationManager(logger.Debug)
+	return validator.NewValidationManager(logger.Debug, logger.Warn)
 }

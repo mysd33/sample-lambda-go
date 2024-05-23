@@ -4,6 +4,7 @@ package validator
 import (
 	"reflect"
 
+	"example.com/appbase/pkg/message"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/locales/ja"
 	ut "github.com/go-playground/universal-translator"
@@ -21,17 +22,22 @@ var Translator ut.Translator
 // LogDebug は、デバッグログを出力する関数です。
 type LogDebug func(template string, args ...any)
 
+// LogWarn は、警告ログを出力する関数です。
+type LogWarn func(code string, args ...any)
+
 // ValidatorM
 type ValidationManager interface {
 	// AddCustomValidatorはカスタムバリデータを追加します。
 	AddCustomValidator(tag string, customValidatorFunc validator.Func)
 }
 
+// defaultValidationManager は、ValidationManagerのデフォルト実装です。
 type defaultValidationManager struct {
 	logDebug LogDebug
+	logWarn  LogWarn
 }
 
-func NewValidationManager(logDebug LogDebug) ValidationManager {
+func NewValidationManager(logDebug LogDebug, logWarn LogWarn) ValidationManager {
 	// 参考
 	// https://github.com/go-playground/validator/blob/master/_examples/translations/main.go
 
@@ -43,9 +49,9 @@ func NewValidationManager(logDebug LogDebug) ValidationManager {
 		uni = ut.New(ja, ja)
 		trans, found := uni.GetTranslator("ja")
 		if found {
-			logDebug("Translatorが見つかりました")
+			logDebug("Validator用のTranslatorが見つかりました")
 		} else {
-			logDebug("Translatorが見つかりません")
+			logWarn(message.W_FW_8005)
 		}
 		ja_translations.RegisterDefaultTranslations(v, trans)
 		Translator = trans
@@ -61,6 +67,7 @@ func NewValidationManager(logDebug LogDebug) ValidationManager {
 	}
 	return &defaultValidationManager{
 		logDebug: logDebug,
+		logWarn:  logWarn,
 	}
 }
 
