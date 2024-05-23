@@ -104,9 +104,10 @@ Globals:
     DeploymentPreference:
       #Type: Linear10PercentEvery1Minute
       Type: AllAtOnce
-    # AppConfig Extensions Lambda Layer    
     Layers:
+      # AppConfig Extensions Lambda Layer    
       - !FindInMap [AppConfigExtentionsLayerMap, !Ref AWS::Region , x86]
+      # Lambda Insights Extensions Lambda Layer    
       - !FindInMap [LambdaInsightsExtensionsLayerMap, !Ref AWS::Region , x86]
   Api:
     OpenApiVersion: 3.0.3
