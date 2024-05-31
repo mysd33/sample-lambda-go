@@ -19,7 +19,10 @@ Parameters:
 
 Resources: 
   AppConfigHostedConfigurationVersion:
-    Type: AWS::AppConfig::HostedConfigurationVersion
+    Type: AWS::AppConfig::HostedConfigurationVersion    
+    # If you want to leave an older version, please uncomment it. (UpdateReplacePolicy: Retain)
+    # But removes the old physical resource from CloudFormation's scope.
+    #UpdateReplacePolicy: Retain
     Properties:
       ApplicationId:
         Fn::ImportValue: !Sub ${StackPrefix}-AppConfigApplicationID
