@@ -36,6 +36,10 @@ const (
 	S3_DOWNLOAD_CONCURRENCY        = "S3_DOWNLOAD_CONCURRENCY"
 )
 
+// デフォルトのurl.QueryEscape関数の挙動を変えるためのReplacer
+// 「+」を「%20」に変換し、「%2」Fを「/」に戻す
+var r = strings.NewReplacer("+", "%20", "%2F", "/")
+
 // ObjectStorageAccessor は、オブジェクトストレージへアクセスするためのインタフェースです。
 type ObjectStorageAccessor interface {
 	// Listは、フォルダ配下のオブジェクトストレージのオブジェクト一覧を取得します。
@@ -529,7 +533,7 @@ func (a *defaultObjectStorageAccessor) CopyFolderAcrossBuckets(bucketName string
 	return nil
 }
 
-// encodeURL は、パスをURLエンコードします。
+// encodeURL は、「/」以外をRFC3986に基づくURLエンコードします。
 func encodeURL(uri string) string {
-	return url.PathEscape(uri)
+	return r.Replace(url.QueryEscape(uri))
 }
