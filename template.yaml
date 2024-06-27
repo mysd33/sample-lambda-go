@@ -45,6 +45,9 @@ Parameters:
     Type: String
 #    Default: INFO
     Default: DEBUG
+  LogRetensionInDays:
+    Type: Number
+    Default: 7
 Mappings:
   AppConfigExtentionsLayerMap:
     #Tokyo
@@ -334,38 +337,38 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /aws/apigateway/accesslog/${AWS::StackName}
-      RetentionInDays: 7
+      RetentionInDays: !Ref LogRetensionInDays
 # Lambda Log group
   HelloWorldFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /aws/lambda/${HelloWorldFunctionName}
-      RetentionInDays: 7
+      RetentionInDays: !Ref LogRetensionInDays
   UsersFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /aws/lambda/${UsersFunctionName}
-      RetentionInDays: 7
+      RetentionInDays: !Ref LogRetensionInDays
   TodoFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /aws/lambda/${TodoFunctionName}
-      RetentionInDays: 7
+      RetentionInDays: !Ref LogRetensionInDays
   BffFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /aws/lambda/${BffFunctionName}
-      RetentionInDays: 7
+      RetentionInDays: !Ref LogRetensionInDays
   TodoAsyncFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /aws/lambda/${TodoAsyncFunctionName}
-      RetentionInDays: 7
+      RetentionInDays: !Ref LogRetensionInDays
   TodoAsyncFifoFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub /aws/lambda/${TodoAsyncFifoFunctionName}
-      RetentionInDays: 7      
+      RetentionInDays: !Ref LogRetensionInDays 
 # Application Insights
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
