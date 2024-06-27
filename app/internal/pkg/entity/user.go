@@ -15,7 +15,7 @@ type User struct {
 }
 
 // GetKey DynamoDBのキー情報を取得します。
-unc (user User) GetKey() (map[string]types.AttributeValue, error) {
+func (user User) GetKey() (map[string]types.AttributeValue, error) {
 	id, err := attributevalue.Marshal(user.ID)
 	if err != nil {
 		return nil, err
