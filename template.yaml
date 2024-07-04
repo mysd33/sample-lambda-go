@@ -48,25 +48,12 @@ Parameters:
   LogRetensionInDays:
     Type: Number
     Default: 7
-Mappings:
-  AppConfigExtentionsLayerMap:
-    #Tokyo
-    ap-northeast-1:
-      x86: arn:aws:lambda:ap-northeast-1:980059726660:layer:AWS-AppConfig-Extension:98           
-      arm: arn:aws:lambda:ap-northeast-1:980059726660:layer:AWS-AppConfig-Extension-Arm64:51           
-    #Osaka
-    ap-northeast-3:
-      x86: arn:aws:lambda:ap-northeast-3:706869817123:layer:AWS-AppConfig-Extension:101           
-      arm: arn:aws:lambda:ap-northeast-3:706869817123:layer:AWS-AppConfig-Extension-Arm64:16
-  LambdaInsightsExtensionsLayerMap:
-    #Tokyo
-    ap-northeast-1:
-      x86: arn:aws:lambda:ap-northeast-1:580247275435:layer:LambdaInsightsExtension:72    
-      arm: arn:aws:lambda:ap-northeast-1:580247275435:layer:LambdaInsightsExtension-Arm64:23
-    #Osaka
-    ap-northeast-3:
-      x86: arn:aws:lambda:ap-northeast-3:194566237122:layer:LambdaInsightsExtension:26
-      arm: arn:aws:lambda:ap-northeast-3:194566237122:layer:LambdaInsightsExtension-Arm64:9   
+  AppConfigLayerArn:
+    Type: String
+    Default: arn:aws:lambda:ap-northeast-1:980059726660:layer:AWS-AppConfig-Extension:98
+  LambdaInsightsLayerArn:
+    Type: String
+    Default: arn:aws:lambda:ap-northeast-1:580247275435:layer:LambdaInsightsExtension:80    
 Conditions:
   TracingEnabled: !Equals
     - !Ref TracingValue
@@ -109,9 +96,9 @@ Globals:
       Type: AllAtOnce
     Layers:
       # AppConfig Extensions Lambda Layer    
-      - !FindInMap [AppConfigExtentionsLayerMap, !Ref AWS::Region , x86]
+      - !Ref AppConfigLayerArn
       # Lambda Insights Extensions Lambda Layer    
-      - !FindInMap [LambdaInsightsExtensionsLayerMap, !Ref AWS::Region , x86]
+      - !Ref LambdaInsightsLayerArn
   Api:
     OpenApiVersion: 3.0.3
     TracingEnabled: !If [TracingEnabled , true, false]
