@@ -26,18 +26,18 @@ type viperConfig struct {
 
 // NewViperConfig は、設定ファイルをロードし、viperConfigを作成します。
 func newViperConfig(log logging.Logger) (Config, error) {
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
+	viper.SetConfigName(fmt.Sprintf("config-%s", strings.ToLower(env.GetEnv())))
+	viper.SetConfigType("yml")
 	if configBasePath, found := os.LookupEnv(CONFIG_BASE_PATH_NAME); found {
 		// 環境変数の定義があればそれをベースパスとしてのConfigを読み取る
-		viper.AddConfigPath(fmt.Sprintf("%s/%s/", strings.TrimRight(configBasePath, "/"), strings.ToLower(env.GetEnv())))
+		viper.AddConfigPath(fmt.Sprintf("%s/", strings.TrimRight(configBasePath, "/")))
 	} else if env.IsLocalTest() {
 		// テストコード実行の場合、テストコードからの相対パスに変更
 		// 環境ごとのConfigを読み取る
-		viper.AddConfigPath(fmt.Sprintf("../../../configs/%s/", strings.ToLower(env.GetEnv())))
+		viper.AddConfigPath("../../../configs/")
 	} else {
 		// 環境ごとのConfigを読み取る
-		viper.AddConfigPath(fmt.Sprintf("configs/%s/", strings.ToLower(env.GetEnv())))
+		viper.AddConfigPath("configs/")
 	}
 	// 環境変数がすでに指定されてる場合はそちらを優先させる
 	viper.AutomaticEnv()
