@@ -75,6 +75,7 @@ type DynamoDBAccessor interface {
 	BatchWriteItemSdk(input *dynamodb.BatchWriteItemInput) (*dynamodb.BatchWriteItemOutput, error)
 }
 
+// NewDynamoDBAccessor は、DynamoDBAccessor を作成します。
 func NewDynamoDBAccessor(log logging.Logger, myCfg myConfig.Config) (DynamoDBAccessor, error) {
 	dynamodbClient, err := CreateDynamoDBClient(myCfg)
 	if err != nil {
@@ -83,6 +84,7 @@ func NewDynamoDBAccessor(log logging.Logger, myCfg myConfig.Config) (DynamoDBAcc
 	return &defaultDynamoDBAccessor{log: log, config: myCfg, dynamodbClient: dynamodbClient}, nil
 }
 
+// defaultDynamoDBAccessor は、DynamoDBAccessor のデフォルト実装です。
 type defaultDynamoDBAccessor struct {
 	log            logging.Logger
 	config         myConfig.Config
