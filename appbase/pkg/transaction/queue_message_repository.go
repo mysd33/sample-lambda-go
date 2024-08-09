@@ -12,9 +12,8 @@ import (
 	"github.com/cockroachdb/errors"
 )
 
-const (
-	QUEUE_MESSAGE_TABLE_NAME = "QUEUE_MESSAGE_TABLE_NAME"
-)
+// キューメッセージ管理テーブル名のプロパティ名
+const QUEUE_MESSAGE_TABLE_NAME = "QUEUE_MESSAGE_TABLE_NAME"
 
 // QueueMessageItemRepository は、キューメッセージ管理テーブルのリポジトリインタフェースです。
 type QueueMessageItemRepository interface {
