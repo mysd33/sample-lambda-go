@@ -1,6 +1,9 @@
+/*
+entity パッケージは、キューメッセージ管理テーブルに関連するエンティティを提供します。
+*/
 package entity
 
-// QueueMessageItem は、QueueMessageテーブルのアイテムを表す構造体です。
+// QueueMessageItem は、キューメッセージ管理テーブルのアイテムを表す構造体です。
 type QueueMessageItem struct {
 	MessageId  string `dynamodbav:"message_id"`
 	DeleteTime int    `dynamodbav:"delete_time"`
