@@ -103,8 +103,6 @@ func (r *defaultIdempotencyRepository) CreateOne(idempotencyItem *entity.Idempot
 		return errors.Wrap(err, "CreateOneで構造体をAttributeValueのMap変換時にエラー")
 	}
 
-	// TODO: DynamoDBTemplate化して呼び出すようにしたい
-
 	input := &dynamodb.PutItemInput{
 		TableName:           aws.String(string(r.tableName)),
 		Item:                attributes,
