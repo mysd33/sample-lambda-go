@@ -1,6 +1,6 @@
 module example.com/appbase
 
-go 1.21
+go 1.22.6
 
 require (
 	github.com/aws/aws-lambda-go v1.41.0

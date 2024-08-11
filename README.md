@@ -63,7 +63,8 @@
 	            * pp.12-13
 
 ## 事前準備
-* ローカル環境に、Go、AWS CLI、AWS SAM CLI、Docker環境が必要
+* ローカル環境に、Go、AWS CLI、AWS SAM CLI、Docker環境が必要です。
+    * Goのバージョンは1.22.6を使用しています。
 
 ## 1. IAMの作成
 ```sh

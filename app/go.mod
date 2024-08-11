@@ -1,6 +1,6 @@
 module app
 
-go 1.21
+go 1.22.6
 
 replace example.com/appbase => ../appbase
 
