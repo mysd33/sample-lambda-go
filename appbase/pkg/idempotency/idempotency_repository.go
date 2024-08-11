@@ -49,6 +49,7 @@ func NewIdempotencyRepository(log logging.Logger, dynamodbAccessor mydynamodb.Dy
 	primaryKey := tables.GetPrimaryKey(tableName)
 	return &defaultIdempotencyRepository{
 		log:              log,
+		dynamodbAccessor: dynamodbAccessor,
 		dynamodbTemplate: dynamodbTemplate,
 		dateManager:      dateManager,
 		tableName:        tableName,
