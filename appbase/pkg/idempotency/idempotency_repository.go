@@ -115,39 +115,6 @@ func (r *defaultIdempotencyRepository) CreateOne(idempotencyItem *entity.Idempot
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 	}
-
-	/*
-		// 以下の条件のいずれかが満たされた場合は、新しいアイテムを作成する
-		// 1. idempotencyKeyが存在しない
-		idempotencyKeyNotExist := "attribute_not_exists(#idempotencyKey)"
-		// 2. アイテムの有効期限（TTL）expiryが過ぎている
-		idempotencyExpiryExpired := "#expiry < :now"
-		// 3. ステータスが処理中のアイテムの処理中状態の有効期限が過ぎている
-		inprogressExpiryExpired := "#status = :inprogress AND attribute_exists(#inprogressExpiry) AND #inprogressExpiry < :nowInMillis"
-		conditionExpression := fmt.Sprintf("(%s) OR (%s) OR (%s)", idempotencyKeyNotExist, idempotencyExpiryExpired, inprogressExpiryExpired)
-
-		attributes, err := attributevalue.MarshalMap(idempotencyItem)
-		if err != nil {
-			return errors.Wrap(err, "CreateOneで構造体をAttributeValueのMap変換時にエラー")
-		}
-
-		input := &dynamodb.PutItemInput{
-			TableName:           aws.String(string(r.tableName)),
-			Item:                attributes,
-			ConditionExpression: aws.String(conditionExpression),
-			ExpressionAttributeNames: map[string]string{
-				"#idempotencyKey":   r.primaryKey.PartitionKey,
-				"#expiry":           mytables.EXPIRY,
-				"#inprogressExpiry": mytables.INPROGRESS_EXPIRY,
-				"#status":           mytables.STATUS,
-			},
-			ExpressionAttributeValues: map[string]types.AttributeValue{
-				":now":         &types.AttributeValueMemberN{Value: strconv.FormatInt(now.Unix(), 10)},
-				":nowInMillis": &types.AttributeValueMemberN{Value: strconv.FormatInt(now.UnixNano()/int64(time.Millisecond), 10)},
-				":inprogress":  &types.AttributeValueMemberS{Value: mytables.STATUS_INPROGRESS},
-			},
-		}
-	*/
 	_, err = r.dynamodbAccessor.PutItemSdk(input)
 	if err != nil {
 		var condErr *types.ConditionalCheckFailedException
@@ -157,7 +124,6 @@ func (r *defaultIdempotencyRepository) CreateOne(idempotencyItem *entity.Idempot
 		return errors.Wrap(err, "CreateOneで登録実行時エラー")
 	}
 	return nil
-
 }
 
 // UpdateOne implements DuplicationCheckRepository.

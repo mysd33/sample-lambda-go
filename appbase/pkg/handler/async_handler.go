@@ -141,7 +141,7 @@ func (h *AsyncLambdaHandler) doHandle(sqsMsg events.SQSMessage, response events.
 		h.log.Debug("処理済のメッセージです。[QueueName: %s, MessageId: %s]", queueName, messageId)
 	}
 	// Contextに非同期処理情報を格納
-	err = h.addAsyncInfoToContext(sqsMsg, isFIFO)
+	err = h.addAsyncInfoToContext(sqsMsg)
 	if err != nil {
 		return err
 	}
@@ -199,7 +199,7 @@ func (h *AsyncLambdaHandler) checkMessageId(sqsMsg events.SQSMessage) (string, e
 }
 
 // addAsyncInfoToContext は、非同期処理情報をContextに格納します。
-func (h *AsyncLambdaHandler) addAsyncInfoToContext(sqsMsg events.SQSMessage, isFIFO bool) error {
+func (h *AsyncLambdaHandler) addAsyncInfoToContext(sqsMsg events.SQSMessage) error {
 	// メッセージ削除時間を設定
 	deleteTime, err := strconv.Atoi(*sqsMsg.MessageAttributes[constant.QUEUE_MESSAGE_DELETE_TIME_NAME].StringValue)
 	if err != nil {
