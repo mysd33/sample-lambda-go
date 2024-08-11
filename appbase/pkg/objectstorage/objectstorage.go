@@ -52,20 +52,20 @@ type ObjectStorageAccessor interface {
 	GetMetadata(bucketName string, objectKey string) (*s3.HeadObjectOutput, error)
 	// Upload は、オブジェクトストレージへbyteスライスのデータをアップロードします。
 	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行いますが、オンメモリのためあまり大きなサイズは推奨されないメソッドです。
-	Upload(bucketName string, objectKey string, objectBody []byte) error
+	Upload(bucketName string, objectKey string, objectBody []byte) (*manager.UploadOutput, error)
 	// UploadWithOwnerFullControl は、 bucket-owner-full-controlのACLを付与しオブジェクトストレージへbyteスライスのデータをアップロードします。
 	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行いますが、オンメモリのためあまり大きなサイズは推奨されないメソッドです。
 	//（使用しないが参考実装）
-	UploadWithOwnerFullControl(bucketName string, objectKey string, objectBody []byte) error
+	UploadWithOwnerFullControl(bucketName string, objectKey string, objectBody []byte) (*manager.UploadOutput, error)
 	// UploadString は、オブジェクトストレージへ文字列のデータをアップロードします。
-	UploadString(bucketName string, objectKey string, objectBody string) error
+	UploadString(bucketName string, objectKey string, objectBody string) (*manager.UploadOutput, error)
 	// UploadFromReader は、オブジェクトストレージへReaderから読み込んだデータをアップロードします。
 	// readerは、クローズは、呼び出し元にて行う必要があります。
 	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行います。
-	UploadFromReader(bucketName string, objectKey string, reader io.Reader) error
+	UploadFromReader(bucketName string, objectKey string, reader io.Reader) (*manager.UploadOutput, error)
 	// UploadFile は、オブジェクトストレージへローカルファイルをアップロードします。
 	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行います。
-	UploadFile(bucketName string, objectKey string, filePath string) error
+	UploadFile(bucketName string, objectKey string, filePath string) (*manager.UploadOutput, error)
 	// ReadAt は、オブジェクトストレージから指定のオフセットからバイトスライス分読み込みます。
 	// io.ReaderAtと似たインタフェースを提供しています。
 	ReadAt(bucketName string, objectKey string, p []byte, offset int64) (int, error)
@@ -265,14 +265,14 @@ func (a *defaultObjectStorageAccessor) GetMetadata(bucketName string, objectKey 
 }
 
 // Upload implements ObjectStorageAccessor.
-func (a *defaultObjectStorageAccessor) Upload(bucketName string, objectKey string, objectBody []byte) error {
+func (a *defaultObjectStorageAccessor) Upload(bucketName string, objectKey string, objectBody []byte) (*manager.UploadOutput, error) {
 	a.log.Debug("Upload bucketName:%s, objectKey:%s", bucketName, objectKey)
 	reader := bytes.NewReader(objectBody)
 	return a.UploadFromReader(bucketName, objectKey, reader)
 }
 
 // UploadWithOwnerFullControl implements ObjectStorageAccessor.
-func (a *defaultObjectStorageAccessor) UploadWithOwnerFullControl(bucketName string, objectKey string, objectBody []byte) error {
+func (a *defaultObjectStorageAccessor) UploadWithOwnerFullControl(bucketName string, objectKey string, objectBody []byte) (*manager.UploadOutput, error) {
 	a.log.Debug("UPloadWithOwnerFullControl bucketName:%s, objectKey:%s", bucketName, objectKey)
 	reader := bytes.NewReader(objectBody)
 	input := &s3.PutObjectInput{
@@ -281,21 +281,21 @@ func (a *defaultObjectStorageAccessor) UploadWithOwnerFullControl(bucketName str
 		Body:   reader,
 		ACL:    types.ObjectCannedACLBucketOwnerFullControl,
 	}
-	_, err := a.uploader.Upload(apcontext.Context, input)
+	uploadOutput, err := a.uploader.Upload(apcontext.Context, input)
 	if err != nil {
-		return errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
-	return nil
+	return uploadOutput, nil
 }
 
 // UploadString implements ObjectStorageAccessor.
-func (a *defaultObjectStorageAccessor) UploadString(bucketName string, objectKey string, objectBody string) error {
+func (a *defaultObjectStorageAccessor) UploadString(bucketName string, objectKey string, objectBody string) (*manager.UploadOutput, error) {
 	a.log.Debug("UploadFromString bucketName:%s, objectKey:%s", bucketName, objectKey)
 	return a.Upload(bucketName, objectKey, []byte(objectBody))
 }
 
 // UploadFromReader implements ObjectStorageAccessor.
-func (a *defaultObjectStorageAccessor) UploadFromReader(bucketName string, objectKey string, reader io.Reader) error {
+func (a *defaultObjectStorageAccessor) UploadFromReader(bucketName string, objectKey string, reader io.Reader) (*manager.UploadOutput, error) {
 	a.log.Debug("UploadFromReader bucketName:%s, objectKey:%s", bucketName, objectKey)
 	input := &s3.PutObjectInput{
 		Bucket: aws.String(bucketName),
@@ -303,19 +303,19 @@ func (a *defaultObjectStorageAccessor) UploadFromReader(bucketName string, objec
 		Body:   reader,
 	}
 	// https://aws.github.io/aws-sdk-go-v2/docs/sdk-utilities/s3/
-	_, err := a.uploader.Upload(apcontext.Context, input)
+	uploadOutput, err := a.uploader.Upload(apcontext.Context, input)
 	if err != nil {
-		return errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
-	return nil
+	return uploadOutput, nil
 }
 
 // UploadFile implements ObjectStorageAccessor.
-func (a *defaultObjectStorageAccessor) UploadFile(bucketName string, objectKey string, filePath string) error {
+func (a *defaultObjectStorageAccessor) UploadFile(bucketName string, objectKey string, filePath string) (*manager.UploadOutput, error) {
 	a.log.Debug("UploadFromFile bucketName:%s, objectKey:%s, filePath:%s", bucketName, objectKey, filePath)
 	f, err := os.Open(filePath)
 	if err != nil {
-		return errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 	defer f.Close()
 	return a.UploadFromReader(bucketName, objectKey, f)
@@ -511,7 +511,7 @@ func (a *defaultObjectStorageAccessor) CopyFolderAcrossBuckets(bucketName string
 			if *object.Size == 0 && strings.HasSuffix(*object.Key, "/") {
 				// サイズが0でキーがスラッシュで終わる場合はフォルダなので、サイズ0のファイルを作成し空フォルダのコピーも行う
 				a.log.Debug("Create empty folder. targetBucketName:%s, targetFolderPath:%s", targetBucketName, targetFolderPath+lastPath)
-				err = a.Upload(targetBucketName, targetFolderPath+lastPath, []byte{})
+				_, err = a.Upload(targetBucketName, targetFolderPath+lastPath, []byte{})
 			} else {
 				i := strings.LastIndex(lastPath, "/")
 				var actualTargetFolderName string

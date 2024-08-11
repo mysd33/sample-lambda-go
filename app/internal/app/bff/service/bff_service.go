@@ -158,7 +158,7 @@ func (bs *bffServiceImpl) registerTemp(todoTitles []string) (*entity.Temp, error
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	objectKey := fmt.Sprintf(tempFilePath, fileName)
-	err = bs.obectStorageAccessor.Upload(bucketName, objectKey, byteMessage)
+	_, err = bs.obectStorageAccessor.Upload(bucketName, objectKey, byteMessage)
 	if err != nil {
 		// TODO: エラー処理
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
