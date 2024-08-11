@@ -4,8 +4,6 @@ idempotency パッケージは、イベントの重複によるLambdaの二重�
 package idempotency
 
 import (
-	"fmt"
-	"strconv"
 	"time"
 
 	"example.com/appbase/pkg/config"
@@ -16,10 +14,11 @@ import (
 	"example.com/appbase/pkg/idempotency/entity"
 	mytables "example.com/appbase/pkg/idempotency/tables"
 	"example.com/appbase/pkg/logging"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/cockroachdb/errors"
 )
 
@@ -91,34 +90,63 @@ func (r *defaultIdempotencyRepository) CreateOne(idempotencyItem *entity.Idempot
 	now := r.dateManager.GetSystemDate()
 	// 以下の条件のいずれかが満たされた場合は、新しいアイテムを作成する
 	// 1. idempotencyKeyが存在しない
-	idempotencyKeyNotExist := "attribute_not_exists(#idempotencyKey)"
+	idempotencyKeyNotExistExpr := expression.AttributeNotExists(expression.Name(mytables.IDEMPOTENCY_KEY))
 	// 2. アイテムの有効期限（TTL）expiryが過ぎている
-	idempotencyExpiryExpired := "#expiry < :now"
+	idempotencyExpiryExpiredExpr := expression.Name(mytables.EXPIRY).LessThan(expression.Value(now.Unix()))
 	// 3. ステータスが処理中のアイテムの処理中状態の有効期限が過ぎている
-	inprogressExpiryExpired := "#status = :inprogress AND attribute_not_exists(#inprogressExpiry) AND #inprogressExpiry < :nowInMillis"
-	conditionExpression := fmt.Sprintf("(%s) OR (%s) OR (%s)", idempotencyKeyNotExist, idempotencyExpiryExpired, inprogressExpiryExpired)
-
+	inprogressExpiryExpiredExpr := expression.Name(mytables.STATUS).Equal(expression.Value(mytables.STATUS_INPROGRESS)).
+		And(expression.AttributeExists(expression.Name(mytables.INPROGRESS_EXPIRY))).
+		And(expression.Name(mytables.INPROGRESS_EXPIRY).LessThan(expression.Value(now.UnixNano() / int64(time.Millisecond))))
+	// 1、2、 3の条件をORで結合
+	conditionExpressionExpr := expression.Or(idempotencyKeyNotExistExpr, idempotencyExpiryExpiredExpr, inprogressExpiryExpiredExpr)
+	expr, err := expression.NewBuilder().WithCondition(conditionExpressionExpr).Build()
+	if err != nil {
+		return errors.Wrap(err, "CreateOneでConditionExpressionの構築時にエラー")
+	}
 	attributes, err := attributevalue.MarshalMap(idempotencyItem)
 	if err != nil {
 		return errors.Wrap(err, "CreateOneで構造体をAttributeValueのMap変換時にエラー")
 	}
-
 	input := &dynamodb.PutItemInput{
-		TableName:           aws.String(string(r.tableName)),
-		Item:                attributes,
-		ConditionExpression: aws.String(conditionExpression),
-		ExpressionAttributeNames: map[string]string{
-			"#idempotencyKey":   r.primaryKey.PartitionKey,
-			"#expiry":           mytables.EXPIRY,
-			"#inprogressExpiry": mytables.INPROGRESS_EXPIRY,
-			"#status":           mytables.STATUS,
-		},
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":now":         &types.AttributeValueMemberN{Value: strconv.FormatInt(now.Unix(), 10)},
-			":nowInMillis": &types.AttributeValueMemberN{Value: strconv.FormatInt(now.UnixNano()/int64(time.Millisecond), 10)},
-			":inprogress":  &types.AttributeValueMemberS{Value: mytables.STATUS_INPROGRESS},
-		},
+		TableName:                 aws.String(string(r.tableName)),
+		Item:                      attributes,
+		ConditionExpression:       expr.Condition(),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
 	}
+
+	/*
+		// 以下の条件のいずれかが満たされた場合は、新しいアイテムを作成する
+		// 1. idempotencyKeyが存在しない
+		idempotencyKeyNotExist := "attribute_not_exists(#idempotencyKey)"
+		// 2. アイテムの有効期限（TTL）expiryが過ぎている
+		idempotencyExpiryExpired := "#expiry < :now"
+		// 3. ステータスが処理中のアイテムの処理中状態の有効期限が過ぎている
+		inprogressExpiryExpired := "#status = :inprogress AND attribute_exists(#inprogressExpiry) AND #inprogressExpiry < :nowInMillis"
+		conditionExpression := fmt.Sprintf("(%s) OR (%s) OR (%s)", idempotencyKeyNotExist, idempotencyExpiryExpired, inprogressExpiryExpired)
+
+		attributes, err := attributevalue.MarshalMap(idempotencyItem)
+		if err != nil {
+			return errors.Wrap(err, "CreateOneで構造体をAttributeValueのMap変換時にエラー")
+		}
+
+		input := &dynamodb.PutItemInput{
+			TableName:           aws.String(string(r.tableName)),
+			Item:                attributes,
+			ConditionExpression: aws.String(conditionExpression),
+			ExpressionAttributeNames: map[string]string{
+				"#idempotencyKey":   r.primaryKey.PartitionKey,
+				"#expiry":           mytables.EXPIRY,
+				"#inprogressExpiry": mytables.INPROGRESS_EXPIRY,
+				"#status":           mytables.STATUS,
+			},
+			ExpressionAttributeValues: map[string]types.AttributeValue{
+				":now":         &types.AttributeValueMemberN{Value: strconv.FormatInt(now.Unix(), 10)},
+				":nowInMillis": &types.AttributeValueMemberN{Value: strconv.FormatInt(now.UnixNano()/int64(time.Millisecond), 10)},
+				":inprogress":  &types.AttributeValueMemberS{Value: mytables.STATUS_INPROGRESS},
+			},
+		}
+	*/
 	_, err = r.dynamodbAccessor.PutItemSdk(input)
 	if err != nil {
 		var condErr *types.ConditionalCheckFailedException
@@ -128,6 +156,7 @@ func (r *defaultIdempotencyRepository) CreateOne(idempotencyItem *entity.Idempot
 		return errors.Wrap(err, "CreateOneで登録実行時エラー")
 	}
 	return nil
+
 }
 
 // UpdateOne implements DuplicationCheckRepository.

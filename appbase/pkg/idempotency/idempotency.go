@@ -131,7 +131,7 @@ func (i *defaultIdempotencyManager) saveIdempotencyInprogress(idempotencyKey str
 	expiry := i.getExpiry()
 	// 処理中状態の有効期限を取得
 	remainingTimeInMilis := i.getRemainingTimeInMillis()
-	inprogressExpiry := i.getInprogressExpiry(remainingTimeInMilis)
+	inprogressExpiry := i.getInprogressExpiryInMillis(remainingTimeInMilis)
 
 	item := &entity.IdempotencyItem{
 		IdempotencyKey:   idempotencyKey,
@@ -147,7 +147,7 @@ func (i *defaultIdempotencyManager) saveIdempotencyInprogress(idempotencyKey str
 	return nil
 }
 
-// updateIdempotencyItemComplete は、冪等性の管理情報を完了状態で保存します。
+// updateIdempotencyItemComplete は、冪等性の管理情報を完了状態に更新します。
 func (i *defaultIdempotencyManager) updateIdempotencyItemComplete(idempotencyKey string) error {
 	// 有効期限を取得
 	expiry := i.getExpiry()
@@ -185,8 +185,8 @@ func (i *defaultIdempotencyManager) getExpiry() int64 {
 	return expiry
 }
 
-// getInprogressExpiry は、Lambdaの残り処理時間remainingTimeInMillisをもとに処理中状態の有効期限を取得します。
-func (i *defaultIdempotencyManager) getInprogressExpiry(remainingTimeInMillis int64) int64 {
+// getInprogressExpiryInMillis は、Lambdaの残り処理時間remainingTimeInMillisをもとに処理中状態の有効期限をミリ秒で取得します。
+func (i *defaultIdempotencyManager) getInprogressExpiryInMillis(remainingTimeInMillis int64) int64 {
 	var expiry int64
 	now := i.dateManager.GetSystemDate()
 	if remainingTimeInMillis > 0 {
@@ -200,7 +200,7 @@ func (i *defaultIdempotencyManager) getInprogressExpiry(remainingTimeInMillis in
 	return expiry
 }
 
-// getRemainingTimeInMillis は、Lambdaの残り処理時間を取得します。
+// getRemainingTimeInMillis は、Lambdaの残り処理時間をミリ秒で取得します。
 func (i *defaultIdempotencyManager) getRemainingTimeInMillis() int64 {
 	ctx := apcontext.Context
 	if ctx == nil {
