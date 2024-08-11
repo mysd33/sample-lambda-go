@@ -8,9 +8,11 @@ import (
 	"example.com/appbase/pkg/async"
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/date"
+	"example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/handler"
 	"example.com/appbase/pkg/httpclient"
 	"example.com/appbase/pkg/id"
+	"example.com/appbase/pkg/idempotency"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
 	"example.com/appbase/pkg/objectstorage"
@@ -62,6 +64,8 @@ type ApplicationContext interface {
 	GetValidationManager() validator.ValidationManager
 	// GetDateManager は、日付管理機能のインタフェースDateManagerを取得します。
 	GetDateManager() date.DateManager
+	// GetIdempotencyManager は、二重実行防止（冪等性）機能のインタフェースIdempotencyManagerを取得します。
+	GetIdempotencyManager() idempotency.IdempotencyManager
 }
 
 // NewApplicationContext は、デフォルトのApplicationContextを作成します。
@@ -90,6 +94,8 @@ func NewApplicationContext() ApplicationContext {
 	asyncLambdaHandler := createAsyncLambdaHandler(config, logger, queueMessageItemRepository)
 	simpleLambdaHandler := createSimpleLambdaHandler(config, logger)
 	validationManager := createValidationManager(logger)
+	idempotencyRepository := createIdempotencyRepository(logger, dynamodbAccessor, dynamoDBTempalte, dateManager, config)
+	idempotencyManager := createIdempotencyManager(logger, dateManager, config, idempotencyRepository)
 
 	return &defaultApplicationContext{
 		id:                                  id,
@@ -112,6 +118,7 @@ func NewApplicationContext() ApplicationContext {
 		asyncLambdaHandler:                  asyncLambdaHandler,
 		simpleLambdaHandler:                 simpleLambdaHandler,
 		validationManager:                   validationManager,
+		idempotencyManager:                  idempotencyManager,
 	}
 }
 
@@ -136,6 +143,7 @@ type defaultApplicationContext struct {
 	asyncLambdaHandler                  *handler.AsyncLambdaHandler
 	simpleLambdaHandler                 *handler.SimpleLambdaHandler
 	validationManager                   validator.ValidationManager
+	idempotencyManager                  idempotency.IdempotencyManager
 }
 
 // GetIDGenerator implements ApplicationContext.
@@ -236,6 +244,11 @@ func (ac *defaultApplicationContext) GetSimpleLambdaHandler() *handler.SimpleLam
 // GetValidationManager implements ApplicationContext.
 func (ac *defaultApplicationContext) GetValidationManager() validator.ValidationManager {
 	return ac.validationManager
+}
+
+// GetIdempotencyManager implements ApplicationContext.
+func (ac *defaultApplicationContext) GetIdempotencyManager() idempotency.IdempotencyManager {
+	return ac.idempotencyManager
 }
 
 func createIDGenerator() id.IDGenerator {
@@ -359,4 +372,14 @@ func createMessageRegisterer(queueMessageItemRepository transaction.QueueMessage
 
 func createValidationManager(logger logging.Logger) validator.ValidationManager {
 	return validator.NewValidationManager(logger.Debug, logger.Warn)
+}
+
+func createIdempotencyRepository(log logging.Logger, dynamodbAccessor dynamodb.DynamoDBAccessor,
+	dynamodbTemplate dynamodb.DynamoDBTemplate, dateManager date.DateManager, config config.Config) idempotency.IdempotencyRepository {
+	return idempotency.NewIdempotencyRepository(log, dynamodbAccessor, dynamodbTemplate, dateManager, config)
+}
+
+func createIdempotencyManager(log logging.Logger, dateManager date.DateManager,
+	config config.Config, repository idempotency.IdempotencyRepository) idempotency.IdempotencyManager {
+	return idempotency.NewIdempotencyManager(log, dateManager, config, repository)
 }

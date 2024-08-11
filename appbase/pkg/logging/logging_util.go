@@ -11,11 +11,14 @@ func LogError(log Logger, err error) {
 		validationError *errors.ValidationError
 		businessErrors  *errors.BusinessErrors
 		systemError     *errors.SystemError
+		otherError      *errors.OtherError
 	)
 	if errors.As(err, &validationError) {
 		log.WarnWithCodableError(validationError)
 	} else if errors.As(err, &businessErrors) {
 		log.WarnWithMultiCodableError(businessErrors)
+	} else if errors.As(err, &otherError) {
+		log.WarnWithCodableError(otherError)
 	} else if errors.As(err, &systemError) {
 		log.ErrorWithCodableError(systemError)
 	} else {

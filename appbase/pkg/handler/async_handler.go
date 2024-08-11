@@ -13,6 +13,7 @@ import (
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/constant"
+	"example.com/appbase/pkg/idempotency"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
 	"example.com/appbase/pkg/transaction"
@@ -90,6 +91,14 @@ func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQS
 			// SQSのメッセージを1件取得しコントローラを呼び出し
 			err := h.doHandle(v, response, isFIFO, asyncControllerFunc)
 			if err != nil {
+				if errors.Is(err, idempotency.CompletedProcessIdempotencyError) {
+					// 二重実行防止（冪等性）機能で、二重実行エラーを検知した場合、
+					// 完了済処理の場合は、正常終了としてスキップし次のメッセージを継続処理する。
+					continue
+					// なお、実行中の処理の二重実行エラーを検知をした場合は、その後実行中の処理が失敗する可能性があるため、
+					// 再試行できるようにSQSのキューからメッセージを削除しないようにするため、
+					// BatchItemFailuresにメッセージIDを追加するルートへ進む。
+				}
 				// 部分的なバッチで一部処理失敗した場合は、エラーは返却しない
 				// 失敗したメッセージ以降のメッセージIDをBatchItemFailuresに登録
 				// https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting

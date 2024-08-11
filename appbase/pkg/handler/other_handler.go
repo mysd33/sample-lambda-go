@@ -8,8 +8,15 @@ import (
 
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/config"
+	"example.com/appbase/pkg/idempotency"
 	"example.com/appbase/pkg/logging"
 	"github.com/cockroachdb/errors"
+)
+
+const (
+	// 当該機能により二重実行検知した場合に、当該ハンドラによるLambdaの戻り値を設定
+	// 当該機能を使ったLambdaを実行し、StepFunctionsで定義したフロー上で重複エラーを判定できるようにする
+	IDEMPOTENCCY_RESPONSE_NAME = "idempotency_check"
 )
 
 // SimpleLambdaHandlerFunc は、その他のトリガのLambdaのハンドラを表す関数です。
@@ -63,6 +70,23 @@ func (h *SimpleLambdaHandler) Handle(simpleControllerFunc SimpleControllerFunc) 
 		h.log.AddInfo("AWS RequestID", lc.AwsRequestID)
 
 		response, resultErr = simpleControllerFunc(ctx, event)
+		if resultErr != nil {
+			if errors.Is(resultErr, idempotency.CompletedProcessIdempotencyError) || errors.Is(resultErr, idempotency.InprogressProcessIdempotencyError) {
+				// 二重実行防止（冪等性）機能で、業務のController側で未ハンドリングの二重実行エラーを検知した場合は、
+				// （実行中、実行済の処理かに関わらず）エラーをnilにし、正常終了とする
+				// DynamoDBStreamsやKinesisDataStreams等、SimpleLambdaHandlerを使ったイベントソースマッピングのトリガに関しては、
+				// 業務側のControllerで、エラーをハンドハンドリングしておく必要があるので注意すること。
+				// ReportBatchItemFailuresによる一部再実行を行う場合は、業務側のControllerで、二重実行エラーが発生したレコードのIDをBatchItemFailuresに設定する
+				// ReportBatchItemFailuresを使わない場合は、業務側のControllerで、別のエラー原因となるOtherErrorを返却し、再実行可能な配慮を行う
+				resultErr = nil
+				// 当該機能の結果を表す戻り値を設定しておくことで、
+				// StepFunctionsで、当該機能を使ったLambdaを実行した場合に、フロー上で戻り値をもとに二重実行を判定できるようにしている
+				response = map[string]any{
+					IDEMPOTENCCY_RESPONSE_NAME: true,
+				}
+			}
+		}
+
 		return
 	}
 }

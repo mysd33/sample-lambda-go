@@ -25,7 +25,7 @@ func initBiz(ac component.ApplicationContext) handler.AsyncControllerFunc {
 	// サービスの作成
 	todoAsyncService := service.New(ac.GetLogger(), ac.GetConfig(), ac.GetObjectStorageAccessor(), tempRepository, todoRepository)
 	// コントローラの作成
-	controller := controller.New(ac.GetLogger(), ac.GetDynamoDBTransactionManager(), todoAsyncService)
+	controller := controller.New(ac.GetLogger(), ac.GetIdempotencyManager(), ac.GetDynamoDBTransactionManager(), todoAsyncService)
 	// ハンドラインタセプタの取得
 	interceptor := ac.GetInterceptor()
 	// ハンドラインタセプタ経由でコントローラのメソッドを呼び出し
