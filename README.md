@@ -682,7 +682,7 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
 * ソフトウェアフレームワーク機能によるプロパティファイル（configs/config-（プロファイル名）.yml）または、AppConfigのホスト化された設定によりが可能
     * AWSSDK_CLIENT_LOG_MODEに、カンマ区切りでログモードを指定することで、ログの出力を制御できる
 
-* config-（プロファイル名）.ymlでの設定例
+* config-（プロファイル名）.yamlでの設定例
 ```yaml
 AWSSDK_CLIENT_LOG_MODE: "LogSigning,LogRetries,LogRequestWithBody,LogResponseWithBody,LogDeprecatedUsage,LogRequestEventMessage,LogResponseEventMessage"
 ```

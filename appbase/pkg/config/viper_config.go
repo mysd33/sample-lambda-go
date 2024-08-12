@@ -27,7 +27,7 @@ type viperConfig struct {
 // NewViperConfig は、設定ファイルをロードし、viperConfigを作成します。
 func newViperConfig(log logging.Logger) (Config, error) {
 	viper.SetConfigName(fmt.Sprintf("config-%s", strings.ToLower(env.GetEnv())))
-	viper.SetConfigType("yml")
+	viper.SetConfigType("yaml")
 	if configBasePath, found := os.LookupEnv(CONFIG_BASE_PATH_NAME); found {
 		// 環境変数の定義があればそれをベースパスとしてのConfigを読み取る
 		viper.AddConfigPath(fmt.Sprintf("%s/", strings.TrimRight(configBasePath, "/")))
