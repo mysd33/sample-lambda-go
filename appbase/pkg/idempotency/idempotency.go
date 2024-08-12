@@ -19,10 +19,10 @@ import (
 )
 
 const (
-	// 冪等性管理テーブルにごみの処理中のアイテムが残ってしまった場合の有効期間のプロパティ名
-	IDEMPOTENCY_INPROGRESS_EXPIRES_IN_SECOUNDS_NAME = "IDEMPOTENCY_INPROGRESS_EXPIRES_IN_SECOUNDS"
-	// 冪等性管理テーブルにごみの処理中のアイテムが残ってしまった場合のデフォルトの有効期間（1時間）
-	DEFAULT_EXPIRES_IN_SECOUNDS = 60 * 60
+	// 冪等性管理テーブルにアイテムの有効期間（TTL）のプロパティ名
+	IDEMPOTENCY_TTL_SECOUND = "IDEMPOTENCY_TTL_SECOUND"
+	// 冪等性管理テーブルにアイテムの有効期間（TTL）のデフォルト値（1時間=3600秒）
+	DEFAULT_IDEMPOTENCY_TTL_SECOUND = 60 * 60
 )
 
 // 二重実行防止チェック時に発生したエラー
@@ -178,7 +178,7 @@ func (i *defaultIdempotencyManager) deleteIdempotencyItem(idempotencyKey string)
 func (i *defaultIdempotencyManager) getExpiry() int64 {
 	now := i.dateManager.GetSystemDate()
 
-	expiresAfterSeconds := i.config.GetInt(IDEMPOTENCY_INPROGRESS_EXPIRES_IN_SECOUNDS_NAME, DEFAULT_EXPIRES_IN_SECOUNDS)
+	expiresAfterSeconds := i.config.GetInt(IDEMPOTENCY_TTL_SECOUND, DEFAULT_IDEMPOTENCY_TTL_SECOUND)
 	period := time.Duration(expiresAfterSeconds) * time.Second
 	expiry := now.Add(period).Unix()
 	i.log.Debug("有効期限: %ds", expiry)

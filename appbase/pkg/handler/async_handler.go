@@ -137,8 +137,8 @@ func (h *AsyncLambdaHandler) doHandle(sqsMsg events.SQSMessage, response events.
 		return err
 	}
 	if status == constant.QUEUE_MESSAGE_STATUS_COMPLETE {
-		// 二重実行防止はidempotencyパッケージの機能で行うこととし、デバッグログのみ出力
-		h.log.Debug("処理済のメッセージです。[QueueName: %s, MessageId: %s]", queueName, messageId)
+		// 二重実行防止は、業務APでidempotencyパッケージを使って実装することとし、ここでは警告ログ出力するのみとする
+		h.log.Warn(message.W_FW_8008, queueName, messageId)
 	}
 	// Contextに非同期処理情報を格納
 	err = h.addAsyncInfoToContext(sqsMsg)
