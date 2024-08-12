@@ -86,6 +86,8 @@ type ObjectStorageAccessor interface {
 	DownloadToFile(bucketName string, objectKey string, filePath string) error
 	// Delele は、オブジェクトストレージからデータを削除します。
 	Delele(bucketName string, objectKey string) error
+	// DeleteByVersionId は、オブジェクトストレージから特定のバージョンのデータを削除します。
+	DeleteByVersionId(bucketName string, objectKey string, versionId string) error
 	// DeleteFolder は、オブジェクトストレージのフォルダごと削除します。
 	// なお、エラーが発生した時点で中断されるため、削除されないファイルが残る可能性があります。
 	DeleteFolder(bucketName string, folderPath string) error
@@ -430,6 +432,21 @@ func (a *defaultObjectStorageAccessor) Delele(bucketName string, objectKey strin
 	input := &s3.DeleteObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
+	}
+	_, err := a.s3Client.DeleteObject(apcontext.Context, input)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
+}
+
+// DeleteByVersionId implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) DeleteByVersionId(bucketName string, objectKey string, versionId string) error {
+	a.log.Debug("DeleteByVersionId bucketName:%s, objectKey:%s, versionId:%s", bucketName, objectKey, versionId)
+	input := &s3.DeleteObjectInput{
+		Bucket:    aws.String(bucketName),
+		Key:       aws.String(objectKey),
+		VersionId: aws.String(versionId),
 	}
 	_, err := a.s3Client.DeleteObject(apcontext.Context, input)
 	if err != nil {
