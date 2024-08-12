@@ -15,6 +15,9 @@ Parameters:
   QueueMessageTableName:
     Type: String
     Default: queue_message
+  IdempotencyTableName:
+    Type: String
+    Default: idempotency
 
 #Mappings: 
 
@@ -70,6 +73,21 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: delete_time
         Enabled: true
+  IdempotencyTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref IdempotencyTableName
+      KeySchema:
+        - AttributeName: idempotency_key
+          KeyType:  HASH
+      AttributeDefinitions:
+        - AttributeName: idempotency_key
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      TimeToLiveSpecification:
+        AttributeName: expiry
+        Enabled: true
+
 
 
 #Outputs:
