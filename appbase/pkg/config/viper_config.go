@@ -16,7 +16,14 @@ import (
 )
 
 const (
-	CONFIG_BASE_PATH_NAME = "CONFIG_BASE_PATH"
+	CONFIG_BASE_PATH_NAME = "CONFIG_BASE_PATH" // 設定ファイルのパスを明示的に指定する場合のOS環境変数名
+)
+
+const (
+	configFileName  = "config-%s"         // 設定ファイル名
+	extension       = "yaml"              // 設定ファイルの拡張子
+	configsPath     = "configs/"          // 設定ファイルのパス
+	testConfigsPath = "../../../configs/" // 処理テスト実行時の設定ファイルのパス
 )
 
 // viperConfigは、spf13/viperによるConfig実装です。
@@ -26,18 +33,18 @@ type viperConfig struct {
 
 // NewViperConfig は、設定ファイルをロードし、viperConfigを作成します。
 func newViperConfig(log logging.Logger) (Config, error) {
-	viper.SetConfigName(fmt.Sprintf("config-%s", strings.ToLower(env.GetEnv())))
-	viper.SetConfigType("yaml")
+	viper.SetConfigName(fmt.Sprintf(configFileName, strings.ToLower(env.GetEnv())))
+	viper.SetConfigType(extension)
 	if configBasePath, found := os.LookupEnv(CONFIG_BASE_PATH_NAME); found {
 		// 環境変数の定義があればそれをベースパスとしてのConfigを読み取る
 		viper.AddConfigPath(fmt.Sprintf("%s/", strings.TrimRight(configBasePath, "/")))
 	} else if env.IsLocalTest() {
 		// テストコード実行の場合、テストコードからの相対パスに変更
 		// 環境ごとのConfigを読み取る
-		viper.AddConfigPath("../../../configs/")
+		viper.AddConfigPath(testConfigsPath)
 	} else {
 		// 環境ごとのConfigを読み取る
-		viper.AddConfigPath("configs/")
+		viper.AddConfigPath(configsPath)
 	}
 	// 環境変数がすでに指定されてる場合はそちらを優先させる
 	viper.AutomaticEnv()
