@@ -108,7 +108,11 @@ func loadAppConfigConfig(log logging.Logger) (map[string]string, error) {
 // loadHostedAppConfig は、AWS AppConfigからHosted Configurationの設定をロードします。
 func loadHostedAppConfig(log logging.Logger) (map[string]string, error) {
 	// Hosted Configurationのエンドポイントを環境変数から取得
-	hostedCfgUrl := os.Getenv(APPCONFIG_HOSTED_EXTENSION_URL_NAME)
+	hostedCfgUrl, ok := os.LookupEnv(APPCONFIG_HOSTED_EXTENSION_URL_NAME)
+	if !ok {
+		// 環境変数が設定されていない場合は、空で返す
+		return nil, nil
+	}
 	// AppConfig Lambda ExtensionsのエンドポイントへアクセスしてHosted Configurationの設定データを取得
 	response, err := http.Get(hostedCfgUrl)
 	if err != nil {
@@ -131,7 +135,11 @@ func loadHostedAppConfig(log logging.Logger) (map[string]string, error) {
 // loadSecretManagerConfig は、AWS AppConfigからSecretManagerの設定をロードします。
 func loadSecretManagerConfig(log logging.Logger) (map[string]string, error) {
 	// SecretManagerのエンドポイントを環境変数から取得
-	smCfgUrl := os.Getenv(APPCONFIG_SM_EXTENSION_URL_NAME)
+	smCfgUrl, ok := os.LookupEnv(APPCONFIG_SM_EXTENSION_URL_NAME)
+	if !ok {
+		// 環境変数が設定されていない場合は、空で返す
+		return nil, nil
+	}
 	// AppConfig Lambda ExtensionsのエンドポイントへアクセスしてSecretManagerの設定データを取得
 	response, err := http.Get(smCfgUrl)
 	if err != nil {
