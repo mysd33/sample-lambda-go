@@ -27,8 +27,12 @@ func (c *testConfig) Get(key string, defaultValue string) string {
 // GetIntWithContains implements Config.
 func (c *testConfig) GetIntWithContains(key string) (int, bool) {
 	value, found := c.GetWithContains(key)
-	// int変換に失敗した場合は、値が見つからなかったとしてfalseを返す
-	return returnIntValue(found, value)
+	result, err := convertIntValueIfFound(found, value)
+	if err != nil {
+		// int変換に失敗した場合は、値が見つからなかったとしてfalseを返す
+		return 0, false
+	}
+	return result, found
 }
 
 // GetInt implements Config.
@@ -40,8 +44,12 @@ func (c *testConfig) GetInt(key string, defaultValue int) int {
 // GetBoolWithContains implements Config.
 func (c *testConfig) GetBoolWithContains(key string) (bool, bool) {
 	value, found := c.GetWithContains(key)
-	// bool変換に失敗した場合は、値が見つからなかったとしてfalseを返す
-	return returnBoolValue(found, value)
+	result, err := convertBoolValueIfFound(found, value)
+	if err != nil {
+		// bool変換に失敗した場合は、値が見つからなかったとしてfalseを返す
+		return false, false
+	}
+	return result, found
 }
 
 // GetBool implements Config.

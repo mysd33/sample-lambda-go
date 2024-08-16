@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"example.com/appbase/pkg/logging"
+	"example.com/appbase/pkg/message"
 	"github.com/cockroachdb/errors"
 	"gopkg.in/yaml.v3"
 )
@@ -50,7 +51,13 @@ func (c *appConfigConfig) Get(key string, defaultValue string) string {
 // GetIntWithContains implements Config.
 func (c *appConfigConfig) GetIntWithContains(key string) (int, bool) {
 	value, found := c.GetWithContains(key)
-	return returnIntValue(found, value)
+	result, err := convertIntValueIfFound(found, value)
+	if err != nil {
+		c.log.WarnWithError(err, message.W_FW_8009, key, value)
+		// int変換に失敗した場合は、値が見つからなかったとしてfalseを返す
+		return 0, false
+	}
+	return result, found
 }
 
 // GetInt implements Config.
@@ -62,7 +69,13 @@ func (c *appConfigConfig) GetInt(key string, defaultValue int) int {
 // GetBoolWithContains implements Config.
 func (c *appConfigConfig) GetBoolWithContains(key string) (bool, bool) {
 	value, found := c.GetWithContains(key)
-	return returnBoolValue(found, value)
+	result, err := convertBoolValueIfFound(found, value)
+	if err != nil {
+		c.log.WarnWithError(err, message.W_FW_8010, key, value)
+		// bool変換に失敗した場合は、値が見つからなかったとしてfalseを返す
+		return false, false
+	}
+	return result, found
 }
 
 // GetBool implements Config.

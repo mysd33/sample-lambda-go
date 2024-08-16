@@ -8,6 +8,7 @@ import (
 
 	"example.com/appbase/pkg/env"
 	"example.com/appbase/pkg/logging"
+	"example.com/appbase/pkg/message"
 )
 
 // Config は、設定ファイルを管理するインターフェースです。
@@ -51,11 +52,15 @@ func NewConfig(log logging.Logger) (Config, error) {
 	}
 	cfgs = append(cfgs, vc)
 
-	return &compositeConfig{cfgs: cfgs}, nil
+	return &compositeConfig{
+		log:  log,
+		cfgs: cfgs,
+	}, nil
 }
 
 // compositeConfigは、複数のConfigをまとめたConfig実装です。
 type compositeConfig struct {
+	log  logging.Logger
 	cfgs []Config
 }
 
@@ -89,8 +94,13 @@ func (c *compositeConfig) Get(key string, defaultValue string) string {
 // GetIntWithContains implements Config.
 func (c *compositeConfig) GetIntWithContains(key string) (int, bool) {
 	value, found := c.GetWithContains(key)
-	// int変換に失敗した場合は、値が見つからなかったとしてfalseを返す
-	return returnIntValue(found, value)
+	result, err := convertIntValueIfFound(found, value)
+	if err != nil {
+		c.log.WarnWithError(err, message.W_FW_8009, key, value)
+		// int変換に失敗した場合は、値が見つからなかったとしてfalseを返す
+		return 0, false
+	}
+	return result, found
 }
 
 // GetInt implements Config.
@@ -102,8 +112,13 @@ func (c *compositeConfig) GetInt(key string, defaultValue int) int {
 // GetBoolWithContains implements Config.
 func (c *compositeConfig) GetBoolWithContains(key string) (bool, bool) {
 	value, found := c.GetWithContains(key)
-	// bool変換に失敗した場合は、値が見つからなかったとしてfalseを返す
-	return returnBoolValue(found, value)
+	result, err := convertBoolValueIfFound(found, value)
+	if err != nil {
+		c.log.WarnWithError(err, message.W_FW_8010, key, value)
+		// bool変換に失敗した場合は、値が見つからなかったとしてfalseを返す
+		return false, false
+	}
+	return result, found
 }
 
 // GetBool implements Config.
@@ -112,6 +127,7 @@ func (c *compositeConfig) GetBool(key string, defaultValue bool) bool {
 	return returnBoolValueIfFound(found, value, defaultValue)
 }
 
+// returnStringValueIfFound は、値が見つかった場合にその値を返し、見つからなかった場合にデフォルト値を返します。
 func returnStringValueIfFound(found bool, value string, defaultValue string) string {
 	if found {
 		return value
@@ -119,18 +135,20 @@ func returnStringValueIfFound(found bool, value string, defaultValue string) str
 	return defaultValue
 }
 
-func returnIntValue(found bool, value string) (int, bool) {
+// convertIntValueIfFound は、値が見つかった場合にその値をint型に変換して返します。見つらない場合はゼロ値(0)を返します。
+// int変換に失敗した場合はエラーを返します。
+func convertIntValueIfFound(found bool, value string) (int, error) {
 	if found {
 		intValue, err := strconv.Atoi(value)
 		if err != nil {
-
-			return 0, false
+			return 0, err
 		}
-		return intValue, true
+		return intValue, nil
 	}
-	return 0, false
+	return 0, nil
 }
 
+// returnIntValueIfFound は、値が見つかった場合にその値を返し、見つからなかった場合にデフォルト値を返します。
 func returnIntValueIfFound(found bool, value int, defaultValue int) int {
 	if found {
 		return value
@@ -138,17 +156,20 @@ func returnIntValueIfFound(found bool, value int, defaultValue int) int {
 	return defaultValue
 }
 
-func returnBoolValue(found bool, value string) (bool, bool) {
+// convertBoolValueIfFound は、値が見つかった場合にその値をbool型に変換して返します。見つらない場合はゼロ値(false)を返します。
+// bool変換に失敗した場合はエラーを返します。
+func convertBoolValueIfFound(found bool, value string) (bool, error) {
 	if found {
 		boolValue, err := strconv.ParseBool(value)
 		if err != nil {
-			return false, false
+			return false, err
 		}
-		return boolValue, true
+		return boolValue, nil
 	}
-	return false, false
+	return false, nil
 }
 
+// returnBoolValueIfFound は、値が見つかった場合にその値を返し、見つからなかった場合にデフォルト値を返します。
 func returnBoolValueIfFound(found bool, value bool, defaultValue bool) bool {
 	if found {
 		return value
