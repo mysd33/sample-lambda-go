@@ -12,12 +12,23 @@ import (
 
 // Config は、設定ファイルを管理するインターフェースです。
 type Config interface {
+	// GetWithContains は、指定されたキーの設定値をstring型で取得します。OKカンマイディオムにより、値が見つからなかった場合にfalseを返します。
 	GetWithContains(key string) (string, bool)
+	// Get は、指定されたキーの設定値をstring型で取得します。値が見つからなかった場合には、デフォルト値を返します。
 	Get(key string, defaultValue string) string
+	// GetIntWithContains は、指定されたキーの設定値をint型で取得します。OKカンマイディオムにより、値が見つからなかった場合にfalseを返します。
+	// int変換に失敗した場合もfalseを返します。
 	GetIntWithContains(key string) (int, bool)
+	// GetInt は、指定されたキーの設定値をint型で取得します。値が見つからなかった場合には、デフォルト値を返します。
+	// int変換に失敗した場合デフォルト値を返します。
 	GetInt(key string, defaultValue int) int
+	// GetBoolWithContains は、指定されたキーの設定値をbool型で取得します。OKカンマイディオムにより、値が見つからなかった場合にfalseを返します。
+	// bool変換に失敗した場合もfalseを返します。
 	GetBoolWithContains(key string) (bool, bool)
+	// GetBool は、指定されたキーの設定値をbool型で取得します。値が見つからなかった場合には、デフォルト値を返します。
+	// bool変換に失敗した場合デフォルト値を返します。
 	GetBool(key string, defaultValue bool) bool
+	// Reload は、設定の取得元よりを最新の設定を再読み込みします。
 	Reload() error
 }
 
