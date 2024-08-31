@@ -33,6 +33,7 @@ func requiredNotCodableError(cause error) {
 	}
 	var ve *ValidationError
 	var be *BusinessError
+	var bes *BusinessErrors
 	var se *SystemError
 	var oe *OtherError
 	// causeが、ValidationError、BusinessError、SystemErrorの場合は、
@@ -49,6 +50,12 @@ func requiredNotCodableError(cause error) {
 			panic(fmt.Sprintf("誤ってBusinessErrorを二重でラップしています:%+v", be))
 		}
 		log.Printf("誤ってBusinessErrorを二重でラップしています:%+v", be)
+	} else if errors.As(cause, &bes) {
+		if !env.IsProd() {
+			// 異常終了
+			panic(fmt.Sprintf("誤ってBusinessErrorsを二重でラップしています:%+v", bes))
+		}
+		log.Printf("誤ってBusinessErrorsを二重でラップしています:%+v", bes)
 	} else if errors.As(cause, &se) {
 		if !env.IsProd() {
 			// 異常終了
