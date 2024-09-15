@@ -1,4 +1,4 @@
-// entityのパッケージ
+// modelのパッケージ
 package model
 
 import (

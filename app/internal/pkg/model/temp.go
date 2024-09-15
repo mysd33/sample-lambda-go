@@ -1,4 +1,4 @@
-// entityのパッケージ
+// modelのパッケージ
 package model
 
 // Temp は、一時テーブルの構造体です。
