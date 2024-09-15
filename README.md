@@ -862,10 +862,9 @@ X-Amzn-Requestid: 1c53023f-b61b-424e-b665-62ca6cdf3f2a
     * 以下のようなログが出力されれば、▷ボタンを押下して、デバッグ可能
 
     ```
-    2024-09-16T08:42:42+09:00 info layer=debugger launching process with args: [/var/task/todo]
-    2024-09-16T08:42:46+09:00 debug layer=debugger Adding target 39 "/var/task/todo"
+    2024-09-16T08:57:15+09:00 info layer=debugger launching process with args: [/var/task/hello-world]
+    2024-09-16T08:57:16+09:00 debug layer=debugger Adding target 36 "/var/task/hello-world"    
     ```
-
 
 ![SAM Localのデバッグ画面](image/sam-local-debug.png)
 
