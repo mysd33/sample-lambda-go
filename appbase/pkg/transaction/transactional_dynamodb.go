@@ -30,16 +30,16 @@ type TransactionalDynamoDBAccessor interface {
 }
 
 // NewTransactionalDynamoDBAccessor は、TransactionalDynamoDBAccessorを作成します。
-func NewTransactionalDynamoDBAccessor(log logging.Logger, myCfg myConfig.Config) (TransactionalDynamoDBAccessor, error) {
-	dynamodbAccessor, err := myDynamoDB.NewDynamoDBAccessor(log, myCfg)
+func NewTransactionalDynamoDBAccessor(logger logging.Logger, myCfg myConfig.Config) (TransactionalDynamoDBAccessor, error) {
+	dynamodbAccessor, err := myDynamoDB.NewDynamoDBAccessor(logger, myCfg)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	return &defaultTransactionalDynamoDBAccessor{log: log, config: myCfg, dynamodbAccessor: dynamodbAccessor}, nil
+	return &defaultTransactionalDynamoDBAccessor{logger: logger, config: myCfg, dynamodbAccessor: dynamodbAccessor}, nil
 }
 
 type defaultTransactionalDynamoDBAccessor struct {
-	log              logging.Logger
+	logger           logging.Logger
 	config           myConfig.Config
 	dynamodbAccessor myDynamoDB.DynamoDBAccessor
 }
@@ -91,13 +91,13 @@ func (da *defaultTransactionalDynamoDBAccessor) BatchWriteItemSdk(input *dynamod
 
 // AppendTransactWriteItem implements TransactionalDynamoDBAccessor.
 func (da *defaultTransactionalDynamoDBAccessor) AppendTransactWriteItem(item *types.TransactWriteItem) error {
-	da.log.Debug("AppendTransactWriteItem")
+	da.logger.Debug("AppendTransactWriteItem")
 	return da.AppendTransactWriteItemWithContext(apcontext.Context, item)
 }
 
 // AppendTransactWriteItemWithContext implements TransactionalDynamoDBAccessor.
 func (da *defaultTransactionalDynamoDBAccessor) AppendTransactWriteItemWithContext(ctx context.Context, item *types.TransactWriteItem) error {
-	da.log.Debug("AppendTransactWriteItemWithContext")
+	da.logger.Debug("AppendTransactWriteItemWithContext")
 	value := ctx.Value(TRANSACTION_CTX_KEY)
 	if value == nil {
 		// TODO: エラー処理
@@ -114,7 +114,7 @@ func (da *defaultTransactionalDynamoDBAccessor) AppendTransactWriteItemWithConte
 
 // TransactWriteItemsSDK implements TransactionalDynamoDBAccessor.
 func (da *defaultTransactionalDynamoDBAccessor) TransactWriteItemsSDK(items []types.TransactWriteItem) (*dynamodb.TransactWriteItemsOutput, error) {
-	da.log.Debug("TransactWriteItemsSDK: %d件", len(items))
+	da.logger.Debug("TransactWriteItemsSDK: %d件", len(items))
 	input := &dynamodb.TransactWriteItemsInput{TransactItems: items}
 	if myDynamoDB.ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
@@ -125,9 +125,9 @@ func (da *defaultTransactionalDynamoDBAccessor) TransactWriteItemsSDK(items []ty
 		return nil, errors.WithStack(err)
 	}
 	if output.ConsumedCapacity != nil && len(output.ConsumedCapacity) > 0 {
-		da.log.Debug("消費キャパシティユニット: %d件", len(output.ConsumedCapacity))
+		da.logger.Debug("消費キャパシティユニット: %d件", len(output.ConsumedCapacity))
 		for i, v := range output.ConsumedCapacity {
-			da.log.Debug("TransactWriteItems(%d番目)[%s]消費キャパシティユニット:%f", i+1, *v.TableName, *v.CapacityUnits)
+			da.logger.Debug("TransactWriteItems(%d番目)[%s]消費キャパシティユニット:%f", i+1, *v.TableName, *v.CapacityUnits)
 		}
 	}
 	return output, nil

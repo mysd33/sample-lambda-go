@@ -21,11 +21,11 @@ const (
 
 // NewUserRepositoryForDynamoDB は、DynamoDB保存のためのUserRepository実装を作成します。
 func NewUserRepositoryForDynamoDB(accessor mydynamodb.DynamoDBAccessor,
-	log logging.Logger, config config.Config,
+	logger logging.Logger, config config.Config,
 	id id.IDGenerator) UserRepository {
 	return &UserRepositoryImplByDynamoDB{
 		accessor: accessor,
-		log:      log,
+		logger:   logger,
 		config:   config,
 		id:       id,
 	}
@@ -34,7 +34,7 @@ func NewUserRepositoryForDynamoDB(accessor mydynamodb.DynamoDBAccessor,
 // UserRepositoryImplByDynamoDB は、DynamoDB保存のためのUserRepository実装です。
 type UserRepositoryImplByDynamoDB struct {
 	accessor mydynamodb.DynamoDBAccessor
-	log      logging.Logger
+	logger   logging.Logger
 	config   config.Config
 	id       id.IDGenerator
 }

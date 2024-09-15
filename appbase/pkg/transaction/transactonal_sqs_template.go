@@ -21,10 +21,10 @@ const (
 )
 
 // NewSQSTemplateは、SQSTemplateを作成します。
-func NewSQSTemplate(log logging.Logger, config config.Config, id id.IDGenerator,
+func NewSQSTemplate(logger logging.Logger, config config.Config, id id.IDGenerator,
 	sqsAccessor TransactionalSQSAccessor) async.SQSTemplate {
 	return &defaultTransactionalSQSTemplate{
-		log:         log,
+		logger:      logger,
 		config:      config,
 		id:          id,
 		sqsAccessor: sqsAccessor,
@@ -33,7 +33,7 @@ func NewSQSTemplate(log logging.Logger, config config.Config, id id.IDGenerator,
 
 // defaultTransactionalSQSTemplateは、SQSTemplateの実装です。
 type defaultTransactionalSQSTemplate struct {
-	log         logging.Logger
+	logger      logging.Logger
 	config      config.Config
 	id          id.IDGenerator
 	sqsAccessor TransactionalSQSAccessor

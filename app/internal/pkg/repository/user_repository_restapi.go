@@ -18,13 +18,13 @@ const (
 )
 
 // NewUserRepositoryForRestAPI は、REST APIのためのUserRepository実装を作成します。
-func NewUserRepositoryForRestAPI(httpClient httpclient.HttpClient, log logging.Logger, config config.Config) UserRepository {
-	return &userRepositoryImplByRestAPI{httpClient: httpClient, log: log, config: config}
+func NewUserRepositoryForRestAPI(httpClient httpclient.HttpClient, logger logging.Logger, config config.Config) UserRepository {
+	return &userRepositoryImplByRestAPI{httpClient: httpClient, logger: logger, config: config}
 }
 
 type userRepositoryImplByRestAPI struct {
 	httpClient httpclient.HttpClient
-	log        logging.Logger
+	logger     logging.Logger
 	config     config.Config
 }
 
@@ -35,7 +35,7 @@ func (ur *userRepositoryImplByRestAPI) FindOne(userId string) (*entity.User, err
 		return nil, errors.NewSystemError(fmt.Errorf("USERS_API_BASE_URLがありません"), message.E_EX_9001)
 	}
 	url := fmt.Sprintf("%s/users-api/v1/users/%s", baseUrl, userId)
-	ur.log.Debug("url:%s", url)
+	ur.logger.Debug("url:%s", url)
 	// REST APIの呼び出し
 	response, err := ur.httpClient.Get(url, nil, nil)
 	if err != nil {
@@ -60,7 +60,7 @@ func (ur *userRepositoryImplByRestAPI) CreateOne(user *entity.User) (*entity.Use
 		return nil, errors.NewSystemError(fmt.Errorf("USERS_API_BASE_URLがありません"), message.E_EX_9001)
 	}
 	url := fmt.Sprintf("%s/users-api/v1/users", baseUrl)
-	ur.log.Debug("url:%s", url)
+	ur.logger.Debug("url:%s", url)
 	// リクエストデータをアンマーシャル
 	data, err := json.MarshalIndent(user, "", "    ")
 	if err != nil {

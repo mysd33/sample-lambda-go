@@ -6,7 +6,7 @@ package logging
 import "example.com/appbase/pkg/errors"
 
 // LogError は、指定されたLoggerを使って、エラー情報をログ出力します
-func LogError(log Logger, err error) {
+func LogError(logger Logger, err error) {
 	var (
 		validationError *errors.ValidationError
 		businessErrors  *errors.BusinessErrors
@@ -14,14 +14,14 @@ func LogError(log Logger, err error) {
 		otherError      *errors.OtherError
 	)
 	if errors.As(err, &validationError) {
-		log.WarnWithCodableError(validationError)
+		logger.WarnWithCodableError(validationError)
 	} else if errors.As(err, &businessErrors) {
-		log.WarnWithMultiCodableError(businessErrors)
+		logger.WarnWithMultiCodableError(businessErrors)
 	} else if errors.As(err, &otherError) {
-		log.WarnWithCodableError(otherError)
+		logger.WarnWithCodableError(otherError)
 	} else if errors.As(err, &systemError) {
-		log.ErrorWithCodableError(systemError)
+		logger.ErrorWithCodableError(systemError)
 	} else {
-		log.ErrorWithUnexpectedError(err)
+		logger.ErrorWithUnexpectedError(err)
 	}
 }

@@ -39,7 +39,7 @@ type IdempotencyRepository interface {
 }
 
 // NewIdempotencyRepository は、IdempotencyRepositoryを作成します。
-func NewIdempotencyRepository(log logging.Logger, dynamodbAccessor mydynamodb.DynamoDBAccessor,
+func NewIdempotencyRepository(logger logging.Logger, dynamodbAccessor mydynamodb.DynamoDBAccessor,
 	dynamodbTemplate mydynamodb.DynamoDBTemplate, dateManager date.DateManager, config config.Config) IdempotencyRepository {
 	// テーブル名取得
 	tableName := tables.DynamoDBTableName(config.Get(IDEMPOTENCY_TABLE_NAME, "idempotency"))
@@ -48,7 +48,7 @@ func NewIdempotencyRepository(log logging.Logger, dynamodbAccessor mydynamodb.Dy
 	// プライマリキーの設定
 	primaryKey := tables.GetPrimaryKey(tableName)
 	return &defaultIdempotencyRepository{
-		log:              log,
+		logger:           logger,
 		dynamodbAccessor: dynamodbAccessor,
 		dynamodbTemplate: dynamodbTemplate,
 		dateManager:      dateManager,
@@ -59,7 +59,7 @@ func NewIdempotencyRepository(log logging.Logger, dynamodbAccessor mydynamodb.Dy
 
 // defaultIdempotencyRepository は、DuplicationCheckRepositoryのデフォルト実装です。
 type defaultIdempotencyRepository struct {
-	log              logging.Logger
+	logger           logging.Logger
 	dynamodbAccessor mydynamodb.DynamoDBAccessor
 	dynamodbTemplate mydynamodb.DynamoDBTemplate
 	dateManager      date.DateManager
@@ -69,7 +69,7 @@ type defaultIdempotencyRepository struct {
 
 // FindOne implements DuplicationCheckRepository.
 func (r *defaultIdempotencyRepository) FindOne(idempotencyKey string) (*entity.IdempotencyItem, error) {
-	r.log.Debug("partitionKey: %s", r.primaryKey.PartitionKey)
+	r.logger.Debug("partitionKey: %s", r.primaryKey.PartitionKey)
 	input := input.PKOnlyQueryInput{
 		PrimaryKey: input.PrimaryKey{
 			PartitionKey: input.Attribute{

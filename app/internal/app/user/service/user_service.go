@@ -19,26 +19,26 @@ type UserService interface {
 }
 
 // New は、UserServiceを作成します。
-func New(log logging.Logger,
+func New(logger logging.Logger,
 	config config.Config,
 	repository repository.UserRepository,
 ) UserService {
-	return &userServiceImpl{log: log, config: config, repository: repository}
+	return &userServiceImpl{logger: logger, config: config, repository: repository}
 }
 
 // userServiceImpl は、UserServiceを実装する構造体です。
 type userServiceImpl struct {
-	log        logging.Logger
+	logger     logging.Logger
 	config     config.Config
 	repository repository.UserRepository
 }
 
 func (us *userServiceImpl) Register(userName string) (*entity.User, error) {
 	//設定の読み込みのとりあえずの確認
-	us.log.Debug("hoge_name=%s", us.config.Get("hoge_name", "not found"))
-	us.log.Info(message.I_EX_0002, us.config.Get("hoge_name", "not found"))
+	us.logger.Debug("hoge_name=%s", us.config.Get("hoge_name", "not found"))
+	us.logger.Info(message.I_EX_0002, us.config.Get("hoge_name", "not found"))
 
-	us.log.Debug("UserName=%s", userName)
+	us.logger.Debug("UserName=%s", userName)
 
 	user := entity.User{Name: userName}
 	return us.repository.CreateOne(&user)

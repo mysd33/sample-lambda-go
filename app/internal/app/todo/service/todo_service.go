@@ -22,16 +22,16 @@ type TodoService interface {
 }
 
 // New は、TodoServiceを作成します。
-func New(log logging.Logger,
+func New(logger logging.Logger,
 	config config.Config,
 	repository repository.TodoRepository,
 ) TodoService {
-	return &todoServiceImpl{log: log, config: config, repository: repository}
+	return &todoServiceImpl{logger: logger, config: config, repository: repository}
 }
 
 // todoServiceImpl TodoServiceを実装する構造体です。
 type todoServiceImpl struct {
-	log        logging.Logger
+	logger     logging.Logger
 	config     config.Config
 	repository repository.TodoRepository
 }
@@ -44,9 +44,9 @@ func (ts *todoServiceImpl) Find(todoId string) (*entity.Todo, error) {
 // Register implements TodoService.
 func (ts *todoServiceImpl) Register(todoTitle string) (*entity.Todo, error) {
 	// デバッグログの例
-	ts.log.Debug("TodoTitle=%s", todoTitle)
+	ts.logger.Debug("TodoTitle=%s", todoTitle)
 	// メッセージIDを使った情報ログの例
-	ts.log.Info(message.I_EX_0001, todoTitle)
+	ts.logger.Info(message.I_EX_0001, todoTitle)
 
 	// 業務エラーの例
 	// if (...) {

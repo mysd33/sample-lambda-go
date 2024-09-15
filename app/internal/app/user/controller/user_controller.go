@@ -25,13 +25,13 @@ type UserController interface {
 }
 
 // New は、UserControllerを作成します。
-func New(log logging.Logger, transactionManager rdb.TransactionManager, service service.UserService) UserController {
-	return &userControllerImpl{log: log, service: service, transactionManager: transactionManager}
+func New(logger logging.Logger, transactionManager rdb.TransactionManager, service service.UserService) UserController {
+	return &userControllerImpl{logger: logger, service: service, transactionManager: transactionManager}
 }
 
 // userControllerImpl は、UserControllerを実装する構造体です。
 type userControllerImpl struct {
-	log                logging.Logger
+	logger             logging.Logger
 	service            service.UserService
 	transactionManager rdb.TransactionManager
 }

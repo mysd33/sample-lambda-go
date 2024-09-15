@@ -33,13 +33,13 @@ type TransactionManager interface {
 }
 
 // NewTransactionManager は、TransactionManagerを作成します
-func NewTransactionManager(log logging.Logger, config config.Config, rdbAccessor RDBAccessor) TransactionManager {
-	return &defaultTransactionManager{log: log, config: config, rdbAccessor: rdbAccessor}
+func NewTransactionManager(logger logging.Logger, config config.Config, rdbAccessor RDBAccessor) TransactionManager {
+	return &defaultTransactionManager{logger: logger, config: config, rdbAccessor: rdbAccessor}
 }
 
 // defaultTransactionManager は、TransactionManagerを実装する構造体です。
 type defaultTransactionManager struct {
-	log         logging.Logger
+	logger      logging.Logger
 	config      config.Config
 	tx          *sql.Tx
 	rdbAccessor RDBAccessor
@@ -87,13 +87,13 @@ func (tm *defaultTransactionManager) rdbConnect() (*sql.DB, error) {
 	if !found {
 		return nil, errors.New("RDB_USER_NAMEが設定されていません")
 	}
-	tm.log.Debug("RDB_USER_NAME: %s", rdbUser)
+	tm.logger.Debug("RDB_USER_NAME: %s", rdbUser)
 	// RDBユーザのパスワード
 	rdbPassword, found := tm.config.GetWithContains(RDB_PASSWORD_NAME)
 	if !found {
 		return nil, errors.New("RDB_PASSWORD_NAMEが設定されていません")
 	}
-	tm.log.Debug("RDB_PASSWORD_NAME: %s", rdbPassword)
+	tm.logger.Debug("RDB_PASSWORD_NAME: %s", rdbPassword)
 	// RDS Proxyのエンドポイント
 	rdbEndpoint, found := tm.config.GetWithContains(RDB_ENDPOINT_NAME)
 	if !found {
@@ -143,7 +143,7 @@ func (tm *defaultTransactionManager) rdbConnect() (*sql.DB, error) {
 
 // startTransaction はトランザクションを開始します。
 func (tm *defaultTransactionManager) startTransaction(db *sql.DB) (*sql.Tx, error) {
-	tm.log.Debug("トランザクション開始")
+	tm.logger.Debug("トランザクション開始")
 	tx, err := db.BeginTx(apcontext.Context, nil)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -155,10 +155,10 @@ func (tm *defaultTransactionManager) startTransaction(db *sql.DB) (*sql.Tx, erro
 func (tm *defaultTransactionManager) endTransaction(err error) error {
 	if err != nil {
 		// トランザクションロールバック
-		tm.log.Debug("トランザクションロールバック")
+		tm.logger.Debug("トランザクションロールバック")
 		err2 := tm.tx.Rollback()
 		if err2 != nil {
-			tm.log.Debug("トランザクションロールバックに失敗")
+			tm.logger.Debug("トランザクションロールバックに失敗")
 			//元のエラー、ロールバックに失敗したエラーまとめて返却する
 			return errors.Join(err, err2)
 		}
@@ -166,6 +166,6 @@ func (tm *defaultTransactionManager) endTransaction(err error) error {
 		return err
 	}
 	// トランザクションコミット
-	tm.log.Debug("トランザクションコミット")
+	tm.logger.Debug("トランザクションコミット")
 	return tm.tx.Commit()
 }

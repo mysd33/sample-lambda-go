@@ -35,33 +35,33 @@ type Config interface {
 
 // NewConfig は、設定ファイルをロードし、Configを作成します。
 
-func NewConfig(log logging.Logger) (Config, error) {
+func NewConfig(logger logging.Logger) (Config, error) {
 	var cfgs []Config
 	if !env.IsLocalOrLocalTest() {
 		// ローカル実行（Env=Local,LocalTest）以外では、AppConfigから優先的に設定値を取得する
-		ac, err := newAppConfigConfig(log)
+		ac, err := newAppConfigConfig(logger)
 		if err != nil {
 			return nil, err
 		}
 		cfgs = append(cfgs, ac)
 	}
 	// Viperを使って設定ファイルの設定値を取得する
-	vc, err := newViperConfig(log)
+	vc, err := newViperConfig(logger)
 	if err != nil {
 		return nil, err
 	}
 	cfgs = append(cfgs, vc)
 
 	return &compositeConfig{
-		log:  log,
-		cfgs: cfgs,
+		logger: logger,
+		cfgs:   cfgs,
 	}, nil
 }
 
 // compositeConfigは、複数のConfigをまとめたConfig実装です。
 type compositeConfig struct {
-	log  logging.Logger
-	cfgs []Config
+	logger logging.Logger
+	cfgs   []Config
 }
 
 // Reload implements Config.
@@ -96,7 +96,7 @@ func (c *compositeConfig) GetIntWithContains(key string) (int, bool) {
 	value, found := c.GetWithContains(key)
 	result, err := convertIntValueIfFound(found, value)
 	if err != nil {
-		c.log.WarnWithError(err, message.W_FW_8009, key, value)
+		c.logger.WarnWithError(err, message.W_FW_8009, key, value)
 		// int変換に失敗した場合は、値が見つからなかったとしてfalseを返す
 		return 0, false
 	}
@@ -114,7 +114,7 @@ func (c *compositeConfig) GetBoolWithContains(key string) (bool, bool) {
 	value, found := c.GetWithContains(key)
 	result, err := convertBoolValueIfFound(found, value)
 	if err != nil {
-		c.log.WarnWithError(err, message.W_FW_8010, key, value)
+		c.logger.WarnWithError(err, message.W_FW_8010, key, value)
 		// bool変換に失敗した場合は、値が見つからなかったとしてfalseを返す
 		return false, false
 	}

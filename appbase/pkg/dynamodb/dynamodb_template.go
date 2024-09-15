@@ -40,16 +40,16 @@ type DynamoDBTemplate interface {
 }
 
 // NewDynamoDBTemplate は、DynamoDBTemplateのインスタンスを生成します。
-func NewDynamoDBTemplate(log logging.Logger, dynamodbAccessor DynamoDBAccessor) DynamoDBTemplate {
+func NewDynamoDBTemplate(logger logging.Logger, dynamodbAccessor DynamoDBAccessor) DynamoDBTemplate {
 	return &defaultDynamoDBTemplate{
-		log:              log,
+		logger:           logger,
 		dynamodbAccessor: dynamodbAccessor,
 	}
 }
 
 // defaultDynamoDBTemplate は、DynamoDBTemplateを実装する構造体です。
 type defaultDynamoDBTemplate struct {
-	log              logging.Logger
+	logger           logging.Logger
 	dynamodbAccessor DynamoDBAccessor
 }
 
@@ -131,7 +131,7 @@ func (t *defaultDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTa
 	loopCnt := 0
 	for {
 		loopCnt += 1
-		t.log.Debug("検索回数: %d, 検索開始キー: %v", loopCnt, sKey)
+		t.logger.Debug("検索回数: %d, 検索開始キー: %v", loopCnt, sKey)
 		queryInput := &dynamodb.QueryInput{
 			TableName:                 aws.String(string(tableName)),
 			KeyConditionExpression:    expr.KeyCondition(),
@@ -183,9 +183,9 @@ func (t *defaultDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTabl
 	handleFn := func(result *dynamodb.QueryOutput) bool {
 		pagingCnt += 1
 		totalCnt += result.Count
-		t.log.Debug("ページング回数: %d, 今回取得件数: %d, 合計取得件数: %d", pagingCnt, result.Count, totalCnt)
+		t.logger.Debug("ページング回数: %d, 今回取得件数: %d, 合計取得件数: %d", pagingCnt, result.Count, totalCnt)
 		if input.TotalLimit != nil && totalCnt < *input.TotalLimit {
-			t.log.Debug("合計件数: %d, 合計取得件数の上限値: %d, 切り捨て件数: %d", totalCnt, *input.TotalLimit, totalCnt-*input.TotalLimit)
+			t.logger.Debug("合計件数: %d, 合計取得件数の上限値: %d, 切り捨て件数: %d", totalCnt, *input.TotalLimit, totalCnt-*input.TotalLimit)
 			delIdx := int(*input.TotalLimit) - len(resultItems)
 			resultItems = append(resultItems, result.Items[:delIdx]...)
 			return true

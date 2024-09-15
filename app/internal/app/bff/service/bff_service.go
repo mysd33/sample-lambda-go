@@ -35,7 +35,7 @@ type BffService interface {
 }
 
 // New は、BffServiceを作成します。
-func New(log logging.Logger,
+func New(logger logging.Logger,
 	config config.Config,
 	id id.IDGenerator,
 	obectStorageAccessor objectstorage.ObjectStorageAccessor,
@@ -45,7 +45,7 @@ func New(log logging.Logger,
 	asyncMessageRepository repository.AsyncMessageRepository,
 ) BffService {
 	return &bffServiceImpl{
-		log:                    log,
+		logger:                 logger,
 		config:                 config,
 		id:                     id,
 		obectStorageAccessor:   obectStorageAccessor,
@@ -58,7 +58,7 @@ func New(log logging.Logger,
 
 // todoServiceImpl BffServiceを実装する構造体です。
 type bffServiceImpl struct {
-	log                    logging.Logger
+	logger                 logging.Logger
 	config                 config.Config
 	id                     id.IDGenerator
 	obectStorageAccessor   objectstorage.ObjectStorageAccessor
@@ -82,27 +82,27 @@ func (bs *bffServiceImpl) RegisterTodo(todoTitle string) (*entity.Todo, error) {
 
 // FindTodo implements BffService.
 func (bs *bffServiceImpl) FindTodo(userId string, todoId string) (*entity.User, *entity.Todo, error) {
-	bs.log.Debug("userId:%s,todoId:%s", userId, todoId)
+	bs.logger.Debug("userId:%s,todoId:%s", userId, todoId)
 
 	user, err := bs.userRepository.FindOne(userId)
 	if err != nil {
 		return nil, nil, err
 	}
-	bs.log.Debug("user:%+v", user)
+	bs.logger.Debug("user:%+v", user)
 	todo, err := bs.todoRepository.FindOne(todoId)
 	if err != nil {
 		return nil, nil, err
 	}
-	bs.log.Debug("todo:%+v", todo)
+	bs.logger.Debug("todo:%+v", todo)
 	return user, todo, nil
 }
 
 // RegisterTodosAsync implements TodoService.
 func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string, dbtx string) error {
-	bs.log.Debug("RegisterTodosAsync")
+	bs.logger.Debug("RegisterTodosAsync")
 	var tempId string
 	if dbtx != "no" {
-		bs.log.Debug("業務のDB登録処理あり")
+		bs.logger.Debug("業務のDB登録処理あり")
 		temp, err := bs.registerTemp(todoTitles)
 		if err != nil {
 			return err
@@ -117,10 +117,10 @@ func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string, dbtx string) e
 
 // RegisterTodosAsyncByFIFO implements BffService.
 func (bs *bffServiceImpl) RegisterTodosAsyncByFIFO(todoTitles []string, dbtx string) error {
-	bs.log.Debug("RegisterTodosAsyncByFIFO")
+	bs.logger.Debug("RegisterTodosAsyncByFIFO")
 	var tempId string
 	if dbtx != "no" {
-		bs.log.Debug("業務のDB登録処理あり")
+		bs.logger.Debug("業務のDB登録処理あり")
 		temp, err := bs.registerTemp(todoTitles)
 		if err != nil {
 			return err

@@ -90,52 +90,52 @@ func NewLogger(messageSource message.MessageSource) (Logger, error) {
 	// SugarLoggerを使って、ログ出力を行う
 	sugerredLogger := z.Sugar()
 	return &zapLogger{
-		originalLog:   sugerredLogger, // AddInfoで付加情報を追加した場合に元のロガーに戻すため保持
-		log:           sugerredLogger, // 実際にログ出力するためのロガー
-		messageSource: messageSource,
+		originalLogger: sugerredLogger, // AddInfoで付加情報を追加した場合に元のロガーに戻すため保持
+		logger:         sugerredLogger, // 実際にログ出力するためのロガー
+		messageSource:  messageSource,
 	}, nil
 }
 
 // zapLoggerは、Zapを使ったLogger実装です。
 type zapLogger struct {
-	originalLog   *zap.SugaredLogger
-	log           *zap.SugaredLogger
-	messageSource message.MessageSource
+	originalLogger *zap.SugaredLogger
+	logger         *zap.SugaredLogger
+	messageSource  message.MessageSource
 }
 
 // AddInfo implements Logger.
 func (z *zapLogger) AddInfo(key string, value string) {
-	z.log = z.log.With(key, value)
+	z.logger = z.logger.With(key, value)
 }
 
 // ClearInfo implements Logger.
 func (z *zapLogger) ClearInfo() {
-	z.log = z.originalLog
+	z.logger = z.originalLogger
 }
 
 // Debug implements Logger.
 func (z *zapLogger) Debug(template string, args ...any) {
-	z.log.Debugf(template, args...)
+	z.logger.Debugf(template, args...)
 }
 
 // Info implements Logger.
 func (z *zapLogger) Info(code string, args ...any) {
 	message := z.messageSource.GetMessage(code, args...)
 	if message != "" {
-		z.log.Infof("[%s]%s", code, message)
+		z.logger.Infof("[%s]%s", code, message)
 		return
 	}
-	z.log.Infof("メッセージ未取得：%s %v", code, args)
+	z.logger.Infof("メッセージ未取得：%s %v", code, args)
 }
 
 // Warn implements Logger.
 func (z *zapLogger) Warn(code string, args ...any) {
 	message := z.messageSource.GetMessage(code, args...)
 	if message != "" {
-		z.log.Warnf("[%s]%s", code, message)
+		z.logger.Warnf("[%s]%s", code, message)
 		return
 	}
-	z.log.Warnf("メッセージ未取得：%s %v", code, args)
+	z.logger.Warnf("メッセージ未取得：%s %v", code, args)
 }
 
 // WarnWithError implements Logger.
@@ -143,10 +143,10 @@ func (z *zapLogger) WarnWithError(err error, code string, args ...any) {
 	message := z.messageSource.GetMessage(code, args...)
 	// エラーのスタックトレース付きのWarnログ出力
 	if message != "" {
-		z.log.Warnf("[%s]%s, %+v", code, message, err)
+		z.logger.Warnf("[%s]%s, %+v", code, message, err)
 		return
 	}
-	z.log.Warnf("メッセージ未取得：%s %v, %+v", code, args, err)
+	z.logger.Warnf("メッセージ未取得：%s %v, %+v", code, args, err)
 }
 
 // WarnWithCodableError implements Logger.
@@ -169,17 +169,17 @@ func (z *zapLogger) WarnWithMultiCodableError(err errors.MultiCodableError) {
 			logStrs = append(logStrs, fmt.Sprintf("メッセージ未取得：%s %v, %+v\n", code, args, e))
 		}
 	}
-	z.log.Warn(logStrs...)
+	z.logger.Warn(logStrs...)
 }
 
 // Error implements Logger.
 func (z *zapLogger) Error(code string, args ...any) {
 	message := z.messageSource.GetMessage(code, args...)
 	if message != "" {
-		z.log.Errorf("[%s]%s", code, message)
+		z.logger.Errorf("[%s]%s", code, message)
 		return
 	}
-	z.log.Error(code, args)
+	z.logger.Error(code, args)
 }
 
 // ErrorWithError implements Logger.
@@ -187,10 +187,10 @@ func (z *zapLogger) ErrorWithError(err error, code string, args ...any) {
 	message := z.messageSource.GetMessage(code, args...)
 	// エラーのスタックトレース付きのErrorログ出力
 	if message != "" {
-		z.log.Errorf("[%s]%s, %+v", code, message, err)
+		z.logger.Errorf("[%s]%s, %+v", code, message, err)
 		return
 	}
-	z.log.Errorf("メッセージ未取得：%s %v, %+v", code, args, err)
+	z.logger.Errorf("メッセージ未取得：%s %v, %+v", code, args, err)
 }
 
 // ErrorWithCodableError implements Logger.
@@ -203,10 +203,10 @@ func (z *zapLogger) ErrorWithCodableError(err errors.CodableError) {
 // Error implements Logger.
 func (z *zapLogger) ErrorWithUnexpectedError(err error) {
 	message := z.messageSource.GetMessage(message.E_FW_9999)
-	z.log.Errorf("%s, %+v", message, err)
+	z.logger.Errorf("%s, %+v", message, err)
 }
 
 // Sync implements Logger.
 func (z *zapLogger) Sync() error {
-	return z.log.Sync()
+	return z.logger.Sync()
 }

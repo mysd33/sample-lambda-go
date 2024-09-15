@@ -51,13 +51,13 @@ type BffController interface {
 }
 
 // New は、BffControllerを作成します。
-func New(log logging.Logger, transactionManager transaction.TransactionManager, service service.BffService) BffController {
-	return &bffControllerImpl{log: log, transactionManager: transactionManager, service: service}
+func New(logger logging.Logger, transactionManager transaction.TransactionManager, service service.BffService) BffController {
+	return &bffControllerImpl{logger: logger, transactionManager: transactionManager, service: service}
 }
 
 // bffControllerImpl は、BffControllerを実装する構造体です。
 type bffControllerImpl struct {
-	log                logging.Logger
+	logger             logging.Logger
 	transactionManager transaction.TransactionManager
 	service            service.BffService
 }
@@ -123,10 +123,10 @@ func (c *bffControllerImpl) RegisterTodosAsync(ctx *gin.Context) (any, error) {
 
 	// クエリパラメータfifoの取得
 	fifo := ctx.Query("fifo")
-	c.log.Debug("fifo=%s", fifo)
+	c.logger.Debug("fifo=%s", fifo)
 	// クエリパラメータdbtxの取得
 	dbtx := ctx.Query("dbtx")
-	c.log.Debug("dbtx=%s", dbtx)
+	c.logger.Debug("dbtx=%s", dbtx)
 
 	var serviceFunc domain.ServiceFunc
 	if fifo == "" {

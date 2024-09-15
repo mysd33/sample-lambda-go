@@ -24,7 +24,7 @@ const (
 // NewTodoRepositoryForDynamoDB は、TodoRepositoryを作成します。
 func NewTodoRepositoryForDynamoDB(dynamoDBTempalte transaction.TransactionalDynamoDBTemplate,
 	accessor transaction.TransactionalDynamoDBAccessor,
-	log logging.Logger, config config.Config,
+	logger logging.Logger, config config.Config,
 	id id.IDGenerator) TodoRepository {
 	// テーブル名の取得
 	tableName := tables.DynamoDBTableName(config.Get(TODO_TABLE_NAME, "todo"))
@@ -36,7 +36,7 @@ func NewTodoRepositoryForDynamoDB(dynamoDBTempalte transaction.TransactionalDyna
 	return &todoRepositoryImplByDynamoDB{
 		dynamodbTemplate: dynamoDBTempalte,
 		accessor:         accessor,
-		log:              log,
+		logger:           logger,
 		config:           config,
 		tableName:        tableName,
 		primaryKey:       primaryKey,
@@ -48,7 +48,7 @@ func NewTodoRepositoryForDynamoDB(dynamoDBTempalte transaction.TransactionalDyna
 type todoRepositoryImplByDynamoDB struct {
 	dynamodbTemplate transaction.TransactionalDynamoDBTemplate
 	accessor         transaction.TransactionalDynamoDBAccessor
-	log              logging.Logger
+	logger           logging.Logger
 	config           config.Config
 	tableName        tables.DynamoDBTableName
 	primaryKey       *tables.PKKeyPair

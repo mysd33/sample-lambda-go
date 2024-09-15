@@ -33,7 +33,7 @@ type TempRepository interface {
 // NewTempRepository は、TempRepositoryを生成します。
 func NewTempRepository(dynamoDBTempalte transaction.TransactionalDynamoDBTemplate,
 	accessor transaction.TransactionalDynamoDBAccessor,
-	log logging.Logger, config config.Config,
+	logger logging.Logger, config config.Config,
 	id id.IDGenerator) TempRepository {
 	// テーブル名の取得
 	tableName := tables.DynamoDBTableName(config.Get(TEMP_TABLE_NAME, "temp"))
@@ -45,7 +45,7 @@ func NewTempRepository(dynamoDBTempalte transaction.TransactionalDynamoDBTemplat
 	return &tempRepositoryImpl{
 		dynamodbTemplate: dynamoDBTempalte,
 		accessor:         accessor,
-		log:              log,
+		logger:           logger,
 		config:           config,
 		tableName:        tableName,
 		primaryKey:       primaryKey,
@@ -57,7 +57,7 @@ func NewTempRepository(dynamoDBTempalte transaction.TransactionalDynamoDBTemplat
 type tempRepositoryImpl struct {
 	dynamodbTemplate transaction.TransactionalDynamoDBTemplate
 	accessor         transaction.TransactionalDynamoDBAccessor
-	log              logging.Logger
+	logger           logging.Logger
 	config           config.Config
 	tableName        tables.DynamoDBTableName
 	primaryKey       *tables.PKKeyPair
@@ -117,8 +117,8 @@ func (r *tempRepositoryImpl) CreateOneTx(temp *entity.Temp) (*entity.Temp, error
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	temp.ID = id
-	r.log.Debug("CreateOneTx Table name: %s", r.tableName)
-	r.log.Debug("CreateOneTx Temp id: %s", id)
+	r.logger.Debug("CreateOneTx Table name: %s", r.tableName)
+	r.logger.Debug("CreateOneTx Temp id: %s", id)
 
 	// DynamoDBTemplateを使ったコード
 	err = r.dynamodbTemplate.CreateOneWithTransaction(r.tableName, temp)
@@ -154,8 +154,8 @@ func (r *tempRepositoryImpl) CreateOne(temp *entity.Temp) (*entity.Temp, error) 
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	temp.ID = id
-	r.log.Debug("CreateOne Table name: %s", r.tableName)
-	r.log.Debug("CreateOne Temp id: %s", id)
+	r.logger.Debug("CreateOne Table name: %s", r.tableName)
+	r.logger.Debug("CreateOne Temp id: %s", id)
 
 	// DynamoDBTemplateを使ったコード
 	err = r.dynamodbTemplate.CreateOne(r.tableName, temp)

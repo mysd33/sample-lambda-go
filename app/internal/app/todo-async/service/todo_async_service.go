@@ -25,12 +25,12 @@ type TodoAsyncService interface {
 }
 
 // NewTodoAsyncService は、TodoAsyncServiceを生成します。
-func New(log logging.Logger,
+func New(logger logging.Logger,
 	config config.Config,
 	obectStorageAccessor objectstorage.ObjectStorageAccessor,
 	tempRepository repository.TempRepository,
 	todoRepository repository.TodoRepository) TodoAsyncService {
-	return &todoAsyncServiceImpl{log: log,
+	return &todoAsyncServiceImpl{logger: logger,
 		config:                config,
 		objectstorageAccessor: obectStorageAccessor,
 		tempRepository:        tempRepository,
@@ -39,7 +39,7 @@ func New(log logging.Logger,
 }
 
 type todoAsyncServiceImpl struct {
-	log                   logging.Logger
+	logger                logging.Logger
 	config                config.Config
 	objectstorageAccessor objectstorage.ObjectStorageAccessor
 	tempRepository        repository.TempRepository
@@ -57,7 +57,7 @@ func (ts *todoAsyncServiceImpl) RegisterTodosAsync(asyncMesssage entity.AsyncMes
 	if err != nil {
 		return err
 	}
-	ts.log.Debug("temp: %+v", temp)
+	ts.logger.Debug("temp: %+v", temp)
 	bucketName, found := ts.config.GetWithContains(S3_BUCKET_NAME)
 	if !found {
 		// TODO: エラー処理
@@ -79,13 +79,13 @@ func (ts *todoAsyncServiceImpl) RegisterTodosAsync(asyncMesssage entity.AsyncMes
 	}
 	// TODO: todoTitlesをS3上のファイルから取得して登録するように変更
 	for _, v := range todoTitles {
-		ts.log.Debug("todoTitle: %s", v)
+		ts.logger.Debug("todoTitle: %s", v)
 		todo := entity.Todo{Title: v}
 		newTodo, err := ts.todoRepository.CreateOneTx(&todo)
 		if err != nil {
 			return err
 		}
-		ts.log.Info(message.I_EX_0003, newTodo.ID)
+		ts.logger.Info(message.I_EX_0003, newTodo.ID)
 	}
 	// TODO: tempテーブルのアイテムの削除
 	return nil

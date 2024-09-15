@@ -23,15 +23,15 @@ type DateManager interface {
 
 // defaultDateManager は、DateManagerのデフォルト実装の構造体です。
 type defaultDateManager struct {
-	cfg config.Config
-	log logging.Logger
+	cfg    config.Config
+	logger logging.Logger
 }
 
 // NewDateManager は、DateManagerを作成します。
-func NewDateManager(cfg config.Config, log logging.Logger) DateManager {
+func NewDateManager(cfg config.Config, logger logging.Logger) DateManager {
 	return &defaultDateManager{
-		cfg: cfg,
-		log: log,
+		cfg:    cfg,
+		logger: logger,
 	}
 }
 
@@ -39,10 +39,10 @@ func NewDateManager(cfg config.Config, log logging.Logger) DateManager {
 func (d *defaultDateManager) GetSystemDate() time.Time {
 	// テスト用の日付が設定されている場合は、その日付を返す
 	if now, ok := d.cfg.GetWithContains(TEST_DATE_NAME); ok {
-		d.log.Debug("テスト時刻: %s", now)
+		d.logger.Debug("テスト時刻: %s", now)
 		t, err := time.ParseInLocation(format, now, time.Local)
 		if err != nil {
-			d.log.WarnWithError(err, message.W_FW_8004, now)
+			d.logger.WarnWithError(err, message.W_FW_8004, now)
 		}
 		return t
 	}

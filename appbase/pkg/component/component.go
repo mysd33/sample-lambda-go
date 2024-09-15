@@ -374,12 +374,12 @@ func createValidationManager(logger logging.Logger) validator.ValidationManager 
 	return validator.NewValidationManager(logger.Debug, logger.Warn)
 }
 
-func createIdempotencyRepository(log logging.Logger, dynamodbAccessor dynamodb.DynamoDBAccessor,
+func createIdempotencyRepository(logger logging.Logger, dynamodbAccessor dynamodb.DynamoDBAccessor,
 	dynamodbTemplate dynamodb.DynamoDBTemplate, dateManager date.DateManager, config config.Config) idempotency.IdempotencyRepository {
-	return idempotency.NewIdempotencyRepository(log, dynamodbAccessor, dynamodbTemplate, dateManager, config)
+	return idempotency.NewIdempotencyRepository(logger, dynamodbAccessor, dynamodbTemplate, dateManager, config)
 }
 
-func createIdempotencyManager(log logging.Logger, dateManager date.DateManager,
+func createIdempotencyManager(logger logging.Logger, dateManager date.DateManager,
 	config config.Config, repository idempotency.IdempotencyRepository) idempotency.IdempotencyManager {
-	return idempotency.NewIdempotencyManager(log, dateManager, config, repository)
+	return idempotency.NewIdempotencyManager(logger, dateManager, config, repository)
 }

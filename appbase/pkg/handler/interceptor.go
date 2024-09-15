@@ -31,17 +31,17 @@ type HandlerInterceptor interface {
 // HandlerInterceptor は、Handlerのインタセプタの構造体です。
 type defaultHandlerInterceptor struct {
 	config config.Config
-	log    logging.Logger
+	logger logging.Logger
 }
 
 // NewHandlerInterceptor は、HandlerInterceptorを作成します。
-func NewHandlerInterceptor(config config.Config, log logging.Logger) HandlerInterceptor {
+func NewHandlerInterceptor(config config.Config, logger logging.Logger) HandlerInterceptor {
 	ginDebugMode := config.GetBool(GIN_DEBUG_NAME, false)
 	if env.IsStragingOrProd() && ginDebugMode {
 		// 本番相当の動作環境の場合、ginのモードを本番モードに設定
 		gin.SetMode(gin.ReleaseMode)
 	}
-	return &defaultHandlerInterceptor{config: config, log: log}
+	return &defaultHandlerInterceptor{config: config, logger: logger}
 }
 
 // Handle は、Controlerで実行する関数controllerFuncの前後でインタセプタの処理を実行します。
@@ -49,16 +49,16 @@ func (i *defaultHandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.Ha
 	return func(ctx *gin.Context) {
 		fv := reflect.ValueOf(controllerFunc)
 		funcName := runtime.FuncForPC(fv.Pointer()).Name()
-		i.log.Info(message.I_FW_0001, funcName)
+		i.logger.Info(message.I_FW_0001, funcName)
 		startTime := time.Now()
 		defer func() {
-			i.log.Info(message.I_FW_0002, funcName, time.Since(startTime))
+			i.logger.Info(message.I_FW_0002, funcName, time.Since(startTime))
 		}()
 
 		// Configの最新読み込み
 		if err := i.config.Reload(); err != nil {
 			// エラーログの出力
-			logging.LogError(i.log, err)
+			logging.LogError(i.logger, err)
 			// エラーをその他のエラー（ginのエラーログ対象外）としてginのContextに格納
 			ctx.Error(err).SetType(gin.ErrorTypeNu)
 			return
@@ -67,7 +67,7 @@ func (i *defaultHandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.Ha
 		result, err := controllerFunc(ctx)
 		if err != nil {
 			// 集約エラーハンドリングによるログ出力
-			logging.LogError(i.log, err)
+			logging.LogError(i.logger, err)
 			// エラーをPublicなエラー（ginのエラーログ対象外）としてginのContextに格納
 			ctx.Error(err).SetType(gin.ErrorTypePublic)
 			return
@@ -83,22 +83,22 @@ func (i *defaultHandlerInterceptor) HandleAsync(asyncControllerFunc AsyncControl
 	return func(sqsMessage events.SQSMessage) error {
 		fv := reflect.ValueOf(asyncControllerFunc)
 		funcName := runtime.FuncForPC(fv.Pointer()).Name()
-		i.log.Info(message.I_FW_0001, funcName)
+		i.logger.Info(message.I_FW_0001, funcName)
 		startTime := time.Now()
 		defer func() {
-			i.log.Info(message.I_FW_0002, funcName, time.Since(startTime))
+			i.logger.Info(message.I_FW_0002, funcName, time.Since(startTime))
 		}()
 
 		// Configの最新読み込み
 		if err := i.config.Reload(); err != nil {
-			logging.LogError(i.log, err)
+			logging.LogError(i.logger, err)
 			return err
 		}
 		// Controllerの実行
 		err := asyncControllerFunc(sqsMessage)
 		// 集約エラーハンドリングによるログ出力
 		if err != nil {
-			logging.LogError(i.log, err)
+			logging.LogError(i.logger, err)
 			return err
 		}
 		return nil
@@ -110,22 +110,22 @@ func (i *defaultHandlerInterceptor) HandleSimple(simpleControllerFunc SimpleCont
 	return func(ctx context.Context, event any) (any, error) {
 		fv := reflect.ValueOf(simpleControllerFunc)
 		funcName := runtime.FuncForPC(fv.Pointer()).Name()
-		i.log.Info(message.I_FW_0001, funcName)
+		i.logger.Info(message.I_FW_0001, funcName)
 		startTime := time.Now()
 		defer func() {
-			i.log.Info(message.I_FW_0002, funcName, time.Since(startTime))
+			i.logger.Info(message.I_FW_0002, funcName, time.Since(startTime))
 		}()
 
 		// Configの最新読み込み
 		if err := i.config.Reload(); err != nil {
-			logging.LogError(i.log, err)
+			logging.LogError(i.logger, err)
 			return nil, err
 		}
 		// Controllerの実行
 		result, err := simpleControllerFunc(ctx, event)
 		// 集約エラーハンドリングによるログ出力
 		if err != nil {
-			logging.LogError(i.log, err)
+			logging.LogError(i.logger, err)
 			return nil, err
 		}
 		return result, nil

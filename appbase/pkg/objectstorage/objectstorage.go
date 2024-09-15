@@ -109,7 +109,7 @@ type ObjectStorageAccessor interface {
 }
 
 // NewObjectStorageAccessor は、ObjectStorageAccessorを作成します。
-func NewObjectStorageAccessor(myCfg myconfig.Config, log logging.Logger) (ObjectStorageAccessor, error) {
+func NewObjectStorageAccessor(myCfg myconfig.Config, logger logging.Logger) (ObjectStorageAccessor, error) {
 	// カスタムHTTPClientの作成
 	sdkHTTPClient := awssdk.NewHTTPClient(myCfg)
 	// ClientLogModeの取得
@@ -165,13 +165,13 @@ func NewObjectStorageAccessor(myCfg myconfig.Config, log logging.Logger) (Object
 		s3Client:   client,
 		uploader:   uploader,
 		downloader: downloader,
-		log:        log,
+		logger:     logger,
 	}, nil
 }
 
 // defaultObjectStorageAccessor は、ObjectStorageAccessorのデフォルト実装です。
 type defaultObjectStorageAccessor struct {
-	log        logging.Logger
+	logger     logging.Logger
 	s3Client   *s3.Client
 	uploader   *manager.Uploader
 	downloader *manager.Downloader
@@ -179,7 +179,7 @@ type defaultObjectStorageAccessor struct {
 
 // List implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) List(bucketName string, folderPath string) ([]types.Object, error) {
-	a.log.Debug("ListObjects bucketName:%s, folderPath:%s", bucketName, folderPath)
+	a.logger.Debug("ListObjects bucketName:%s, folderPath:%s", bucketName, folderPath)
 	input := &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucketName),
 		Prefix: aws.String(folderPath),
@@ -229,12 +229,12 @@ func (a *defaultObjectStorageAccessor) List(bucketName string, folderPath string
 
 // Exists implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) Exists(bucketName string, objectKey string) (bool, error) {
-	a.log.Debug("ExistsObject bucketName:%s, objectKey:%s", bucketName, objectKey)
+	a.logger.Debug("ExistsObject bucketName:%s, objectKey:%s", bucketName, objectKey)
 	_, err := a.GetMetadata(bucketName, objectKey)
 	if err != nil {
 		var notFound *types.NotFound
 		if errors.As(err, &notFound) {
-			a.log.Debug("Object not found. bucketName:%s, objectKey:%s", bucketName, objectKey)
+			a.logger.Debug("Object not found. bucketName:%s, objectKey:%s", bucketName, objectKey)
 			return false, nil
 		}
 		return false, err
@@ -244,7 +244,7 @@ func (a *defaultObjectStorageAccessor) Exists(bucketName string, objectKey strin
 
 // GetSize implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) GetSize(bucketName string, objectKey string) (int64, error) {
-	a.log.Debug("GetSize bucketName:%s, objectKey:%s", bucketName, objectKey)
+	a.logger.Debug("GetSize bucketName:%s, objectKey:%s", bucketName, objectKey)
 	output, err := a.GetMetadata(bucketName, objectKey)
 	if err != nil {
 		return 0, err
@@ -254,7 +254,7 @@ func (a *defaultObjectStorageAccessor) GetSize(bucketName string, objectKey stri
 
 // GetMetadata implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) GetMetadata(bucketName string, objectKey string) (*s3.HeadObjectOutput, error) {
-	a.log.Debug("GetObjectMetadata bucketName:%s, objectKey:%s", bucketName, objectKey)
+	a.logger.Debug("GetObjectMetadata bucketName:%s, objectKey:%s", bucketName, objectKey)
 	input := &s3.HeadObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
@@ -268,14 +268,14 @@ func (a *defaultObjectStorageAccessor) GetMetadata(bucketName string, objectKey 
 
 // Upload implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) Upload(bucketName string, objectKey string, objectBody []byte) (*manager.UploadOutput, error) {
-	a.log.Debug("Upload bucketName:%s, objectKey:%s", bucketName, objectKey)
+	a.logger.Debug("Upload bucketName:%s, objectKey:%s", bucketName, objectKey)
 	reader := bytes.NewReader(objectBody)
 	return a.UploadFromReader(bucketName, objectKey, reader)
 }
 
 // UploadWithOwnerFullControl implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) UploadWithOwnerFullControl(bucketName string, objectKey string, objectBody []byte) (*manager.UploadOutput, error) {
-	a.log.Debug("UPloadWithOwnerFullControl bucketName:%s, objectKey:%s", bucketName, objectKey)
+	a.logger.Debug("UPloadWithOwnerFullControl bucketName:%s, objectKey:%s", bucketName, objectKey)
 	reader := bytes.NewReader(objectBody)
 	input := &s3.PutObjectInput{
 		Bucket: aws.String(bucketName),
@@ -292,13 +292,13 @@ func (a *defaultObjectStorageAccessor) UploadWithOwnerFullControl(bucketName str
 
 // UploadString implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) UploadString(bucketName string, objectKey string, objectBody string) (*manager.UploadOutput, error) {
-	a.log.Debug("UploadFromString bucketName:%s, objectKey:%s", bucketName, objectKey)
+	a.logger.Debug("UploadFromString bucketName:%s, objectKey:%s", bucketName, objectKey)
 	return a.Upload(bucketName, objectKey, []byte(objectBody))
 }
 
 // UploadFromReader implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) UploadFromReader(bucketName string, objectKey string, reader io.Reader) (*manager.UploadOutput, error) {
-	a.log.Debug("UploadFromReader bucketName:%s, objectKey:%s", bucketName, objectKey)
+	a.logger.Debug("UploadFromReader bucketName:%s, objectKey:%s", bucketName, objectKey)
 	input := &s3.PutObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
@@ -314,7 +314,7 @@ func (a *defaultObjectStorageAccessor) UploadFromReader(bucketName string, objec
 
 // UploadFile implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) UploadFile(bucketName string, objectKey string, filePath string) (*manager.UploadOutput, error) {
-	a.log.Debug("UploadFromFile bucketName:%s, objectKey:%s, filePath:%s", bucketName, objectKey, filePath)
+	a.logger.Debug("UploadFromFile bucketName:%s, objectKey:%s, filePath:%s", bucketName, objectKey, filePath)
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -325,7 +325,7 @@ func (a *defaultObjectStorageAccessor) UploadFile(bucketName string, objectKey s
 
 // ReadAt implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) ReadAt(bucketName string, objectKey string, p []byte, offset int64) (int, error) {
-	a.log.Debug("ReadAt bucketName:%s, objectKey:%s, offset:%d", bucketName, objectKey, offset)
+	a.logger.Debug("ReadAt bucketName:%s, objectKey:%s, offset:%d", bucketName, objectKey, offset)
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
@@ -345,7 +345,7 @@ func (a *defaultObjectStorageAccessor) ReadAt(bucketName string, objectKey strin
 
 // Download implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) Download(bucketName string, objectKey string) ([]byte, error) {
-	a.log.Debug("Download bucketName:%s, objectKey:%s", bucketName, objectKey)
+	a.logger.Debug("Download bucketName:%s, objectKey:%s", bucketName, objectKey)
 	// GetObjectを使用する方法だと、コメントアウト部分のコードの通り、1回のリクエスト呼び出しでデータ取得できるが、
 	// 本サンプルでは、Downloaderを使用してマルチパート対応した方法を使用している。
 	// その代わり、HeadObjectを呼び出し、サイズ情報を取得しバッファを確保してからダウンロードする必要があるので、
@@ -378,7 +378,7 @@ func (a *defaultObjectStorageAccessor) Download(bucketName string, objectKey str
 
 // DownloadAsString implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DownloadAsString(bucketName string, objectKey string) (string, error) {
-	a.log.Debug("DownloadToString bucketName:%s, objectKey:%s", bucketName, objectKey)
+	a.logger.Debug("DownloadToString bucketName:%s, objectKey:%s", bucketName, objectKey)
 	data, err := a.Download(bucketName, objectKey)
 	if err != nil {
 		return "", err
@@ -388,7 +388,7 @@ func (a *defaultObjectStorageAccessor) DownloadAsString(bucketName string, objec
 
 // DownloadAsReader implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DownloadAsReader(bucketName string, objectKey string) (io.ReadCloser, error) {
-	a.log.Debug("DownloadToReader bucketName:%s, objectKey:%s", bucketName, objectKey)
+	a.logger.Debug("DownloadToReader bucketName:%s, objectKey:%s", bucketName, objectKey)
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
@@ -402,7 +402,7 @@ func (a *defaultObjectStorageAccessor) DownloadAsReader(bucketName string, objec
 
 // DownloadToWriter implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DownloadToWriter(bucketName string, objectKey string, writer io.WriterAt) error {
-	a.log.Debug("DownloadToWriter bucketName:%s, objectKey:%s", bucketName, objectKey)
+	a.logger.Debug("DownloadToWriter bucketName:%s, objectKey:%s", bucketName, objectKey)
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
@@ -417,7 +417,7 @@ func (a *defaultObjectStorageAccessor) DownloadToWriter(bucketName string, objec
 
 // DownloadToFile implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DownloadToFile(bucketName string, objectKey string, filePath string) error {
-	a.log.Debug("DownloadLargeObject bucketName:%s, objectKey:%s, filePath", bucketName, objectKey, filePath)
+	a.logger.Debug("DownloadLargeObject bucketName:%s, objectKey:%s, filePath", bucketName, objectKey, filePath)
 	f, err := os.Create(filePath)
 	if err != nil {
 		return errors.WithStack(err)
@@ -428,7 +428,7 @@ func (a *defaultObjectStorageAccessor) DownloadToFile(bucketName string, objectK
 
 // Delele implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) Delele(bucketName string, objectKey string) error {
-	a.log.Debug("Delete bucketName:%s, objectKey:%s", bucketName, objectKey)
+	a.logger.Debug("Delete bucketName:%s, objectKey:%s", bucketName, objectKey)
 	input := &s3.DeleteObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
@@ -442,7 +442,7 @@ func (a *defaultObjectStorageAccessor) Delele(bucketName string, objectKey strin
 
 // DeleteByVersionId implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DeleteByVersionId(bucketName string, objectKey string, versionId string) error {
-	a.log.Debug("DeleteByVersionId bucketName:%s, objectKey:%s, versionId:%s", bucketName, objectKey, versionId)
+	a.logger.Debug("DeleteByVersionId bucketName:%s, objectKey:%s, versionId:%s", bucketName, objectKey, versionId)
 	input := &s3.DeleteObjectInput{
 		Bucket:    aws.String(bucketName),
 		Key:       aws.String(objectKey),
@@ -457,7 +457,7 @@ func (a *defaultObjectStorageAccessor) DeleteByVersionId(bucketName string, obje
 
 // DeleteFolder implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DeleteFolder(bucketName string, folderPath string) error {
-	a.log.Debug("DeleteFolder bucketName:%s, folderPath:%s", bucketName, folderPath)
+	a.logger.Debug("DeleteFolder bucketName:%s, folderPath:%s", bucketName, folderPath)
 	// コピー元フォルダに存在するオブジェクトを取得
 	objects, err := a.List(bucketName, folderPath)
 	if err != nil {
@@ -474,16 +474,16 @@ func (a *defaultObjectStorageAccessor) DeleteFolder(bucketName string, folderPat
 
 // Copy implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) Copy(bucketName string, objectKey string, targetFolderPath string) error {
-	a.log.Debug("Copy bucketName:%s, objectKey:%s, targetFolderPath:%s", bucketName, objectKey, targetFolderPath)
+	a.logger.Debug("Copy bucketName:%s, objectKey:%s, targetFolderPath:%s", bucketName, objectKey, targetFolderPath)
 	return a.CopyAcrossBuckets(bucketName, objectKey, bucketName, targetFolderPath)
 }
 
 // CopyAcrossBuckets implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) CopyAcrossBuckets(bucketName string, objectKey string, targetBucketName string, targetFolderPath string) error {
-	a.log.Debug("CopyAcrossBuckets bucketName:%s, objectKey:%s, targetBucketName:%s, targetFolderPath:%s", bucketName, objectKey, targetBucketName, targetFolderPath)
+	a.logger.Debug("CopyAcrossBuckets bucketName:%s, objectKey:%s, targetBucketName:%s, targetFolderPath:%s", bucketName, objectKey, targetBucketName, targetFolderPath)
 	i := strings.LastIndex(objectKey, "/")
 	fileName := objectKey[i+1:]
-	a.log.Debug("fileName:%s", fileName)
+	a.logger.Debug("fileName:%s", fileName)
 	input := &s3.CopyObjectInput{
 		Bucket:     aws.String(targetBucketName),
 		CopySource: aws.String(encodeURL(fmt.Sprintf("%s/%s", bucketName, objectKey))),
@@ -498,13 +498,13 @@ func (a *defaultObjectStorageAccessor) CopyAcrossBuckets(bucketName string, obje
 
 // CopyFolder implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) CopyFolder(bucketName string, srcFolderPath string, targetFolderPath string, nested bool) error {
-	a.log.Debug("CopyFolder bucketName:%s, srcFolderPath:%s, targetFolderPath:%s, nested:%v", bucketName, srcFolderPath, targetFolderPath, nested)
+	a.logger.Debug("CopyFolder bucketName:%s, srcFolderPath:%s, targetFolderPath:%s, nested:%v", bucketName, srcFolderPath, targetFolderPath, nested)
 	return a.CopyFolderAcrossBuckets(bucketName, srcFolderPath, bucketName, targetFolderPath, nested)
 }
 
 // CopyFolderAcrossBuckets implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) CopyFolderAcrossBuckets(bucketName string, srcFolderPath string, targetBucketName string, targetFolderPath string, nested bool) error {
-	a.log.Debug("CopyFolderAcrossBuckets bucketName:%s, srcFolderPath:%s, targetBucketName:%s, targetFolderPath:%s, nested:%v", bucketName, srcFolderPath, targetBucketName, targetFolderPath, nested)
+	a.logger.Debug("CopyFolderAcrossBuckets bucketName:%s, srcFolderPath:%s, targetBucketName:%s, targetFolderPath:%s, nested:%v", bucketName, srcFolderPath, targetBucketName, targetFolderPath, nested)
 	srcFolderPath = strings.Trim(srcFolderPath, "/")
 	targetFolderPath = strings.Trim(targetFolderPath, "/")
 	// コピー元とコピー先が同じ場合は何もしない
@@ -519,7 +519,7 @@ func (a *defaultObjectStorageAccessor) CopyFolderAcrossBuckets(bucketName string
 	}
 	// 対象のオブジェクトに対して繰り返し処理
 	for _, object := range objects {
-		a.log.Debug("object.Key:%s", *object.Key)
+		a.logger.Debug("object.Key:%s", *object.Key)
 		// コピー元フォルダ名を除いたパスを取得
 		lastPath := strings.TrimPrefix(*object.Key, srcFolderPath)
 		// nestedならすべてコピーする
@@ -527,7 +527,7 @@ func (a *defaultObjectStorageAccessor) CopyFolderAcrossBuckets(bucketName string
 		if nested || !strings.Contains(lastPath, "/") {
 			if *object.Size == 0 && strings.HasSuffix(*object.Key, "/") {
 				// サイズが0でキーがスラッシュで終わる場合はフォルダなので、サイズ0のファイルを作成し空フォルダのコピーも行う
-				a.log.Debug("Create empty folder. targetBucketName:%s, targetFolderPath:%s", targetBucketName, targetFolderPath+lastPath)
+				a.logger.Debug("Create empty folder. targetBucketName:%s, targetFolderPath:%s", targetBucketName, targetFolderPath+lastPath)
 				_, err = a.Upload(targetBucketName, targetFolderPath+lastPath, []byte{})
 			} else {
 				i := strings.LastIndex(lastPath, "/")

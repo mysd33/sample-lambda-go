@@ -27,11 +27,11 @@ type TodoController interface {
 }
 
 // New は、TodoControllerを作成します。
-func New(log logging.Logger,
+func New(logger logging.Logger,
 	transactionManager transaction.TransactionManager,
 	service service.TodoService,
 ) TodoController {
-	return &todoControllerImpl{log: log,
+	return &todoControllerImpl{logger: logger,
 		transactionManager: transactionManager,
 		service:            service,
 	}
@@ -39,7 +39,7 @@ func New(log logging.Logger,
 
 // todoControllerImpl は、TodoControllerを実装する構造体です。
 type todoControllerImpl struct {
-	log                logging.Logger
+	logger             logging.Logger
 	transactionManager transaction.TransactionManager
 	service            service.TodoService
 }

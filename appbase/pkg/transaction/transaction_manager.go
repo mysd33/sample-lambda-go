@@ -35,11 +35,11 @@ type TransactionManager interface {
 }
 
 // NewTransactionManager は、TransactionManagerを作成します
-func NewTransactionManager(log logging.Logger,
+func NewTransactionManager(logger logging.Logger,
 	dynamodbAccessor TransactionalDynamoDBAccessor,
 	sqsAccessor TransactionalSQSAccessor,
 	messageRegsiterer MessageRegisterer) TransactionManager {
-	return &defaultTransactionManager{log: log,
+	return &defaultTransactionManager{logger: logger,
 		dynamodbAccessor:  dynamodbAccessor,
 		sqsAccessor:       sqsAccessor,
 		messageRegsiterer: messageRegsiterer,
@@ -48,11 +48,11 @@ func NewTransactionManager(log logging.Logger,
 
 // NewTransactionManagerFoDBOnly は、DynamoDBのみのトランザクションに対応するTransactionManagerを作成します。
 // SQSのトランザクションは利用しない場合に使用します。
-func NewTransactionManagerForDBOnly(log logging.Logger,
+func NewTransactionManagerForDBOnly(logger logging.Logger,
 	dynamodbAccessor TransactionalDynamoDBAccessor,
 	messageRegsterer MessageRegisterer,
 ) TransactionManager {
-	return &defaultTransactionManager{log: log,
+	return &defaultTransactionManager{logger: logger,
 		dynamodbAccessor:  dynamodbAccessor,
 		messageRegsiterer: messageRegsterer,
 	}
@@ -60,7 +60,7 @@ func NewTransactionManagerForDBOnly(log logging.Logger,
 
 // defaultTransactionManager は、TransactionManagerを実装する構造体です。
 type defaultTransactionManager struct {
-	log               logging.Logger
+	logger            logging.Logger
 	dynamodbAccessor  TransactionalDynamoDBAccessor
 	sqsAccessor       TransactionalSQSAccessor
 	messageRegsiterer MessageRegisterer
@@ -82,7 +82,7 @@ func (tm *defaultTransactionManager) ExecuteTransactionWithContext(ctx context.C
 		ctx = apcontext.Context
 	}
 	// 新しいトランザクションを作成
-	transaction := newTrasaction(tm.log, tm.messageRegsiterer)
+	transaction := newTrasaction(tm.logger, tm.messageRegsiterer)
 	// トランザクション付きのContextを作成
 	ctxWithTx := context.WithValue(ctx, TRANSACTION_CTX_KEY, transaction)
 
@@ -128,13 +128,13 @@ type Transaction interface {
 }
 
 // newTrasactionは 新しいTransactionを作成します。
-func newTrasaction(log logging.Logger, messageRegsiterer MessageRegisterer) Transaction {
-	return &defaultTransaction{log: log, messageRegsiterer: messageRegsiterer}
+func newTrasaction(logger logging.Logger, messageRegsiterer MessageRegisterer) Transaction {
+	return &defaultTransaction{logger: logger, messageRegsiterer: messageRegsiterer}
 }
 
 // defaultTransactionは、transactionを実装する構造体です。
 type defaultTransaction struct {
-	log               logging.Logger
+	logger            logging.Logger
 	messageRegsiterer MessageRegisterer
 	dynamodbAccessor  TransactionalDynamoDBAccessor
 	sqsAccessor       TransactionalSQSAccessor
@@ -149,7 +149,7 @@ type defaultTransaction struct {
 
 // Start implements Transaction.
 func (t *defaultTransaction) Start(dynamodbAccessor TransactionalDynamoDBAccessor, sqsAccessor TransactionalSQSAccessor) {
-	t.log.Debug("トランザクション開始")
+	t.logger.Debug("トランザクション開始")
 	t.dynamodbAccessor = dynamodbAccessor
 	t.sqsAccessor = sqsAccessor
 }
@@ -176,7 +176,7 @@ func (t *defaultTransaction) Commit() (*dynamodb.TransactWriteItemsOutput, error
 		// SQSのメッセージの送信とメッセージのDBトランザクション管理
 		err = t.sqsAccessor.TransactSendMessages(t.messages)
 		if err != nil {
-			t.log.Debug("SQSのメッセージ送信失敗でロールバック")
+			t.logger.Debug("SQSのメッセージ送信失敗でロールバック")
 			return nil, errors.WithStack(err)
 		}
 	}
@@ -188,14 +188,14 @@ func (t *defaultTransaction) Commit() (*dynamodb.TransactWriteItemsOutput, error
 
 	// DBトランザクションの実行
 	if !t.CheckTransactWriteItems() {
-		t.log.Debug("トランザクション処理なし")
+		t.logger.Debug("トランザクション処理なし")
 		return nil, err
 	}
 
 	// DynamoDBトランザクション実行
 	output, err := t.dynamodbAccessor.TransactWriteItemsSDK(t.transactWriteItems)
 	if err != nil {
-		t.log.Debug("トランザクションコミットエラー")
+		t.logger.Debug("トランザクションコミットエラー")
 		// https://docs.aws.amazon.com/ja_jp/amazondynamodb/latest/developerguide/transaction-apis.html
 		var txCanceledException *types.TransactionCanceledException
 		var txConflictException *types.TransactionConflictException
@@ -216,23 +216,23 @@ func (t *defaultTransaction) Commit() (*dynamodb.TransactWriteItemsOutput, error
 				} else {
 					msg = *messagePtr
 				}
-				t.log.Info(message.I_FW_0003, code, msg, v.Item)
+				t.logger.Info(message.I_FW_0003, code, msg, v.Item)
 			}
 		} else if errors.As(err, &txConflictException) {
-			t.log.Info(message.I_FW_0004, *txConflictException.ErrorCodeOverride, *txConflictException.Message)
+			t.logger.Info(message.I_FW_0004, *txConflictException.ErrorCodeOverride, *txConflictException.Message)
 		}
 		return nil, errors.WithStack(err)
 	}
-	t.log.Debug("トランザクションコミット")
+	t.logger.Debug("トランザクションコミット")
 	return output, nil
 }
 
 // Rollback implements Transaction.
 func (t *defaultTransaction) Rollback() {
 	if t.CheckTransactWriteItems() {
-		t.log.Debug("業務処理エラーでトランザクションロールバック")
+		t.logger.Debug("業務処理エラーでトランザクションロールバック")
 	} else {
-		t.log.Debug("業務処理エラーだがトランザクション処理なし")
+		t.logger.Debug("業務処理エラーだがトランザクション処理なし")
 	}
 }
 
@@ -241,13 +241,13 @@ func (t *defaultTransaction) transactUpdateQueueMessageItem() error {
 	// Contextから非同期処理情報を取得
 	asyncHandlerInfo := apcontext.Context.Value(constant.ASYNC_HANDLER_INFO_CTX_KEY)
 	if asyncHandlerInfo == nil {
-		t.log.Debug("非同期処理情報なし")
+		t.logger.Debug("非同期処理情報なし")
 		return nil
 	}
 	queueMessageItem, ok := asyncHandlerInfo.(*entity.QueueMessageItem)
 	if ok {
 		// メッセージ管理テーブルのアイテムのステータスを完了に更新するトランザクションを追加
-		t.log.Debug("メッセージ管理テーブルにステータスを完了にする更新トランザクションを追加")
+		t.logger.Debug("メッセージ管理テーブルにステータスを完了にする更新トランザクションを追加")
 		queueMessageItem.Status = constant.QUEUE_MESSAGE_STATUS_COMPLETE
 		return t.messageRegsiterer.UpdateMessage(queueMessageItem)
 	}

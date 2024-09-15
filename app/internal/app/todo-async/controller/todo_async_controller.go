@@ -21,12 +21,12 @@ type TodoAsyncController interface {
 	RegisterAllAsync(sqsMessage events.SQSMessage) error
 }
 
-func New(log logging.Logger,
+func New(logger logging.Logger,
 	idempotencyManager idempotency.IdempotencyManager,
 	transactionManager transaction.TransactionManager,
 	service service.TodoAsyncService) TodoAsyncController {
 	return &todoAsyncControllerImpl{
-		log:                log,
+		logger:             logger,
 		idempotencyManager: idempotencyManager,
 		transactionManager: transactionManager,
 		service:            service,
@@ -34,7 +34,7 @@ func New(log logging.Logger,
 }
 
 type todoAsyncControllerImpl struct {
-	log                logging.Logger
+	logger             logging.Logger
 	idempotencyManager idempotency.IdempotencyManager
 	transactionManager transaction.TransactionManager
 	service            service.TodoAsyncService
@@ -53,7 +53,7 @@ func (c *todoAsyncControllerImpl) RegisterAllAsync(sqsMessage events.SQSMessage)
 // doRegisterAllAsync は、RegisterAllAsyncの実処理で、SQSメッセージとして受け取ったTodoのリストを全て登録します。
 func (c *todoAsyncControllerImpl) doRegisterAllAsync(sqsMessage events.SQSMessage) error {
 	body := sqsMessage.Body
-	c.log.Debug("Message: %s", body)
+	c.logger.Debug("Message: %s", body)
 
 	//メッセージをjsonデコードして、AsyncMessageを取得する処理
 	var asyncMessage entity.AsyncMessage

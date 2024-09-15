@@ -50,7 +50,7 @@ type SQSAccessor interface {
 }
 
 // NewSQSAccessor は、SQSAccessorを作成します。
-func NewSQSAccessor(log logging.Logger, myCfg myConfig.Config) (SQSAccessor, error) {
+func NewSQSAccessor(logger logging.Logger, myCfg myConfig.Config) (SQSAccessor, error) {
 	// カスタムHTTPClientの作成
 	sdkHTTPClient := awssdk.NewHTTPClient(myCfg)
 	// ClientLogModeの取得
@@ -78,7 +78,7 @@ func NewSQSAccessor(log logging.Logger, myCfg myConfig.Config) (SQSAccessor, err
 	})
 	return &defaultSQSAccessor{
 		config:    myCfg,
-		log:       log,
+		logger:    logger,
 		sqsClient: sqlClient,
 		queueUrls: make(map[string]string),
 	}, nil
@@ -87,7 +87,7 @@ func NewSQSAccessor(log logging.Logger, myCfg myConfig.Config) (SQSAccessor, err
 // defaultSQSAccessor は、SQSAccessorを実装する構造体です。
 type defaultSQSAccessor struct {
 	config    myConfig.Config
-	log       logging.Logger
+	logger    logging.Logger
 	sqsClient *sqs.Client
 	queueUrls map[string]string
 }
@@ -98,7 +98,7 @@ func (sa *defaultSQSAccessor) SendMessageSdk(queueName string, input *sqs.SendMe
 	queueUrl, ok := sa.queueUrls[queueName]
 	if ok {
 		// キャッシュがある場合は、キャッシュから取得
-		sa.log.Debug("QueueURLキャッシュ:%s", queueUrl)
+		sa.logger.Debug("QueueURLキャッシュ:%s", queueUrl)
 		input.QueueUrl = &queueUrl
 	} else {
 		// キャッシュがない場合は、APIで取得
@@ -108,7 +108,7 @@ func (sa *defaultSQSAccessor) SendMessageSdk(queueName string, input *sqs.SendMe
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
-		sa.log.Debug("GetQueueURL:%s", *queueUrlOutput.QueueUrl)
+		sa.logger.Debug("GetQueueURL:%s", *queueUrlOutput.QueueUrl)
 		// 送信先の設定
 		input.QueueUrl = queueUrlOutput.QueueUrl
 		// キャッシュへ格納
@@ -117,19 +117,19 @@ func (sa *defaultSQSAccessor) SendMessageSdk(queueName string, input *sqs.SendMe
 
 	if input.MessageGroupId != nil {
 		if input.MessageDeduplicationId != nil {
-			sa.log.Debug("MessageGroupId=%s, MessageDeduplicationId=%s, Message=%s", *input.MessageGroupId, *input.MessageDeduplicationId, *input.MessageBody)
+			sa.logger.Debug("MessageGroupId=%s, MessageDeduplicationId=%s, Message=%s", *input.MessageGroupId, *input.MessageDeduplicationId, *input.MessageBody)
 		} else {
-			sa.log.Debug("MessageGroupId=%s, Message=%s", *input.MessageGroupId, *input.MessageBody)
+			sa.logger.Debug("MessageGroupId=%s, Message=%s", *input.MessageGroupId, *input.MessageBody)
 		}
 	} else {
-		sa.log.Debug("Message=%s", *input.MessageBody)
+		sa.logger.Debug("Message=%s", *input.MessageBody)
 	}
-	sa.log.Info(message.I_FW_0006, queueName)
+	sa.logger.Info(message.I_FW_0006, queueName)
 	//　SQSへメッセージ送信する
 	output, err := sa.sqsClient.SendMessage(apcontext.Context, input)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	sa.log.Info(message.I_FW_0007, queueName, *output.MessageId)
+	sa.logger.Info(message.I_FW_0007, queueName, *output.MessageId)
 	return output, nil
 }

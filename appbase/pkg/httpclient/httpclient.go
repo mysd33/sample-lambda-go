@@ -61,16 +61,16 @@ type ResponseData struct {
 // defaultHttpClientは、HttpClientインタフェースを実装する構造体です。
 type defaultHttpClient struct {
 	config  config.Config
-	log     logging.Logger
+	logger  logging.Logger
 	retryer retry.Retryer[*http.Response]
 }
 
 // NewHttpClient は、HttpClientを生成します。
-func NewHttpClient(config config.Config, log logging.Logger) HttpClient {
-	retryer := retry.NewRetryer[*http.Response](log)
+func NewHttpClient(config config.Config, logger logging.Logger) HttpClient {
+	retryer := retry.NewRetryer[*http.Response](logger)
 	return &defaultHttpClient{
 		config:  config,
-		log:     log,
+		logger:  logger,
 		retryer: retryer,
 	}
 }
@@ -150,7 +150,7 @@ func (c *defaultHttpClient) doGet(ctx context.Context, url string, header http.H
 		if header != nil {
 			req.Header = header
 		}
-		c.log.Info(message.I_FW_0005, "GET", url)
+		c.logger.Info(message.I_FW_0005, "GET", url)
 		// Getメソッドの実行（X-Ray対応）
 		response, err := ctxhttp.Do(ctx, xray.Client(nil), req)
 		if err != nil {
@@ -172,7 +172,7 @@ func (c *defaultHttpClient) doPost(ctx context.Context, url string, header http.
 			req.Header = header
 		}
 		req.Header.Set("Content-Type", "application/json")
-		c.log.Info(message.I_FW_0005, "POST", url)
+		c.logger.Info(message.I_FW_0005, "POST", url)
 		// POSTメソッドの実行（X-Ray対応）
 		response, err := ctxhttp.Do(ctx, xray.Client(nil), req)
 		if err != nil {

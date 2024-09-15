@@ -26,13 +26,13 @@ type Retryer[T any] interface {
 
 // defaultRetryer は、リトライ処理を行うためのRetryerのデフォルト実装です。
 type defaultRetryer[T any] struct {
-	log logging.Logger
+	logger logging.Logger
 }
 
 // NewRetryer は、リトライ処理を行うためのRetryerを生成します。
-func NewRetryer[T any](log logging.Logger) Retryer[T] {
+func NewRetryer[T any](logger logging.Logger) Retryer[T] {
 	return &defaultRetryer[T]{
-		log: log,
+		logger: logger,
 	}
 }
 
@@ -85,7 +85,7 @@ func (r *defaultRetryer[T]) DoWithContext(ctx context.Context, retryableFunc Ret
 			return result, ctx.Err()
 		// リトライ間隔の時間経過誤、最初に戻り処理を継続
 		case <-t.C():
-			r.log.Debug("リトライ回数:%d", eb.retryTimes)
+			r.logger.Debug("リトライ回数:%d", eb.retryTimes)
 		}
 	}
 }

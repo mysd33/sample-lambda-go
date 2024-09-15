@@ -1,5 +1,6 @@
 {
     "Parameters": {
-        "ENV": "Local"
+        "ENV": "Local",
+        "LOG_LEVEL": "DEBUG"
     }
 }

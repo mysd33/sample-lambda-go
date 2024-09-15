@@ -29,11 +29,11 @@ const (
 
 // viperConfigは、spf13/viperによるConfig実装です。
 type viperConfig struct {
-	log logging.Logger
+	logger logging.Logger
 }
 
 // NewViperConfig は、設定ファイルをロードし、viperConfigを作成します。
-func newViperConfig(log logging.Logger) (Config, error) {
+func newViperConfig(logger logging.Logger) (Config, error) {
 	viper.SetConfigName(fmt.Sprintf(configFileName, strings.ToLower(env.GetEnv())))
 	viper.SetConfigType(extension)
 	if configBasePath, found := os.LookupEnv(CONFIG_BASE_PATH_NAME); found {
@@ -55,7 +55,7 @@ func newViperConfig(log logging.Logger) (Config, error) {
 	if err := viper.ReadInConfig(); err != nil {
 		return nil, errors.Errorf("設定ファイル読み込みエラー:%w", err)
 	}
-	return &viperConfig{log: log}, nil
+	return &viperConfig{logger: logger}, nil
 }
 
 // GetWithContains implements Config.
@@ -78,7 +78,7 @@ func (c *viperConfig) GetIntWithContains(key string) (int, bool) {
 	value, found := c.GetWithContains(key)
 	result, err := convertIntValueIfFound(found, value)
 	if err != nil {
-		c.log.WarnWithError(err, message.W_FW_8009, key, value)
+		c.logger.WarnWithError(err, message.W_FW_8009, key, value)
 		// int変換に失敗した場合は、値が見つからなかったとしてfalseを返す
 		return 0, false
 	}
@@ -96,7 +96,7 @@ func (c *viperConfig) GetBoolWithContains(key string) (bool, bool) {
 	value, found := c.GetWithContains(key)
 	result, err := convertBoolValueIfFound(found, value)
 	if err != nil {
-		c.log.WarnWithError(err, message.W_FW_8010, key, value)
+		c.logger.WarnWithError(err, message.W_FW_8010, key, value)
 		// bool変換に失敗した場合は、値が見つからなかったとしてfalseを返す
 		return false, false
 	}

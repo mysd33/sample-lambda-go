@@ -48,15 +48,15 @@ type TransactionalSQSAccessor interface {
 }
 
 // NewTransactionalSQSAccessor は、TransactionalSQSAccessorを作成します。
-func NewTransactionalSQSAccessor(log logging.Logger, myCfg myConfig.Config, messageRegisterer MessageRegisterer) (TransactionalSQSAccessor, error) {
-	sqsAccessor, err := async.NewSQSAccessor(log, myCfg)
+func NewTransactionalSQSAccessor(logger logging.Logger, myCfg myConfig.Config, messageRegisterer MessageRegisterer) (TransactionalSQSAccessor, error) {
+	sqsAccessor, err := async.NewSQSAccessor(logger, myCfg)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 	// TTL（時間）の取得
 	ttl := myCfg.GetInt(QUEUE_MESSAGE_TABLE_TTL_HOUR, 24*4)
 	return &defaultTransactionalSQSAccessor{
-		log:               log,
+		logger:            logger,
 		config:            myCfg,
 		sqsAccessor:       sqsAccessor,
 		messageRegisterer: messageRegisterer,
@@ -66,7 +66,7 @@ func NewTransactionalSQSAccessor(log logging.Logger, myCfg myConfig.Config, mess
 
 // defaultTransactionalSQSAccessor は、TransactionalSQSAccessorを実装する構造体です。
 type defaultTransactionalSQSAccessor struct {
-	log               logging.Logger
+	logger            logging.Logger
 	config            myConfig.Config
 	sqsAccessor       async.SQSAccessor
 	messageRegisterer MessageRegisterer
@@ -80,13 +80,13 @@ func (sa *defaultTransactionalSQSAccessor) SendMessageSdk(queueName string, inpu
 
 // AppendTransactMessage implements TransactionalSQSAccessor.
 func (sa *defaultTransactionalSQSAccessor) AppendTransactMessage(queueName string, input *sqs.SendMessageInput) error {
-	sa.log.Debug("AppendTransactMessage")
+	sa.logger.Debug("AppendTransactMessage")
 	return sa.AppendTransactMessageWithContext(apcontext.Context, queueName, input)
 }
 
 // AppendTransactMessageWithContext implements TransactionalSQSAccessor.
 func (sa *defaultTransactionalSQSAccessor) AppendTransactMessageWithContext(ctx context.Context, queueName string, input *sqs.SendMessageInput) error {
-	sa.log.Debug("AppendTransactMessageWithContext")
+	sa.logger.Debug("AppendTransactMessageWithContext")
 	value := ctx.Value(TRANSACTION_CTX_KEY)
 	if value == nil {
 		// TODO: エラー処理
@@ -103,7 +103,7 @@ func (sa *defaultTransactionalSQSAccessor) AppendTransactMessageWithContext(ctx 
 
 // TransactSendMessages implements TransactionalSQSAccessor.
 func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Message) error {
-	sa.log.Debug("TransactSendMessages: %d件", len(inputs))
+	sa.logger.Debug("TransactSendMessages: %d件", len(inputs))
 
 	for _, v := range inputs {
 		// メッセージに削除時間を追加する
@@ -114,7 +114,7 @@ func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Messag
 			//TODO: forの途中でエラーを返却することハンドリングが問題ないか再考
 			return errors.WithStack(err)
 		}
-		sa.log.Debug("Send Message Id=%s", *output.MessageId)
+		sa.logger.Debug("Send Message Id=%s", *output.MessageId)
 
 		// メッセージ管理テーブル用のアイテムのトランザクション登録処理を追加
 		queueMessageItem := &entity.QueueMessageItem{}

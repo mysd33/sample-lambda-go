@@ -24,19 +24,19 @@ type APITriggeredLambdaHandlerFunc func(ctx context.Context, request events.APIG
 // APILambdaHandler は、APIGatewayトリガのLambdaのハンドラを管理する構造体です。
 type APILambdaHandler struct {
 	config               config.Config
-	log                  logging.Logger
+	logger               logging.Logger
 	messageSource        message.MessageSource
 	apiResponseFormatter api.ApiResponseFormatter
 }
 
 // NewAPILambdaHandler は、APILambdaHandlerを作成します。
 func NewAPILambdaHandler(config config.Config,
-	log logging.Logger,
+	logger logging.Logger,
 	messageSource message.MessageSource,
 	apiResponseFormatter api.ApiResponseFormatter) *APILambdaHandler {
 	return &APILambdaHandler{
 		config:               config,
-		log:                  log,
+		logger:               logger,
 		messageSource:        messageSource,
 		apiResponseFormatter: apiResponseFormatter,
 	}
@@ -57,21 +57,21 @@ func (h *APILambdaHandler) GetDefaultGinEngine(errorResponse api.ErrorResponse) 
 		gin.CustomRecovery(func(c *gin.Context, recover any) {
 			// パニックをエラーでラップ
 			err := errors.Errorf("recover from: %+v", recover)
-			h.log.ErrorWithUnexpectedError(err)
+			h.logger.ErrorWithUnexpectedError(err)
 			// エラーをその他のエラー（ginのエラーログ対象外）として、ginのContextに格納
 			c.Error(err).SetType(gin.ErrorTypeNu)
 		}))
 
 	// 404エラー
 	engine.NoRoute(func(ctx *gin.Context) {
-		h.log.Debug("%s is not found", ctx.Request.URL.Path)
+		h.logger.Debug("%s is not found", ctx.Request.URL.Path)
 		// エラーをPublicなエラー（ginのエラーログ対象外）として、ginのContextに格納
 		ctx.Error(api.NoRouteError).SetType(gin.ErrorTypePublic)
 	})
 	// 405エラー
 	engine.HandleMethodNotAllowed = true
 	engine.NoMethod(func(ctx *gin.Context) {
-		h.log.Debug("%s Method %s is not allowed", ctx.Request.Method, ctx.Request.URL.Path)
+		h.logger.Debug("%s Method %s is not allowed", ctx.Request.Method, ctx.Request.URL.Path)
 		// エラーをPublicなエラー（ginのエラーログ対象外）として、ginのContextに格納
 		ctx.Error(api.NoMethodError).SetType(gin.ErrorTypePublic)
 	})
@@ -87,28 +87,28 @@ func (h *APILambdaHandler) Handle(ginLambda *ginadapter.GinLambda, errorResponse
 			if v := recover(); v != nil {
 				perr := errors.Errorf("recover from: %+v", v)
 				// パニックのスタックトレース情報をログ出力
-				h.log.ErrorWithUnexpectedError(perr)
+				h.logger.ErrorWithUnexpectedError(perr)
 				// 想定外のエラーレスポンスの生成
 				response = h.createUnexpectedErrorResponse(perr, errorResponse)
 				// errがnilでないと{"message":"Internal Server Error"} のレスポンスが返却されるため、nilのまま
 			}
 			// ログのフラッシュ
-			h.log.Sync()
+			h.logger.Sync()
 		}()
 		// ctxをコンテキスト領域に格納
 		apcontext.Context = ctx
 
 		// リクエストIDをログの付加情報として追加
-		h.log.ClearInfo()
+		h.logger.ClearInfo()
 		lc := apcontext.GetLambdaContext(ctx)
-		h.log.AddInfo("AWS RequestID", lc.AwsRequestID)
-		h.log.AddInfo("API Gateway RequestID", request.RequestContext.RequestID)
+		h.logger.AddInfo("AWS RequestID", lc.AwsRequestID)
+		h.logger.AddInfo("API Gateway RequestID", request.RequestContext.RequestID)
 
 		// AWS Lambda Go API Proxyでginと統合
 		// https://github.com/awslabs/aws-lambda-go-api-proxy
 		response, gerr := ginLambda.ProxyWithContext(ctx, request)
 		if gerr != nil {
-			h.log.ErrorWithUnexpectedError(gerr)
+			h.logger.ErrorWithUnexpectedError(gerr)
 			// 想定外のエラーレスポンスの生成
 			response = h.createUnexpectedErrorResponse(gerr, errorResponse)
 			// errがnilでないと{"message":"Internal Server Error"} のレスポンスが返却されるため、nilのまま
@@ -122,7 +122,7 @@ func (h *APILambdaHandler) createUnexpectedErrorResponse(err error, errorRespons
 	statusCode, body := errorResponse.UnexpectedErrorResponse(err)
 	bbody, jerr := json.Marshal(body)
 	if jerr != nil {
-		h.log.ErrorWithUnexpectedError(jerr)
+		h.logger.ErrorWithUnexpectedError(jerr)
 		return events.APIGatewayProxyResponse{
 			StatusCode: statusCode,
 		}

@@ -37,15 +37,15 @@ func SimpleLambdaHandlerGenericFuncAdapter[T any](f SimpleLambdaHandlerFunc) Sim
 // SimpleLambdaHandler は、その他のトリガのLambdaのハンドラを表す構造体です。
 type SimpleLambdaHandler struct {
 	config config.Config
-	log    logging.Logger
+	logger logging.Logger
 }
 
 // NewSimpleLambdaHandler は、SimpleLambdaHandlerを作成します。
 func NewSimpleLambdaHandler(config config.Config,
-	log logging.Logger) *SimpleLambdaHandler {
+	logger logging.Logger) *SimpleLambdaHandler {
 	return &SimpleLambdaHandler{
 		config: config,
-		log:    log,
+		logger: logger,
 	}
 }
 
@@ -57,17 +57,17 @@ func (h *SimpleLambdaHandler) Handle(simpleControllerFunc SimpleControllerFunc) 
 			if v := recover(); v != nil {
 				resultErr = errors.Errorf("recover from: %+v", v)
 				// パニックのスタックトレース情報をログ出力
-				h.log.ErrorWithUnexpectedError(resultErr)
+				h.logger.ErrorWithUnexpectedError(resultErr)
 			}
 			// ログのフラッシュ
-			h.log.Sync()
+			h.logger.Sync()
 		}()
 		// ctxをコンテキスト領域に格納
 		apcontext.Context = ctx
 		// リクエストIDをログの付加情報として追加
-		h.log.ClearInfo()
+		h.logger.ClearInfo()
 		lc := apcontext.GetLambdaContext(ctx)
-		h.log.AddInfo("AWS RequestID", lc.AwsRequestID)
+		h.logger.AddInfo("AWS RequestID", lc.AwsRequestID)
 
 		response, resultErr = simpleControllerFunc(ctx, event)
 		if resultErr != nil {

@@ -24,7 +24,7 @@ type QueueMessageItemRepository interface {
 
 // NewQueueMessageItemRepository は、QueueMessageItemRepositoryを作成します。
 func NewQueueMessageItemRepository(config config.Config,
-	log logging.Logger,
+	logger logging.Logger,
 	dynamodbTemplate TransactionalDynamoDBTemplate) QueueMessageItemRepository {
 	// テーブル名取得
 	tableName := tables.DynamoDBTableName(config.Get(QUEUE_MESSAGE_TABLE_NAME, "queue_message"))
@@ -33,7 +33,7 @@ func NewQueueMessageItemRepository(config config.Config,
 	// プライマリキーの設定
 	primaryKey := tables.GetPrimaryKey(tableName)
 	return &defaultQueueMessageItemRepository{
-		log:              log,
+		logger:           logger,
 		dynamodbTemplate: dynamodbTemplate,
 		tableName:        tableName,
 		primaryKey:       primaryKey,
@@ -42,7 +42,7 @@ func NewQueueMessageItemRepository(config config.Config,
 
 // defaultQueueMessageItemRepository は、QueueMessageItemRepositoryを実装する構造体です。
 type defaultQueueMessageItemRepository struct {
-	log              logging.Logger
+	logger           logging.Logger
 	dynamodbTemplate TransactionalDynamoDBTemplate
 	tableName        tables.DynamoDBTableName
 	primaryKey       *tables.PKKeyPair
@@ -50,7 +50,7 @@ type defaultQueueMessageItemRepository struct {
 
 // FindOne implements QueueMessageItemRepository.
 func (r *defaultQueueMessageItemRepository) FindOne(messageId string, deleteTime int) (*entity.QueueMessageItem, error) {
-	r.log.Debug("partitionKey: %s", r.primaryKey.PartitionKey)
+	r.logger.Debug("partitionKey: %s", r.primaryKey.PartitionKey)
 	input := input.PKQueryInput{
 		PrimaryKey: input.PrimaryKey{
 			PartitionKey: input.Attribute{
@@ -93,7 +93,7 @@ func (r *defaultQueueMessageItemRepository) CreateOneWithTx(queueMessage *entity
 
 // UpdateOneWithTx implements QueueMessageItemRepository.
 func (r *defaultQueueMessageItemRepository) UpdateOneWithTx(queueMessage *entity.QueueMessageItem) error {
-	r.log.Debug("partitionKey: %s", r.primaryKey.PartitionKey)
+	r.logger.Debug("partitionKey: %s", r.primaryKey.PartitionKey)
 	input := input.UpdateInput{
 		PrimaryKey: input.PrimaryKey{
 			PartitionKey: input.Attribute{
@@ -118,7 +118,7 @@ func (r *defaultQueueMessageItemRepository) UpdateOneWithTx(queueMessage *entity
 			},
 		},
 	}
-	r.log.Debug("ステータス: %s", queueMessage.Status)
+	r.logger.Debug("ステータス: %s", queueMessage.Status)
 	err := r.dynamodbTemplate.UpdateOneWithTransaction(r.tableName, input)
 	if err != nil {
 		return errors.WithStack(err)

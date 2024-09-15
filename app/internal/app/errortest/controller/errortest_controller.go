@@ -21,13 +21,13 @@ type ErrorTestController interface {
 }
 
 // New は、ErrorControllerを作成します。
-func New(log logging.Logger, service service.ErrorTestService) ErrorTestController {
-	return &errorTestControllerImpl{log: log, service: service}
+func New(logger logging.Logger, service service.ErrorTestService) ErrorTestController {
+	return &errorTestControllerImpl{logger: logger, service: service}
 }
 
 // errorTestControllerImpl は、ErrorTestControllerを実装します。
 type errorTestControllerImpl struct {
-	log     logging.Logger
+	logger  logging.Logger
 	service service.ErrorTestService
 }
 

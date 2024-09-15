@@ -33,18 +33,18 @@ type TransactionalDynamoDBTemplate interface {
 	DeleteOneWithTransactionInContext(ctx context.Context, tableName tables.DynamoDBTableName, input input.DeleteInput) error
 }
 
-func NewTransactionalDynamoDBTemplate(log logging.Logger,
+func NewTransactionalDynamoDBTemplate(logger logging.Logger,
 	transactionalDynamoDBAccessor TransactionalDynamoDBAccessor) TransactionalDynamoDBTemplate {
-	dynamodbTemplate := mydynamodb.NewDynamoDBTemplate(log, transactionalDynamoDBAccessor)
+	dynamodbTemplate := mydynamodb.NewDynamoDBTemplate(logger, transactionalDynamoDBAccessor)
 	return &defaultTransactionalDynamoDBTemplate{
-		log:                           log,
+		logger:                        logger,
 		dynamodbTemplate:              dynamodbTemplate,
 		transactionalDynamoDBAccessor: transactionalDynamoDBAccessor,
 	}
 }
 
 type defaultTransactionalDynamoDBTemplate struct {
-	log                           logging.Logger
+	logger                        logging.Logger
 	dynamodbTemplate              mydynamodb.DynamoDBTemplate
 	transactionalDynamoDBAccessor TransactionalDynamoDBAccessor
 }
@@ -129,7 +129,7 @@ func (t *defaultTransactionalDynamoDBTemplate) newPutTransactionWriteItem(tableN
 
 // UpdateOneWithTransaction implements TransactinalDynamoDBTemplate.
 func (t *defaultTransactionalDynamoDBTemplate) UpdateOneWithTransaction(tableName tables.DynamoDBTableName, input input.UpdateInput) error {
-	t.log.Debug("UpdateOneWithTransaction")
+	t.logger.Debug("UpdateOneWithTransaction")
 	item, err := t.newUpdateTransactionWriteItem(tableName, input)
 	if err != nil {
 		return err

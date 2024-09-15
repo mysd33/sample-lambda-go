@@ -40,17 +40,17 @@ type SQSTriggeredLambdaHandlerFunc func(ctx context.Context, event events.SQSEve
 // AsyncLambdaHandler は、SQSトリガの非同期処理のLambdaのハンドラを管理する構造体です。
 type AsyncLambdaHandler struct {
 	config                     config.Config
-	log                        logging.Logger
+	logger                     logging.Logger
 	queueMessageItemRepository transaction.QueueMessageItemRepository
 }
 
 // NewAsyncLambdaHandler は、AsyncLambdaHandlerを作成します。
 func NewAsyncLambdaHandler(config config.Config,
-	log logging.Logger,
+	logger logging.Logger,
 	queueMessageItemRepository transaction.QueueMessageItemRepository) *AsyncLambdaHandler {
 	return &AsyncLambdaHandler{
 		config:                     config,
-		log:                        log,
+		logger:                     logger,
 		queueMessageItemRepository: queueMessageItemRepository,
 	}
 }
@@ -63,17 +63,17 @@ func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQS
 			if v := recover(); v != nil {
 				resultErr = errors.Errorf("recover from: %+v", v)
 				// パニックのスタックトレース情報をログ出力
-				h.log.ErrorWithUnexpectedError(resultErr)
+				h.logger.ErrorWithUnexpectedError(resultErr)
 				// 全てのメッセージを失敗扱いにするため、空の文字列ItemIdentifierを追加
 				// https://docs.aws.amazon.com/ja_jp/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting
 				response.BatchItemFailures = append(response.BatchItemFailures, events.SQSBatchItemFailure{ItemIdentifier: ""})
 			}
 			// ログのフラッシュ
-			h.log.Sync()
+			h.logger.Sync()
 		}()
 		// FIFOの対応（FIFOの場合はメッセージグループID毎にメッセージのソート）
 		isFIFO := event.Records[0].Attributes[string(types.MessageSystemAttributeNameMessageGroupId)] != ""
-		h.log.Debug("isFIFO: %t", isFIFO)
+		h.logger.Debug("isFIFO: %t", isFIFO)
 		if isFIFO {
 			// FIFOの場合はメッセージをソート
 			h.sortMessages(event.Records)
@@ -83,10 +83,10 @@ func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQS
 			apcontext.Context = ctx
 
 			// リクエストID等をログの付加情報として追加
-			h.log.ClearInfo()
+			h.logger.ClearInfo()
 			lc := apcontext.GetLambdaContext(ctx)
-			h.log.AddInfo("AWS RequestID", lc.AwsRequestID)
-			h.log.AddInfo("SQS MessageId", v.MessageId)
+			h.logger.AddInfo("AWS RequestID", lc.AwsRequestID)
+			h.logger.AddInfo("SQS MessageId", v.MessageId)
 
 			// SQSのメッセージを1件取得しコントローラを呼び出し
 			err := h.doHandle(v, response, isFIFO, asyncControllerFunc)
@@ -118,7 +118,7 @@ func (h *AsyncLambdaHandler) doHandle(sqsMsg events.SQSMessage, response events.
 	queueName := h.getQueueName(sqsMsg)
 	messageId := sqsMsg.MessageId
 
-	h.log.Debug("doHandle[QueueName: %s, MessageId: %s]", queueName, messageId)
+	h.logger.Debug("doHandle[QueueName: %s, MessageId: %s]", queueName, messageId)
 	// キューメッセージテーブルのキーを作成
 	status, err := h.checkMessageId(sqsMsg)
 	if err != nil {
@@ -128,7 +128,7 @@ func (h *AsyncLambdaHandler) doHandle(sqsMsg events.SQSMessage, response events.
 			receiveCount, _ := strconv.Atoi(sqsMsg.Attributes[string(types.MessageSystemAttributeNameApproximateReceiveCount)])
 			if receiveCount >= QUEUE_MESSAGE_DELETE_RETRY_COUNT {
 				// Errorログの出力
-				h.log.Error(message.E_FW_9002, queueName, messageId)
+				h.logger.Error(message.E_FW_9002, queueName, messageId)
 
 				// メッセージ削除させるため正常終了
 				return nil
@@ -138,7 +138,7 @@ func (h *AsyncLambdaHandler) doHandle(sqsMsg events.SQSMessage, response events.
 	}
 	if status == constant.QUEUE_MESSAGE_STATUS_COMPLETE {
 		// 二重実行防止は、業務APでidempotencyパッケージを使って実装することとし、ここでは警告ログ出力するのみとする
-		h.log.Warn(message.W_FW_8008, queueName, messageId)
+		h.logger.Warn(message.W_FW_8008, queueName, messageId)
 	}
 	// Contextに非同期処理情報を格納
 	err = h.addAsyncInfoToContext(sqsMsg)
@@ -169,7 +169,7 @@ func (h *AsyncLambdaHandler) sortMessages(sqsMsgs []events.SQSMessage) {
 // checkMessagId は、キューメッセージ管理テーブルにメッセージIDが存在するか確認する
 func (h *AsyncLambdaHandler) checkMessageId(sqsMsg events.SQSMessage) (string, error) {
 	queueMessageTableId := h.getQueueMessageTableId(sqsMsg)
-	h.log.Debug("キューメッセージテーブルID: %s", queueMessageTableId)
+	h.logger.Debug("キューメッセージテーブルID: %s", queueMessageTableId)
 	deleteTime, err := strconv.Atoi(*sqsMsg.MessageAttributes[constant.QUEUE_MESSAGE_DELETE_TIME_NAME].StringValue)
 	if err != nil {
 		return "", errors.WithStack(err)
@@ -188,7 +188,7 @@ func (h *AsyncLambdaHandler) checkMessageId(sqsMsg events.SQSMessage) (string, e
 		}
 		retryCount++
 		// メッセージIDを取得できなかった場合のWARNログの追加
-		h.log.Warn(message.W_FW_8003, queueMessageTableId)
+		h.logger.Warn(message.W_FW_8003, queueMessageTableId)
 		// キューメッセージ管理テーブルへのアクセスリトライ時間待機
 		time.Sleep(TABLE_ACESS_RETRY_DURATION * time.Millisecond)
 	}

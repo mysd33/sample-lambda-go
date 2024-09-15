@@ -76,17 +76,17 @@ type DynamoDBAccessor interface {
 }
 
 // NewDynamoDBAccessor は、DynamoDBAccessor を作成します。
-func NewDynamoDBAccessor(log logging.Logger, myCfg myConfig.Config) (DynamoDBAccessor, error) {
+func NewDynamoDBAccessor(logger logging.Logger, myCfg myConfig.Config) (DynamoDBAccessor, error) {
 	dynamodbClient, err := CreateDynamoDBClient(myCfg)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	return &defaultDynamoDBAccessor{log: log, config: myCfg, dynamodbClient: dynamodbClient}, nil
+	return &defaultDynamoDBAccessor{logger: logger, config: myCfg, dynamodbClient: dynamodbClient}, nil
 }
 
 // defaultDynamoDBAccessor は、DynamoDBAccessor のデフォルト実装です。
 type defaultDynamoDBAccessor struct {
-	log            logging.Logger
+	logger         logging.Logger
 	config         myConfig.Config
 	dynamodbClient *dynamodb.Client
 }
@@ -106,7 +106,7 @@ func (da *defaultDynamoDBAccessor) GetItemSdk(input *dynamodb.GetItemInput) (*dy
 		return nil, errors.WithStack(err)
 	}
 	if output.ConsumedCapacity != nil {
-		da.log.Debug("GetItem[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
+		da.logger.Debug("GetItem[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
 	}
 	return output, nil
 }
@@ -121,7 +121,7 @@ func (da *defaultDynamoDBAccessor) QuerySdk(input *dynamodb.QueryInput) (*dynamo
 		return nil, errors.WithStack(err)
 	}
 	if output.ConsumedCapacity != nil {
-		da.log.Debug("Query[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
+		da.logger.Debug("Query[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
 	}
 	return output, nil
 }
@@ -135,7 +135,7 @@ func (da *defaultDynamoDBAccessor) QueryPagesSdk(input *dynamodb.QueryInput, fn 
 			return errors.WithStack(err)
 		}
 		if page.ConsumedCapacity != nil {
-			da.log.Debug("Query[%s]消費キャパシティユニット:%f", *page.ConsumedCapacity.TableName, *page.ConsumedCapacity.CapacityUnits)
+			da.logger.Debug("Query[%s]消費キャパシティユニット:%f", *page.ConsumedCapacity.TableName, *page.ConsumedCapacity.CapacityUnits)
 		}
 		if fn(page) {
 			break
@@ -154,7 +154,7 @@ func (da *defaultDynamoDBAccessor) PutItemSdk(input *dynamodb.PutItemInput) (*dy
 		return nil, errors.WithStack(err)
 	}
 	if output.ConsumedCapacity != nil {
-		da.log.Debug("PutItem[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
+		da.logger.Debug("PutItem[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
 	}
 	return output, nil
 
@@ -170,7 +170,7 @@ func (da *defaultDynamoDBAccessor) UpdateItemSdk(input *dynamodb.UpdateItemInput
 		return nil, errors.WithStack(err)
 	}
 	if output.ConsumedCapacity != nil {
-		da.log.Debug("UpdateItem[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
+		da.logger.Debug("UpdateItem[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
 	}
 	return output, nil
 }
@@ -185,7 +185,7 @@ func (da *defaultDynamoDBAccessor) DeleteItemSdk(input *dynamodb.DeleteItemInput
 		return nil, errors.WithStack(err)
 	}
 	if output.ConsumedCapacity != nil {
-		da.log.Debug("DeleteItem[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
+		da.logger.Debug("DeleteItem[%s]消費キャパシティユニット:%f", *output.ConsumedCapacity.TableName, *output.ConsumedCapacity.CapacityUnits)
 	}
 	return output, nil
 }
@@ -200,7 +200,7 @@ func (da *defaultDynamoDBAccessor) BatchGetItemSdk(input *dynamodb.BatchGetItemI
 		return nil, errors.WithStack(err)
 	}
 	for i, v := range output.ConsumedCapacity {
-		da.log.Debug("BatchGetItem(%d番目)[%s]消費キャパシティユニット:%f", i+1, *v.TableName, *v.CapacityUnits)
+		da.logger.Debug("BatchGetItem(%d番目)[%s]消費キャパシティユニット:%f", i+1, *v.TableName, *v.CapacityUnits)
 	}
 	return output, nil
 }
@@ -215,7 +215,7 @@ func (da *defaultDynamoDBAccessor) BatchWriteItemSdk(input *dynamodb.BatchWriteI
 		return nil, errors.WithStack(err)
 	}
 	for i, v := range output.ConsumedCapacity {
-		da.log.Debug("BatchWriteItem(%d番目)[%s]消費キャパシティユニット:%f", i+1, *v.TableName, *v.CapacityUnits)
+		da.logger.Debug("BatchWriteItem(%d番目)[%s]消費キャパシティユニット:%f", i+1, *v.TableName, *v.CapacityUnits)
 	}
 	return output, nil
 }

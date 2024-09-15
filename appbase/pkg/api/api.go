@@ -26,12 +26,12 @@ type ApiResponseFormatter interface {
 }
 
 // NewApiResponseFormatter は、ApiResponseFormatterを作成します。
-func NewApiResponseFormatter(log logging.Logger, messageSource message.MessageSource) ApiResponseFormatter {
-	return &defaultApiResponseFormatter{log: log, messageSource: messageSource}
+func NewApiResponseFormatter(logger logging.Logger, messageSource message.MessageSource) ApiResponseFormatter {
+	return &defaultApiResponseFormatter{logger: logger, messageSource: messageSource}
 }
 
 type defaultApiResponseFormatter struct {
-	log           logging.Logger
+	logger        logging.Logger
 	messageSource message.MessageSource
 }
 
@@ -72,7 +72,7 @@ func (f *defaultApiResponseFormatter) ReturnResponseBody(ctx *gin.Context, error
 		}
 		// resultが取得できなかった場合には予期せぬエラーとしてログを出力し、エラーを返却する
 		err := errors.New("result is not found")
-		f.log.ErrorWithUnexpectedError(err)
+		f.logger.ErrorWithUnexpectedError(err)
 		// 予期せぬエラー扱いのレスポンスを返却
 		ctx.JSON(errorResponse.UnexpectedErrorResponse(err))
 	}

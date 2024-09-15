@@ -16,14 +16,14 @@ import (
 )
 
 // NewUserRepositoryForRDB は、RDB保存のためのUserRepository実装を作成します。
-func NewUserRepositoryForRDB(accessor rdb.RDBAccessor, log logging.Logger, id id.IDGenerator) UserRepository {
-	return &UserRepositoryImplByRDB{accessor: accessor, log: log, id: id}
+func NewUserRepositoryForRDB(accessor rdb.RDBAccessor, logger logging.Logger, id id.IDGenerator) UserRepository {
+	return &UserRepositoryImplByRDB{accessor: accessor, logger: logger, id: id}
 }
 
 // UserRepositoryImplByRDB は、RDB保存のためのUserRepository実装です。
 type UserRepositoryImplByRDB struct {
 	accessor rdb.RDBAccessor
-	log      logging.Logger
+	logger   logging.Logger
 	id       id.IDGenerator
 }
 

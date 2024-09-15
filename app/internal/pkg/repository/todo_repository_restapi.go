@@ -18,13 +18,13 @@ const (
 )
 
 // NewTodoRepositoryForRestAPI は、REST APIのためのTodoRepository実装を作成します。
-func NewTodoRepositoryForRestAPI(httpClient httpclient.HttpClient, log logging.Logger, config config.Config) TodoRepository {
-	return &todoRepositoryImplByRestAPI{httpClient: httpClient, log: log, config: config}
+func NewTodoRepositoryForRestAPI(httpClient httpclient.HttpClient, logger logging.Logger, config config.Config) TodoRepository {
+	return &todoRepositoryImplByRestAPI{httpClient: httpClient, logger: logger, config: config}
 }
 
 type todoRepositoryImplByRestAPI struct {
 	httpClient httpclient.HttpClient
-	log        logging.Logger
+	logger     logging.Logger
 	config     config.Config
 }
 
@@ -35,7 +35,7 @@ func (tr *todoRepositoryImplByRestAPI) FindOne(todoId string) (*entity.Todo, err
 		return nil, errors.NewSystemError(fmt.Errorf("TODO_API_BASE_URLがありません"), message.E_EX_9001)
 	}
 	url := fmt.Sprintf("%s/todo-api/v1/todo/%s", baseUrl, todoId)
-	tr.log.Debug("url:%s", url)
+	tr.logger.Debug("url:%s", url)
 
 	response, err := tr.httpClient.Get(url, nil, nil)
 	if err != nil {
@@ -56,7 +56,7 @@ func (tr *todoRepositoryImplByRestAPI) CreateOne(todo *entity.Todo) (*entity.Tod
 		return nil, errors.NewSystemError(fmt.Errorf("TODO_API_BASE_URLがありません"), message.E_EX_9001)
 	}
 	url := fmt.Sprintf("%s/todo-api/v1/todo", baseUrl)
-	tr.log.Debug("url:%s", url)
+	tr.logger.Debug("url:%s", url)
 	// リクエストデータをアンマーシャル
 	data, err := json.MarshalIndent(todo, "", "    ")
 	if err != nil {

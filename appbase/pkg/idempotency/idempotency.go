@@ -41,10 +41,10 @@ type IdempotencyManager interface {
 }
 
 // NewIdempotencyManager は、IdempotencyManagerを作成します。
-func NewIdempotencyManager(log logging.Logger, dateManager date.DateManager,
+func NewIdempotencyManager(logger logging.Logger, dateManager date.DateManager,
 	config config.Config, repository IdempotencyRepository) IdempotencyManager {
 	return &defaultIdempotencyManager{
-		log:         log,
+		logger:      logger,
 		dateManager: dateManager,
 		config:      config,
 		repository:  repository,
@@ -53,7 +53,7 @@ func NewIdempotencyManager(log logging.Logger, dateManager date.DateManager,
 
 // defaultIdempotencyManager は、IdempotencyManagerのデフォルト実装です。
 type defaultIdempotencyManager struct {
-	log         logging.Logger
+	logger      logging.Logger
 	dateManager date.DateManager
 	config      config.Config
 	repository  IdempotencyRepository
@@ -181,7 +181,7 @@ func (i *defaultIdempotencyManager) getExpiry() int64 {
 	expiresAfterSeconds := i.config.GetInt(IDEMPOTENCY_TTL_SECOUND, DEFAULT_IDEMPOTENCY_TTL_SECOUND)
 	period := time.Duration(expiresAfterSeconds) * time.Second
 	expiry := now.Add(period).Unix()
-	i.log.Debug("有効期限: %ds", expiry)
+	i.logger.Debug("有効期限: %ds", expiry)
 	return expiry
 }
 
@@ -190,16 +190,16 @@ func (i *defaultIdempotencyManager) getInprogressExpiryInMillis() int64 {
 	var expiry int64
 	now := i.dateManager.GetSystemDate()
 	remainingTimeInMillis := i.getRemainingTimeInMillis()
-	i.log.Debug("Lambdaの残り処理時間: %dms", remainingTimeInMillis)
+	i.logger.Debug("Lambdaの残り処理時間: %dms", remainingTimeInMillis)
 	if remainingTimeInMillis > 0 {
 		period := time.Duration(remainingTimeInMillis) * time.Millisecond
 		expiry = now.Add(period).Unix() * 1000
 	} else {
 		// remainingTimeInMillisを取得できなかった場合は、現在時刻をそのまま有効期限とする
-		i.log.Warn(message.W_FW_8006, remainingTimeInMillis)
+		i.logger.Warn(message.W_FW_8006, remainingTimeInMillis)
 		expiry = now.Unix() * 1000
 	}
-	i.log.Debug("処理中状態の有効期限: %dms", expiry)
+	i.logger.Debug("処理中状態の有効期限: %dms", expiry)
 	return expiry
 }
 

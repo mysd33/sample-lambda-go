@@ -23,17 +23,17 @@ const (
 
 // appConfigConfigは、AWS AppConfigによるConfig実装です。
 type appConfigConfig struct {
-	log logging.Logger
-	cfg map[string]string
+	logger logging.Logger
+	cfg    map[string]string
 }
 
 // NewAppConfigConfig は、AWS AppConfigから設定をロードする、Configを作成します。
-func newAppConfigConfig(log logging.Logger) (Config, error) {
-	cfg, err := loadAppConfigConfig(log)
+func newAppConfigConfig(logger logging.Logger) (Config, error) {
+	cfg, err := loadAppConfigConfig(logger)
 	if err != nil {
 		return nil, err
 	}
-	return &appConfigConfig{log: log, cfg: cfg}, nil
+	return &appConfigConfig{logger: logger, cfg: cfg}, nil
 }
 
 // GetWithContains implements Config.
@@ -53,7 +53,7 @@ func (c *appConfigConfig) GetIntWithContains(key string) (int, bool) {
 	value, found := c.GetWithContains(key)
 	result, err := convertIntValueIfFound(found, value)
 	if err != nil {
-		c.log.WarnWithError(err, message.W_FW_8009, key, value)
+		c.logger.WarnWithError(err, message.W_FW_8009, key, value)
 		// int変換に失敗した場合は、値が見つからなかったとしてfalseを返す
 		return 0, false
 	}
@@ -71,7 +71,7 @@ func (c *appConfigConfig) GetBoolWithContains(key string) (bool, bool) {
 	value, found := c.GetWithContains(key)
 	result, err := convertBoolValueIfFound(found, value)
 	if err != nil {
-		c.log.WarnWithError(err, message.W_FW_8010, key, value)
+		c.logger.WarnWithError(err, message.W_FW_8010, key, value)
 		// bool変換に失敗した場合は、値が見つからなかったとしてfalseを返す
 		return false, false
 	}
@@ -90,7 +90,7 @@ func (c *appConfigConfig) Reload() error {
 	//Handlerメソッドの最初で取得するようにする実装しているが
 	//init関数のみで各コンポーネント作成時にConfigの値を利用するケースも考えると
 	//設定のバージョン不整合が発生してしまう可能性があるため注意が必要
-	cfg, err := loadAppConfigConfig(c.log)
+	cfg, err := loadAppConfigConfig(c.logger)
 	if err != nil {
 		return err
 	}
@@ -99,27 +99,27 @@ func (c *appConfigConfig) Reload() error {
 }
 
 // loadAppConfigConfig は、AWS AppConfigから設定をロードします。
-func loadAppConfigConfig(log logging.Logger) (map[string]string, error) {
+func loadAppConfigConfig(logger logging.Logger) (map[string]string, error) {
 	// Hosted ConfigurationのProfileからの設定読み込み
-	cfg, err := loadHostedAppConfig(log)
+	cfg, err := loadHostedAppConfig(logger)
 	if err != nil {
 		return nil, err
 	}
-	log.Debug("AppConfig設定(Hosted):%v\n", cfg)
+	logger.Debug("AppConfig設定(Hosted):%v\n", cfg)
 	// SecretManagerのProfileからの設定読み込み
-	smCfg, err := loadSecretManagerConfig(log)
+	smCfg, err := loadSecretManagerConfig(logger)
 	if err != nil {
 		return nil, err
 	}
-	log.Debug("AppConfig設定(SM):%v\n", smCfg)
+	logger.Debug("AppConfig設定(SM):%v\n", smCfg)
 	// 設定をマージ
 	maps.Copy(cfg, smCfg)
-	log.Debug("AppConfig設定(マージ):%v\n", cfg)
+	logger.Debug("AppConfig設定(マージ):%v\n", cfg)
 	return cfg, nil
 }
 
 // loadHostedAppConfig は、AWS AppConfigからHosted Configurationの設定をロードします。
-func loadHostedAppConfig(log logging.Logger) (map[string]string, error) {
+func loadHostedAppConfig(logger logging.Logger) (map[string]string, error) {
 	// Hosted Configurationのエンドポイントを環境変数から取得
 	hostedCfgUrl, ok := os.LookupEnv(APPCONFIG_HOSTED_EXTENSION_URL_NAME)
 	if !ok {
@@ -137,7 +137,7 @@ func loadHostedAppConfig(log logging.Logger) (map[string]string, error) {
 	if err != nil {
 		return nil, errors.Errorf("Hosted ConfigurtionのAppConfig読み込みエラー:%w", err)
 	}
-	log.Debug("Hosted ConfigurationのAppConfig読み込み(yaml)):%s\n", string(data))
+	logger.Debug("Hosted ConfigurationのAppConfig読み込み(yaml)):%s\n", string(data))
 	// YAMLの設定データを読み込み
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, errors.Errorf("Hosted ConfigurtionのAppConfig読み込みエラー:%w", err)
@@ -146,7 +146,7 @@ func loadHostedAppConfig(log logging.Logger) (map[string]string, error) {
 }
 
 // loadSecretManagerConfig は、AWS AppConfigからSecretManagerの設定をロードします。
-func loadSecretManagerConfig(log logging.Logger) (map[string]string, error) {
+func loadSecretManagerConfig(logger logging.Logger) (map[string]string, error) {
 	// SecretManagerのエンドポイントを環境変数から取得
 	smCfgUrl, ok := os.LookupEnv(APPCONFIG_SM_EXTENSION_URL_NAME)
 	if !ok {
@@ -164,7 +164,7 @@ func loadSecretManagerConfig(log logging.Logger) (map[string]string, error) {
 	if err != nil {
 		return nil, errors.Errorf("SecretManagerのAppConfig読み込みエラー:%w", err)
 	}
-	log.Debug("SecretManagerのAppConfig読み込み(json):%s\n", string(data))
+	logger.Debug("SecretManagerのAppConfig読み込み(json):%s\n", string(data))
 	// JSONの設定データを読み込み
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return nil, errors.Errorf("SecretManagerのAppConfig読み込みエラー:%w", err)
