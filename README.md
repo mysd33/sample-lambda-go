@@ -757,7 +757,7 @@ X-Amzn-Requestid: 1c53023f-b61b-424e-b665-62ca6cdf3f2a
 >
 > ```
 > Build Failed
-Error: GoModulesBuilder:Build - Builder Failed: go: go.mod file not found in current directory or any parent directory; see 'go help modules'
+> Error: GoModulesBuilder:Build - Builder Failed: go: go.mod file not found in current directory or any parent directory; see 'go help modules'
 > ```
 
 
