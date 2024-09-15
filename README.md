@@ -744,7 +744,7 @@ X-Amzn-Requestid: 1c53023f-b61b-424e-b665-62ca6cdf3f2a
 ```
 
 ## sam localでのリモートデバッグ実行
-> [!WARINING]
+> [!WARNING]
 > 最近、本サンプルAPに関して、以下のやり方ではうまくいかなくなっており、他の方法を要検討状態となっています。
 
 * [AWSの開発者ガイド](https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/serverless-sam-cli-using-debugging.html#serverless-sam-cli-running-locally)の記載にある通り、[delve](https://github.com/go-delve/delve)といったサードパーティのデバッガを使用することで、VSCodeでの sam localのリモートデバッグ実行可能である。
@@ -763,7 +763,7 @@ X-Amzn-Requestid: 1c53023f-b61b-424e-b665-62ca6cdf3f2a
         ![go1.xへのテンプレート変更2](image/template_go1x_2.png)
 
 > [!NOTE]
-> 簡単なAPの場合は、ビルド時に、sam build --use-containerを実行することで、ビルド環境をLambdaの実行環境に合わせることができるので、本手順でのデバッグ実行ができるケースがある。ただし、このサンプルでは、うまくいっていない。
+> 簡単なAPの場合は、ビルド時に、「sam build --use-container」を実行することで、ビルド環境をLambdaの実行環境に合わせることができるので、本手順でのデバッグ実行ができるケースがある。ただし、このサンプルでは、うまくいっていない。
 
 * delveのインストール
     * Lambda関数及びdelveが実行されるのはLambdaコンテナ内(Amazon Linux)なので、
