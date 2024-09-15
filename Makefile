@@ -51,9 +51,9 @@ build: clean
 # for linux
 # TODO	
 
-build_uc: clean
+build_dbg: clean
 # for windows	
-	sam build --use-container
+	sam build --template-file template-dbg.yaml
 	xcopy /I /S configs .aws-sam\build\BffFunction\configs
 	xcopy /I /S configs .aws-sam\build\UsersFunction\configs	
 	xcopy /I /S configs .aws-sam\build\TodoFunction\configs	

@@ -744,38 +744,12 @@ X-Amzn-Requestid: 1c53023f-b61b-424e-b665-62ca6cdf3f2a
 ```
 
 ## sam localでのリモートデバッグ実行
-> [!WARNING]
-> 最近、本サンプルAPに関して、以下のやり方ではうまくいかなくなっており、他の方法を要検討状態となっている。  
-> 以降の記載のとおり、al2023のランタイムではリモートデバッグができないことへの回避策として、ランタイムgo1.xのコンテナイメージを使ってsam localを実行する際、Lambda Insightを有効化すると、ローカル端末環境でsam buildされた資材（以下の場合は）のcloudwatch_lambda_agentがランタイムgo1.xに含まれるGLIBCが、GLIBC_2.18、2.25といった新しいバージョンに対応していないためと考えられる。  
->
-> ```
-> /opt/extensions/cloudwatch_lambda_agent: /lib64/libc.so.6: version `GLIBC_2.18' not found (required by /opt/extensions/cloudwatch_lambda_agent)
-> /opt/extensions/cloudwatch_lambda_agent: /lib64/libc.so.6: version `GLIBC_2.25' not found (required by /opt/extensions/cloudwatch_lambda_agent)
-> ```
->
-> ごく簡単なAPの場合は、「sam build --use-container」でビルドすることで、ビルド環境をgo1.xのランタイム環境に合わせることができるので、本手順でのデバッグ実行がうまくいくケースもある。ただし、このサンプルでは、sam build時に以下のようなエラーが出てしまいうまくいっていない。  
->
-> ```
-> Build Failed
-> Error: GoModulesBuilder:Build - Builder Failed: go: go.mod file not found in current directory or any parent directory; see 'go help modules'
-> ```
-> このエラーは、go.modファイルがないために発生しているが、本サンプルのプロジェクト構成の場合、main.goがあるディレクトリにgo.modファイルがないと、このエラーが発生することが分かっている。
-> また、ソースコードに複数のmain.goがあるとデバッグがうまくいかない（別のmain.goでデバッグされてしまう）ように見える。
-
 
 > [!WARNING]  
 > [aws-sam-cliのissue](https://github.com/aws/aws-sam-cli/issues/3718)によると、当該サンプルAPが使用する「provided.al2」、「provided.al2023」（カスタムランタイム）でのsam localのデバッグ実行は現状サポートされていない。  
 > template.yaml回避策として「go1.x」ランタイムに修正して、実際に試した手順を参考に記載する。 
 
 * [AWSの開発者ガイド](https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/serverless-sam-cli-using-debugging.html#serverless-sam-cli-running-locally)の記載にある通り、[delve](https://github.com/go-delve/delve)といったサードパーティのデバッガを使用することで、VSCodeでの sam localのリモートデバッグ実行可能である。
-
-* サンプルAPを一時的にgo1.xのランタイムに切り替える場合
-    * template.yamlのRuntimeを「go1.x」に変更、Handlerの値を「bootstrap」から任意のAP名に変更して、クリーンして再ビルド(makeコマンドでOK)すればよい。  
-    * Runtimeの修正例:  
-        ![go1.xへのテンプレート変更](image/template_go1x_1.png)
-
-    * Handlerの修正例（HelloWorldFunctionの場合）：  
-        ![go1.xへのテンプレート変更2](image/template_go1x_2.png)
 
 * delveのインストール
     * Lambda関数及びdelveが実行されるのはLambdaコンテナ内(Amazon Linux)なので、
@@ -790,6 +764,40 @@ X-Amzn-Requestid: 1c53023f-b61b-424e-b665-62ca6cdf3f2a
         # Linux
         GOARCH=amd64 GOOS=linux go install github.com/go-delve/delve/cmd/dlv@latest
         ```
+
+* サンプルAPを一時的にgo1.xのランタイムに切り替えてビルド
+    * template.yamlのRuntimeを「go1.x」に変更、Handlerの値を「bootstrap」から任意のAP名に変更する。また、Lambda Insightの設定を無効化する。その後、クリーンして再ビルド(makeコマンドでOK)する。
+        * Runtimeの修正例:  
+            ![go1.xへのテンプレート変更](image/template_go1x_1.png)
+
+        * Handlerの修正例（HelloWorldFunctionの場合）：  
+            ![go1.xへのテンプレート変更2](image/template_go1x_2.png)
+
+        * Lambda Insightの修正例:
+            ![go1.xへのテンプレート変更2](image/template_go1x_3.png)
+
+    * 本サンプルAPでは、すでに上記の修正をしたデバッグ用のtemplate.yaml、template-dbg.yamlを使ってビルドすればよい。makeコマンドも用意している。    
+    ```sh
+	sam build --template-file template-dbg.yaml
+	xcopy /I /S configs .aws-sam\build\BffFunction\configs
+	xcopy /I /S configs .aws-sam\build\UsersFunction\configs	
+	xcopy /I /S configs .aws-sam\build\TodoFunction\configs	
+	xcopy /I /S configs .aws-sam\build\TodoAsyncFunction\configs
+	xcopy /I /S configs .aws-sam\build\TodoAsyncFifoFunction\configs
+
+    # Windowsでもmakeをインストールすればmakeでいけます
+    make build_dbg
+    ```
+
+> [!Note]
+> 上記に記載のとおり、al2、al2023のランタイムではリモートデバッグができないことへの回避策として、ランタイムgo1.xのコンテナイメージを使ってsam localを実行する際、Lambda Insightを有効化すると、cloudwatch_lambda_agentが利用される際、ランタイムgo1.xに含まれるGLIBCが、GLIBC_2.18、2.25といった新しいバージョンに対応していないためと考えられる。  
+>
+> ```
+> /opt/extensions/cloudwatch_lambda_agent: /lib64/libc.so.6: version `GLIBC_2.18' not found (required by /opt/extensions/cloudwatch_lambda_agent)
+> /opt/extensions/cloudwatch_lambda_agent: /lib64/libc.so.6: version `GLIBC_2.25' not found (required by /opt/extensions/cloudwatch_lambda_agent)
+> ```
+
+
 
 * デバッガパス、デバッグポート(この例では8099番)を指定して、sam local start-apiを実行
     * [AWSのデベロッパーガイド](https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/serverless-sam-cli-using-debugging.html#serverless-sam-cli-running-locally)を参考
@@ -848,6 +856,13 @@ X-Amzn-Requestid: 1c53023f-b61b-424e-b665-62ca6cdf3f2a
 * curlコマンドで、確認対象のAPIを呼び出すと、処理が待ち状態で止まった状態になる
 
 * VSCodeでブレイクポイントを設定、「実行とデバッグ」の▷ボタンを押すと、ブレイクポイントで止まる。
+    * 以下のようなログが出力されれば、▷ボタンを押下して、デバッグ可能
+
+    ```
+    2024-09-16T08:42:42+09:00 info layer=debugger launching process with args: [/var/task/todo]
+    2024-09-16T08:42:46+09:00 debug layer=debugger Adding target 39 "/var/task/todo"
+    ```
+
 
 ![SAM Localのデバッグ画面](image/sam-local-debug.png)
 
