@@ -7,7 +7,7 @@ import (
 	"example.com/appbase/pkg/dynamodb/input"
 	"example.com/appbase/pkg/dynamodb/tables"
 	"example.com/appbase/pkg/logging"
-	"example.com/appbase/pkg/transaction/entity"
+	"example.com/appbase/pkg/transaction/model"
 	mytables "example.com/appbase/pkg/transaction/tables"
 	"github.com/cockroachdb/errors"
 )
@@ -17,9 +17,9 @@ const QUEUE_MESSAGE_TABLE_NAME = "QUEUE_MESSAGE_TABLE_NAME"
 
 // QueueMessageItemRepository は、キューメッセージ管理テーブルのリポジトリインタフェースです。
 type QueueMessageItemRepository interface {
-	FindOne(messageId string, deleteTime int) (*entity.QueueMessageItem, error)
-	CreateOneWithTx(queueMessage *entity.QueueMessageItem) error
-	UpdateOneWithTx(queueMessage *entity.QueueMessageItem) error
+	FindOne(messageId string, deleteTime int) (*model.QueueMessageItem, error)
+	CreateOneWithTx(queueMessage *model.QueueMessageItem) error
+	UpdateOneWithTx(queueMessage *model.QueueMessageItem) error
 }
 
 // NewQueueMessageItemRepository は、QueueMessageItemRepositoryを作成します。
@@ -49,7 +49,7 @@ type defaultQueueMessageItemRepository struct {
 }
 
 // FindOne implements QueueMessageItemRepository.
-func (r *defaultQueueMessageItemRepository) FindOne(messageId string, deleteTime int) (*entity.QueueMessageItem, error) {
+func (r *defaultQueueMessageItemRepository) FindOne(messageId string, deleteTime int) (*model.QueueMessageItem, error) {
 	r.logger.Debug("partitionKey: %s", r.primaryKey.PartitionKey)
 	input := input.PKQueryInput{
 		PrimaryKey: input.PrimaryKey{
@@ -70,12 +70,12 @@ func (r *defaultQueueMessageItemRepository) FindOne(messageId string, deleteTime
 		},
 		ConsitentRead: true,
 	}
-	var queueMessageItems []entity.QueueMessageItem
+	var queueMessageItems []model.QueueMessageItem
 	// Itemの取得
 	err := r.dynamodbTemplate.FindSomeByTableKey(r.tableName, input, &queueMessageItems)
 	if err != nil {
 		if errors.Is(err, dynamodb.ErrRecordNotFound) {
-			return &entity.QueueMessageItem{}, nil
+			return &model.QueueMessageItem{}, nil
 		}
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (r *defaultQueueMessageItemRepository) FindOne(messageId string, deleteTime
 }
 
 // CreateOneWithTx implements QueueMessageItemRepository.
-func (r *defaultQueueMessageItemRepository) CreateOneWithTx(queueMessage *entity.QueueMessageItem) error {
+func (r *defaultQueueMessageItemRepository) CreateOneWithTx(queueMessage *model.QueueMessageItem) error {
 	err := r.dynamodbTemplate.CreateOneWithTransaction(r.tableName, queueMessage)
 	if err != nil {
 		return errors.WithStack(err)
@@ -92,7 +92,7 @@ func (r *defaultQueueMessageItemRepository) CreateOneWithTx(queueMessage *entity
 }
 
 // UpdateOneWithTx implements QueueMessageItemRepository.
-func (r *defaultQueueMessageItemRepository) UpdateOneWithTx(queueMessage *entity.QueueMessageItem) error {
+func (r *defaultQueueMessageItemRepository) UpdateOneWithTx(queueMessage *model.QueueMessageItem) error {
 	r.logger.Debug("partitionKey: %s", r.primaryKey.PartitionKey)
 	input := input.UpdateInput{
 		PrimaryKey: input.PrimaryKey{

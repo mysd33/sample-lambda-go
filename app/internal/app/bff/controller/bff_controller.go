@@ -3,8 +3,8 @@ package controller
 
 import (
 	"app/internal/app/bff/service"
-	"app/internal/pkg/entity"
 	"app/internal/pkg/message"
+	"app/internal/pkg/model"
 
 	"example.com/appbase/pkg/domain"
 	"example.com/appbase/pkg/errors"
@@ -26,8 +26,8 @@ type RequestRegisterTodo struct {
 
 // ResponseFindTodo は、REST APIで受け取るレスポンスデータの構造体です。
 type ResponseFindTodo struct {
-	User *entity.User `json:"user"`
-	Todo *entity.Todo `json:"todo"`
+	User *model.User `json:"user"`
+	Todo *model.Todo `json:"todo"`
 }
 
 type RequestRegisterTodoAsync struct {

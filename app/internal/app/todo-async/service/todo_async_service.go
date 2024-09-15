@@ -2,8 +2,8 @@
 package service
 
 import (
-	"app/internal/pkg/entity"
 	"app/internal/pkg/message"
+	"app/internal/pkg/model"
 	"app/internal/pkg/repository"
 	"encoding/json"
 	"fmt"
@@ -21,7 +21,7 @@ const (
 // TodoAsyncService は、Todoの非同期処理を管理するServiceインタフェースです。
 type TodoAsyncService interface {
 	// RegisterTodosAsync は、Todoを非同期で登録します。
-	RegisterTodosAsync(asyncMesssage entity.AsyncMessage) error
+	RegisterTodosAsync(asyncMesssage model.AsyncMessage) error
 }
 
 // NewTodoAsyncService は、TodoAsyncServiceを生成します。
@@ -47,7 +47,7 @@ type todoAsyncServiceImpl struct {
 }
 
 // RegisterTodosAsync implements TodoAsyncService.
-func (ts *todoAsyncServiceImpl) RegisterTodosAsync(asyncMesssage entity.AsyncMessage) error {
+func (ts *todoAsyncServiceImpl) RegisterTodosAsync(asyncMesssage model.AsyncMessage) error {
 	if asyncMesssage.TempId == "" {
 		// TempIdが空の場合は、何もしない
 		return nil
@@ -80,7 +80,7 @@ func (ts *todoAsyncServiceImpl) RegisterTodosAsync(asyncMesssage entity.AsyncMes
 	// TODO: todoTitlesをS3上のファイルから取得して登録するように変更
 	for _, v := range todoTitles {
 		ts.logger.Debug("todoTitle: %s", v)
-		todo := entity.Todo{Title: v}
+		todo := model.Todo{Title: v}
 		newTodo, err := ts.todoRepository.CreateOneTx(&todo)
 		if err != nil {
 			return err

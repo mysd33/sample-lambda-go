@@ -2,8 +2,8 @@
 package repository
 
 import (
-	"app/internal/pkg/entity"
 	"app/internal/pkg/message"
+	"app/internal/pkg/model"
 	"database/sql"
 	"fmt"
 
@@ -27,7 +27,7 @@ type UserRepositoryImplByRDB struct {
 	id       id.IDGenerator
 }
 
-func (ur *UserRepositoryImplByRDB) FindOne(userId string) (*entity.User, error) {
+func (ur *UserRepositoryImplByRDB) FindOne(userId string) (*model.User, error) {
 
 	// RDS Proxy経由で接続する場合、１つのトランザクション内での呼び出しは、同じコネクションを使用する
 	// auto commit無効の場合は、トランザクションが終了（commit/rollback）するまで、接続の再利用は行われない
@@ -36,7 +36,7 @@ func (ur *UserRepositoryImplByRDB) FindOne(userId string) (*entity.User, error) 
 	// pp.12-13
 	tx := ur.accessor.GetTransaction()
 	ctx := apcontext.Context
-	var user entity.User
+	var user model.User
 
 	//プリペアードステートメントによる例
 	//X-RayのSQLトレースにも対応
@@ -59,7 +59,7 @@ func (ur *UserRepositoryImplByRDB) FindOne(userId string) (*entity.User, error) 
 	return &user, nil
 }
 
-func (ur *UserRepositoryImplByRDB) CreateOne(user *entity.User) (*entity.User, error) {
+func (ur *UserRepositoryImplByRDB) CreateOne(user *model.User) (*model.User, error) {
 	//ID採番
 	userId, err := ur.id.GenerateUUID()
 	if err != nil {

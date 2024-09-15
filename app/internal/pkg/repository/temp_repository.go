@@ -2,8 +2,8 @@
 package repository
 
 import (
-	"app/internal/pkg/entity"
 	"app/internal/pkg/message"
+	"app/internal/pkg/model"
 	mytables "app/internal/pkg/repository/tables"
 
 	"example.com/appbase/pkg/config"
@@ -23,11 +23,11 @@ const (
 // TempRepository は、一時テーブルを管理するRepositoryインタフェースです。
 type TempRepository interface {
 	// FindOne は、idが一致する値を取得します。
-	FindOne(id string) (*entity.Temp, error)
+	FindOne(id string) (*model.Temp, error)
 	// CreateOneTx は、指定された値をトランザクションを使って登録します。
-	CreateOneTx(temp *entity.Temp) (*entity.Temp, error)
+	CreateOneTx(temp *model.Temp) (*model.Temp, error)
 	// CreateOne は、指定された値を登録します。
-	CreateOne(temp *entity.Temp) (*entity.Temp, error)
+	CreateOne(temp *model.Temp) (*model.Temp, error)
 }
 
 // NewTempRepository は、TempRepositoryを生成します。
@@ -65,7 +65,7 @@ type tempRepositoryImpl struct {
 }
 
 // FindOne implements TempRepository.
-func (r *tempRepositoryImpl) FindOne(id string) (*entity.Temp, error) {
+func (r *tempRepositoryImpl) FindOne(id string) (*model.Temp, error) {
 	// DynamoDBTemplateを使ったコード
 	input := input.PKOnlyQueryInput{
 		PrimaryKey: input.PrimaryKey{
@@ -76,7 +76,7 @@ func (r *tempRepositoryImpl) FindOne(id string) (*entity.Temp, error) {
 		},
 		//ConsitentRead: true,
 	}
-	var temp entity.Temp
+	var temp model.Temp
 	// Itemの取得
 	err := r.dynamodbTemplate.FindOneByTableKey(r.tableName, input, &temp)
 	if err != nil {
@@ -90,7 +90,7 @@ func (r *tempRepositoryImpl) FindOne(id string) (*entity.Temp, error) {
 	// 従来のDynamoDBAccessorを使ったコード
 	// Itemの取得
 	/*
-		temp := entity.Temp{ID: id}
+		temp := model.Temp{ID: id}
 		key, err := temp.GetKey()
 		if err != nil {
 			return nil, errors.NewSystemError(err, message.E_EX_9001)
@@ -110,7 +110,7 @@ func (r *tempRepositoryImpl) FindOne(id string) (*entity.Temp, error) {
 }
 
 // CreateOneTx implements TempRepository.
-func (r *tempRepositoryImpl) CreateOneTx(temp *entity.Temp) (*entity.Temp, error) {
+func (r *tempRepositoryImpl) CreateOneTx(temp *model.Temp) (*model.Temp, error) {
 	// ID採番
 	id, err := r.id.GenerateUUID()
 	if err != nil {
@@ -147,7 +147,7 @@ func (r *tempRepositoryImpl) CreateOneTx(temp *entity.Temp) (*entity.Temp, error
 }
 
 // CreateOne implements TempRepository.
-func (r *tempRepositoryImpl) CreateOne(temp *entity.Temp) (*entity.Temp, error) {
+func (r *tempRepositoryImpl) CreateOne(temp *model.Temp) (*model.Temp, error) {
 	// ID採番
 	id, err := r.id.GenerateUUID()
 	if err != nil {

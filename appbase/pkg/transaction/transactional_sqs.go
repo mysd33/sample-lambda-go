@@ -14,7 +14,7 @@ import (
 	myConfig "example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/constant"
 	"example.com/appbase/pkg/logging"
-	"example.com/appbase/pkg/transaction/entity"
+	"example.com/appbase/pkg/transaction/model"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
@@ -117,7 +117,7 @@ func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Messag
 		sa.logger.Debug("Send Message Id=%s", *output.MessageId)
 
 		// メッセージ管理テーブル用のアイテムのトランザクション登録処理を追加
-		queueMessageItem := &entity.QueueMessageItem{}
+		queueMessageItem := &model.QueueMessageItem{}
 		// (キュー名) + "_" + (メッセージID)をパーティションキーとする
 		queueMessageItem.MessageId = v.QueueName + "_" + *output.MessageId
 		// ステータスは送信時は格納していない

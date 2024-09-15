@@ -2,7 +2,7 @@ package main
 
 import (
 	"app/cmd/common"
-	"app/internal/pkg/entity"
+	"app/internal/pkg/model"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -40,7 +40,7 @@ func TestPostTodo(t *testing.T) {
 		r.ServeHTTP(w, req)
 		// ステータスコード200で返却されること
 		assert.Equal(t, 200, w.Code)
-		var actual entity.Todo
+		var actual model.Todo
 		json.Unmarshal(w.Body.Bytes(), &actual)
 		assert.NotEqual(t, "", actual.ID)
 		assert.Equal(t, "Buy Milk", actual.Title)

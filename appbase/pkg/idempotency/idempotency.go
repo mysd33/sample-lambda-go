@@ -11,7 +11,7 @@ import (
 	"example.com/appbase/pkg/date"
 	"example.com/appbase/pkg/dynamodb"
 	myerrors "example.com/appbase/pkg/errors"
-	"example.com/appbase/pkg/idempotency/entity"
+	"example.com/appbase/pkg/idempotency/model"
 	"example.com/appbase/pkg/idempotency/tables"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
@@ -132,7 +132,7 @@ func (i *defaultIdempotencyManager) saveIdempotencyInprogress(idempotencyKey str
 	// 処理中状態の有効期限を取得
 	inprogressExpiry := i.getInprogressExpiryInMillis()
 
-	item := &entity.IdempotencyItem{
+	item := &model.IdempotencyItem{
 		IdempotencyKey:   idempotencyKey,
 		Expiry:           expiry,
 		InprogressExpiry: inprogressExpiry,
@@ -151,7 +151,7 @@ func (i *defaultIdempotencyManager) updateIdempotencyItemComplete(idempotencyKey
 	// 有効期限を取得
 	expiry := i.getExpiry()
 
-	item := &entity.IdempotencyItem{
+	item := &model.IdempotencyItem{
 		IdempotencyKey: idempotencyKey,
 		Expiry:         expiry,
 		Status:         tables.STATUS_COMPLETE,

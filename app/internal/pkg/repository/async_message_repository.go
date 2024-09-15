@@ -2,8 +2,8 @@
 package repository
 
 import (
-	"app/internal/pkg/entity"
 	"app/internal/pkg/message"
+	"app/internal/pkg/model"
 
 	"example.com/appbase/pkg/async"
 	"example.com/appbase/pkg/errors"
@@ -11,9 +11,9 @@ import (
 
 type AsyncMessageRepository interface {
 	// メッセージを（標準キューに）送信する
-	Send(msg *entity.AsyncMessage) error
+	Send(msg *model.AsyncMessage) error
 	// メッセージをFIFOに送信する
-	SendToFIFOQueue(msg *entity.AsyncMessage, msgGroupId string) error
+	SendToFIFOQueue(msg *model.AsyncMessage, msgGroupId string) error
 }
 
 func NewAsyncMessageRepository(sqsTemplate async.SQSTemplate,
@@ -33,7 +33,7 @@ type defaultAsyncMessageRepository struct {
 }
 
 // Send implements AsyncMessageRepository.
-func (r *defaultAsyncMessageRepository) Send(msg *entity.AsyncMessage) error {
+func (r *defaultAsyncMessageRepository) Send(msg *model.AsyncMessage) error {
 	// 標準キューでの非同期実行依頼
 	if err := r.sqsTemplate.SendToStandardQueue(r.starndardQueueName, msg); err != nil {
 		return errors.NewSystemError(err, message.E_EX_9001)
@@ -42,7 +42,7 @@ func (r *defaultAsyncMessageRepository) Send(msg *entity.AsyncMessage) error {
 }
 
 // SendToFIFOQueue implements AsyncMessageRepository.
-func (r *defaultAsyncMessageRepository) SendToFIFOQueue(msg *entity.AsyncMessage, msgGroupId string) error {
+func (r *defaultAsyncMessageRepository) SendToFIFOQueue(msg *model.AsyncMessage, msgGroupId string) error {
 	// FIFOキューでの非同期実行依頼
 	if err := r.sqsTemplate.SendToFIFOQueue(r.fifoQueueName, msg, msgGroupId); err != nil {
 		return errors.NewSystemError(err, message.E_EX_9001)

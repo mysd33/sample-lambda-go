@@ -142,8 +142,8 @@ Resources:
 #      Handler: bff    
       FunctionName: !Ref BffFunctionName
       CodeUri: app/cmd/bff/
-      Role: 
-        !ImportValue Fn::Sub: ${StackPrefix}-LambdaRoleArn
+      Role:
+        Fn::ImportValue: !Sub ${StackPrefix}-LambdaRoleArn
       Events:
         Event:
           Type: Api

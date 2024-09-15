@@ -2,8 +2,8 @@
 package repository
 
 import (
-	"app/internal/pkg/entity"
 	"app/internal/pkg/message"
+	"app/internal/pkg/model"
 	"encoding/json"
 	"fmt"
 
@@ -29,7 +29,7 @@ type todoRepositoryImplByRestAPI struct {
 }
 
 // FindOne implements TodoRepository.
-func (tr *todoRepositoryImplByRestAPI) FindOne(todoId string) (*entity.Todo, error) {
+func (tr *todoRepositoryImplByRestAPI) FindOne(todoId string) (*model.Todo, error) {
 	baseUrl, found := tr.config.GetWithContains(TODO_API_BASE_URL)
 	if !found {
 		return nil, errors.NewSystemError(fmt.Errorf("TODO_API_BASE_URLがありません"), message.E_EX_9001)
@@ -42,7 +42,7 @@ func (tr *todoRepositoryImplByRestAPI) FindOne(todoId string) (*entity.Todo, err
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 
-	var todo entity.Todo
+	var todo model.Todo
 	if err = json.Unmarshal(response.Body, &todo); err != nil {
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
@@ -50,7 +50,7 @@ func (tr *todoRepositoryImplByRestAPI) FindOne(todoId string) (*entity.Todo, err
 }
 
 // CreateOne implements TodoRepository.
-func (tr *todoRepositoryImplByRestAPI) CreateOne(todo *entity.Todo) (*entity.Todo, error) {
+func (tr *todoRepositoryImplByRestAPI) CreateOne(todo *model.Todo) (*model.Todo, error) {
 	baseUrl, found := tr.config.GetWithContains(TODO_API_BASE_URL)
 	if !found {
 		return nil, errors.NewSystemError(fmt.Errorf("TODO_API_BASE_URLがありません"), message.E_EX_9001)
@@ -72,7 +72,7 @@ func (tr *todoRepositoryImplByRestAPI) CreateOne(todo *entity.Todo) (*entity.Tod
 		return nil, errors.NewBusinessError(message.W_EX_8001, "xxxx")
 	}
 	// レスポンスデータをアンマーシャル
-	var newTodo entity.Todo
+	var newTodo model.Todo
 	if err = json.Unmarshal(response.Body, &newTodo); err != nil {
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
@@ -80,6 +80,6 @@ func (tr *todoRepositoryImplByRestAPI) CreateOne(todo *entity.Todo) (*entity.Tod
 }
 
 // CreateOneTx implements TodoRepository.
-func (*todoRepositoryImplByRestAPI) CreateOneTx(todo *entity.Todo) (*entity.Todo, error) {
+func (*todoRepositoryImplByRestAPI) CreateOneTx(todo *model.Todo) (*model.Todo, error) {
 	panic("unimplemented")
 }

@@ -1,7 +1,7 @@
 /*
-entity パッケージは、冪等性管理テーブルに関連するエンティティを提供します。
+model パッケージは、冪等性管理テーブルに関連するエンティティを提供します。
 */
-package entity
+package model
 
 // IdempotencyItem は、冪等性管理テーブルのアイテムを表す構造体です。
 type IdempotencyItem struct {

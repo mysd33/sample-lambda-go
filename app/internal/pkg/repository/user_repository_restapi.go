@@ -2,8 +2,8 @@
 package repository
 
 import (
-	"app/internal/pkg/entity"
 	"app/internal/pkg/message"
+	"app/internal/pkg/model"
 	"encoding/json"
 	"fmt"
 
@@ -29,7 +29,7 @@ type userRepositoryImplByRestAPI struct {
 }
 
 // FindOne implements UserRepository.
-func (ur *userRepositoryImplByRestAPI) FindOne(userId string) (*entity.User, error) {
+func (ur *userRepositoryImplByRestAPI) FindOne(userId string) (*model.User, error) {
 	baseUrl, found := ur.config.GetWithContains(USERS_API_BASE_URL)
 	if !found {
 		return nil, errors.NewSystemError(fmt.Errorf("USERS_API_BASE_URLがありません"), message.E_EX_9001)
@@ -42,7 +42,7 @@ func (ur *userRepositoryImplByRestAPI) FindOne(userId string) (*entity.User, err
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	// レスポンスデータをアンマーシャル
-	var user entity.User
+	var user model.User
 	if err = json.Unmarshal(response.Body, &user); err != nil {
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
@@ -54,7 +54,7 @@ func (ur *userRepositoryImplByRestAPI) FindOne(userId string) (*entity.User, err
 }
 
 // CreateOne implements UserRepository.
-func (ur *userRepositoryImplByRestAPI) CreateOne(user *entity.User) (*entity.User, error) {
+func (ur *userRepositoryImplByRestAPI) CreateOne(user *model.User) (*model.User, error) {
 	baseUrl, found := ur.config.GetWithContains(USERS_API_BASE_URL)
 	if !found {
 		return nil, errors.NewSystemError(fmt.Errorf("USERS_API_BASE_URLがありません"), message.E_EX_9001)
@@ -76,7 +76,7 @@ func (ur *userRepositoryImplByRestAPI) CreateOne(user *entity.User) (*entity.Use
 		return nil, errors.NewBusinessError(message.W_EX_8001, "xxxx")
 	}
 	// レスポンスデータをアンマーシャル
-	var newUser entity.User
+	var newUser model.User
 	if err = json.Unmarshal(response.Body, &newUser); err != nil {
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}

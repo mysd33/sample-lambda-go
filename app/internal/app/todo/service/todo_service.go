@@ -2,8 +2,8 @@
 package service
 
 import (
-	"app/internal/pkg/entity"
 	"app/internal/pkg/message"
+	"app/internal/pkg/model"
 	"app/internal/pkg/repository"
 
 	"example.com/appbase/pkg/config"
@@ -13,12 +13,12 @@ import (
 // TodoService は、Todo業務のServiceインタフェースです。
 type TodoService interface {
 	// Find は、todoIdのTodoを照会します。
-	Find(todoId string) (*entity.Todo, error)
+	Find(todoId string) (*model.Todo, error)
 	// Register は、タイトルtodoTitleのTodoを登録します。
-	Register(todoTitle string) (*entity.Todo, error)
+	Register(todoTitle string) (*model.Todo, error)
 	// RegisterTx は、タイトルtodoTitleのTodoをトランザクションを使って登録します。
 	// DynamoDBトランザクションを使った動作確認用に定義したもの
-	RegisterTx(todoTitle string) (*entity.Todo, error)
+	RegisterTx(todoTitle string) (*model.Todo, error)
 }
 
 // New は、TodoServiceを作成します。
@@ -37,12 +37,12 @@ type todoServiceImpl struct {
 }
 
 // Find implements TodoService.
-func (ts *todoServiceImpl) Find(todoId string) (*entity.Todo, error) {
+func (ts *todoServiceImpl) Find(todoId string) (*model.Todo, error) {
 	return ts.repository.FindOne(todoId)
 }
 
 // Register implements TodoService.
-func (ts *todoServiceImpl) Register(todoTitle string) (*entity.Todo, error) {
+func (ts *todoServiceImpl) Register(todoTitle string) (*model.Todo, error) {
 	// デバッグログの例
 	ts.logger.Debug("TodoTitle=%s", todoTitle)
 	// メッセージIDを使った情報ログの例
@@ -53,13 +53,13 @@ func (ts *todoServiceImpl) Register(todoTitle string) (*entity.Todo, error) {
 	//   return nil, errors.NewBusinessError(nil, message.W_EX_8001, "xxxx")
 	// }
 
-	todo := entity.Todo{Title: todoTitle}
+	todo := model.Todo{Title: todoTitle}
 
 	return ts.repository.CreateOne(&todo)
 }
 
 // RegisterTx implements TodoService.
-func (ts *todoServiceImpl) RegisterTx(todoTitle string) (*entity.Todo, error) {
-	todo := entity.Todo{Title: todoTitle}
+func (ts *todoServiceImpl) RegisterTx(todoTitle string) (*model.Todo, error) {
+	todo := model.Todo{Title: todoTitle}
 	return ts.repository.CreateOneTx(&todo)
 }

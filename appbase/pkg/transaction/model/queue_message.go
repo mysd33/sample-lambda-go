@@ -1,7 +1,7 @@
 /*
-entity パッケージは、キューメッセージ管理テーブルに関連するエンティティを提供します。
+model パッケージは、キューメッセージ管理テーブルに関連するエンティティを提供します。
 */
-package entity
+package model
 
 // QueueMessageItem は、キューメッセージ管理テーブルのアイテムを表す構造体です。
 type QueueMessageItem struct {

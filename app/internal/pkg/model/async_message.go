@@ -1,5 +1,5 @@
 // entityのパッケージ
-package entity
+package model
 
 // AsyncMessage は、非同期メッセージを表す構造体です。
 type AsyncMessage struct {

@@ -2,8 +2,8 @@
 package repository
 
 import (
-	"app/internal/pkg/entity"
 	"app/internal/pkg/message"
+	"app/internal/pkg/model"
 
 	"example.com/appbase/pkg/config"
 	mydynamodb "example.com/appbase/pkg/dynamodb"
@@ -39,12 +39,12 @@ type UserRepositoryImplByDynamoDB struct {
 	id       id.IDGenerator
 }
 
-func (ur *UserRepositoryImplByDynamoDB) FindOne(userId string) (*entity.User, error) {
+func (ur *UserRepositoryImplByDynamoDB) FindOne(userId string) (*model.User, error) {
 	// AWS SDK for Go v2 Migration
 	// https://docs.aws.amazon.com/ja_jp/code-library/latest/ug/go_2_dynamodb_code_examples.html
 	// https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/gov2/dynamodb
 	//Itemの取得（X-Rayトレース）
-	user := entity.User{ID: userId}
+	user := model.User{ID: userId}
 	key, err := user.GetKey()
 
 	userTable := ur.config.Get(USERS_TABLE_NAME, "users")
@@ -72,7 +72,7 @@ func (ur *UserRepositoryImplByDynamoDB) FindOne(userId string) (*entity.User, er
 	return &user, nil
 }
 
-func (ur *UserRepositoryImplByDynamoDB) CreateOne(user *entity.User) (*entity.User, error) {
+func (ur *UserRepositoryImplByDynamoDB) CreateOne(user *model.User) (*model.User, error) {
 	// ID採番
 	userId, err := ur.id.GenerateUUID()
 	if err != nil {

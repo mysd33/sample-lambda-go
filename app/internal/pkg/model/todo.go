@@ -1,5 +1,5 @@
 // entityのパッケージ
-package entity
+package model
 
 // Todo はやることリスト（Todo）のEntityです。
 type Todo struct {

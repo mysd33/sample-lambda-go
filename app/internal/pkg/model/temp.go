@@ -1,5 +1,5 @@
 // entityのパッケージ
-package entity
+package model
 
 // Temp は、一時テーブルの構造体です。
 type Temp struct {

@@ -2,8 +2,8 @@
 package service
 
 import (
-	"app/internal/pkg/entity"
 	"app/internal/pkg/message"
+	"app/internal/pkg/model"
 	"app/internal/pkg/repository"
 	"encoding/json"
 	"fmt"
@@ -23,11 +23,11 @@ const (
 // TodoService は、Bff業務のServiceインタフェースです。
 type BffService interface {
 	// FindTodo は、指定したuserIdとtodoIdに合致するユーザ情報とTodoを照会します。
-	FindTodo(userId string, todoId string) (*entity.User, *entity.Todo, error)
+	FindTodo(userId string, todoId string) (*model.User, *model.Todo, error)
 	// RegisterUser は、リクエストデータで受け取ったユーザ情報を登録します。
-	RegisterUser(userName string) (*entity.User, error)
+	RegisterUser(userName string) (*model.User, error)
 	// RegisterTodo は、タイトルtodoTitleのTodoを登録します。
-	RegisterTodo(todoTitle string) (*entity.Todo, error)
+	RegisterTodo(todoTitle string) (*model.Todo, error)
 	// RegisterTodosAsync は、（標準キューで）タイトルのリストtodoTitlesのTodoを非同期で登録します。
 	RegisterTodosAsync(todoTitles []string, dbtx string) error
 	// RegisterTodosAsyncByFIFO は、FIFOキューでタイトルのリストtodoTitlesのTodoを非同期で登録します。
@@ -69,19 +69,19 @@ type bffServiceImpl struct {
 }
 
 // RegisterUser implements BffService.
-func (bs *bffServiceImpl) RegisterUser(userName string) (*entity.User, error) {
-	user := entity.User{Name: userName}
+func (bs *bffServiceImpl) RegisterUser(userName string) (*model.User, error) {
+	user := model.User{Name: userName}
 	return bs.userRepository.CreateOne(&user)
 }
 
 // RegisterTodo implements BffService.
-func (bs *bffServiceImpl) RegisterTodo(todoTitle string) (*entity.Todo, error) {
-	todo := entity.Todo{Title: todoTitle}
+func (bs *bffServiceImpl) RegisterTodo(todoTitle string) (*model.Todo, error) {
+	todo := model.Todo{Title: todoTitle}
 	return bs.todoRepository.CreateOne(&todo)
 }
 
 // FindTodo implements BffService.
-func (bs *bffServiceImpl) FindTodo(userId string, todoId string) (*entity.User, *entity.Todo, error) {
+func (bs *bffServiceImpl) FindTodo(userId string, todoId string) (*model.User, *model.Todo, error) {
 	bs.logger.Debug("userId:%s,todoId:%s", userId, todoId)
 
 	user, err := bs.userRepository.FindOne(userId)
@@ -110,7 +110,7 @@ func (bs *bffServiceImpl) RegisterTodosAsync(todoTitles []string, dbtx string) e
 		tempId = temp.ID
 	}
 	// TODOリストの登録を非同期処理実行依頼
-	asyncMessage := &entity.AsyncMessage{TempId: tempId}
+	asyncMessage := &model.AsyncMessage{TempId: tempId}
 	bs.asyncMessageRepository.Send(asyncMessage)
 	return nil
 }
@@ -129,7 +129,7 @@ func (bs *bffServiceImpl) RegisterTodosAsyncByFIFO(todoTitles []string, dbtx str
 	}
 
 	// TODOリストの登録を非同期処理実行依頼
-	asyncMessage := &entity.AsyncMessage{TempId: tempId}
+	asyncMessage := &model.AsyncMessage{TempId: tempId}
 	// メッセージグループIDの生成
 	msgGroupId, err := bs.id.GenerateUUID()
 	if err != nil {
@@ -140,7 +140,7 @@ func (bs *bffServiceImpl) RegisterTodosAsyncByFIFO(todoTitles []string, dbtx str
 
 }
 
-func (bs *bffServiceImpl) registerTemp(todoTitles []string) (*entity.Temp, error) {
+func (bs *bffServiceImpl) registerTemp(todoTitles []string) (*model.Temp, error) {
 	// todoTitlesの内容をS3にファイルとして格納する
 	byteMessage, err := json.Marshal(todoTitles)
 	if err != nil {
@@ -164,7 +164,7 @@ func (bs *bffServiceImpl) registerTemp(todoTitles []string) (*entity.Temp, error
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	// Valueに、S3のパスを入れて登録するように変更
-	temp := &entity.Temp{Value: objectKey}
+	temp := &model.Temp{Value: objectKey}
 	// Tempテーブルの登録
 	bs.tempRepository.CreateOneTx(temp)
 	return temp, nil

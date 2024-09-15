@@ -11,7 +11,7 @@ import (
 	mydynamodb "example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/dynamodb/input"
 	"example.com/appbase/pkg/dynamodb/tables"
-	"example.com/appbase/pkg/idempotency/entity"
+	"example.com/appbase/pkg/idempotency/model"
 	mytables "example.com/appbase/pkg/idempotency/tables"
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -28,12 +28,12 @@ const IDEMPOTENCY_TABLE_NAME = "IDEMPOTENCY_TABLE_NAME"
 // IdempotencyRepository は、冪等性管理テーブルのためのリポジトリインターフェースです。
 type IdempotencyRepository interface {
 	// FindOne は、冪等性テーブルからアイテムを取得します。
-	FindOne(idempotencyKey string) (*entity.IdempotencyItem, error)
+	FindOne(idempotencyKey string) (*model.IdempotencyItem, error)
 	// CreateOne は、冪等性テーブルにアイテムを作成します。
 	// 既に同一のidempotencyKeyが存在する場合はエラーを返します。
-	CreateOne(idempotencyItem *entity.IdempotencyItem) error
+	CreateOne(idempotencyItem *model.IdempotencyItem) error
 	// UpdateOne は、冪等性テーブルのアイテムを更新します。
-	UpdateOne(idempotencyItem *entity.IdempotencyItem) error
+	UpdateOne(idempotencyItem *model.IdempotencyItem) error
 	// DeleteOne は、冪等性テーブルのアイテムを削除します。
 	DeleteOne(idempotencyKey string) error
 }
@@ -68,7 +68,7 @@ type defaultIdempotencyRepository struct {
 }
 
 // FindOne implements DuplicationCheckRepository.
-func (r *defaultIdempotencyRepository) FindOne(idempotencyKey string) (*entity.IdempotencyItem, error) {
+func (r *defaultIdempotencyRepository) FindOne(idempotencyKey string) (*model.IdempotencyItem, error) {
 	r.logger.Debug("partitionKey: %s", r.primaryKey.PartitionKey)
 	input := input.PKOnlyQueryInput{
 		PrimaryKey: input.PrimaryKey{
@@ -78,7 +78,7 @@ func (r *defaultIdempotencyRepository) FindOne(idempotencyKey string) (*entity.I
 			},
 		},
 	}
-	var idempotencyItem entity.IdempotencyItem
+	var idempotencyItem model.IdempotencyItem
 	err := r.dynamodbTemplate.FindOneByTableKey(r.tableName, input, &idempotencyItem)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -87,7 +87,7 @@ func (r *defaultIdempotencyRepository) FindOne(idempotencyKey string) (*entity.I
 }
 
 // CreateOne implements DuplicationCheckRepository.
-func (r *defaultIdempotencyRepository) CreateOne(idempotencyItem *entity.IdempotencyItem) error {
+func (r *defaultIdempotencyRepository) CreateOne(idempotencyItem *model.IdempotencyItem) error {
 	now := r.dateManager.GetSystemDate()
 	// 以下の条件のいずれかが満たされた場合は、新しいアイテムを作成する
 	// 1. idempotencyKeyが存在しない
@@ -127,7 +127,7 @@ func (r *defaultIdempotencyRepository) CreateOne(idempotencyItem *entity.Idempot
 }
 
 // UpdateOne implements DuplicationCheckRepository.
-func (r *defaultIdempotencyRepository) UpdateOne(idempotencyItem *entity.IdempotencyItem) error {
+func (r *defaultIdempotencyRepository) UpdateOne(idempotencyItem *model.IdempotencyItem) error {
 	input := input.UpdateInput{
 		PrimaryKey: input.PrimaryKey{
 			PartitionKey: input.Attribute{

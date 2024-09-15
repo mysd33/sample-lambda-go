@@ -4,8 +4,8 @@ id パッケージはID生成に関する機能を提供するパッケージで
 package id
 
 import (
+	"github.com/cockroachdb/errors"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"github.com/teris-io/shortid"
 )
 

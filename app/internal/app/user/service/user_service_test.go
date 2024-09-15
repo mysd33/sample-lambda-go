@@ -2,7 +2,7 @@ package service_test
 
 import (
 	"app/internal/app/user/service"
-	"app/internal/pkg/entity"
+	"app/internal/pkg/model"
 	"app/internal/pkg/repository"
 	"testing"
 
@@ -19,16 +19,16 @@ type MockUserRepository struct {
 	mock.Mock
 }
 
-func (d *MockUserRepository) FindOne(userId string) (*entity.User, error) {
+func (d *MockUserRepository) FindOne(userId string) (*model.User, error) {
 	//インタフェースメソッド実装時、Mock.Calledメソッド呼び出し
 	args := d.Called(userId)
-	return args.Get(0).(*entity.User), args.Error(1)
+	return args.Get(0).(*model.User), args.Error(1)
 }
 
-func (d *MockUserRepository) CreateOne(user *entity.User) (*entity.User, error) {
+func (d *MockUserRepository) CreateOne(user *model.User) (*model.User, error) {
 	//インタフェースメソッド実装時、Mock.Calledメソッド呼び出し
 	args := d.Called(user)
-	return args.Get(0).(*entity.User), args.Error(1)
+	return args.Get(0).(*model.User), args.Error(1)
 }
 
 func TestRegister(t *testing.T) {
@@ -44,11 +44,11 @@ func TestRegister(t *testing.T) {
 
 	//RepsitoryのMockへの入力値と戻り値の設定
 	mockRepository := new(MockUserRepository)
-	mockInputValue := entity.User{Name: inputUserName}
+	mockInputValue := model.User{Name: inputUserName}
 	uuid, err := id.NewIDGenerator().GenerateUUID()
 	assert.NoError(t, err)
 
-	mockReturnValue := entity.User{ID: uuid, Name: expectedName}
+	mockReturnValue := model.User{ID: uuid, Name: expectedName}
 	mockRepository.On("CreateOne", &mockInputValue).Return(&mockReturnValue, nil)
 	var repository repository.UserRepository = mockRepository
 	sut := service.New(log, cfg, repository)

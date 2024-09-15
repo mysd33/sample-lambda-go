@@ -3,8 +3,8 @@ package controller
 
 import (
 	"app/internal/app/todo-async/service"
-	"app/internal/pkg/entity"
 	"app/internal/pkg/message"
+	"app/internal/pkg/model"
 	"encoding/json"
 
 	"example.com/appbase/pkg/errors"
@@ -56,7 +56,7 @@ func (c *todoAsyncControllerImpl) doRegisterAllAsync(sqsMessage events.SQSMessag
 	c.logger.Debug("Message: %s", body)
 
 	//メッセージをjsonデコードして、AsyncMessageを取得する処理
-	var asyncMessage entity.AsyncMessage
+	var asyncMessage model.AsyncMessage
 	err := json.Unmarshal([]byte(body), &asyncMessage)
 	if err != nil {
 		return errors.NewSystemError(err, message.E_EX_9003)

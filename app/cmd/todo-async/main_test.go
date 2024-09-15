@@ -1,7 +1,7 @@
 package main
 
 import (
-	"app/internal/pkg/entity"
+	"app/internal/pkg/model"
 	"app/internal/pkg/repository"
 	"context"
 	"fmt"
@@ -33,7 +33,7 @@ func TestRegisterAllAsync(t *testing.T) {
 		// TODO: tempテーブルのテストデータ登録（仮置きのコード）
 		value := "todoFiles/fef300f7-b37d-11ee-9c20-0242ac110006.json"
 		tempRepository := repository.NewTempRepository(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig(), ac.GetIDGenerator())
-		testData, err := tempRepository.CreateOne(&entity.Temp{Value: value})
+		testData, err := tempRepository.CreateOne(&model.Temp{Value: value})
 		tempId := testData.ID
 		if err != nil {
 			t.Errorf("テストデータ登録エラー: %v", err)

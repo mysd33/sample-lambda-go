@@ -11,7 +11,7 @@ import (
 	"example.com/appbase/pkg/domain"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
-	"example.com/appbase/pkg/transaction/entity"
+	"example.com/appbase/pkg/transaction/model"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/cockroachdb/errors"
@@ -244,7 +244,7 @@ func (t *defaultTransaction) transactUpdateQueueMessageItem() error {
 		t.logger.Debug("非同期処理情報なし")
 		return nil
 	}
-	queueMessageItem, ok := asyncHandlerInfo.(*entity.QueueMessageItem)
+	queueMessageItem, ok := asyncHandlerInfo.(*model.QueueMessageItem)
 	if ok {
 		// メッセージ管理テーブルのアイテムのステータスを完了に更新するトランザクションを追加
 		t.logger.Debug("メッセージ管理テーブルにステータスを完了にする更新トランザクションを追加")

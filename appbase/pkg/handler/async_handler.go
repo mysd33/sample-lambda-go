@@ -17,7 +17,7 @@ import (
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
 	"example.com/appbase/pkg/transaction"
-	"example.com/appbase/pkg/transaction/entity"
+	"example.com/appbase/pkg/transaction/model"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/cockroachdb/errors"
@@ -175,7 +175,7 @@ func (h *AsyncLambdaHandler) checkMessageId(sqsMsg events.SQSMessage) (string, e
 		return "", errors.WithStack(err)
 	}
 	retryCount := 0
-	var queueMessageItem *entity.QueueMessageItem
+	var queueMessageItem *model.QueueMessageItem
 	for {
 		// メッセージIDに対応するキューメッセージ管理テーブルからのアイテムを取得
 		queueMessageItem, err = h.queueMessageItemRepository.FindOne(queueMessageTableId, deleteTime)
@@ -207,7 +207,7 @@ func (h *AsyncLambdaHandler) addAsyncInfoToContext(sqsMsg events.SQSMessage) err
 	}
 	// 処理成功時にメッセージ管理テーブルを更新するため、Context領域に非同期処理情報を格納しておく
 	apcontext.Context = context.WithValue(apcontext.Context, constant.ASYNC_HANDLER_INFO_CTX_KEY,
-		&entity.QueueMessageItem{
+		&model.QueueMessageItem{
 			MessageId:  h.getQueueMessageTableId(sqsMsg),
 			DeleteTime: deleteTime,
 		},

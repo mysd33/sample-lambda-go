@@ -2,8 +2,8 @@
 package repository
 
 import (
-	"app/internal/pkg/entity"
 	"app/internal/pkg/message"
+	"app/internal/pkg/model"
 	mytables "app/internal/pkg/repository/tables"
 
 	"example.com/appbase/pkg/config"
@@ -55,7 +55,7 @@ type todoRepositoryImplByDynamoDB struct {
 	id               id.IDGenerator
 }
 
-func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, error) {
+func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*model.Todo, error) {
 	// DynamoDBTemplateを使ったコード
 	input := input.PKOnlyQueryInput{
 		PrimaryKey: input.PrimaryKey{
@@ -65,7 +65,7 @@ func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, er
 			},
 		},
 	}
-	var todo entity.Todo
+	var todo model.Todo
 	// Itemの取得
 	err := tr.dynamodbTemplate.FindOneByTableKey(tr.tableName, input, &todo)
 	if err != nil {
@@ -81,7 +81,7 @@ func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, er
 	// https://docs.aws.amazon.com/ja_jp/code-library/latest/ug/go_2_dynamodb_code_examples.html
 	// https://github.com/awsdocs/aws-doc-sdk-examples/tree/main/gov2/dynamodb
 	/*
-		todo := entity.Todo{ID: todoId}
+		todo := model.Todo{ID: todoId}
 		key, err := todo.GetKey()
 		if err != nil {
 			return nil, errors.NewSystemError(err, message.E_EX_9001)
@@ -106,7 +106,7 @@ func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*entity.Todo, er
 	return &todo, nil
 }
 
-func (tr *todoRepositoryImplByDynamoDB) CreateOne(todo *entity.Todo) (*entity.Todo, error) {
+func (tr *todoRepositoryImplByDynamoDB) CreateOne(todo *model.Todo) (*model.Todo, error) {
 	// ID採番
 	todoId, err := tr.id.GenerateUUID()
 	if err != nil {
@@ -147,7 +147,7 @@ func (tr *todoRepositoryImplByDynamoDB) CreateOne(todo *entity.Todo) (*entity.To
 }
 
 // CreateOneTx implements TodoRepository.
-func (tr *todoRepositoryImplByDynamoDB) CreateOneTx(todo *entity.Todo) (*entity.Todo, error) {
+func (tr *todoRepositoryImplByDynamoDB) CreateOneTx(todo *model.Todo) (*model.Todo, error) {
 	// ID採番
 	todoId, err := tr.id.GenerateUUID()
 	if err != nil {
