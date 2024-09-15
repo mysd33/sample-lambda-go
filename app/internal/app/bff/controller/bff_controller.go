@@ -13,27 +13,35 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// RequestRegisterUser は、REST APIで受け取るリクエストデータの構造体です。
-type RequestRegisterUser struct {
-	Name string `json:"user_name" binding:"required"`
+// RequestFindTodo は、TODO検索のREST APIで受け取るリクエストデータの構造体です。
+type RequestFindTodo struct {
+	UserId string `label:"ユーザID(user_id)" form:"user_id" binding:"required"`
+	TodoId string `label:"Todo ID(todo_id)" form:"todo_id" binding:"required"`
 }
 
-// RequestRegisterTodo は、REST APIで受け取るリクエストデータの構造体です。
-type RequestRegisterTodo struct {
-	// TodoTitle は、Todoのタイトルです。
-	TodoTitle string `json:"todo_title" binding:"required"`
-}
-
-// ResponseFindTodo は、REST APIで受け取るレスポンスデータの構造体です。
+// ResponseFindTodo は、TODO検索のREST APIで受け取るレスポンスデータの構造体です。
 type ResponseFindTodo struct {
 	User *model.User `json:"user"`
 	Todo *model.Todo `json:"todo"`
 }
 
+// RequestRegisterUser は、ユーザ登録のREST APIで受け取るリクエストデータの構造体です。
+type RequestRegisterUser struct {
+	Name string `label:"ユーザ名(user_name)" json:"user_name" binding:"required"`
+}
+
+// RequestRegisterTodo は、TODO登録のREST APIで受け取るリクエストデータの構造体です。
+type RequestRegisterTodo struct {
+	// TodoTitle は、Todoのタイトルです。
+	TodoTitle string `label:"Todoタイトル(todo_title)" json:"todo_title" binding:"required"`
+}
+
+// RequestRegisterTodoAsync は、TODO一括登録のREST APIで受け取るリクエストデータの構造体です。
 type RequestRegisterTodoAsync struct {
 	TodoTitles []string `json:"todo_titles" binding:"required"`
 }
 
+// ResponseRegisterTodoAsync は、TODO一括登録のREST APIで受け取るレスポンスデータの構造体です。
 type ResponseRegisterTodoAsync struct {
 	Result string `json:"result"`
 }
@@ -65,19 +73,14 @@ type bffControllerImpl struct {
 // FindTodo implements BffController.
 func (c *bffControllerImpl) FindTodo(ctx *gin.Context) (any, error) {
 	// クエリパラメータの取得
-	userId := ctx.Query("user_id")
-	// 入力チェック
-	if userId == "" {
+	var request RequestFindTodo
+	if err := ctx.ShouldBindQuery(&request); err != nil {
 		// 入力チェックエラーのハンドリング
-		return nil, errors.NewValidationError(message.W_EX_5002, "user_id")
+		return nil, errors.NewValidationErrorWithCause(err, message.W_EX_5001)
 	}
-	todoId := ctx.Query("todo_id")
-	if todoId == "" {
-		// 入力チェックエラーのハンドリング
-		return nil, errors.NewValidationError(message.W_EX_5002, "todo_id")
-	}
+
 	// サービスの実行（DynamoDBトランザクション管理なし）
-	user, todo, err := c.service.FindTodo(userId, todoId)
+	user, todo, err := c.service.FindTodo(request.UserId, request.TodoId)
 	if err != nil {
 		return nil, err
 	}

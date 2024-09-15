@@ -11,9 +11,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Request は、REST APIで受け取るリクエストデータの構造体です。
-type Request struct {
-	Name string `label:"ユーザ名" json:"user_name" binding:"required"`
+// RequestFind は、ユーザ照会のREST APIで受け取るリクエストデータの構造体です。
+type RequestFind struct {
+	// UserId は、ユーザのIDです。
+	UserId string `label:"ユーザID(user_id)" uri:"user_id" binding:"required,uuid"`
+}
+
+// RequestRegister は、ユーザ登録のREST APIで受け取るリクエストデータの構造体です。
+type RequestRegister struct {
+	// Name は、ユーザの名前です。
+	Name string `label:"ユーザ名(user_name)" json:"user_name" binding:"required"`
 }
 
 // UserController は、ユーザ管理業務のContollerインタフェースです。
@@ -38,22 +45,21 @@ type userControllerImpl struct {
 
 func (c *userControllerImpl) Find(ctx *gin.Context) (any, error) {
 	// パスパラメータの取得
-	userId := ctx.Param("user_id")
-	// 入力チェック
-	if userId == "" {
+	var request RequestFind
+	if err := ctx.ShouldBindUri(&request); err != nil {
 		// 入力チェックエラーのハンドリング
-		return nil, errors.NewValidationError(message.W_EX_5002, "user_id")
+		return nil, errors.NewValidationErrorWithCause(err, message.W_EX_5001)
 	}
 
 	// RDBトランザクション開始してサービスの実行
 	return c.transactionManager.ExecuteTransaction(func() (any, error) {
-		return c.service.Find(userId)
+		return c.service.Find(request.UserId)
 	})
 }
 
 func (c *userControllerImpl) Register(ctx *gin.Context) (any, error) {
 	// POSTデータをバインド
-	var request Request
+	var request RequestRegister
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		// 入力チェックエラーのハンドリング
 		return nil, errors.NewValidationErrorWithCause(err, message.W_EX_5001)

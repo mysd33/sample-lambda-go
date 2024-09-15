@@ -84,7 +84,7 @@ func (r *commonErrorResponse) UnexpectedErrorResponse(err error) (int, any) {
 		r.messageSource.GetMessage(mymessage.E_EX_9999))
 }
 
-func (*commonErrorResponse) errorResponseBody(label string, detail any) gin.H {
+func (*commonErrorResponse) errorResponseBody(code string, detail any) gin.H {
 	//TODO: 要件に応じてエラーレスポンスの形式を修正する。
-	return gin.H{"code": label, "detail": detail}
+	return gin.H{"code": code, "detail": detail}
 }

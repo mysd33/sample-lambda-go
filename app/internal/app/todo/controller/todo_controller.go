@@ -12,10 +12,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Request は、REST APIで受け取るリクエストデータの構造体です。
-type Request struct {
+// RequestFind は、Todo照会のREST APIで受け取るリクエストデータの構造体です。
+type RequestFind struct {
+	// TodoId は、TodoのIDです。
+	TodoId string `label:"Todo ID(todo_id)" uri:"todo_id" binding:"required,uuid"`
+}
+
+// RequestRegister は、Todo登録REST APIで受け取るリクエストデータの構造体です。
+type RequestRegister struct {
 	// TodoTitle は、Todoのタイトルです。
-	TodoTitle string `label:"タイトル" json:"todo_title" binding:"required"`
+	TodoTitle string `label:"Todoタイトル(todo_title)" json:"todo_title" binding:"required"`
 }
 
 // TodoController は、Todo業務のControllerインタフェースです。
@@ -46,21 +52,21 @@ type todoControllerImpl struct {
 
 func (c *todoControllerImpl) Find(ctx *gin.Context) (any, error) {
 	// パスパラメータの取得
-	todoId := ctx.Param("todo_id")
-	// 入力チェック
-	if todoId == "" {
+	var request RequestFind
+	if err := ctx.ShouldBindUri(&request); err != nil {
 		// 入力チェックエラーのハンドリング
-		return nil, errors.NewValidationError(message.W_EX_5002, "todo_id")
+		return nil, errors.NewValidationErrorWithCause(err, message.W_EX_5001)
 	}
+
 	// DynamoDBトランザクション管理してサービスの実行
 	return c.transactionManager.ExecuteTransaction(func() (any, error) {
-		return c.service.Find(todoId)
+		return c.service.Find(request.TodoId)
 	})
 }
 
 func (c *todoControllerImpl) Register(ctx *gin.Context) (any, error) {
 	// POSTデータをバインド
-	var request Request
+	var request RequestRegister
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		// 入力チェックエラーのハンドリング
 		return nil, errors.NewValidationErrorWithCause(err, message.W_EX_5001)
