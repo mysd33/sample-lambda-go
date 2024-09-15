@@ -746,7 +746,7 @@ X-Amzn-Requestid: 1c53023f-b61b-424e-b665-62ca6cdf3f2a
 ## sam localでのリモートデバッグ実行
 > [!WARNING]
 > 最近、本サンプルAPに関して、以下のやり方ではうまくいかなくなっており、他の方法を要検討状態となっている。  
-> 以降の記載のとおり、al2023のランタイムではリモートデバッグができないことへの回避策として、ランタイムgo1.xのコンテナイメージを使ってsam localを実行する際、ローカル端末環境でsam buildされた資材（以下の場合は）に、ランタイムgo1.xに含まれるGLIBCの新しいバージョンに対応していないためと考えられる。  
+> 以降の記載のとおり、al2023のランタイムではリモートデバッグができないことへの回避策として、ランタイムgo1.xのコンテナイメージを使ってsam localを実行する際、Lambda Insightを有効化すると、ローカル端末環境でsam buildされた資材（以下の場合は）のcloudwatch_lambda_agentがランタイムgo1.xに含まれるGLIBCが、GLIBC_2.18、2.25といった新しいバージョンに対応していないためと考えられる。  
 >
 > ```
 > /opt/extensions/cloudwatch_lambda_agent: /lib64/libc.so.6: version `GLIBC_2.18' not found (required by /opt/extensions/cloudwatch_lambda_agent)
