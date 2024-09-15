@@ -19,7 +19,7 @@ confirm_changeset = true
 s3_prefix = "todo-go-app"
 region = "ap-northeast-1"
 image_repositories = []
-parameter_overrides = "StackPrefix=\"Demo\" TracingValue=\"Active\" Stage=\"Prod\" MemorySize=\"128\" HelloWorldFunctionName=\"hello-world\" UsersFunctionName=\"user-function\" TodoFunctionName=\"todo-function\" BffFunctionName=\"bff-function\" TodoAsyncFunctionName=\"todo-async-function\" TodoAsyncFifoFunctionName=\"todo-async-fifo-function\" LogLevel=\"DEBUG\" LogRetensionInDays=\"7\" AppConfigLayerArn=\"arn:aws:lambda:ap-northeast-1:980059726660:layer:AWS-AppConfig-Extension:98\" LambdaInsightsLayerArn=\"arn:aws:lambda:ap-northeast-1:580247275435:layer:LambdaInsightsExtension:80\""
+parameter_overrides = "StackPrefix=\"Demo\" TracingValue=\"Active\" Stage=\"Prod\" MemorySize=\"128\" Timeout=\"5\" HelloWorldFunctionName=\"hello-world\" UsersFunctionName=\"user-function\" TodoFunctionName=\"todo-function\" BffFunctionName=\"bff-function\" TodoAsyncFunctionName=\"todo-async-function\" TodoAsyncFifoFunctionName=\"todo-async-fifo-function\" LogLevel=\"DEBUG\" LogRetensionInDays=\"7\" AppConfigLayerArn=\"arn:aws:lambda:ap-northeast-1:980059726660:layer:AWS-AppConfig-Extension:98\" LambdaInsightsLayerArn=\"arn:aws:lambda:ap-northeast-1:580247275435:layer:LambdaInsightsExtension:80\""
 resolve_s3 = true
 
 [default.package.parameters]

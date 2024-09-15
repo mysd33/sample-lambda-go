@@ -23,6 +23,9 @@ Parameters:
     MinValue: 128
     MaxValue: 10240
     Default: 128
+  Timeout:
+    Type: Number
+    Default: 5
   HelloWorldFunctionName:
     Type: String
     Default: hello-world
@@ -65,7 +68,7 @@ Globals:
 #    Runtime: go1.x
     Architectures:
       - x86_64
-    Timeout: 5
+    Timeout: !Ref Timeout
     MemorySize: !Ref MemorySize
     Tracing: !Ref TracingValue
     VpcConfig:
