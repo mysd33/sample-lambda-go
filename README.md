@@ -759,6 +759,8 @@ X-Amzn-Requestid: 1c53023f-b61b-424e-b665-62ca6cdf3f2a
 > Build Failed
 > Error: GoModulesBuilder:Build - Builder Failed: go: go.mod file not found in current directory or any parent directory; see 'go help modules'
 > ```
+> このエラーは、go.modファイルがないために発生しているが、本サンプルのプロジェクト構成の場合、main.goがあるディレクトリにgo.modファイルがないと、このエラーが発生することが分かっている。
+> また、ソースコードに複数のmain.goがあるとデバッグがうまくいかない（別のmain.goでデバッグされてしまう）ように見える。
 
 
 > [!WARNING]  
