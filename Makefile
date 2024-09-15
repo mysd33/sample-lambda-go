@@ -51,6 +51,17 @@ build: clean
 # for linux
 # TODO	
 
+build_uc: clean
+# for windows	
+	sam build --use-container
+	xcopy /I /S configs .aws-sam\build\BffFunction\configs
+	xcopy /I /S configs .aws-sam\build\UsersFunction\configs	
+	xcopy /I /S configs .aws-sam\build\TodoFunction\configs	
+	xcopy /I /S configs .aws-sam\build\TodoAsyncFunction\configs
+	xcopy /I /S configs .aws-sam\build\TodoAsyncFifoFunction\configs
+# for linux
+# TODO	
+
 unit_test:
 	cd app & go test -v ./internal/...
 	cd appbase & go test -v ./pkg/...
