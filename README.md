@@ -747,9 +747,9 @@ X-Amzn-Requestid: 1c53023f-b61b-424e-b665-62ca6cdf3f2a
 
 > [!WARNING]  
 > [aws-sam-cliのissue](https://github.com/aws/aws-sam-cli/issues/3718)によると、当該サンプルAPが使用する「provided.al2」、「provided.al2023」（カスタムランタイム）でのsam localのデバッグ実行は現状サポートされていない。  
-> template.yaml回避策として「go1.x」ランタイムに修正して、実際に試した手順を参考に記載する。 
+> 回避策として、template.yaml中を「go1.x」ランタイムに一時的に修正する対応する手順を参考に記載する。 
 
-* [AWSの開発者ガイド](https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/serverless-sam-cli-using-debugging.html#serverless-sam-cli-running-locally)の記載にある通り、[delve](https://github.com/go-delve/delve)といったサードパーティのデバッガを使用することで、VSCodeでの sam localのリモートデバッグ実行可能である。
+* [AWSの開発者ガイド](https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/serverless-sam-cli-using-debugging.html#serverless-sam-cli-running-locally)の記載にある通り、[delve](https://github.com/go-delve/delve)といったサードパーティのデバッガを使用することで、VSCodeでの sam localのリモートデバッグ実行が可能である。
 
 * delveのインストール
     * Lambda関数及びdelveが実行されるのはLambdaコンテナ内(Amazon Linux)なので、
@@ -776,7 +776,8 @@ X-Amzn-Requestid: 1c53023f-b61b-424e-b665-62ca6cdf3f2a
         * Lambda Insightの修正例:
             ![go1.xへのテンプレート変更2](image/template_go1x_3.png)
 
-    * 本サンプルAPでは、すでに上記の修正をしたデバッグ用のtemplate.yaml、template-dbg.yamlを使ってビルドすればよい。makeコマンドも用意している。    
+    * 本サンプルAPでは、すでに上記の修正をしたデバッグ実行用の一時的なtemplate.yamlとして[template-dbg.yaml](./template-dbg.yaml)を使ってビルドすればよい。makeコマンドも用意している。    
+
     ```sh
 	sam build --template-file template-dbg.yaml
 	xcopy /I /S configs .aws-sam\build\BffFunction\configs
@@ -791,6 +792,7 @@ X-Amzn-Requestid: 1c53023f-b61b-424e-b665-62ca6cdf3f2a
 
 > [!Note]
 > 上記に記載のとおり、al2、al2023のランタイムではリモートデバッグができないことへの回避策として、ランタイムgo1.xのコンテナイメージを使ってsam localを実行する際、Lambda Insightを有効化すると、cloudwatch_lambda_agentが利用される際、ランタイムgo1.xに含まれるGLIBCが、GLIBC_2.18、2.25といった新しいバージョンに対応していないためと考えられる。  
+> このため、デバッグ実行時はコメントアウトして無効化している。
 >
 > ```
 > /opt/extensions/cloudwatch_lambda_agent: /lib64/libc.so.6: version `GLIBC_2.18' not found (required by /opt/extensions/cloudwatch_lambda_agent)
@@ -799,8 +801,9 @@ X-Amzn-Requestid: 1c53023f-b61b-424e-b665-62ca6cdf3f2a
 
 
 
-* デバッガパス、デバッグポート(この例では8099番)を指定して、sam local start-apiを実行
-    * [AWSのデベロッパーガイド](https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/serverless-sam-cli-using-debugging.html#serverless-sam-cli-running-locally)を参考
+* sam local start-apiの実行
+    * デバッガパス、デバッグポート(この例では8099番)を指定して、sam local start-apiを実行する。
+        * [AWSのデベロッパーガイド](https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/serverless-sam-cli-using-debugging.html#serverless-sam-cli-running-locally)を参考のこと。
 
     * 本サンプルAPのように、SAMテンプレート内にFunctionが複数ある場合は、デバッグできるのは一度に1つの関数のみのためか、--debug-functionオプションでデバッグしたい関数を指定しないとデバッガが動かない
 
