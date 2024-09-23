@@ -25,7 +25,7 @@ func init() {
 	er := common.NewCommonErrorResponse(ac.GetMessageSource())
 	// Ginのエンジンを作成
 	apiLambdaHandler := ac.GetAPILambdaHandler()
-	r := apiLambdaHandler.GetDefaultGinEngine(er)
+	r := apiLambdaHandler.GetDefaultGinEngine(er, nil)
 	// 業務の初期化処理実行
 	initBiz(ac, r)
 	// ハンドラ関数の作成

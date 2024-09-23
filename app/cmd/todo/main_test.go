@@ -28,7 +28,7 @@ func TestPostTodo(t *testing.T) {
 
 	ac := component.NewApplicationContext()
 	apiLambdaHandler := ac.GetAPILambdaHandler()
-	r := apiLambdaHandler.GetDefaultGinEngine(common.NewCommonErrorResponse(ac.GetMessageSource()))
+	r := apiLambdaHandler.GetDefaultGinEngine(common.NewCommonErrorResponse(ac.GetMessageSource()), nil)
 	initBiz(ac, r)
 
 	// TODO: データ駆動テスト化

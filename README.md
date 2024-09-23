@@ -751,6 +751,13 @@ X-Amzn-Requestid: 1c53023f-b61b-424e-b665-62ca6cdf3f2a
 
 * [AWSの開発者ガイド](https://docs.aws.amazon.com/ja_jp/serverless-application-model/latest/developerguide/serverless-sam-cli-using-debugging.html#serverless-sam-cli-running-locally)の記載にある通り、[delve](https://github.com/go-delve/delve)といったサードパーティのデバッガを使用することで、VSCodeでの sam localのリモートデバッグ実行が可能である。
 
+> [!WARNING]  
+> Linuxの場合はGLIBCのバージョンの問題が出ることがほとんどである。今分かっている簡易的な回避策としてあらかじめ、`CGO_ENABLED=0`を指定してから、delveのインストール、sam buildをビルドする方法がある。
+> 
+> ```sh
+> go env -w CGO_ENABLED=0
+> ```
+
 * delveのインストール
     * Lambda関数及びdelveが実行されるのはLambdaコンテナ内(Amazon Linux)なので、
     GOOSに`linux`を指定し、インストール
