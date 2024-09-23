@@ -822,10 +822,10 @@ X-Amzn-Requestid: 1c53023f-b61b-424e-b665-62ca6cdf3f2a
 
 
         # Windowsでもmakeをインストールすればmakeでいけます
-        make local_startapi_dg_HelloWorldFunction
-        make local_startapi_dg_UsersFunction
-        make local_startapi_dg_TodoFunction
-        make local_startapi_dg_BffFunction
+        make local_startapi_dbg_HelloWorldFunction
+        make local_startapi_dbg_UsersFunction
+        make local_startapi_dbg_TodoFunction
+        make local_startapi_dbg_BffFunction
         ```
 
     * SAMテンプレート内にFunctionが1つの場合は--debug-functionオプションなくてもうまくいく
@@ -882,16 +882,22 @@ go install golang.org/x/tools/cmd/godoc@latest
 
 * 使い方は、[godoc](https://pkg.go.dev/golang.org/x/tools/cmd/godoc)を参照のこと
 
+* appbaseフォルダでgodocコマンドを実行    
+```sh
+cd appbase
+godoc
+
+# Windowsでもmakeをインストールすればmakeでいけます
+make doc_appbase
+```
+
 * appフォルダでgodocコマンドを実行
 ```sh
 cd app
 godoc
-```
 
-* appbaseフォルダでgodocコマンドを実行    
-```sh
-cd app
-godoc
+# Windowsでもmakeをインストールすればmakeでいけます
+make doc_app
 ```
 
 * godoc起動中の状態で、[http://localhost:6060](http://localhost:6060)へアクセス
