@@ -16,6 +16,7 @@ import (
 	"example.com/appbase/pkg/awssdk"
 	myconfig "example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/logging"
+	"example.com/appbase/pkg/message"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -32,8 +33,9 @@ const (
 	S3_MINIO_SECRET_KEY_NAME       = "S3_MINIO_SECRET_KEY"
 	S3_UPLOAD_PART_SIZE_MiB_NAME   = "S3_UPLOAD_PART_SIZE_MiB"
 	S3_DOWNLOAD_PART_SIZE_MiB_NAME = "S3_DOWNLOAD_PART_SIZE_MiB"
-	S3_UPLOAD_CONCURRENCY          = "S3_UPLOAD_CONCURRENCY"
-	S3_DOWNLOAD_CONCURRENCY        = "S3_DOWNLOAD_CONCURRENCY"
+	S3_UPLOAD_CONCURRENCY_NAME     = "S3_UPLOAD_CONCURRENCY"
+	S3_DOWNLOAD_CONCURRENCY_NAME   = "S3_DOWNLOAD_CONCURRENCY"
+	S3_MAX_KEY_NUM_NAME            = "S3_MAX_KEY_NUM"
 )
 
 // デフォルトのurl.QueryEscape関数の挙動を変えるためのReplacer
@@ -88,6 +90,8 @@ type ObjectStorageAccessor interface {
 	Delele(bucketName string, objectKey string) error
 	// DeleteByVersionId は、オブジェクトストレージから特定のバージョンのデータを削除します。
 	DeleteByVersionId(bucketName string, objectKey string, versionId string) error
+	// DeleteAllVersions は、オブジェクトストレージから全てのバージョンのデータを削除します。
+	DeleteAllVersions(bucketName string, objectKey string) error
 	// DeleteFolder は、オブジェクトストレージのフォルダごと削除します。
 	// なお、エラーが発生した時点で中断されるため、削除されないファイルが残る可能性があります。
 	DeleteFolder(bucketName string, folderPath string) error
@@ -147,8 +151,8 @@ func NewObjectStorageAccessor(myCfg myconfig.Config, logger logging.Logger) (Obj
 	uploadPartMiBs := myCfg.GetInt(S3_UPLOAD_PART_SIZE_MiB_NAME, 5)
 	downloadPartMiBs := myCfg.GetInt(S3_DOWNLOAD_PART_SIZE_MiB_NAME, 5)
 	// 並列実行数のパラメータ取得
-	uploadConcurrency := myCfg.GetInt(S3_UPLOAD_CONCURRENCY, 5)
-	downloadConCurrency := myCfg.GetInt(S3_DOWNLOAD_CONCURRENCY, 5)
+	uploadConcurrency := myCfg.GetInt(S3_UPLOAD_CONCURRENCY_NAME, 5)
+	downloadConCurrency := myCfg.GetInt(S3_DOWNLOAD_CONCURRENCY_NAME, 5)
 
 	// https://aws.github.io/aws-sdk-go-v2/docs/sdk-utilities/s3/#configuration-options
 	uploader := manager.NewUploader(client, func(u *manager.Uploader) {
@@ -162,16 +166,18 @@ func NewObjectStorageAccessor(myCfg myconfig.Config, logger logging.Logger) (Obj
 	})
 
 	return &defaultObjectStorageAccessor{
+		logger:     logger,
+		config:     myCfg,
 		s3Client:   client,
 		uploader:   uploader,
 		downloader: downloader,
-		logger:     logger,
 	}, nil
 }
 
 // defaultObjectStorageAccessor は、ObjectStorageAccessorのデフォルト実装です。
 type defaultObjectStorageAccessor struct {
 	logger     logging.Logger
+	config     myconfig.Config
 	s3Client   *s3.Client
 	uploader   *manager.Uploader
 	downloader *manager.Downloader
@@ -453,6 +459,93 @@ func (a *defaultObjectStorageAccessor) DeleteByVersionId(bucketName string, obje
 		return errors.WithStack(err)
 	}
 	return nil
+}
+
+// DeleteAllVersions implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) DeleteAllVersions(bucketName string, objectKey string) error {
+	a.logger.Debug("DeleteAllVersions bucketName:%s, objectKey:%s", bucketName, objectKey)
+
+	// オブジェクトの全てのバージョンIDを取得
+	versions, err := a.listObjectVersions(bucketName, objectKey)
+	if err != nil {
+		return err
+	}
+	if len(versions) == 0 {
+		return errors.New(fmt.Sprintf("削除対象のオブジェクトが存在しません。 bucketName:%s, objectKey:%s", bucketName, objectKey))
+	}
+	// DeleteObjectesは最大1000件までの削除が可能
+	// 設定のChunkSizeごとに分割して、削除処理を行う
+	chunkSize := a.config.GetInt(S3_MAX_KEY_NUM_NAME, 1000)
+	chunkedVersion := chunkBy(versions, chunkSize)
+
+	for i, chunk := range chunkedVersion {
+		a.logger.Debug("chunk: %2d", i+1)
+		objects := make([]types.ObjectIdentifier, 0, len(chunk))
+		for j, v := range chunk {
+			a.logger.Debug("%3d: key:%s versionId:%s", j+1, *v.Key, *v.VersionId)
+			objects = append(objects, types.ObjectIdentifier{
+				Key: v.Key,
+			})
+		}
+		input := &s3.DeleteObjectsInput{
+			Bucket: aws.String(bucketName),
+			Delete: &types.Delete{
+				Objects: objects,
+			},
+		}
+		output, err := a.s3Client.DeleteObjects(apcontext.Context, input)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		if output.Errors != nil {
+			for _, e := range output.Errors {
+				a.logger.Warn(message.W_FW_8011, bucketName, *e.Key, *e.VersionId, *e.Code, *e.Message)
+			}
+			return errors.New("DeleteAllVersionsでオブジェクトの削除操作に失敗")
+		}
+	}
+	return nil
+}
+
+// listObjectVersions は、指定のバケットとキーに対する全てのバージョンを取得します。
+func (a *defaultObjectStorageAccessor) listObjectVersions(bucketName string, objectKey string) ([]types.ObjectVersion, error) {
+	input := &s3.ListObjectVersionsInput{
+		Bucket:  aws.String(bucketName),
+		MaxKeys: aws.Int32(int32(a.config.GetInt(S3_MAX_KEY_NUM_NAME, 1000))),
+		Prefix:  aws.String(objectKey),
+	}
+	var err error
+	var output *s3.ListObjectVersionsOutput
+	var versions []types.ObjectVersion
+	paginator := s3.NewListObjectVersionsPaginator(a.s3Client, input)
+	for paginator.HasMorePages() {
+		output, err = paginator.NextPage(apcontext.Context)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		for _, version := range output.Versions {
+			// ListObjectVersionsは、Prefix指定しかできないため
+			// キーが完全一致するバージョンのみを取得
+			if *version.Key == objectKey {
+				versions = append(versions, version)
+			}
+		}
+	}
+	return versions, nil
+}
+
+// chunkBy は、指定のサイズでスライスを分割します。
+func chunkBy[T any](items []T, chunkSize int) [][]T {
+	if len(items) == 0 || chunkSize <= 0 {
+		return [][]T{}
+	}
+
+	// https://go.dev/wiki/SliceTricks#batching-with-minimal-allocation
+	chunks := make([][]T, 0, (len(items)+chunkSize-1)/chunkSize)
+	for chunkSize < len(items) {
+		items, chunks = items[chunkSize:], append(chunks, items[0:chunkSize:chunkSize])
+	}
+	return append(chunks, items)
 }
 
 // DeleteFolder implements ObjectStorageAccessor.
