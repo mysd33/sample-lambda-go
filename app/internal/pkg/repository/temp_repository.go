@@ -39,8 +39,6 @@ func NewTempRepository(dynamoDBTempalte transaction.TransactionalDynamoDBTemplat
 	tableName := tables.DynamoDBTableName(config.Get(TEMP_TABLE_NAME, "temp"))
 	// テーブル定義の設定
 	mytables.Temp{}.InitPK(tableName)
-	// プライマリキーの設定
-	primaryKey := tables.GetPrimaryKey(tableName)
 
 	return &tempRepositoryImpl{
 		dynamodbTemplate: dynamoDBTempalte,
@@ -48,7 +46,6 @@ func NewTempRepository(dynamoDBTempalte transaction.TransactionalDynamoDBTemplat
 		logger:           logger,
 		config:           config,
 		tableName:        tableName,
-		primaryKey:       primaryKey,
 		id:               id,
 	}
 }
@@ -60,7 +57,6 @@ type tempRepositoryImpl struct {
 	logger           logging.Logger
 	config           config.Config
 	tableName        tables.DynamoDBTableName
-	primaryKey       *tables.PKKeyPair
 	id               id.IDGenerator
 }
 
@@ -70,7 +66,7 @@ func (r *tempRepositoryImpl) FindOne(id string) (*model.Temp, error) {
 	input := input.PKOnlyQueryInput{
 		PrimaryKey: input.PrimaryKey{
 			PartitionKey: input.Attribute{
-				Name:  r.primaryKey.PartitionKey,
+				Name:  tables.GetPrimaryKey(r.tableName).PartitionKey,
 				Value: id,
 			},
 		},

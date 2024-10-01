@@ -11,7 +11,7 @@ type User struct {
 	// ID は、ユーザのIDです。
 	ID string `json:"user_id" dynamodbav:"user_id"`
 	// Nameは、ユーザ名です。
-	Name string `json:"user_name" dynamodbav:"user_name`
+	Name string `json:"user_name" dynamodbav:"user_name"`
 }
 
 // GetKey DynamoDBのキー情報を取得します。

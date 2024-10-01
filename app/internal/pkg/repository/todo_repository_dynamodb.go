@@ -30,8 +30,6 @@ func NewTodoRepositoryForDynamoDB(dynamoDBTempalte transaction.TransactionalDyna
 	tableName := tables.DynamoDBTableName(config.Get(TODO_TABLE_NAME, "todo"))
 	// テーブル定義の設定
 	mytables.Todo{}.InitPK(tableName)
-	// プライマリキーの設定
-	primaryKey := tables.GetPrimaryKey(tableName)
 
 	return &todoRepositoryImplByDynamoDB{
 		dynamodbTemplate: dynamoDBTempalte,
@@ -39,7 +37,6 @@ func NewTodoRepositoryForDynamoDB(dynamoDBTempalte transaction.TransactionalDyna
 		logger:           logger,
 		config:           config,
 		tableName:        tableName,
-		primaryKey:       primaryKey,
 		id:               id,
 	}
 }
@@ -51,7 +48,6 @@ type todoRepositoryImplByDynamoDB struct {
 	logger           logging.Logger
 	config           config.Config
 	tableName        tables.DynamoDBTableName
-	primaryKey       *tables.PKKeyPair
 	id               id.IDGenerator
 }
 
@@ -60,7 +56,7 @@ func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*model.Todo, err
 	input := input.PKOnlyQueryInput{
 		PrimaryKey: input.PrimaryKey{
 			PartitionKey: input.Attribute{
-				Name:  tr.primaryKey.PartitionKey,
+				Name:  tables.GetPrimaryKey(tr.tableName).PartitionKey,
 				Value: todoId,
 			},
 		},
