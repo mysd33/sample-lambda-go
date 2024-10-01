@@ -151,11 +151,12 @@ func CreateKeyCondition(primaryKeyCond *input.PrimaryKey) (*expression.KeyCondit
 			}
 		case input.SORTKEY_BETWEEN:
 			// primaryKey.SortKey.Value[0] <= ソートキー <= primaryKey.SortKey.Value[1]
-			if v, ok := primaryKeyCond.SortKey.Value.([2]interface{}); ok {
-				keyCond.And(expression.Key(primaryKeyCond.SortKey.Name).Between(expression.Value(v[0]), expression.Value(v[1])))
+			if v, ok := primaryKeyCond.SortKey.Value.([2]any); ok {
+				keyCond = keyCond.And(expression.Key(primaryKeyCond.SortKey.Name).Between(expression.Value(v[0]), expression.Value(v[1])))
 			} else {
 				return nil, errors.New("type not supported")
 			}
+
 		case input.SORTKEY_GREATER_THAN:
 			keyCond = keyCond.And(expression.Key(primaryKeyCond.SortKey.Name).GreaterThan(expression.Value(primaryKeyCond.SortKey.Value)))
 		case input.SORTKEY_GREATER_THAN_EQ:
