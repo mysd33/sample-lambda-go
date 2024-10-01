@@ -12,10 +12,6 @@ type PK struct {
 	SortKey      *string
 }
 
-type Tables interface {
-	InitPK(tableName DynamoDBTableName)
-}
-
 type PKKeyPair struct {
 	PartitionKey string
 	SortKey      *string

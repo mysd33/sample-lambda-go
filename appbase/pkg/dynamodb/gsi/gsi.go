@@ -5,10 +5,6 @@ package gsi
 
 import "example.com/appbase/pkg/dynamodb/tables"
 
-type Gsi interface {
-	InitGsi(gsiName DynamoDBGSIName)
-}
-
 type DynamoDBGSIName string
 
 var gsiMap map[tables.DynamoDBTableName]*GSIDefinition
