@@ -29,7 +29,7 @@ func GetGSIKeyPair(tableName tables.DynamoDBTableName, indexName DynamoDBGSIName
 	return gsis.IndexMap[indexName]
 }
 
-func SetGSIKeyPair(tableName tables.DynamoDBTableName, indexName DynamoDBGSIName, gsiKeyPair *GSIKeyPair) {
+func AddGSIKeyPair(tableName tables.DynamoDBTableName, indexName DynamoDBGSIName, gsiKeyPair *GSIKeyPair) {
 	if gsiMap == nil {
 		gsiMap = make(map[tables.DynamoDBTableName]*GSIDefinition)
 	}
