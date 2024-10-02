@@ -179,23 +179,25 @@ func (t *defaultDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTabl
 	var totalCnt int32
 	// ページング回数
 	var pagingCnt int
-
+	// ページングの処理
 	handleFn := func(result *dynamodb.QueryOutput) bool {
 		pagingCnt += 1
 		totalCnt += result.Count
 		t.logger.Debug("ページング回数: %d, 今回取得件数: %d, 合計取得件数: %d", pagingCnt, result.Count, totalCnt)
-		if input.TotalLimit != nil && totalCnt < *input.TotalLimit {
+		if input.TotalLimit != nil && totalCnt > *input.TotalLimit {
 			t.logger.Debug("合計件数: %d, 合計取得件数の上限値: %d, 切り捨て件数: %d", totalCnt, *input.TotalLimit, totalCnt-*input.TotalLimit)
+			// 合計取得件数の上限の指定があり、合計取得件数が上限値を超えた場合は切り捨てて追加
+			// 例）合計取得件数=120、 上限値=100、既存のリスト件数=95
+			//     → 100 - 95 = 5件append可能
 			delIdx := int(*input.TotalLimit) - len(resultItems)
 			resultItems = append(resultItems, result.Items[:delIdx]...)
+			// 上限値を超えたため検索終了
 			return true
-		} else {
-			resultItems = append(resultItems, result.Items...)
-			if len(result.LastEvaluatedKey) == 0 {
-				return true
-			}
 		}
-		return false
+		// 検索結果の追加
+		resultItems = append(resultItems, result.Items...)
+		// 最後のページなら検索終了
+		return len(result.LastEvaluatedKey) == 0
 	}
 	// Limitの件数毎に取得する。
 	queryInput := &dynamodb.QueryInput{
