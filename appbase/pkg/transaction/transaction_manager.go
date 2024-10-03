@@ -101,7 +101,7 @@ func (tm *defaultTransactionManager) ExecuteTransactionWithContext(ctx context.C
 			transaction.Rollback()
 		} else {
 			// Serviceの実行成功時トランザクションをコミット
-			_, err = transaction.Commit()
+			_, err = transaction.Commit(ctx)
 			// TODO: TransactWriteItemsOutputの利用（ログ出力等）
 		}
 	}()
@@ -123,7 +123,7 @@ type Transaction interface {
 	// CheckTransactWriteItems は、TransactWriteItemが存在するかを確認します。
 	CheckTransactWriteItems() bool
 	// Commit は、トランザクションをコミットします。
-	Commit() (*dynamodb.TransactWriteItemsOutput, error)
+	Commit(ctx context.Context) (*dynamodb.TransactWriteItemsOutput, error)
 	// Rollback は、トランザクションをロールバックします。
 	Rollback()
 }
@@ -177,18 +177,18 @@ func (t *defaultTransaction) CheckTransactWriteItems() bool {
 }
 
 // Commit implements Transaction.
-func (t *defaultTransaction) Commit() (*dynamodb.TransactWriteItemsOutput, error) {
+func (t *defaultTransaction) Commit(ctx context.Context) (*dynamodb.TransactWriteItemsOutput, error) {
 	var err error
 	if t.sqsAccessor != nil {
 		// SQSのメッセージの送信とメッセージのDBトランザクション管理
-		err = t.sqsAccessor.TransactSendMessages(t.messages, t.options.SqsOptions...)
+		err = t.sqsAccessor.TransactSendMessagesWithContext(ctx, t.messages, t.options.SqsOptions...)
 		if err != nil {
 			t.logger.Debug("SQSのメッセージ送信失敗でロールバック")
 			return nil, errors.WithStack(err)
 		}
 	}
 	// ディレード処理の場合は、メッセージ管理テーブルのアイテムの重複メッセージIDを登録する更新トランザクションを追加
-	err = t.transactUpdateQueueMessageItem()
+	err = t.transactUpdateQueueMessageItem(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +200,7 @@ func (t *defaultTransaction) Commit() (*dynamodb.TransactWriteItemsOutput, error
 	}
 
 	// DynamoDBトランザクション実行
-	output, err := t.dynamodbAccessor.TransactWriteItemsSDK(t.transactWriteItems, t.options.DynamoDBOptions...)
+	output, err := t.dynamodbAccessor.TransactWriteItemsSDKWithContext(ctx, t.transactWriteItems, t.options.DynamoDBOptions...)
 	if err != nil {
 		t.logger.Debug("トランザクションコミットエラー")
 		// https://docs.aws.amazon.com/ja_jp/amazondynamodb/latest/developerguide/transaction-apis.html
@@ -244,9 +244,9 @@ func (t *defaultTransaction) Rollback() {
 }
 
 // transactUpdateQueueMessageItem は、メッセージ管理テーブルのアイテムの重複メッセージIDを登録する更新トランザクションを追加します。
-func (t *defaultTransaction) transactUpdateQueueMessageItem() error {
+func (t *defaultTransaction) transactUpdateQueueMessageItem(ctx context.Context) error {
 	// Contextから非同期処理情報を取得
-	asyncHandlerInfo := apcontext.Context.Value(constant.ASYNC_HANDLER_INFO_CTX_KEY)
+	asyncHandlerInfo := ctx.Value(constant.ASYNC_HANDLER_INFO_CTX_KEY)
 	if asyncHandlerInfo == nil {
 		t.logger.Debug("非同期処理情報なし")
 		return nil

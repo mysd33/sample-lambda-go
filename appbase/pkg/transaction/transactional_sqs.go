@@ -45,6 +45,10 @@ type TransactionalSQSAccessor interface {
 	// TransactSendMessages は、トランザクション管理されたメッセージを送信します。
 	// なお、TransactSendMessagesの実行は、TransactionManagerが実行するため業務ロジックで利用する必要はありません。
 	TransactSendMessages(inputs []*Message, optFns ...func(*sqs.Options)) error
+	// TransactSendMessagesWithContext は、goroutine向けに渡されたContextを利用して、
+	/// トランザクション管理されたメッセージを送信します。
+	// なお、TransactSendMessagesWithContextの実行は、TransactionManagerが実行するため業務ロジックで利用する必要はありません。
+	TransactSendMessagesWithContext(ctx context.Context, inputs []*Message, optFns ...func(*sqs.Options)) error
 }
 
 // NewTransactionalSQSAccessor は、TransactionalSQSAccessorを作成します。
@@ -78,6 +82,11 @@ func (sa *defaultTransactionalSQSAccessor) SendMessageSdk(queueName string, inpu
 	return sa.sqsAccessor.SendMessageSdk(queueName, input, optFns...)
 }
 
+// SendMessageSdkWithContext implements TransactionalSQSAccessor.
+func (sa *defaultTransactionalSQSAccessor) SendMessageSdkWithContext(ctx context.Context, queueName string, input *sqs.SendMessageInput, optFns ...func(*sqs.Options)) (*sqs.SendMessageOutput, error) {
+	return sa.sqsAccessor.SendMessageSdkWithContext(ctx, queueName, input, optFns...)
+}
+
 // AppendTransactMessage implements TransactionalSQSAccessor.
 func (sa *defaultTransactionalSQSAccessor) AppendTransactMessage(queueName string, input *sqs.SendMessageInput) error {
 	sa.logger.Debug("AppendTransactMessage")
@@ -103,13 +112,18 @@ func (sa *defaultTransactionalSQSAccessor) AppendTransactMessageWithContext(ctx 
 
 // TransactSendMessages implements TransactionalSQSAccessor.
 func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Message, optFns ...func(*sqs.Options)) error {
+	return sa.TransactSendMessagesWithContext(apcontext.Context, inputs, optFns...)
+}
+
+// TransactSendMessagesWithContext implements TransactionalSQSAccessor.
+func (sa *defaultTransactionalSQSAccessor) TransactSendMessagesWithContext(ctx context.Context, inputs []*Message, optFns ...func(*sqs.Options)) error {
 	sa.logger.Debug("TransactSendMessages: %d件", len(inputs))
 
 	for _, v := range inputs {
 		// メッセージに削除時間を追加する
 		sa.addDeleteTime(v)
 		// SQSへメッセージ送信
-		output, err := sa.SendMessageSdk(v.QueueName, v.Input, optFns...)
+		output, err := sa.SendMessageSdkWithContext(ctx, v.QueueName, v.Input, optFns...)
 		if err != nil {
 			//TODO: forの途中でエラーを返却することハンドリングが問題ないか再考
 			return errors.WithStack(err)

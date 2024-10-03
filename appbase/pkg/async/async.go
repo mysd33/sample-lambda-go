@@ -47,6 +47,8 @@ type SQSTemplate interface {
 type SQSAccessor interface {
 	// SendMessageSdk は、AWS SDKによるSendMessageをラップします。
 	SendMessageSdk(queueName string, input *sqs.SendMessageInput, optFns ...func(*sqs.Options)) (*sqs.SendMessageOutput, error)
+	// SendMessageSdkWithContext は、AWS SDKによるSendMessageをラップします。goroutine向けに、渡されたContextを利用して実行します。
+	SendMessageSdkWithContext(ctx context.Context, queueName string, input *sqs.SendMessageInput, optFns ...func(*sqs.Options)) (*sqs.SendMessageOutput, error)
 }
 
 // NewSQSAccessor は、SQSAccessorを作成します。
@@ -94,6 +96,11 @@ type defaultSQSAccessor struct {
 
 // SendMessageSdk implements SQSAccessor.
 func (sa *defaultSQSAccessor) SendMessageSdk(queueName string, input *sqs.SendMessageInput, optFns ...func(*sqs.Options)) (*sqs.SendMessageOutput, error) {
+	return sa.SendMessageSdkWithContext(apcontext.Context, queueName, input, optFns...)
+}
+
+// SendMessageSdkWithContext implements SQSAccessor.
+func (sa *defaultSQSAccessor) SendMessageSdkWithContext(ctx context.Context, queueName string, input *sqs.SendMessageInput, optFns ...func(*sqs.Options)) (*sqs.SendMessageOutput, error) {
 	// QueueのURLの取得・設定
 	queueUrl, ok := sa.queueUrls[queueName]
 	if ok {
@@ -102,7 +109,7 @@ func (sa *defaultSQSAccessor) SendMessageSdk(queueName string, input *sqs.SendMe
 		input.QueueUrl = &queueUrl
 	} else {
 		// キャッシュがない場合は、APIで取得
-		queueUrlOutput, err := sa.sqsClient.GetQueueUrl(apcontext.Context, &sqs.GetQueueUrlInput{
+		queueUrlOutput, err := sa.sqsClient.GetQueueUrl(ctx, &sqs.GetQueueUrlInput{
 			QueueName: aws.String(queueName),
 		}, optFns...)
 		if err != nil {
@@ -126,7 +133,7 @@ func (sa *defaultSQSAccessor) SendMessageSdk(queueName string, input *sqs.SendMe
 	}
 	sa.logger.Info(message.I_FW_0006, queueName)
 	//　SQSへメッセージ送信する
-	output, err := sa.sqsClient.SendMessage(apcontext.Context, input, optFns...)
+	output, err := sa.sqsClient.SendMessage(ctx, input, optFns...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
