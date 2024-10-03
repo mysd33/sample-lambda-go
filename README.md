@@ -565,7 +565,7 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
         curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Milk", "Study English"]}' http://127.0.0.1:3000/bff-api/v1/todo-async?dbtx=no
 
         # Elastic MQから実行依頼したメッセージを取得し確認
-        aws sqs receive-message --queue-url http://localhost:9324/000000000000/SampleQueue --endpoint-url http://localhost:9324 --attribute-names All --message-attribute-names All --no-paginate
+        aws sqs receive-message --queue-url http://localhost:9324/000000000000/SampleQueue --endpoint-url http://localhost:9324 --attribute-names All --message-attribute-names All
         ```
 
         * events/event-TodoAsyncFunction.jsonをメッセージ内容に合わせて編集
@@ -624,7 +624,7 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
         # 業務のDB更新を伴わない場合
         curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Milk", "Study English"]}' http://127.0.0.1:3000/bff-api/v1/todo-async?fifo=true\&dbtx=no
         # Elastic MQから実行依頼したメッセージを取得し確認
-        aws sqs receive-message --queue-url http://localhost:9324/000000000000/SampleFIFOQueue.fifo --endpoint-url http://localhost:9324 --attribute-names All --message-attribute-names All --no-paginate
+        aws sqs receive-message --queue-url http://localhost:9324/000000000000/SampleFIFOQueue.fifo --endpoint-url http://localhost:9324 --attribute-names All --message-attribute-names All
         ```
 
         * events/event-TodoAsyncFifoFunction.jsonをメッセージ内容に合わせて編集
