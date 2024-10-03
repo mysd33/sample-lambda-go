@@ -26,17 +26,17 @@ var (
 // DynamoDBTemplate は、DynamoDBアクセスを定型化した高次のインタフェースです。
 type DynamoDBTemplate interface {
 	// CreateOne は、DynamoDBに項目を1件登録します。
-	CreateOne(tableName tables.DynamoDBTableName, inputEntity any) error
+	CreateOne(tableName tables.DynamoDBTableName, inputEntity any, optFns ...func(*dynamodb.Options)) error
 	// FindOneByTableKey は、ベーステーブルのプライマリキーの完全一致でDynamoDBから1件の項目を取得します。
-	FindOneByTableKey(tableName tables.DynamoDBTableName, input input.PKOnlyQueryInput, outEntity any) error
+	FindOneByTableKey(tableName tables.DynamoDBTableName, input input.PKOnlyQueryInput, outEntity any, optFns ...func(*dynamodb.Options)) error
 	// FindSomeByTableKey は、ベーステーブルのプライマリキーによる条件でDynamoDBから複数件の項目を取得します。
-	FindSomeByTableKey(tableName tables.DynamoDBTableName, input input.PKQueryInput, outEntities any) error
+	FindSomeByTableKey(tableName tables.DynamoDBTableName, input input.PKQueryInput, outEntities any, optFns ...func(*dynamodb.Options)) error
 	// FindSomeByGSIKey は、GSIのプライマリキーによる条件でDynamoDBから項目を複数件取得します。
-	FindSomeByGSIKey(tableName tables.DynamoDBTableName, input input.GsiQueryInput, outEntities any) error
+	FindSomeByGSIKey(tableName tables.DynamoDBTableName, input input.GsiQueryInput, outEntities any, optFns ...func(*dynamodb.Options)) error
 	// UpdateOne は、DynamoDBの項目を更新します。
-	UpdateOne(tableName tables.DynamoDBTableName, input input.UpdateInput) error
+	UpdateOne(tableName tables.DynamoDBTableName, input input.UpdateInput, optFns ...func(*dynamodb.Options)) error
 	// DeleteOne は、DynamoDBの項目を削除します。
-	DeleteOne(tableName tables.DynamoDBTableName, input input.DeleteInput) error
+	DeleteOne(tableName tables.DynamoDBTableName, input input.DeleteInput, optFns ...func(*dynamodb.Options)) error
 }
 
 // NewDynamoDBTemplate は、DynamoDBTemplateのインスタンスを生成します。
@@ -54,7 +54,7 @@ type defaultDynamoDBTemplate struct {
 }
 
 // CreateOne implements DynamoDBTemplate.
-func (t *defaultDynamoDBTemplate) CreateOne(tableName tables.DynamoDBTableName, inputEntity any) error {
+func (t *defaultDynamoDBTemplate) CreateOne(tableName tables.DynamoDBTableName, inputEntity any, optFns ...func(*dynamodb.Options)) error {
 	attributes, err := attributevalue.MarshalMap(inputEntity)
 	if err != nil {
 		return errors.Wrap(err, "CreateOneで構造体をAttributeValueのMap変換時にエラー")
@@ -71,7 +71,7 @@ func (t *defaultDynamoDBTemplate) CreateOne(tableName tables.DynamoDBTableName, 
 		ConditionExpression:      conditionExpression,
 		ExpressionAttributeNames: expressionAttributeNames,
 	}
-	_, err = t.dynamodbAccessor.PutItemSdk(item)
+	_, err = t.dynamodbAccessor.PutItemSdk(item, optFns...)
 	if err != nil {
 		var condErr *types.ConditionalCheckFailedException
 		if errors.As(err, &condErr) {
@@ -83,7 +83,7 @@ func (t *defaultDynamoDBTemplate) CreateOne(tableName tables.DynamoDBTableName, 
 }
 
 // FindOneByTableKey implements DynamoDBTemplate.
-func (t *defaultDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTableName, input input.PKOnlyQueryInput, outEntity any) error {
+func (t *defaultDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTableName, input input.PKOnlyQueryInput, outEntity any, optFns ...func(*dynamodb.Options)) error {
 	// プライマリキーの条件
 	keyMap, err := CreatePkAttributeValue(input.PrimaryKey)
 	if err != nil {
@@ -102,7 +102,7 @@ func (t *defaultDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTab
 		ConsistentRead:       aws.Bool(input.ConsitentRead),
 	}
 	// GetItemの実行
-	getItemOutput, err := t.dynamodbAccessor.GetItemSdk(getItemInput)
+	getItemOutput, err := t.dynamodbAccessor.GetItemSdk(getItemInput, optFns...)
 	if err != nil {
 		return errors.Wrap(err, "FindOneByTableKeyで検索実行時エラー")
 	}
@@ -117,7 +117,7 @@ func (t *defaultDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTab
 }
 
 // FindSomeByTableKey implements DynamoDBTemplate.
-func (t *defaultDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTableName, input input.PKQueryInput, outEntities any) error {
+func (t *defaultDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTableName, input input.PKQueryInput, outEntities any, optFns ...func(*dynamodb.Options)) error {
 	// クエリ表現の作成
 	expr, err := CreateQueryExpressionForTable(input)
 	if err != nil {
@@ -144,7 +144,7 @@ func (t *defaultDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTa
 			ScanIndexForward:          ScanIndexForward(input.PrimaryKey.SortkeyOrderBy),
 		}
 		// Queryの実行
-		result, err := t.dynamodbAccessor.QuerySdk(queryInput)
+		result, err := t.dynamodbAccessor.QuerySdk(queryInput, optFns...)
 		if err != nil {
 			return errors.Wrap(err, "FindSomeByTableKeyで検索実行時エラー")
 		}
@@ -167,7 +167,7 @@ func (t *defaultDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTa
 }
 
 // FindSomeByGSIKey implements DynamoDBTemplate.
-func (t *defaultDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTableName, input input.GsiQueryInput, outEntities any) error {
+func (t *defaultDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTableName, input input.GsiQueryInput, outEntities any, optFns ...func(*dynamodb.Options)) error {
 	// クエリ表現の作成
 	expr, err := CreateQueryExpressionForGSI(input)
 	if err != nil {
@@ -210,7 +210,7 @@ func (t *defaultDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTabl
 		Limit:                     input.LimitPerQuery,
 		ScanIndexForward:          ScanIndexForward(input.IndexKey.SortkeyOrderBy),
 	}
-	err = t.dynamodbAccessor.QueryPagesSdk(queryInput, handleFn)
+	err = t.dynamodbAccessor.QueryPagesSdk(queryInput, handleFn, optFns...)
 	if err != nil {
 		return errors.Wrap(err, "FindSomeByGSIKeyで検索時エラー")
 	}
@@ -224,7 +224,7 @@ func (t *defaultDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTabl
 }
 
 // UpdateOne implements DynamoDBTemplate.
-func (t *defaultDynamoDBTemplate) UpdateOne(tableName tables.DynamoDBTableName, input input.UpdateInput) error {
+func (t *defaultDynamoDBTemplate) UpdateOne(tableName tables.DynamoDBTableName, input input.UpdateInput, optFns ...func(*dynamodb.Options)) error {
 	// プライマリキーの条件
 	keyMap, err := CreatePkAttributeValue(input.PrimaryKey)
 	if err != nil {
@@ -246,7 +246,7 @@ func (t *defaultDynamoDBTemplate) UpdateOne(tableName tables.DynamoDBTableName, 
 		ReturnValues:              types.ReturnValueAllNew,
 	}
 	// UpdateItemの実行
-	_, err = t.dynamodbAccessor.UpdateItemSdk(updateItemInput)
+	_, err = t.dynamodbAccessor.UpdateItemSdk(updateItemInput, optFns...)
 	if err != nil {
 		// 更新条件エラー
 		var condErr *types.ConditionalCheckFailedException
@@ -259,7 +259,7 @@ func (t *defaultDynamoDBTemplate) UpdateOne(tableName tables.DynamoDBTableName, 
 }
 
 // DeleteOne implements DynamoDBTemplate.
-func (t *defaultDynamoDBTemplate) DeleteOne(tableName tables.DynamoDBTableName, input input.DeleteInput) error {
+func (t *defaultDynamoDBTemplate) DeleteOne(tableName tables.DynamoDBTableName, input input.DeleteInput, optFns ...func(*dynamodb.Options)) error {
 	// プライマリキーの条件
 	keyMap, err := CreatePkAttributeValue(input.PrimaryKey)
 	if err != nil {
@@ -279,7 +279,7 @@ func (t *defaultDynamoDBTemplate) DeleteOne(tableName tables.DynamoDBTableName, 
 		ReturnValues:              types.ReturnValueNone,
 	}
 	// DeleteItemの実行
-	_, err = t.dynamodbAccessor.DeleteItemSdk(deleteItemInput)
+	_, err = t.dynamodbAccessor.DeleteItemSdk(deleteItemInput, optFns...)
 	if err != nil {
 		// 削除条件エラー
 		var condErr *types.ConditionalCheckFailedException

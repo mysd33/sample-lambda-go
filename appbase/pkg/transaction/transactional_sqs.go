@@ -44,7 +44,7 @@ type TransactionalSQSAccessor interface {
 	AppendTransactMessageWithContext(ctx context.Context, queueName string, input *sqs.SendMessageInput) error
 	// TransactSendMessages は、トランザクション管理されたメッセージを送信します。
 	// なお、TransactSendMessagesの実行は、TransactionManagerが実行するため業務ロジックで利用する必要はありません。
-	TransactSendMessages(inputs []*Message) error
+	TransactSendMessages(inputs []*Message, optFns ...func(*sqs.Options)) error
 }
 
 // NewTransactionalSQSAccessor は、TransactionalSQSAccessorを作成します。
@@ -74,8 +74,8 @@ type defaultTransactionalSQSAccessor struct {
 }
 
 // SendMessageSdk implements TransactionalSQSAccessor.
-func (sa *defaultTransactionalSQSAccessor) SendMessageSdk(queueName string, input *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
-	return sa.sqsAccessor.SendMessageSdk(queueName, input)
+func (sa *defaultTransactionalSQSAccessor) SendMessageSdk(queueName string, input *sqs.SendMessageInput, optFns ...func(*sqs.Options)) (*sqs.SendMessageOutput, error) {
+	return sa.sqsAccessor.SendMessageSdk(queueName, input, optFns...)
 }
 
 // AppendTransactMessage implements TransactionalSQSAccessor.
@@ -102,14 +102,14 @@ func (sa *defaultTransactionalSQSAccessor) AppendTransactMessageWithContext(ctx 
 }
 
 // TransactSendMessages implements TransactionalSQSAccessor.
-func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Message) error {
+func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Message, optFns ...func(*sqs.Options)) error {
 	sa.logger.Debug("TransactSendMessages: %d件", len(inputs))
 
 	for _, v := range inputs {
 		// メッセージに削除時間を追加する
 		sa.addDeleteTime(v)
 		// SQSへメッセージ送信
-		output, err := sa.SendMessageSdk(v.QueueName, v.Input)
+		output, err := sa.SendMessageSdk(v.QueueName, v.Input, optFns...)
 		if err != nil {
 			//TODO: forの途中でエラーを返却することハンドリングが問題ないか再考
 			return errors.WithStack(err)
@@ -127,6 +127,7 @@ func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Messag
 			return errors.WithStack(err)
 		}
 		queueMessageItem.DeleteTime = deleteTime
+
 		if err := sa.messageRegisterer.RegisterMessage(queueMessageItem); err != nil {
 			return errors.WithStack(err)
 		}

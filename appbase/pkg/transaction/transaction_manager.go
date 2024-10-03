@@ -24,14 +24,15 @@ const (
 // TransactionManager はトランザクションを管理するインタフェースです
 type TransactionManager interface {
 	// ExecuteTransaction は、Serviceの関数serviceFuncの実行前後でDynamoDBトランザクション実行します。
-	ExecuteTransaction(serviceFunc domain.ServiceFunc) (any, error)
+	ExecuteTransaction(serviceFunc domain.ServiceFunc, optFns ...func(*Options)) (any, error)
+
 	// ExecuteTransactionWithContext は、goroutine向けに、渡されたContextを利用して、
 	// Serviceの関数serviceFuncの実行前後でDynamoDBトランザクション実行します。
 	// goroutineで実施する場合は、この関数を利用してください。また、ServiceFuncWithContextで渡されるContextを引き継いで
 	// TransactionalDynamoDBAccessor.AppendTransactWriteItemWithContext、
 	// TransactionalSQSAccessor.AppendTransactMessageWithContextの引数に渡して利用してください。
 	// そうしないと、トランザクションデータが正しく伝番されません。
-	ExecuteTransactionWithContext(context context.Context, serviceFunc domain.ServiceFuncWithContext) (any, error)
+	ExecuteTransactionWithContext(context context.Context, serviceFunc domain.ServiceFuncWithContext, optFns ...func(*Options)) (any, error)
 }
 
 // NewTransactionManager は、TransactionManagerを作成します
@@ -67,22 +68,22 @@ type defaultTransactionManager struct {
 }
 
 // ExecuteTransaction implements TransactionManager.
-func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.ServiceFunc) (any, error) {
+func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.ServiceFunc, optFns ...func(*Options)) (any, error) {
 	return tm.ExecuteTransactionWithContext(apcontext.Context, func(ctx context.Context) (any, error) {
 		// トランザクション付きのContextを設定
 		apcontext.Context = ctx
 		return serviceFunc()
-	})
+	}, optFns...)
 }
 
 // ExecuteTransactionWithContext implements TransactionManager.
 func (tm *defaultTransactionManager) ExecuteTransactionWithContext(ctx context.Context,
-	serviceFunc domain.ServiceFuncWithContext) (result any, err error) {
+	serviceFunc domain.ServiceFuncWithContext, optFns ...func(*Options)) (result any, err error) {
 	if ctx == nil {
 		ctx = apcontext.Context
 	}
 	// 新しいトランザクションを作成
-	transaction := newTransaction(tm.logger, tm.messageRegsiterer)
+	transaction := newTransaction(tm.logger, tm.messageRegsiterer, optFns...)
 	// トランザクション付きのContextを作成
 	ctxWithTx := context.WithValue(ctx, TRANSACTION_CTX_KEY, transaction)
 
@@ -128,8 +129,12 @@ type Transaction interface {
 }
 
 // newTransactionは 新しいTransactionを作成します。
-func newTransaction(logger logging.Logger, messageRegsiterer MessageRegisterer) Transaction {
-	return &defaultTransaction{logger: logger, messageRegsiterer: messageRegsiterer}
+func newTransaction(logger logging.Logger, messageRegsiterer MessageRegisterer, optFns ...func(*Options)) Transaction {
+	options := &Options{}
+	for _, optFn := range optFns {
+		optFn(options)
+	}
+	return &defaultTransaction{logger: logger, messageRegsiterer: messageRegsiterer, options: options}
 }
 
 // defaultTransactionは、transactionを実装する構造体です。
@@ -142,6 +147,8 @@ type defaultTransaction struct {
 	transactWriteItems []types.TransactWriteItem
 	// SQSのメッセージ
 	messages []*Message
+	// Option
+	options *Options
 
 	// TODO: 読み込みトランザクションTransactGetItems
 	// transactGetItems []types.TransactGetItem
@@ -174,7 +181,7 @@ func (t *defaultTransaction) Commit() (*dynamodb.TransactWriteItemsOutput, error
 	var err error
 	if t.sqsAccessor != nil {
 		// SQSのメッセージの送信とメッセージのDBトランザクション管理
-		err = t.sqsAccessor.TransactSendMessages(t.messages)
+		err = t.sqsAccessor.TransactSendMessages(t.messages, t.options.SqsOptions...)
 		if err != nil {
 			t.logger.Debug("SQSのメッセージ送信失敗でロールバック")
 			return nil, errors.WithStack(err)
@@ -193,7 +200,7 @@ func (t *defaultTransaction) Commit() (*dynamodb.TransactWriteItemsOutput, error
 	}
 
 	// DynamoDBトランザクション実行
-	output, err := t.dynamodbAccessor.TransactWriteItemsSDK(t.transactWriteItems)
+	output, err := t.dynamodbAccessor.TransactWriteItemsSDK(t.transactWriteItems, t.options.DynamoDBOptions...)
 	if err != nil {
 		t.logger.Debug("トランザクションコミットエラー")
 		// https://docs.aws.amazon.com/ja_jp/amazondynamodb/latest/developerguide/transaction-apis.html

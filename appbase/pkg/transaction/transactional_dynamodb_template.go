@@ -12,6 +12,7 @@ import (
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/cockroachdb/errors"
 )
@@ -50,33 +51,33 @@ type defaultTransactionalDynamoDBTemplate struct {
 }
 
 // CreateOne implements TransactinalDynamoDBTemplate.
-func (t *defaultTransactionalDynamoDBTemplate) CreateOne(tableName tables.DynamoDBTableName, inputEntity any) error {
-	return t.dynamodbTemplate.CreateOne(tableName, inputEntity)
+func (t *defaultTransactionalDynamoDBTemplate) CreateOne(tableName tables.DynamoDBTableName, inputEntity any, optFns ...func(*dynamodb.Options)) error {
+	return t.dynamodbTemplate.CreateOne(tableName, inputEntity, optFns...)
 }
 
 // FindOneByTableKey implements TransactinalDynamoDBTemplate.
-func (t *defaultTransactionalDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTableName, input input.PKOnlyQueryInput, outEntity any) error {
-	return t.dynamodbTemplate.FindOneByTableKey(tableName, input, outEntity)
+func (t *defaultTransactionalDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTableName, input input.PKOnlyQueryInput, outEntity any, optFns ...func(*dynamodb.Options)) error {
+	return t.dynamodbTemplate.FindOneByTableKey(tableName, input, outEntity, optFns...)
 }
 
 // FindSomeByTableKey implements TransactinalDynamoDBTemplate.
-func (t *defaultTransactionalDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTableName, input input.PKQueryInput, outEntities any) error {
-	return t.dynamodbTemplate.FindSomeByTableKey(tableName, input, outEntities)
+func (t *defaultTransactionalDynamoDBTemplate) FindSomeByTableKey(tableName tables.DynamoDBTableName, input input.PKQueryInput, outEntities any, optFns ...func(*dynamodb.Options)) error {
+	return t.dynamodbTemplate.FindSomeByTableKey(tableName, input, outEntities, optFns...)
 }
 
 // FindSomeByGSIKey implements TransactinalDynamoDBTemplate.
-func (t *defaultTransactionalDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTableName, input input.GsiQueryInput, outEntities any) error {
-	return t.dynamodbTemplate.FindSomeByGSIKey(tableName, input, outEntities)
+func (t *defaultTransactionalDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTableName, input input.GsiQueryInput, outEntities any, optFns ...func(*dynamodb.Options)) error {
+	return t.dynamodbTemplate.FindSomeByGSIKey(tableName, input, outEntities, optFns...)
 }
 
 // UpdateOne implements TransactinalDynamoDBTemplate.
-func (t *defaultTransactionalDynamoDBTemplate) UpdateOne(tableName tables.DynamoDBTableName, input input.UpdateInput) error {
-	return t.dynamodbTemplate.UpdateOne(tableName, input)
+func (t *defaultTransactionalDynamoDBTemplate) UpdateOne(tableName tables.DynamoDBTableName, input input.UpdateInput, optFns ...func(*dynamodb.Options)) error {
+	return t.dynamodbTemplate.UpdateOne(tableName, input, optFns...)
 }
 
 // DeleteOne implements TransactinalDynamoDBTemplate.
-func (t *defaultTransactionalDynamoDBTemplate) DeleteOne(tableName tables.DynamoDBTableName, input input.DeleteInput) error {
-	return t.dynamodbTemplate.DeleteOne(tableName, input)
+func (t *defaultTransactionalDynamoDBTemplate) DeleteOne(tableName tables.DynamoDBTableName, input input.DeleteInput, optFns ...func(*dynamodb.Options)) error {
+	return t.dynamodbTemplate.DeleteOne(tableName, input, optFns...)
 }
 
 // CreateOneWithTransaction implements TransactinalDynamoDBTemplate.

@@ -26,7 +26,7 @@ type TransactionalDynamoDBAccessor interface {
 	AppendTransactWriteItemWithContext(ctx context.Context, item *types.TransactWriteItem) error
 	// TransactWriteItemsSDK は、AWS SDKによるTransactWriteItemsをラップします。
 	// なお、TransactWriteItemsの実行は、TransactionManagerが実行するため業務ロジックで利用する必要はありません。
-	TransactWriteItemsSDK(items []types.TransactWriteItem) (*dynamodb.TransactWriteItemsOutput, error)
+	TransactWriteItemsSDK(items []types.TransactWriteItem, optFns ...func(*dynamodb.Options)) (*dynamodb.TransactWriteItemsOutput, error)
 }
 
 // NewTransactionalDynamoDBAccessor は、TransactionalDynamoDBAccessorを作成します。
@@ -50,43 +50,43 @@ func (da *defaultTransactionalDynamoDBAccessor) GetDynamoDBClient() *dynamodb.Cl
 }
 
 // GetItemSdk implements TransactionalDynamoDBAccessor.
-func (da *defaultTransactionalDynamoDBAccessor) GetItemSdk(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
-	return da.dynamodbAccessor.GetItemSdk(input)
+func (da *defaultTransactionalDynamoDBAccessor) GetItemSdk(input *dynamodb.GetItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error) {
+	return da.dynamodbAccessor.GetItemSdk(input, optFns...)
 }
 
 // PutItemSdk implements TransactionalDynamoDBAccessor.
-func (da *defaultTransactionalDynamoDBAccessor) PutItemSdk(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
-	return da.dynamodbAccessor.PutItemSdk(input)
+func (da *defaultTransactionalDynamoDBAccessor) PutItemSdk(input *dynamodb.PutItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.PutItemOutput, error) {
+	return da.dynamodbAccessor.PutItemSdk(input, optFns...)
 }
 
 // QueryPagesSdk implements TransactionalDynamoDBAccessor.
-func (da *defaultTransactionalDynamoDBAccessor) QueryPagesSdk(input *dynamodb.QueryInput, fn func(*dynamodb.QueryOutput) bool) error {
-	return da.dynamodbAccessor.QueryPagesSdk(input, fn)
+func (da *defaultTransactionalDynamoDBAccessor) QueryPagesSdk(input *dynamodb.QueryInput, fn func(*dynamodb.QueryOutput) bool, optFns ...func(*dynamodb.Options)) error {
+	return da.dynamodbAccessor.QueryPagesSdk(input, fn, optFns...)
 }
 
 // QuerySdk implements TransactionalDynamoDBAccessor.
-func (da *defaultTransactionalDynamoDBAccessor) QuerySdk(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
-	return da.dynamodbAccessor.QuerySdk(input)
+func (da *defaultTransactionalDynamoDBAccessor) QuerySdk(input *dynamodb.QueryInput, optFns ...func(*dynamodb.Options)) (*dynamodb.QueryOutput, error) {
+	return da.dynamodbAccessor.QuerySdk(input, optFns...)
 }
 
 // UpdateItemSdk implements TransactionalDynamoDBAccessor.
-func (da *defaultTransactionalDynamoDBAccessor) UpdateItemSdk(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
-	return da.dynamodbAccessor.UpdateItemSdk(input)
+func (da *defaultTransactionalDynamoDBAccessor) UpdateItemSdk(input *dynamodb.UpdateItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.UpdateItemOutput, error) {
+	return da.dynamodbAccessor.UpdateItemSdk(input, optFns...)
 }
 
 // DeleteItemSdk implements TransactionalDynamoDBAccessor.
-func (da *defaultTransactionalDynamoDBAccessor) DeleteItemSdk(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
-	return da.dynamodbAccessor.DeleteItemSdk(input)
+func (da *defaultTransactionalDynamoDBAccessor) DeleteItemSdk(input *dynamodb.DeleteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.DeleteItemOutput, error) {
+	return da.dynamodbAccessor.DeleteItemSdk(input, optFns...)
 }
 
 // BatchGetItemSdk implements TransactionalDynamoDBAccessor.
-func (da *defaultTransactionalDynamoDBAccessor) BatchGetItemSdk(input *dynamodb.BatchGetItemInput) (*dynamodb.BatchGetItemOutput, error) {
-	return da.dynamodbAccessor.BatchGetItemSdk(input)
+func (da *defaultTransactionalDynamoDBAccessor) BatchGetItemSdk(input *dynamodb.BatchGetItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.BatchGetItemOutput, error) {
+	return da.dynamodbAccessor.BatchGetItemSdk(input, optFns...)
 }
 
 // BatchWriteItemSdk implements TransactionalDynamoDBAccessor.
-func (da *defaultTransactionalDynamoDBAccessor) BatchWriteItemSdk(input *dynamodb.BatchWriteItemInput) (*dynamodb.BatchWriteItemOutput, error) {
-	return da.dynamodbAccessor.BatchWriteItemSdk(input)
+func (da *defaultTransactionalDynamoDBAccessor) BatchWriteItemSdk(input *dynamodb.BatchWriteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.BatchWriteItemOutput, error) {
+	return da.dynamodbAccessor.BatchWriteItemSdk(input, optFns...)
 }
 
 // AppendTransactWriteItem implements TransactionalDynamoDBAccessor.
@@ -113,13 +113,13 @@ func (da *defaultTransactionalDynamoDBAccessor) AppendTransactWriteItemWithConte
 }
 
 // TransactWriteItemsSDK implements TransactionalDynamoDBAccessor.
-func (da *defaultTransactionalDynamoDBAccessor) TransactWriteItemsSDK(items []types.TransactWriteItem) (*dynamodb.TransactWriteItemsOutput, error) {
+func (da *defaultTransactionalDynamoDBAccessor) TransactWriteItemsSDK(items []types.TransactWriteItem, optFns ...func(*dynamodb.Options)) (*dynamodb.TransactWriteItemsOutput, error) {
 	da.logger.Debug("TransactWriteItemsSDK: %d件", len(items))
 	input := &dynamodb.TransactWriteItemsInput{TransactItems: items}
 	if myDynamoDB.ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
-	output, err := da.GetDynamoDBClient().TransactWriteItems(apcontext.Context, input)
+	output, err := da.GetDynamoDBClient().TransactWriteItems(apcontext.Context, input, optFns...)
 
 	if err != nil {
 		return nil, errors.WithStack(err)

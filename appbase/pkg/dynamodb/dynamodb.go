@@ -58,21 +58,21 @@ type DynamoDBAccessor interface {
 	// GetDynamoDBClient は、DyanmoDBClientを返却します。
 	GetDynamoDBClient() *dynamodb.Client
 	// GetItemSdk は、AWS SDKによるGetItemをラップします。
-	GetItemSdk(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
+	GetItemSdk(input *dynamodb.GetItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error)
 	// QuerySdk は、AWS SDKによるQueryをラップします。
-	QuerySdk(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error)
+	QuerySdk(input *dynamodb.QueryInput, optFns ...func(*dynamodb.Options)) (*dynamodb.QueryOutput, error)
 	// QueryPagesSdk は、AWS SDKによるQueryのページング処理をラップします。
-	QueryPagesSdk(input *dynamodb.QueryInput, fn func(*dynamodb.QueryOutput) bool) error
+	QueryPagesSdk(input *dynamodb.QueryInput, fn func(*dynamodb.QueryOutput) bool, optFns ...func(*dynamodb.Options)) error
 	// PutItemSdk は、AWS SDKによるPutItemをラップします。
-	PutItemSdk(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error)
+	PutItemSdk(input *dynamodb.PutItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.PutItemOutput, error)
 	// UpdateItemSdk は、AWS SDKによるUpdateItemをラップします。
-	UpdateItemSdk(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error)
+	UpdateItemSdk(input *dynamodb.UpdateItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.UpdateItemOutput, error)
 	// DeleteItemSdk は、AWS SDKによるDeleteItemをラップします。
-	DeleteItemSdk(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error)
+	DeleteItemSdk(input *dynamodb.DeleteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.DeleteItemOutput, error)
 	// BatchGetItemSdk は、AWS SDKによるBatchGetItemをラップします。
-	BatchGetItemSdk(input *dynamodb.BatchGetItemInput) (*dynamodb.BatchGetItemOutput, error)
+	BatchGetItemSdk(input *dynamodb.BatchGetItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.BatchGetItemOutput, error)
 	// BatchWriteItemSdk は、AWS SDKによるBatchWriteItemをラップします。
-	BatchWriteItemSdk(input *dynamodb.BatchWriteItemInput) (*dynamodb.BatchWriteItemOutput, error)
+	BatchWriteItemSdk(input *dynamodb.BatchWriteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.BatchWriteItemOutput, error)
 }
 
 // NewDynamoDBAccessor は、DynamoDBAccessor を作成します。
@@ -97,11 +97,11 @@ func (da *defaultDynamoDBAccessor) GetDynamoDBClient() *dynamodb.Client {
 }
 
 // GetItemSdk implements DynamoDBAccessor.
-func (da *defaultDynamoDBAccessor) GetItemSdk(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
+func (da *defaultDynamoDBAccessor) GetItemSdk(input *dynamodb.GetItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error) {
 	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
-	output, err := da.dynamodbClient.GetItem(apcontext.Context, input)
+	output, err := da.dynamodbClient.GetItem(apcontext.Context, input, optFns...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -112,11 +112,11 @@ func (da *defaultDynamoDBAccessor) GetItemSdk(input *dynamodb.GetItemInput) (*dy
 }
 
 // QuerySdk implements DynamoDBAccessor.
-func (da *defaultDynamoDBAccessor) QuerySdk(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
+func (da *defaultDynamoDBAccessor) QuerySdk(input *dynamodb.QueryInput, optFns ...func(*dynamodb.Options)) (*dynamodb.QueryOutput, error) {
 	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
-	output, err := da.dynamodbClient.Query(apcontext.Context, input)
+	output, err := da.dynamodbClient.Query(apcontext.Context, input, optFns...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -127,10 +127,11 @@ func (da *defaultDynamoDBAccessor) QuerySdk(input *dynamodb.QueryInput) (*dynamo
 }
 
 // QueryPagesSdk implements DynamoDBAccessor.
-func (da *defaultDynamoDBAccessor) QueryPagesSdk(input *dynamodb.QueryInput, fn func(*dynamodb.QueryOutput) bool) error {
+func (da *defaultDynamoDBAccessor) QueryPagesSdk(input *dynamodb.QueryInput, fn func(*dynamodb.QueryOutput) bool,
+	optFns ...func(*dynamodb.Options)) error {
 	paginator := dynamodb.NewQueryPaginator(da.dynamodbClient, input)
 	for paginator.HasMorePages() {
-		page, err := paginator.NextPage(apcontext.Context)
+		page, err := paginator.NextPage(apcontext.Context, optFns...)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -145,11 +146,11 @@ func (da *defaultDynamoDBAccessor) QueryPagesSdk(input *dynamodb.QueryInput, fn 
 }
 
 // PutItemSdk implements DynamoDBAccessor.
-func (da *defaultDynamoDBAccessor) PutItemSdk(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
+func (da *defaultDynamoDBAccessor) PutItemSdk(input *dynamodb.PutItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.PutItemOutput, error) {
 	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
-	output, err := da.dynamodbClient.PutItem(apcontext.Context, input)
+	output, err := da.dynamodbClient.PutItem(apcontext.Context, input, optFns...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -161,11 +162,11 @@ func (da *defaultDynamoDBAccessor) PutItemSdk(input *dynamodb.PutItemInput) (*dy
 }
 
 // UpdateItemSdk implements DynamoDBAccessor.
-func (da *defaultDynamoDBAccessor) UpdateItemSdk(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
+func (da *defaultDynamoDBAccessor) UpdateItemSdk(input *dynamodb.UpdateItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.UpdateItemOutput, error) {
 	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
-	output, err := da.dynamodbClient.UpdateItem(apcontext.Context, input)
+	output, err := da.dynamodbClient.UpdateItem(apcontext.Context, input, optFns...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -176,11 +177,11 @@ func (da *defaultDynamoDBAccessor) UpdateItemSdk(input *dynamodb.UpdateItemInput
 }
 
 // DeleteItemSdk implements DynamoDBAccessor.
-func (da *defaultDynamoDBAccessor) DeleteItemSdk(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
+func (da *defaultDynamoDBAccessor) DeleteItemSdk(input *dynamodb.DeleteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.DeleteItemOutput, error) {
 	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
-	output, err := da.dynamodbClient.DeleteItem(apcontext.Context, input)
+	output, err := da.dynamodbClient.DeleteItem(apcontext.Context, input, optFns...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -191,11 +192,11 @@ func (da *defaultDynamoDBAccessor) DeleteItemSdk(input *dynamodb.DeleteItemInput
 }
 
 // BatchGetItemSdk implements DynamoDBAccessor.
-func (da *defaultDynamoDBAccessor) BatchGetItemSdk(input *dynamodb.BatchGetItemInput) (*dynamodb.BatchGetItemOutput, error) {
+func (da *defaultDynamoDBAccessor) BatchGetItemSdk(input *dynamodb.BatchGetItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.BatchGetItemOutput, error) {
 	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
-	output, err := da.dynamodbClient.BatchGetItem(apcontext.Context, input)
+	output, err := da.dynamodbClient.BatchGetItem(apcontext.Context, input, optFns...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -206,11 +207,11 @@ func (da *defaultDynamoDBAccessor) BatchGetItemSdk(input *dynamodb.BatchGetItemI
 }
 
 // BatchWriteItemSdk implements DynamoDBAccessor.
-func (da *defaultDynamoDBAccessor) BatchWriteItemSdk(input *dynamodb.BatchWriteItemInput) (*dynamodb.BatchWriteItemOutput, error) {
+func (da *defaultDynamoDBAccessor) BatchWriteItemSdk(input *dynamodb.BatchWriteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.BatchWriteItemOutput, error) {
 	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
-	output, err := da.dynamodbClient.BatchWriteItem(apcontext.Context, input)
+	output, err := da.dynamodbClient.BatchWriteItem(apcontext.Context, input, optFns...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
