@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	TRANSACTION_CTX_KEY = "TRANSACTION"
+	TRANSACTION_CTX_KEY = apcontext.ContextKey("TRANSACTION")
 )
 
 // TransactionManager はトランザクションを管理するインタフェースです
@@ -82,7 +82,7 @@ func (tm *defaultTransactionManager) ExecuteTransactionWithContext(ctx context.C
 		ctx = apcontext.Context
 	}
 	// 新しいトランザクションを作成
-	transaction := newTrasaction(tm.logger, tm.messageRegsiterer)
+	transaction := newTransaction(tm.logger, tm.messageRegsiterer)
 	// トランザクション付きのContextを作成
 	ctxWithTx := context.WithValue(ctx, TRANSACTION_CTX_KEY, transaction)
 
@@ -127,8 +127,8 @@ type Transaction interface {
 	Rollback()
 }
 
-// newTrasactionは 新しいTransactionを作成します。
-func newTrasaction(logger logging.Logger, messageRegsiterer MessageRegisterer) Transaction {
+// newTransactionは 新しいTransactionを作成します。
+func newTransaction(logger logging.Logger, messageRegsiterer MessageRegisterer) Transaction {
 	return &defaultTransaction{logger: logger, messageRegsiterer: messageRegsiterer}
 }
 
