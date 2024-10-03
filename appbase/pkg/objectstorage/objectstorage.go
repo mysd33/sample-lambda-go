@@ -46,70 +46,149 @@ var r = strings.NewReplacer("+", "%20", "%2F", "/")
 type ObjectStorageAccessor interface {
 	// Listは、フォルダ配下のオブジェクトストレージのオブジェクト一覧を取得します。
 	List(bucketName string, folderPath string, optFns ...func(*s3.Options)) ([]types.Object, error)
+	// ListWithContextは、フォルダ配下のオブジェクトストレージのオブジェクト一覧を取得します。。goroutine向けに、渡されたContextを利用して実行します。
+	ListWithContext(ctx context.Context, bucketName string, folderPath string, optFns ...func(*s3.Options)) ([]types.Object, error)
 	// Exists は、オブジェクトストレージにオブジェクトが存在するか確認します。
 	Exists(bucketName string, objectKey string, optFns ...func(*s3.Options)) (bool, error)
+	// ExistsWithContext は、オブジェクトストレージにオブジェクトが存在するか確認します。goroutine向けに、渡されたContextを利用して実行します。
+	ExistsWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) (bool, error)
 	// GetObjectSize は、オブジェクトストレージのオブジェクトのサイズを取得します。
 	GetSize(bucketName string, objectKey string, optFns ...func(*s3.Options)) (int64, error)
+	// GetSizeWithContext は、オブジェクトストレージのオブジェクトのサイズを取得します。goroutine向けに、渡されたContextを利用して実行します。
+	GetSizeWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) (int64, error)
 	// GetMetadata は、オブジェクトストレージのオブジェクトのメタデータを取得します。
 	GetMetadata(bucketName string, objectKey string, optFns ...func(*s3.Options)) (*s3.HeadObjectOutput, error)
+	// GetMetadataWithContext は、オブジェクトストレージのオブジェクトのメタデータを取得します。goroutine向けに、渡されたContextを利用して実行します。
+	GetMetadataWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) (*s3.HeadObjectOutput, error)
 	// Upload は、オブジェクトストレージへbyteスライスのデータをアップロードします。
 	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行いますが、オンメモリのためあまり大きなサイズは推奨されないメソッドです。
 	Upload(bucketName string, objectKey string, objectBody []byte, optFns ...func(*s3.Options)) (*manager.UploadOutput, error)
+	// UploadWithContext は、オブジェクトストレージへbyteスライスのデータをアップロードします。goroutine向けに、渡されたContextを利用して実行します。
+	UploadWithContext(ctx context.Context, bucketName string, objectKey string, objectBody []byte, optFns ...func(*s3.Options)) (*manager.UploadOutput, error)
 	// UploadWithOwnerFullControl は、 bucket-owner-full-controlのACLを付与しオブジェクトストレージへbyteスライスのデータをアップロードします。
 	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行いますが、オンメモリのためあまり大きなサイズは推奨されないメソッドです。
 	//（使用しないが参考実装）
 	UploadWithOwnerFullControl(bucketName string, objectKey string, objectBody []byte, optFns ...func(*s3.Options)) (*manager.UploadOutput, error)
+	// UploadWithOwnerFullControlContext は、 bucket-owner-full-controlのACLを付与しオブジェクトストレージへbyteスライスのデータをアップロードします。
+	// goroutine向けに、渡されたContextを利用して実行します。
+	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行いますが、オンメモリのためあまり大きなサイズは推奨されないメソッドです。
+	//（使用しないが参考実装）
+	UploadWithOwnerFullControlContext(ctx context.Context, bucketName string, objectKey string, objectBody []byte, optFns ...func(*s3.Options)) (*manager.UploadOutput, error)
 	// UploadString は、オブジェクトストレージへ文字列のデータをアップロードします。
 	UploadString(bucketName string, objectKey string, objectBody string, optFns ...func(*s3.Options)) (*manager.UploadOutput, error)
+	// UploadStringWithContext は、オブジェクトストレージへ文字列のデータをアップロードします。goroutine向けに、渡されたContextを利用して実行します。
+	UploadStringWithContext(ctx context.Context, bucketName string, objectKey string, objectBody string, optFns ...func(*s3.Options)) (*manager.UploadOutput, error)
 	// UploadFromReader は、オブジェクトストレージへReaderから読み込んだデータをアップロードします。
 	// readerは、クローズは、呼び出し元にて行う必要があります。
 	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行います。
 	UploadFromReader(bucketName string, objectKey string, reader io.Reader, optFns ...func(*s3.Options)) (*manager.UploadOutput, error)
+	// UploadFromReaderWithContext は、オブジェクトストレージへReaderから読み込んだデータをアップロードします。
+	// goroutine向けに、渡されたContextを利用して実行します。
+	// readerは、クローズは、呼び出し元にて行う必要があります。
+	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行います。goroutine向けに、渡されたContextを利用して実行します。
+	UploadFromReaderWithContext(ctx context.Context, bucketName string, objectKey string, reader io.Reader, optFns ...func(*s3.Options)) (*manager.UploadOutput, error)
 	// UploadFile は、オブジェクトストレージへローカルファイルをアップロードします。
 	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行います。
 	UploadFile(bucketName string, objectKey string, filePath string, optFns ...func(*s3.Options)) (*manager.UploadOutput, error)
+	// UploadFileWithContext は、オブジェクトストレージへローカルファイルをアップロードします。
+	// goroutine向けに、渡されたContextを利用して実行します。
+	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行います。
+	UploadFileWithContext(ctx context.Context, bucketName string, objectKey string, filePath string, optFns ...func(*s3.Options)) (*manager.UploadOutput, error)
 	// ReadAt は、オブジェクトストレージから指定のオフセットからバイトスライス分読み込みます。
 	// io.ReaderAtと似たインタフェースを提供しています。
 	ReadAt(bucketName string, objectKey string, p []byte, offset int64, optFns ...func(*s3.Options)) (int, error)
+	// ReadAtWithContext は、オブジェクトストレージから指定のオフセットからバイトスライス分読み込みます。
+	// goroutine向けに、渡されたContextを利用して実行します。
+	// io.ReaderAtと似たインタフェースを提供しています。goroutine向けに、渡されたContextを利用して実行します。
+	ReadAtWithContext(ctx context.Context, bucketName string, objectKey string, p []byte, offset int64, optFns ...func(*s3.Options)) (int, error)
 	// Download は、オブジェクトストレージからデータをbyteスライスのデータでダウンロードします。
 	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行いますが、オンメモリのためあまり大きなサイズは推奨されないメソッドです。
 	Download(bucketName string, objectKey string, optFns ...func(*s3.Options)) ([]byte, error)
+	// DownloadWithContext は、オブジェクトストレージからデータをbyteスライスのデータでダウンロードします。
+	// goroutine向けに、渡されたContextを利用して実行します。
+	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行いますが、オンメモリのためあまり大きなサイズは推奨されないメソッドです。
+	DownloadWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) ([]byte, error)
 	// DownloadAsString は、オブジェクトストレージからデータをダウンロードし、文字列として返却します。
 	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行いますが、オンメモリのためあまり大きなサイズは推奨されないメソッドです。
 	DownloadAsString(bucketName string, objectKey string, optFns ...func(*s3.Options)) (string, error)
+	// DownloadAsStringWithContext は、オブジェクトストレージからデータをダウンロードし、文字列として返却します。
+	// goroutine向けに、渡されたContextを利用して実行します。
+	// サイズが5MiBを超える場合は、透過的にマルチパートアップロードを行いますが、オンメモリのためあまり大きなサイズは推奨されないメソッドです。
+	DownloadAsStringWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) (string, error)
 	// DownloadAsReader は、オブジェクトストレージからデータをダウンロードし、Readerとして返却します。
 	// readerは、クローズは、呼び出し元にて行う必要があります。Readerで返却可能ですが、マルチパートダウンロードは行いません。
 	DownloadAsReader(bucketName string, objectKey string, optFns ...func(*s3.Options)) (io.ReadCloser, error)
+	// DownloadAsReaderWithContext は、オブジェクトストレージからデータをダウンロードし、Readerとして返却します。
+	// goroutine向けに、渡されたContextを利用して実行します。
+	// readerは、クローズは、呼び出し元にて行う必要があります。Readerで返却可能ですが、マルチパートダウンロードは行いません。
+	DownloadAsReaderWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) (io.ReadCloser, error)
 	// DownloadToWriter は、オブジェクトストレージからデータをダウンロードし、指定のWriterに保存します。
 	// サイズが5MiBを超える場合は、透過的にマルチパートダウンロードを行います。
 	DownloadToWriter(bucketName string, objectKey string, writer io.WriterAt, optFns ...func(*s3.Options)) error
+	// DownloadToWriterWithContext は、オブジェクトストレージからデータをダウンロードし、指定のWriterに保存します。
+	// goroutine向けに、渡されたContextを利用して実行します。
+	// サイズが5MiBを超える場合は、透過的にマルチパートダウンロードを行います。
+	DownloadToWriterWithContext(ctx context.Context, bucketName string, objectKey string, writer io.WriterAt, optFns ...func(*s3.Options)) error
 	// DownloadToFile は、オブジェクトストレージから大きなデータをダウンロードし、指定のローカルファイルに保存します。
 	// サイズが5MiBを超える場合は、透過的にマルチパートダウンロードを行います。
 	DownloadToFile(bucketName string, objectKey string, filePath string, optFns ...func(*s3.Options)) error
+	// DownloadToFileWithContext は、オブジェクトストレージから大きなデータをダウンロードし、指定のローカルファイルに保存します。
+	// goroutine向けに、渡されたContextを利用して実行します。
+	// サイズが5MiBを超える場合は、透過的にマルチパートダウンロードを行います。
+	DownloadToFileWithContext(ctx context.Context, bucketName string, objectKey string, filePath string, optFns ...func(*s3.Options)) error
 	// Delele は、オブジェクトストレージからデータを削除します。
 	Delele(bucketName string, objectKey string, optFns ...func(*s3.Options)) error
+	// DeleteWithContext は、オブジェクトストレージからデータを削除します。goroutine向けに、渡されたContextを利用して実行します。
+	DeleteWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) error
 	// DeleteByVersionId は、オブジェクトストレージから特定のバージョンのデータを削除します。
 	DeleteByVersionId(bucketName string, objectKey string, versionId string, optFns ...func(*s3.Options)) error
+	// DeleteByVersionIdWithContext は、オブジェクトストレージから特定のバージョンのデータを削除します。goroutine向けに、渡されたContextを利用して実行します。
+	DeleteByVersionIdWithContext(ctx context.Context, bucketName string, objectKey string, versionId string, optFns ...func(*s3.Options)) error
 	// DeleteAllVersions は、オブジェクトストレージから全てのバージョンのデータを削除します。
 	DeleteAllVersions(bucketName string, objectKey string, optFns ...func(*s3.Options)) error
+	// DeleteAllVersionsWithContext は、オブジェクトストレージから全てのバージョンのデータを削除します。goroutine向けに、渡されたContextを利用して実行します。
+	DeleteAllVersionsWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) error
 	// DeleteFolder は、オブジェクトストレージのフォルダごと削除します。
 	// なお、エラーが発生した時点で中断されるため、削除されないファイルが残る可能性があります。
 	DeleteFolder(bucketName string, folderPath string, optFns ...func(*s3.Options)) error
+	// DeleteFolderWithContext は、オブジェクトストレージのフォルダごと削除します。
+	// goroutine向けに、渡されたContextを利用して実行します。
+	// なお、エラーが発生した時点で中断されるため、削除されないファイルが残る可能性があります。
+	DeleteFolderWithContext(ctx context.Context, bucketName string, folderPath string, optFns ...func(*s3.Options)) error
 	// Copy は、オブジェクトストレージのオブジェクトを指定フォルダにコピーします。
 	// 例えば、objectKey = input/xxxx/hoge.txt、targetFolderPath= output とした場合、output/hoge.txtにコピーします。
 	Copy(bucketName string, objectKey string, targetFolderPath string, optFns ...func(*s3.Options)) error
+	// CopyWithContext は、オブジェクトストレージのオブジェクトを指定フォルダにコピーします。
+	// goroutine向けに、渡されたContextを利用して実行します。
+	// 例えば、objectKey = input/xxxx/hoge.txt、targetFolderPath= output とした場合、output/hoge.txtにコピーします。
+	CopyWithContext(ctx context.Context, bucketName string, objectKey string, targetFolderPath string, optFns ...func(*s3.Options)) error
 	// CopyAcrossBuckets は、オブジェクトストレージのオブジェクトを指定の別のバケットのフォルダにコピーします。
 	// 例えば、bucketName = inputBucket、objectKey = input/xxxx/hoge.txt、
 	// targetBucketName = outputBucket、targetFolderPath= output とした場合、outputBucketのoutput/hoge.txtにコピーします。
 	CopyAcrossBuckets(bucketName string, objectKey string, targetBucketName string, targetFolderPath string, optFns ...func(*s3.Options)) error
+	// CopyAcrossBucketsWithContext は、オブジェクトストレージのオブジェクトを指定の別のバケットのフォルダにコピーします。
+	// goroutine向けに、渡されたContextを利用して実行します。
+	// 例えば、bucketName = inputBucket、objectKey = input/xxxx/hoge.txt、
+	// targetBucketName = outputBucket、targetFolderPath= output とした場合、outputBucketのoutput/hoge.txtにコピーします。
+	CopyAcrossBucketsWithContext(ctx context.Context, bucketName string, objectKey string, targetBucketName string, targetFolderPath string, optFns ...func(*s3.Options)) error
 	// CopyFolder は、オブジェクトストレージのフォルダごと指定フォルダにコピーします。
 	// nestedがtrueの場合、サブフォルダ含めてコピーします。falseの場合、直下のファイルのみコピーします。
 	// なお、エラーが発生した時点で中断されるため、途中までコピーされたファイルが残る可能性があります。
 	CopyFolder(bucketName string, srcFolderPath string, targetFolderPath string, nested bool, optFns ...func(*s3.Options)) error
+	// CopyFolderWithContext は、オブジェクトストレージのフォルダごと指定フォルダにコピーします。
+	// goroutine向けに、渡されたContextを利用して実行します。
+	// nestedがtrueの場合、サブフォルダ含めてコピーします。falseの場合、直下のファイルのみコピーします。
+	// なお、エラーが発生した時点で中断されるため、途中までコピーされたファイルが残る可能性があります。
+	CopyFolderWithContext(ctx context.Context, bucketName string, srcFolderPath string, targetFolderPath string, nested bool, optFns ...func(*s3.Options)) error
 	// CopyFolderAcrossBuckets は、オブジェクトストレージのフォルダごと指定の別のバケットのフォルダにコピーします。
 	// nestedがtrueの場合、サブフォルダ含めてコピーします。falseの場合、直下のファイルのみコピーします。
 	// なお、エラーが発生した時点で中断されるため、途中までコピーされたファイルが残る可能性があります。
 	CopyFolderAcrossBuckets(bucketName string, srcFolderPath string, targetBucketName string, targetFolderPath string, nested bool, optFns ...func(*s3.Options)) error
+	// CopyFolderAcrossBucketsWithContext は、オブジェクトストレージのフォルダごと指定の別のバケットのフォルダにコピーします。
+	// goroutine向けに、渡されたContextを利用して実行します。
+	// nestedがtrueの場合、サブフォルダ含めてコピーします。falseの場合、直下のファイルのみコピーします。
+	// なお、エラーが発生した時点で中断されるため、途中までコピーされたファイルが残る可能性があります。
+	CopyFolderAcrossBucketsWithContext(ctx context.Context, bucketName string, srcFolderPath string, targetBucketName string, targetFolderPath string, nested bool, optFns ...func(*s3.Options)) error
 }
 
 // NewObjectStorageAccessor は、ObjectStorageAccessorを作成します。
@@ -185,7 +264,12 @@ type defaultObjectStorageAccessor struct {
 
 // List implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) List(bucketName string, folderPath string, optFns ...func(*s3.Options)) ([]types.Object, error) {
-	a.logger.Debug("ListObjects bucketName:%s, folderPath:%s", bucketName, folderPath)
+	return a.ListWithContext(apcontext.Context, bucketName, folderPath, optFns...)
+}
+
+// ListWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) ListWithContext(ctx context.Context, bucketName string, folderPath string, optFns ...func(*s3.Options)) ([]types.Object, error) {
+	a.logger.Debug("List bucketName:%s, folderPath:%s", bucketName, folderPath)
 	input := &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucketName),
 		Prefix: aws.String(folderPath),
@@ -194,20 +278,24 @@ func (a *defaultObjectStorageAccessor) List(bucketName string, folderPath string
 
 	var objects []types.Object
 	for paginator.HasMorePages() {
-		page, err := paginator.NextPage(apcontext.Context, optFns...)
+		page, err := paginator.NextPage(ctx, optFns...)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 		objects = append(objects, page.Contents...)
 	}
 	return objects, nil
-
 }
 
 // Exists implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) Exists(bucketName string, objectKey string, optFns ...func(*s3.Options)) (bool, error) {
-	a.logger.Debug("ExistsObject bucketName:%s, objectKey:%s", bucketName, objectKey)
-	_, err := a.GetMetadata(bucketName, objectKey, optFns...)
+	return a.ExistsWithContext(apcontext.Context, bucketName, objectKey, optFns...)
+}
+
+// ExistsWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) ExistsWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) (bool, error) {
+	a.logger.Debug("Exists bucketName:%s, objectKey:%s", bucketName, objectKey)
+	_, err := a.GetMetadataWithContext(ctx, bucketName, objectKey, optFns...)
 	if err != nil {
 		var notFound *types.NotFound
 		if errors.As(err, &notFound) {
@@ -221,8 +309,13 @@ func (a *defaultObjectStorageAccessor) Exists(bucketName string, objectKey strin
 
 // GetSize implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) GetSize(bucketName string, objectKey string, optFns ...func(*s3.Options)) (int64, error) {
+	return a.GetSizeWithContext(apcontext.Context, bucketName, objectKey, optFns...)
+}
+
+// GetSizeWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) GetSizeWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) (int64, error) {
 	a.logger.Debug("GetSize bucketName:%s, objectKey:%s", bucketName, objectKey)
-	output, err := a.GetMetadata(bucketName, objectKey, optFns...)
+	output, err := a.GetMetadataWithContext(ctx, bucketName, objectKey, optFns...)
 	if err != nil {
 		return 0, err
 	}
@@ -231,12 +324,17 @@ func (a *defaultObjectStorageAccessor) GetSize(bucketName string, objectKey stri
 
 // GetMetadata implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) GetMetadata(bucketName string, objectKey string, optFns ...func(*s3.Options)) (*s3.HeadObjectOutput, error) {
-	a.logger.Debug("GetObjectMetadata bucketName:%s, objectKey:%s", bucketName, objectKey)
+	return a.GetMetadataWithContext(apcontext.Context, bucketName, objectKey, optFns...)
+}
+
+// GetMetadataWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) GetMetadataWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) (*s3.HeadObjectOutput, error) {
+	a.logger.Debug("GetMetadata bucketName:%s, objectKey:%s", bucketName, objectKey)
 	input := &s3.HeadObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
 	}
-	output, err := a.s3Client.HeadObject(apcontext.Context, input, optFns...)
+	output, err := a.s3Client.HeadObject(ctx, input, optFns...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -245,14 +343,24 @@ func (a *defaultObjectStorageAccessor) GetMetadata(bucketName string, objectKey 
 
 // Upload implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) Upload(bucketName string, objectKey string, objectBody []byte, optFns ...func(*s3.Options)) (*manager.UploadOutput, error) {
+	return a.UploadWithContext(apcontext.Context, bucketName, objectKey, objectBody, optFns...)
+}
+
+// UploadWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) UploadWithContext(ctx context.Context, bucketName string, objectKey string, objectBody []byte, optFns ...func(*s3.Options)) (*manager.UploadOutput, error) {
 	a.logger.Debug("Upload bucketName:%s, objectKey:%s", bucketName, objectKey)
 	reader := bytes.NewReader(objectBody)
-	return a.UploadFromReader(bucketName, objectKey, reader, optFns...)
+	return a.UploadFromReaderWithContext(ctx, bucketName, objectKey, reader, optFns...)
 }
 
 // UploadWithOwnerFullControl implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) UploadWithOwnerFullControl(bucketName string, objectKey string, objectBody []byte, optFns ...func(*s3.Options)) (*manager.UploadOutput, error) {
-	a.logger.Debug("UPloadWithOwnerFullControl bucketName:%s, objectKey:%s", bucketName, objectKey)
+	return a.UploadWithOwnerFullControlContext(apcontext.Context, bucketName, objectKey, objectBody, optFns...)
+}
+
+// UploadWithOwnerFullControlContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) UploadWithOwnerFullControlContext(ctx context.Context, bucketName string, objectKey string, objectBody []byte, optFns ...func(*s3.Options)) (*manager.UploadOutput, error) {
+	a.logger.Debug("UploadWithOwnerFullControl bucketName:%s, objectKey:%s", bucketName, objectKey)
 	reader := bytes.NewReader(objectBody)
 	input := &s3.PutObjectInput{
 		Bucket: aws.String(bucketName),
@@ -264,7 +372,7 @@ func (a *defaultObjectStorageAccessor) UploadWithOwnerFullControl(bucketName str
 		o.ClientOptions = append(o.ClientOptions, optFns...)
 	}
 
-	uploadOutput, err := a.uploader.Upload(apcontext.Context, input, option)
+	uploadOutput, err := a.uploader.Upload(ctx, input, option)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -273,12 +381,22 @@ func (a *defaultObjectStorageAccessor) UploadWithOwnerFullControl(bucketName str
 
 // UploadString implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) UploadString(bucketName string, objectKey string, objectBody string, optFns ...func(*s3.Options)) (*manager.UploadOutput, error) {
-	a.logger.Debug("UploadFromString bucketName:%s, objectKey:%s", bucketName, objectKey)
-	return a.Upload(bucketName, objectKey, []byte(objectBody), optFns...)
+	return a.UploadStringWithContext(apcontext.Context, bucketName, objectKey, objectBody, optFns...)
+}
+
+// UploadStringWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) UploadStringWithContext(ctx context.Context, bucketName string, objectKey string, objectBody string, optFns ...func(*s3.Options)) (*manager.UploadOutput, error) {
+	a.logger.Debug("UploadString bucketName:%s, objectKey:%s", bucketName, objectKey)
+	return a.UploadWithContext(ctx, bucketName, objectKey, []byte(objectBody), optFns...)
 }
 
 // UploadFromReader implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) UploadFromReader(bucketName string, objectKey string, reader io.Reader, optFns ...func(*s3.Options)) (*manager.UploadOutput, error) {
+	return a.UploadFromReaderWithContext(apcontext.Context, bucketName, objectKey, reader, optFns...)
+}
+
+// UploadFromReaderWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) UploadFromReaderWithContext(ctx context.Context, bucketName string, objectKey string, reader io.Reader, optFns ...func(*s3.Options)) (*manager.UploadOutput, error) {
 	a.logger.Debug("UploadFromReader bucketName:%s, objectKey:%s", bucketName, objectKey)
 	input := &s3.PutObjectInput{
 		Bucket: aws.String(bucketName),
@@ -291,7 +409,7 @@ func (a *defaultObjectStorageAccessor) UploadFromReader(bucketName string, objec
 	}
 
 	// https://aws.github.io/aws-sdk-go-v2/docs/sdk-utilities/s3/
-	uploadOutput, err := a.uploader.Upload(apcontext.Context, input, option)
+	uploadOutput, err := a.uploader.Upload(ctx, input, option)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -300,24 +418,34 @@ func (a *defaultObjectStorageAccessor) UploadFromReader(bucketName string, objec
 
 // UploadFile implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) UploadFile(bucketName string, objectKey string, filePath string, optFns ...func(*s3.Options)) (*manager.UploadOutput, error) {
-	a.logger.Debug("UploadFromFile bucketName:%s, objectKey:%s, filePath:%s", bucketName, objectKey, filePath)
+	return a.UploadFileWithContext(apcontext.Context, bucketName, objectKey, filePath, optFns...)
+}
+
+// UploadFileWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) UploadFileWithContext(ctx context.Context, bucketName string, objectKey string, filePath string, optFns ...func(*s3.Options)) (*manager.UploadOutput, error) {
+	a.logger.Debug("UploadFile bucketName:%s, objectKey:%s, filePath:%s", bucketName, objectKey, filePath)
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 	defer f.Close()
-	return a.UploadFromReader(bucketName, objectKey, f, optFns...)
+	return a.UploadFromReaderWithContext(ctx, bucketName, objectKey, f, optFns...)
 }
 
 // ReadAt implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) ReadAt(bucketName string, objectKey string, p []byte, offset int64, optFns ...func(*s3.Options)) (int, error) {
+	return a.ReadAtWithContext(apcontext.Context, bucketName, objectKey, p, offset, optFns...)
+}
+
+// ReadAtWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) ReadAtWithContext(ctx context.Context, bucketName string, objectKey string, p []byte, offset int64, optFns ...func(*s3.Options)) (int, error) {
 	a.logger.Debug("ReadAt bucketName:%s, objectKey:%s, offset:%d", bucketName, objectKey, offset)
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
 		Range:  aws.String(fmt.Sprintf("bytes=%d-%d", offset, offset+int64(len(p)))),
 	}
-	output, err := a.s3Client.GetObject(apcontext.Context, input, optFns...)
+	output, err := a.s3Client.GetObject(ctx, input, optFns...)
 	if err != nil {
 		return 0, errors.WithStack(err)
 	}
@@ -331,6 +459,11 @@ func (a *defaultObjectStorageAccessor) ReadAt(bucketName string, objectKey strin
 
 // Download implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) Download(bucketName string, objectKey string, optFns ...func(*s3.Options)) ([]byte, error) {
+	return a.DownloadWithContext(apcontext.Context, bucketName, objectKey, optFns...)
+}
+
+// DownloadWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) DownloadWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) ([]byte, error) {
 	a.logger.Debug("Download bucketName:%s, objectKey:%s", bucketName, objectKey)
 	// GetObjectを使用する方法だと、コメントアウト部分のコードの通り、1回のリクエスト呼び出しでデータ取得できるが、
 	// 本サンプルでは、Downloaderを使用してマルチパート対応した方法を使用している。
@@ -354,7 +487,7 @@ func (a *defaultObjectStorageAccessor) Download(bucketName string, objectKey str
 	}
 	buf := make([]byte, size)
 	w := manager.NewWriteAtBuffer(buf)
-	err = a.DownloadToWriter(bucketName, objectKey, w, optFns...)
+	err = a.DownloadToWriterWithContext(ctx, bucketName, objectKey, w, optFns...)
 	if err != nil {
 		return nil, err
 
@@ -364,8 +497,13 @@ func (a *defaultObjectStorageAccessor) Download(bucketName string, objectKey str
 
 // DownloadAsString implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DownloadAsString(bucketName string, objectKey string, optFns ...func(*s3.Options)) (string, error) {
-	a.logger.Debug("DownloadToString bucketName:%s, objectKey:%s", bucketName, objectKey)
-	data, err := a.Download(bucketName, objectKey, optFns...)
+	return a.DownloadAsStringWithContext(apcontext.Context, bucketName, objectKey, optFns...)
+}
+
+// DownloadAsStringWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) DownloadAsStringWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) (string, error) {
+	a.logger.Debug("DownloadAsString bucketName:%s, objectKey:%s", bucketName, objectKey)
+	data, err := a.DownloadWithContext(ctx, bucketName, objectKey, optFns...)
 	if err != nil {
 		return "", err
 	}
@@ -374,12 +512,17 @@ func (a *defaultObjectStorageAccessor) DownloadAsString(bucketName string, objec
 
 // DownloadAsReader implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DownloadAsReader(bucketName string, objectKey string, optFns ...func(*s3.Options)) (io.ReadCloser, error) {
-	a.logger.Debug("DownloadToReader bucketName:%s, objectKey:%s", bucketName, objectKey)
+	return a.DownloadAsReaderWithContext(apcontext.Context, bucketName, objectKey, optFns...)
+}
+
+// DownloadAsReaderWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) DownloadAsReaderWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) (io.ReadCloser, error) {
+	a.logger.Debug("DownloadAsReader bucketName:%s, objectKey:%s", bucketName, objectKey)
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
 	}
-	output, err := a.s3Client.GetObject(apcontext.Context, input, optFns...)
+	output, err := a.s3Client.GetObject(ctx, input, optFns...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -388,6 +531,11 @@ func (a *defaultObjectStorageAccessor) DownloadAsReader(bucketName string, objec
 
 // DownloadToWriter implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DownloadToWriter(bucketName string, objectKey string, writer io.WriterAt, optFns ...func(*s3.Options)) error {
+	return a.DownloadToWriterWithContext(apcontext.Context, bucketName, objectKey, writer, optFns...)
+}
+
+// DownloadToWriterWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) DownloadToWriterWithContext(ctx context.Context, bucketName string, objectKey string, writer io.WriterAt, optFns ...func(*s3.Options)) error {
 	a.logger.Debug("DownloadToWriter bucketName:%s, objectKey:%s", bucketName, objectKey)
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
@@ -399,7 +547,7 @@ func (a *defaultObjectStorageAccessor) DownloadToWriter(bucketName string, objec
 	}
 
 	// https://aws.github.io/aws-sdk-go-v2/docs/sdk-utilities/s3/
-	_, err := a.downloader.Download(apcontext.Context, writer, input, option)
+	_, err := a.downloader.Download(ctx, writer, input, option)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -408,23 +556,33 @@ func (a *defaultObjectStorageAccessor) DownloadToWriter(bucketName string, objec
 
 // DownloadToFile implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DownloadToFile(bucketName string, objectKey string, filePath string, optFns ...func(*s3.Options)) error {
-	a.logger.Debug("DownloadLargeObject bucketName:%s, objectKey:%s, filePath", bucketName, objectKey, filePath)
+	return a.DownloadToFileWithContext(apcontext.Context, bucketName, objectKey, filePath, optFns...)
+}
+
+// DownloadToFileWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) DownloadToFileWithContext(ctx context.Context, bucketName string, objectKey string, filePath string, optFns ...func(*s3.Options)) error {
+	a.logger.Debug("DownloadToFile bucketName:%s, objectKey:%s, filePath", bucketName, objectKey, filePath)
 	f, err := os.Create(filePath)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 	defer f.Close()
-	return a.DownloadToWriter(bucketName, objectKey, f, optFns...)
+	return a.DownloadToWriterWithContext(ctx, bucketName, objectKey, f, optFns...)
 }
 
 // Delele implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) Delele(bucketName string, objectKey string, optFns ...func(*s3.Options)) error {
+	return a.DeleteWithContext(apcontext.Context, bucketName, objectKey, optFns...)
+}
+
+// DeleteWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) DeleteWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) error {
 	a.logger.Debug("Delete bucketName:%s, objectKey:%s", bucketName, objectKey)
 	input := &s3.DeleteObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
 	}
-	_, err := a.s3Client.DeleteObject(apcontext.Context, input, optFns...)
+	_, err := a.s3Client.DeleteObject(ctx, input, optFns...)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -433,13 +591,18 @@ func (a *defaultObjectStorageAccessor) Delele(bucketName string, objectKey strin
 
 // DeleteByVersionId implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DeleteByVersionId(bucketName string, objectKey string, versionId string, optFns ...func(*s3.Options)) error {
+	return a.DeleteByVersionIdWithContext(apcontext.Context, bucketName, objectKey, versionId, optFns...)
+}
+
+// DeleteByVersionIdWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) DeleteByVersionIdWithContext(ctx context.Context, bucketName string, objectKey string, versionId string, optFns ...func(*s3.Options)) error {
 	a.logger.Debug("DeleteByVersionId bucketName:%s, objectKey:%s, versionId:%s", bucketName, objectKey, versionId)
 	input := &s3.DeleteObjectInput{
 		Bucket:    aws.String(bucketName),
 		Key:       aws.String(objectKey),
 		VersionId: aws.String(versionId),
 	}
-	_, err := a.s3Client.DeleteObject(apcontext.Context, input, optFns...)
+	_, err := a.s3Client.DeleteObject(ctx, input, optFns...)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -448,10 +611,15 @@ func (a *defaultObjectStorageAccessor) DeleteByVersionId(bucketName string, obje
 
 // DeleteAllVersions implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DeleteAllVersions(bucketName string, objectKey string, optFns ...func(*s3.Options)) error {
+	return a.DeleteAllVersionsWithContext(apcontext.Context, bucketName, objectKey, optFns...)
+}
+
+// DeleteAllVersionsWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) DeleteAllVersionsWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) error {
 	a.logger.Debug("DeleteAllVersions bucketName:%s, objectKey:%s", bucketName, objectKey)
 
 	// オブジェクトの全てのバージョンIDを取得
-	versions, err := a.listObjectVersions(bucketName, objectKey, optFns...)
+	versions, err := a.listObjectVersions(ctx, bucketName, objectKey, optFns...)
 	if err != nil {
 		return err
 	}
@@ -493,7 +661,7 @@ func (a *defaultObjectStorageAccessor) DeleteAllVersions(bucketName string, obje
 }
 
 // listObjectVersions は、指定のバケットとキーに対する全てのバージョンを取得します。
-func (a *defaultObjectStorageAccessor) listObjectVersions(bucketName string, objectKey string, optFns ...func(*s3.Options)) ([]types.ObjectVersion, error) {
+func (a *defaultObjectStorageAccessor) listObjectVersions(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) ([]types.ObjectVersion, error) {
 	input := &s3.ListObjectVersionsInput{
 		Bucket:  aws.String(bucketName),
 		MaxKeys: aws.Int32(int32(a.config.GetInt(S3_MAX_KEY_NUM_NAME, 1000))),
@@ -504,7 +672,7 @@ func (a *defaultObjectStorageAccessor) listObjectVersions(bucketName string, obj
 	var versions []types.ObjectVersion
 	paginator := s3.NewListObjectVersionsPaginator(a.s3Client, input)
 	for paginator.HasMorePages() {
-		output, err = paginator.NextPage(apcontext.Context, optFns...)
+		output, err = paginator.NextPage(ctx, optFns...)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -535,6 +703,11 @@ func chunkBy[T any](items []T, chunkSize int) [][]T {
 
 // DeleteFolder implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DeleteFolder(bucketName string, folderPath string, optFns ...func(*s3.Options)) error {
+	return a.DeleteFolderWithContext(apcontext.Context, bucketName, folderPath, optFns...)
+}
+
+// DeleteFolderWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) DeleteFolderWithContext(ctx context.Context, bucketName string, folderPath string, optFns ...func(*s3.Options)) error {
 	a.logger.Debug("DeleteFolder bucketName:%s, folderPath:%s", bucketName, folderPath)
 	// コピー元フォルダに存在するオブジェクトを取得
 	objects, err := a.List(bucketName, folderPath)
@@ -542,7 +715,7 @@ func (a *defaultObjectStorageAccessor) DeleteFolder(bucketName string, folderPat
 		return err
 	}
 	for _, object := range objects {
-		err = a.Delele(bucketName, *object.Key, optFns...)
+		err = a.DeleteWithContext(ctx, bucketName, *object.Key, optFns...)
 		if err != nil {
 			return err
 		}
@@ -552,13 +725,24 @@ func (a *defaultObjectStorageAccessor) DeleteFolder(bucketName string, folderPat
 
 // Copy implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) Copy(bucketName string, objectKey string, targetFolderPath string, optFns ...func(*s3.Options)) error {
+	return a.CopyWithContext(apcontext.Context, bucketName, objectKey, targetFolderPath, optFns...)
+}
+
+// CopyWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) CopyWithContext(ctx context.Context, bucketName string, objectKey string, targetFolderPath string, optFns ...func(*s3.Options)) error {
 	a.logger.Debug("Copy bucketName:%s, objectKey:%s, targetFolderPath:%s", bucketName, objectKey, targetFolderPath)
-	return a.CopyAcrossBuckets(bucketName, objectKey, bucketName, targetFolderPath, optFns...)
+	return a.CopyAcrossBucketsWithContext(ctx, bucketName, objectKey, bucketName, targetFolderPath, optFns...)
+
 }
 
 // CopyAcrossBuckets implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) CopyAcrossBuckets(bucketName string, objectKey string, targetBucketName string, targetFolderPath string,
 	optFns ...func(*s3.Options)) error {
+	return a.CopyAcrossBucketsWithContext(apcontext.Context, bucketName, objectKey, targetBucketName, targetFolderPath, optFns...)
+}
+
+// CopyAcrossBucketsWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) CopyAcrossBucketsWithContext(ctx context.Context, bucketName string, objectKey string, targetBucketName string, targetFolderPath string, optFns ...func(*s3.Options)) error {
 	a.logger.Debug("CopyAcrossBuckets bucketName:%s, objectKey:%s, targetBucketName:%s, targetFolderPath:%s", bucketName, objectKey, targetBucketName, targetFolderPath)
 	i := strings.LastIndex(objectKey, "/")
 	fileName := objectKey[i+1:]
@@ -568,7 +752,7 @@ func (a *defaultObjectStorageAccessor) CopyAcrossBuckets(bucketName string, obje
 		CopySource: aws.String(encodeURL(fmt.Sprintf("%s/%s", bucketName, objectKey))),
 		Key:        aws.String(fmt.Sprintf("%s/%s", targetFolderPath, fileName)),
 	}
-	_, err := a.s3Client.CopyObject(apcontext.Context, input, optFns...)
+	_, err := a.s3Client.CopyObject(ctx, input, optFns...)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -577,12 +761,22 @@ func (a *defaultObjectStorageAccessor) CopyAcrossBuckets(bucketName string, obje
 
 // CopyFolder implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) CopyFolder(bucketName string, srcFolderPath string, targetFolderPath string, nested bool, optFns ...func(*s3.Options)) error {
+	return a.CopyFolderWithContext(apcontext.Context, bucketName, srcFolderPath, targetFolderPath, nested, optFns...)
+}
+
+// CopyFolderWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) CopyFolderWithContext(ctx context.Context, bucketName string, srcFolderPath string, targetFolderPath string, nested bool, optFns ...func(*s3.Options)) error {
 	a.logger.Debug("CopyFolder bucketName:%s, srcFolderPath:%s, targetFolderPath:%s, nested:%v", bucketName, srcFolderPath, targetFolderPath, nested)
-	return a.CopyFolderAcrossBuckets(bucketName, srcFolderPath, bucketName, targetFolderPath, nested, optFns...)
+	return a.CopyFolderAcrossBucketsWithContext(ctx, bucketName, srcFolderPath, bucketName, targetFolderPath, nested, optFns...)
 }
 
 // CopyFolderAcrossBuckets implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) CopyFolderAcrossBuckets(bucketName string, srcFolderPath string, targetBucketName string, targetFolderPath string, nested bool, optFns ...func(*s3.Options)) error {
+	return a.CopyFolderAcrossBucketsWithContext(apcontext.Context, bucketName, srcFolderPath, targetBucketName, targetFolderPath, nested, optFns...)
+}
+
+// CopyFolderAcrossBucketsWithContext implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) CopyFolderAcrossBucketsWithContext(ctx context.Context, bucketName string, srcFolderPath string, targetBucketName string, targetFolderPath string, nested bool, optFns ...func(*s3.Options)) error {
 	a.logger.Debug("CopyFolderAcrossBuckets bucketName:%s, srcFolderPath:%s, targetBucketName:%s, targetFolderPath:%s, nested:%v", bucketName, srcFolderPath, targetBucketName, targetFolderPath, nested)
 	srcFolderPath = strings.Trim(srcFolderPath, "/")
 	targetFolderPath = strings.Trim(targetFolderPath, "/")
@@ -592,7 +786,7 @@ func (a *defaultObjectStorageAccessor) CopyFolderAcrossBuckets(bucketName string
 	}
 
 	// コピー元フォルダに存在するオブジェクトを取得
-	objects, err := a.List(bucketName, srcFolderPath, optFns...)
+	objects, err := a.ListWithContext(ctx, bucketName, srcFolderPath, optFns...)
 	if err != nil {
 		return err
 	}
@@ -607,7 +801,7 @@ func (a *defaultObjectStorageAccessor) CopyFolderAcrossBuckets(bucketName string
 			if *object.Size == 0 && strings.HasSuffix(*object.Key, "/") {
 				// サイズが0でキーがスラッシュで終わる場合はフォルダなので、サイズ0のファイルを作成し空フォルダのコピーも行う
 				a.logger.Debug("Create empty folder. targetBucketName:%s, targetFolderPath:%s", targetBucketName, targetFolderPath+lastPath)
-				_, err = a.Upload(targetBucketName, targetFolderPath+lastPath, []byte{}, optFns...)
+				_, err = a.UploadWithContext(ctx, targetBucketName, targetFolderPath+lastPath, []byte{}, optFns...)
 			} else {
 				i := strings.LastIndex(lastPath, "/")
 				var actualTargetFolderName string
@@ -618,7 +812,7 @@ func (a *defaultObjectStorageAccessor) CopyFolderAcrossBuckets(bucketName string
 					// （スラッシュを含まないので）サブフォルダがない場合は、引数のフォルダ名をそのまま使用
 					actualTargetFolderName = targetFolderPath
 				}
-				err = a.CopyAcrossBuckets(bucketName, *object.Key, targetBucketName, actualTargetFolderName, optFns...)
+				err = a.CopyAcrossBucketsWithContext(ctx, bucketName, *object.Key, targetBucketName, actualTargetFolderName, optFns...)
 			}
 			if err != nil {
 				return err
