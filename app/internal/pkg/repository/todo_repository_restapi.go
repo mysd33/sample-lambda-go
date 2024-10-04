@@ -39,7 +39,7 @@ func (tr *todoRepositoryImplByRestAPI) FindOne(todoId string) (*model.Todo, erro
 
 	response, err := tr.httpClient.Get(url, nil, nil)
 	if err != nil {
-		return nil, errors.NewSystemError(err, message.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9004)
 	}
 
 	var todo model.Todo
@@ -65,7 +65,7 @@ func (tr *todoRepositoryImplByRestAPI) CreateOne(todo *model.Todo) (*model.Todo,
 	// REST APIの呼び出し
 	response, err := tr.httpClient.Post(url, nil, data)
 	if err != nil {
-		return nil, errors.NewSystemError(err, message.E_EX_9001)
+		return nil, errors.NewSystemError(err, message.E_EX_9004)
 	}
 	if response.StatusCode != 200 {
 		// TODO: 200以外の処理
