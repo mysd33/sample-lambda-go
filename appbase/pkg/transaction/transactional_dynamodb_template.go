@@ -118,10 +118,9 @@ func (t *defaultTransactionalDynamoDBTemplate) newPutTransactionWriteItem(tableN
 	// TransactWriteItem
 	item := types.TransactWriteItem{
 		Put: &types.Put{
-			TableName:           aws.String(string(tableName)),
-			Item:                attributes,
-			ConditionExpression: conditionExpression,
-
+			TableName:                aws.String(string(tableName)),
+			Item:                     attributes,
+			ConditionExpression:      conditionExpression,
 			ExpressionAttributeNames: expressionAttributeNames,
 		},
 	}
@@ -214,6 +213,7 @@ func (t *defaultTransactionalDynamoDBTemplate) newDeleteTransactionWriteItem(tab
 			Key:                       keyMap,
 			ExpressionAttributeNames:  expr.Names(),
 			ExpressionAttributeValues: expr.Values(),
+			ConditionExpression:       expr.Condition(),
 		},
 	}
 	return &item, nil

@@ -276,6 +276,7 @@ func (t *defaultDynamoDBTemplate) DeleteOne(tableName tables.DynamoDBTableName, 
 		Key:                       keyMap,
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
+		ConditionExpression:       expr.Condition(),
 		ReturnValues:              types.ReturnValueNone,
 	}
 	// DeleteItemの実行
