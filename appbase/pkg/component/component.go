@@ -50,8 +50,8 @@ type ApplicationContext interface {
 	GetRDBAccessor() rdb.RDBAccessor
 	// GetRDBTransactionManager は、RDBトランザクション管理機能のインタフェースTransactionManagerを取得します。
 	GetRDBTransactionManager() rdb.TransactionManager
-	// GetHttpClient は、HTTPクライアント機能のインタフェースHttpClientを取得します。
-	GetHttpClient() httpclient.HttpClient
+	// GetHTTPClient は、HTTPクライアント機能のインタフェースHTTPClientを取得します。
+	GetHTTPClient() httpclient.HTTPClient
 	// GetInterceptor は、集約例外ハンドリング機能のインターセプタのインタフェースHandlerInterceptorを取得します。
 	GetInterceptor() handler.HandlerInterceptor
 	// GetAPILambdaHandler は、APIトリガのオンラインAP実行制御機能のインタフェースAPILambdaHandlerを取得します。
@@ -88,7 +88,7 @@ func NewApplicationContext() ApplicationContext {
 	dynamoDBTransactionManagerForDBOnly := createDynamoDBTransactionManagerForDBOnly(logger, dynamodbAccessor, messageRegisterer)
 	rdbAccessor := createRDBAccessor()
 	rdbTransactionManager := rdb.NewTransactionManager(logger, config, rdbAccessor)
-	httpclient := createHttpClient(config, logger)
+	httpclient := createHTTPClient(config, logger)
 	interceptor := createHanderInterceptor(config, logger)
 	apiLambdaHandler := createAPILambdaHandler(config, logger, messageSource, apiResponseFormatter)
 	asyncLambdaHandler := createAsyncLambdaHandler(config, logger, queueMessageItemRepository)
@@ -137,7 +137,7 @@ type defaultApplicationContext struct {
 	objectStorageAccessor               objectstorage.ObjectStorageAccessor
 	rdbAccessor                         rdb.RDBAccessor
 	rdbTransactionManager               rdb.TransactionManager
-	httpClient                          httpclient.HttpClient
+	httpClient                          httpclient.HTTPClient
 	interceptor                         handler.HandlerInterceptor
 	apiLambdaHandler                    *handler.APILambdaHandler
 	asyncLambdaHandler                  *handler.AsyncLambdaHandler
@@ -216,8 +216,8 @@ func (ac *defaultApplicationContext) GetObjectStorageAccessor() objectstorage.Ob
 	return ac.objectStorageAccessor
 }
 
-// GetHttpClient implements ApplicationContext.
-func (ac *defaultApplicationContext) GetHttpClient() httpclient.HttpClient {
+// GetHTTPClient implements ApplicationContext.
+func (ac *defaultApplicationContext) GetHTTPClient() httpclient.HTTPClient {
 	return ac.httpClient
 }
 
@@ -338,8 +338,8 @@ func createRDBAccessor() rdb.RDBAccessor {
 	return rdb.NewRDBAccessor()
 }
 
-func createHttpClient(config config.Config, logger logging.Logger) httpclient.HttpClient {
-	return httpclient.NewHttpClient(config, logger)
+func createHTTPClient(config config.Config, logger logging.Logger) httpclient.HTTPClient {
+	return httpclient.NewHTTPClient(config, logger)
 }
 
 func createHanderInterceptor(config config.Config, logger logging.Logger) handler.HandlerInterceptor {

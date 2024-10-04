@@ -31,8 +31,8 @@ const (
 	HTTP_CLIENT_DEFAULT_RETRY_INTERVAL = 500
 )
 
-// HttpClient は、HTTPクライアントのインタフェースです。
-type HttpClient interface {
+// HTTPClient は、HTTPクライアントのインタフェースです。
+type HTTPClient interface {
 	// Get は、GETメソッドでリクエストを送信します。
 	Get(url string, header http.Header, params map[string]string) (*ResponseData, error)
 	// GetWithContext は、goroutine向けに、渡されたContextを利用して、GETメソッドでリクエストを送信します。
@@ -58,25 +58,25 @@ type ResponseData struct {
 	ResponseHeader http.Header
 }
 
-// defaultHttpClientは、HttpClientインタフェースを実装する構造体です。
-type defaultHttpClient struct {
+// defaultHTTPClientは、HTTPClientインタフェースを実装する構造体です。
+type defaultHTTPClient struct {
 	config  config.Config
 	logger  logging.Logger
 	retryer retry.Retryer[*http.Response]
 }
 
-// NewHttpClient は、HttpClientを生成します。
-func NewHttpClient(config config.Config, logger logging.Logger) HttpClient {
+// NewHTTPClient は、HTTPClientを生成します。
+func NewHTTPClient(config config.Config, logger logging.Logger) HTTPClient {
 	retryer := retry.NewRetryer[*http.Response](logger)
-	return &defaultHttpClient{
+	return &defaultHTTPClient{
 		config:  config,
 		logger:  logger,
 		retryer: retryer,
 	}
 }
 
-// Get implements HttpClient.
-func (c *defaultHttpClient) Get(url string, header http.Header, params map[string]string) (*ResponseData, error) {
+// Get implements HTTPClient.
+func (c *defaultHTTPClient) Get(url string, header http.Header, params map[string]string) (*ResponseData, error) {
 	// リトライ対応のGet処理の実行
 	response, err := c.retryer.Do(
 		c.doGet(apcontext.Context, url, header, params),
@@ -89,8 +89,8 @@ func (c *defaultHttpClient) Get(url string, header http.Header, params map[strin
 	return createResponseData(response)
 }
 
-// GetWithContext implements HttpClient.
-func (c *defaultHttpClient) GetWithContext(ctx context.Context, url string, header http.Header, params map[string]string) (*ResponseData, error) {
+// GetWithContext implements HTTPClient.
+func (c *defaultHTTPClient) GetWithContext(ctx context.Context, url string, header http.Header, params map[string]string) (*ResponseData, error) {
 	// リトライ対応のGet処理の実行
 	response, err := c.retryer.DoWithContext(ctx,
 		c.doGet(ctx, url, header, params),
@@ -103,8 +103,8 @@ func (c *defaultHttpClient) GetWithContext(ctx context.Context, url string, head
 	return createResponseData(response)
 }
 
-// Post implements HttpClient.
-func (c *defaultHttpClient) Post(url string, header http.Header, bbody []byte) (*ResponseData, error) {
+// Post implements HTTPClient.
+func (c *defaultHTTPClient) Post(url string, header http.Header, bbody []byte) (*ResponseData, error) {
 	// リトライ対応のPost処理の実行
 	response, err := c.retryer.Do(
 		c.doPost(apcontext.Context, url, header, bbody),
@@ -117,8 +117,8 @@ func (c *defaultHttpClient) Post(url string, header http.Header, bbody []byte) (
 	return createResponseData(response)
 }
 
-// PostWithContext implements HttpClient.
-func (c *defaultHttpClient) PostWithContext(ctx context.Context, url string, header http.Header, bbody []byte) (*ResponseData, error) {
+// PostWithContext implements HTTPClient.
+func (c *defaultHTTPClient) PostWithContext(ctx context.Context, url string, header http.Header, bbody []byte) (*ResponseData, error) {
 	// リトライ対応のPost処理の実行
 	response, err := c.retryer.DoWithContext(ctx,
 		c.doPost(ctx, url, header, bbody),
@@ -132,7 +132,7 @@ func (c *defaultHttpClient) PostWithContext(ctx context.Context, url string, hea
 }
 
 // doGet は、GETメソッドを実行します。
-func (c *defaultHttpClient) doGet(ctx context.Context, url string, header http.Header, params map[string]string) retry.RetryableFunc[*http.Response] {
+func (c *defaultHTTPClient) doGet(ctx context.Context, url string, header http.Header, params map[string]string) retry.RetryableFunc[*http.Response] {
 	return func() (*http.Response, error) {
 		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
@@ -161,7 +161,7 @@ func (c *defaultHttpClient) doGet(ctx context.Context, url string, header http.H
 }
 
 // doPost は、POSTメソッドを実行します。
-func (c *defaultHttpClient) doPost(ctx context.Context, url string, header http.Header, bbody []byte) retry.RetryableFunc[*http.Response] {
+func (c *defaultHTTPClient) doPost(ctx context.Context, url string, header http.Header, bbody []byte) retry.RetryableFunc[*http.Response] {
 	return func() (*http.Response, error) {
 		req, err := http.NewRequest("POST", url, bytes.NewReader(bbody))
 		if err != nil {
@@ -183,7 +183,7 @@ func (c *defaultHttpClient) doPost(ctx context.Context, url string, header http.
 }
 
 // checkRetryable は、リトライ可能かどうかを判定する関数です。
-func (c *defaultHttpClient) checkRetryable() retry.CheckRetryable[*http.Response] {
+func (c *defaultHTTPClient) checkRetryable() retry.CheckRetryable[*http.Response] {
 	return func(result *http.Response, err error) bool {
 		// エラーの場合は、リトライを行う
 		if err != nil {
@@ -195,7 +195,7 @@ func (c *defaultHttpClient) checkRetryable() retry.CheckRetryable[*http.Response
 }
 
 // isRetryable は、リトライ可能なステータスコードかどうかを判定する関数です。
-func (c *defaultHttpClient) isRetryable(statusCode int) bool {
+func (c *defaultHTTPClient) isRetryable(statusCode int) bool {
 	switch statusCode {
 	// TODO: プロパティから設定可能にする
 	case 408, 429, 500, 502, 503, 504:
@@ -205,7 +205,7 @@ func (c *defaultHttpClient) isRetryable(statusCode int) bool {
 }
 
 // retryOptions は、リトライオプションを取得する関数です。
-func (c *defaultHttpClient) retryOptions() []retry.Option {
+func (c *defaultHTTPClient) retryOptions() []retry.Option {
 	return []retry.Option{
 		retry.MaxRetryTimes(uint(c.config.GetInt(HTTP_CLIENT_MAX_RETRY_TIMES_NAME, HTTP_CLIENT_DEFAULT_MAX_RETRY_TIMES))),
 		retry.Interval(time.Duration(c.config.GetInt(HTTP_CLIENT_RETRY_INTERVAL_NAME, HTTP_CLIENT_DEFAULT_RETRY_INTERVAL)) * time.Millisecond),

@@ -18,12 +18,12 @@ const (
 )
 
 // NewTodoRepositoryForRestAPI は、REST APIのためのTodoRepository実装を作成します。
-func NewTodoRepositoryForRestAPI(httpClient httpclient.HttpClient, logger logging.Logger, config config.Config) TodoRepository {
+func NewTodoRepositoryForRestAPI(httpClient httpclient.HTTPClient, logger logging.Logger, config config.Config) TodoRepository {
 	return &todoRepositoryImplByRestAPI{httpClient: httpClient, logger: logger, config: config}
 }
 
 type todoRepositoryImplByRestAPI struct {
-	httpClient httpclient.HttpClient
+	httpClient httpclient.HTTPClient
 	logger     logging.Logger
 	config     config.Config
 }

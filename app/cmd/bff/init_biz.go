@@ -21,8 +21,8 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 		panic(err)
 	}
 	// リポジトリの作成
-	userRepository := repository.NewUserRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger(), ac.GetConfig())
-	todoRepository := repository.NewTodoRepositoryForRestAPI(ac.GetHttpClient(), ac.GetLogger(), ac.GetConfig())
+	userRepository := repository.NewUserRepositoryForRestAPI(ac.GetHTTPClient(), ac.GetLogger(), ac.GetConfig())
+	todoRepository := repository.NewTodoRepositoryForRestAPI(ac.GetHTTPClient(), ac.GetLogger(), ac.GetConfig())
 	tempRepository := repository.NewTempRepository(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(),
 		ac.GetLogger(), ac.GetConfig(), ac.GetIDGenerator())
 	// Configからキュー名を取得する

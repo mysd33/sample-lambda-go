@@ -18,12 +18,12 @@ const (
 )
 
 // NewUserRepositoryForRestAPI は、REST APIのためのUserRepository実装を作成します。
-func NewUserRepositoryForRestAPI(httpClient httpclient.HttpClient, logger logging.Logger, config config.Config) UserRepository {
+func NewUserRepositoryForRestAPI(httpClient httpclient.HTTPClient, logger logging.Logger, config config.Config) UserRepository {
 	return &userRepositoryImplByRestAPI{httpClient: httpClient, logger: logger, config: config}
 }
 
 type userRepositoryImplByRestAPI struct {
-	httpClient httpclient.HttpClient
+	httpClient httpclient.HTTPClient
 	logger     logging.Logger
 	config     config.Config
 }
