@@ -8,6 +8,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/config"
+	"example.com/appbase/pkg/env"
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
 	"example.com/appbase/pkg/retry"
@@ -29,6 +31,9 @@ const (
 	// デフォルトリトライ間隔500ms
 	HTTP_CLIENT_RETRY_INTERVAL_NAME    = "HTTP_CLIENT_RETRY_INTERVAL"
 	HTTP_CLIENT_DEFAULT_RETRY_INTERVAL = 500
+	// デフォルトリトライ対象ステータスコード
+	HTTP_CLIENT_RETRY_STATUS_CODE_NAME     = "HTTP_CLIENT_RETRY_STATUS_CODE"
+	HTTP_CLIENT_DEFAULT_RETRY_STATUS_CODES = "408,429,500,502,503,504"
 )
 
 // HTTPClient は、HTTPクライアントのインタフェースです。
@@ -78,15 +83,7 @@ func NewHTTPClient(config config.Config, logger logging.Logger) HTTPClient {
 // Get implements HTTPClient.
 func (c *defaultHTTPClient) Get(url string, header http.Header, params map[string]string) (*ResponseData, error) {
 	// リトライ対応のGet処理の実行
-	response, err := c.retryer.Do(
-		c.doGet(apcontext.Context, url, header, params),
-		c.checkRetryable(),
-		c.retryOptions()...,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return createResponseData(response)
+	return c.GetWithContext(apcontext.Context, url, header, params)
 }
 
 // GetWithContext implements HTTPClient.
@@ -106,15 +103,7 @@ func (c *defaultHTTPClient) GetWithContext(ctx context.Context, url string, head
 // Post implements HTTPClient.
 func (c *defaultHTTPClient) Post(url string, header http.Header, bbody []byte) (*ResponseData, error) {
 	// リトライ対応のPost処理の実行
-	response, err := c.retryer.Do(
-		c.doPost(apcontext.Context, url, header, bbody),
-		c.checkRetryable(),
-		c.retryOptions()...,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return createResponseData(response)
+	return c.PostWithContext(apcontext.Context, url, header, bbody)
 }
 
 // PostWithContext implements HTTPClient.
@@ -184,24 +173,39 @@ func (c *defaultHTTPClient) doPost(ctx context.Context, url string, header http.
 
 // checkRetryable は、リトライ可能かどうかを判定する関数です。
 func (c *defaultHTTPClient) checkRetryable() retry.CheckRetryable[*http.Response] {
+	statusCodes := c.getRetryableStatusCodes()
 	return func(result *http.Response, err error) bool {
 		// エラーの場合は、リトライを行う
 		if err != nil {
 			return true
 		}
 		// リトライ可能なステータスコードの場合は、リトライを行う
-		return c.isRetryable(result.StatusCode)
+		_, ok := statusCodes[result.StatusCode]
+		return ok
 	}
 }
 
-// isRetryable は、リトライ可能なステータスコードかどうかを判定する関数です。
-func (c *defaultHTTPClient) isRetryable(statusCode int) bool {
-	switch statusCode {
-	// TODO: プロパティから設定可能にする
-	case 408, 429, 500, 502, 503, 504:
-		return true
+// getRetryableStatusCodes は、プロパティよりリトライ対象のステータスコードを取得します。
+func (c *defaultHTTPClient) getRetryableStatusCodes() map[int]struct{} {
+	statusCodesStr := strings.Split(
+		c.config.Get(HTTP_CLIENT_RETRY_STATUS_CODE_NAME, HTTP_CLIENT_DEFAULT_RETRY_STATUS_CODES),
+		",",
+	)
+	statusCodes := make(map[int]struct{}, len(statusCodesStr))
+	for _, codeStr := range statusCodesStr {
+		code, err := strconv.Atoi(codeStr)
+		if err != nil {
+			c.logger.Warn(message.W_FW_8012, codeStr)
+			if !env.IsProd() {
+				// 開発中は、設定誤りを検知するため、異常終了
+				panic(err)
+			}
+			// 本番環境では、設定誤りをスキップして続行
+			continue
+		}
+		statusCodes[code] = struct{}{}
 	}
-	return false
+	return statusCodes
 }
 
 // retryOptions は、リトライオプションを取得する関数です。
