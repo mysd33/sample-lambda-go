@@ -42,6 +42,17 @@ func (tr *todoRepositoryImplByRestAPI) FindOne(todoId string) (*model.Todo, erro
 		return nil, errors.NewSystemError(err, message.E_EX_9004)
 	}
 
+	if response.StatusCode != 200 {
+		// 200以外の処理
+		var data ErrorResponse
+		// エラーレスポンスデータをアンマーシャル
+		if err = json.Unmarshal(response.Body, &data); err != nil {
+			return nil, errors.NewSystemError(err, message.E_EX_9001)
+		}
+		// この例では、システムエラーとして扱っているが、実際にはエラーコードに応じて業務エラーとして扱うケースもある
+		return nil, errors.NewSystemError(err, message.E_EX_9005, response.StatusCode, data.Code, data.Detail)
+	}
+
 	var todo model.Todo
 	if err = json.Unmarshal(response.Body, &todo); err != nil {
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
@@ -67,10 +78,18 @@ func (tr *todoRepositoryImplByRestAPI) CreateOne(todo *model.Todo) (*model.Todo,
 	if err != nil {
 		return nil, errors.NewSystemError(err, message.E_EX_9004)
 	}
+
 	if response.StatusCode != 200 {
-		// TODO: 200以外の処理
-		return nil, errors.NewBusinessError(message.W_EX_8001, "xxxx")
+		// 200以外の処理
+		var data ErrorResponse
+		// エラーレスポンスデータをアンマーシャル
+		if err = json.Unmarshal(response.Body, &data); err != nil {
+			return nil, errors.NewSystemError(err, message.E_EX_9001)
+		}
+		// この例では、システムエラーとして扱っているが、実際にはエラーコードに応じて業務エラーとして扱うケースもある
+		return nil, errors.NewSystemError(err, message.E_EX_9005, response.StatusCode, data.Code, data.Detail)
 	}
+
 	// レスポンスデータをアンマーシャル
 	var newTodo model.Todo
 	if err = json.Unmarshal(response.Body, &newTodo); err != nil {

@@ -24,7 +24,7 @@ const (
 // TransactionManager はトランザクションを管理するインタフェースです
 type TransactionManager interface {
 	// ExecuteTransaction は、Serviceの関数serviceFuncの実行前後でDynamoDBトランザクション実行します。
-	ExecuteTransaction(serviceFunc domain.ServiceFunc, optFns ...func(*Options)) (any, error)
+	ExecuteTransaction(serviceFunc domain.ServiceFunc, opts ...Option) (any, error)
 
 	// ExecuteTransactionWithContext は、goroutine向けに、渡されたContextを利用して、
 	// Serviceの関数serviceFuncの実行前後でDynamoDBトランザクション実行します。
@@ -32,7 +32,7 @@ type TransactionManager interface {
 	// TransactionalDynamoDBAccessor.AppendTransactWriteItemWithContext、
 	// TransactionalSQSAccessor.AppendTransactMessageWithContextの引数に渡して利用してください。
 	// そうしないと、トランザクションデータが正しく伝番されません。
-	ExecuteTransactionWithContext(context context.Context, serviceFunc domain.ServiceFuncWithContext, optFns ...func(*Options)) (any, error)
+	ExecuteTransactionWithContext(context context.Context, serviceFunc domain.ServiceFuncWithContext, opts ...Option) (any, error)
 }
 
 // NewTransactionManager は、TransactionManagerを作成します
@@ -68,22 +68,22 @@ type defaultTransactionManager struct {
 }
 
 // ExecuteTransaction implements TransactionManager.
-func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.ServiceFunc, optFns ...func(*Options)) (any, error) {
+func (tm *defaultTransactionManager) ExecuteTransaction(serviceFunc domain.ServiceFunc, opts ...Option) (any, error) {
 	return tm.ExecuteTransactionWithContext(apcontext.Context, func(ctx context.Context) (any, error) {
 		// トランザクション付きのContextを設定
 		apcontext.Context = ctx
 		return serviceFunc()
-	}, optFns...)
+	}, opts...)
 }
 
 // ExecuteTransactionWithContext implements TransactionManager.
 func (tm *defaultTransactionManager) ExecuteTransactionWithContext(ctx context.Context,
-	serviceFunc domain.ServiceFuncWithContext, optFns ...func(*Options)) (result any, err error) {
+	serviceFunc domain.ServiceFuncWithContext, opts ...Option) (result any, err error) {
 	if ctx == nil {
 		ctx = apcontext.Context
 	}
 	// 新しいトランザクションを作成
-	transaction := newTransaction(tm.logger, tm.messageRegsiterer, optFns...)
+	transaction := newTransaction(tm.logger, tm.messageRegsiterer, opts...)
 	// トランザクション付きのContextを作成
 	ctxWithTx := context.WithValue(ctx, TRANSACTION_CTX_KEY, transaction)
 
@@ -129,9 +129,9 @@ type Transaction interface {
 }
 
 // newTransactionは 新しいTransactionを作成します。
-func newTransaction(logger logging.Logger, messageRegsiterer MessageRegisterer, optFns ...func(*Options)) Transaction {
+func newTransaction(logger logging.Logger, messageRegsiterer MessageRegisterer, opts ...Option) Transaction {
 	options := &Options{}
-	for _, optFn := range optFns {
+	for _, optFn := range opts {
 		optFn(options)
 	}
 	return &defaultTransaction{logger: logger, messageRegsiterer: messageRegsiterer, options: options}
