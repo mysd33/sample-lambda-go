@@ -218,7 +218,7 @@ func (c *defaultHTTPClient) getRetryableStatusCodes() map[int]struct{} {
 	)
 	statusCodes := make(map[int]struct{}, len(statusCodesStr))
 	for _, codeStr := range statusCodesStr {
-		code, err := strconv.Atoi(codeStr)
+		code, err := strconv.Atoi(strings.TrimSpace(codeStr))
 		if err != nil {
 			c.logger.Warn(message.W_FW_8012, codeStr)
 			if !env.IsProd() {
