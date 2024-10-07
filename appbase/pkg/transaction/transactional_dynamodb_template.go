@@ -6,6 +6,7 @@ package transaction
 import (
 	"context"
 
+	"example.com/appbase/pkg/apcontext"
 	mydynamodb "example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/dynamodb/input"
 	"example.com/appbase/pkg/dynamodb/tables"
@@ -55,9 +56,19 @@ func (t *defaultTransactionalDynamoDBTemplate) CreateOne(tableName tables.Dynamo
 	return t.dynamodbTemplate.CreateOne(tableName, inputEntity, optFns...)
 }
 
+// CreateOneWithContext implements TransactionalDynamoDBTemplate.
+func (t *defaultTransactionalDynamoDBTemplate) CreateOneWithContext(ctx context.Context, tableName tables.DynamoDBTableName, inputEntity any, optFns ...func(*dynamodb.Options)) error {
+	return t.dynamodbTemplate.CreateOneWithContext(ctx, tableName, inputEntity, optFns...)
+}
+
 // FindOneByTableKey implements TransactinalDynamoDBTemplate.
 func (t *defaultTransactionalDynamoDBTemplate) FindOneByTableKey(tableName tables.DynamoDBTableName, input input.PKOnlyQueryInput, outEntity any, optFns ...func(*dynamodb.Options)) error {
 	return t.dynamodbTemplate.FindOneByTableKey(tableName, input, outEntity, optFns...)
+}
+
+// FindOneByTableKeyWithContext implements TransactionalDynamoDBTemplate.
+func (t *defaultTransactionalDynamoDBTemplate) FindOneByTableKeyWithContext(ctx context.Context, tableName tables.DynamoDBTableName, input input.PKOnlyQueryInput, outEntity any, optFns ...func(*dynamodb.Options)) error {
+	return t.dynamodbTemplate.FindOneByTableKeyWithContext(ctx, tableName, input, outEntity, optFns...)
 }
 
 // FindSomeByTableKey implements TransactinalDynamoDBTemplate.
@@ -65,9 +76,19 @@ func (t *defaultTransactionalDynamoDBTemplate) FindSomeByTableKey(tableName tabl
 	return t.dynamodbTemplate.FindSomeByTableKey(tableName, input, outEntities, optFns...)
 }
 
+// FindSomeByTableKeyWithContext implements TransactionalDynamoDBTemplate.
+func (t *defaultTransactionalDynamoDBTemplate) FindSomeByTableKeyWithContext(ctx context.Context, tableName tables.DynamoDBTableName, input input.PKQueryInput, outEntities any, optFns ...func(*dynamodb.Options)) error {
+	return t.dynamodbTemplate.FindSomeByTableKeyWithContext(ctx, tableName, input, outEntities, optFns...)
+}
+
 // FindSomeByGSIKey implements TransactinalDynamoDBTemplate.
 func (t *defaultTransactionalDynamoDBTemplate) FindSomeByGSIKey(tableName tables.DynamoDBTableName, input input.GsiQueryInput, outEntities any, optFns ...func(*dynamodb.Options)) error {
 	return t.dynamodbTemplate.FindSomeByGSIKey(tableName, input, outEntities, optFns...)
+}
+
+// FindSomeByGSIKeyWithContext implements TransactionalDynamoDBTemplate.
+func (t *defaultTransactionalDynamoDBTemplate) FindSomeByGSIKeyWithContext(ctx context.Context, tableName tables.DynamoDBTableName, input input.GsiQueryInput, outEntities any, optFns ...func(*dynamodb.Options)) error {
+	return t.dynamodbTemplate.FindSomeByGSIKeyWithContext(ctx, tableName, input, outEntities, optFns...)
 }
 
 // UpdateOne implements TransactinalDynamoDBTemplate.
@@ -75,20 +96,24 @@ func (t *defaultTransactionalDynamoDBTemplate) UpdateOne(tableName tables.Dynamo
 	return t.dynamodbTemplate.UpdateOne(tableName, input, optFns...)
 }
 
+// UpdateOneWithContext implements TransactionalDynamoDBTemplate.
+func (t *defaultTransactionalDynamoDBTemplate) UpdateOneWithContext(ctx context.Context, tableName tables.DynamoDBTableName, input input.UpdateInput, optFns ...func(*dynamodb.Options)) error {
+	return t.dynamodbTemplate.UpdateOneWithContext(ctx, tableName, input, optFns...)
+}
+
 // DeleteOne implements TransactinalDynamoDBTemplate.
 func (t *defaultTransactionalDynamoDBTemplate) DeleteOne(tableName tables.DynamoDBTableName, input input.DeleteInput, optFns ...func(*dynamodb.Options)) error {
 	return t.dynamodbTemplate.DeleteOne(tableName, input, optFns...)
 }
 
+// DeleteOneWithContext implements TransactionalDynamoDBTemplate.
+func (t *defaultTransactionalDynamoDBTemplate) DeleteOneWithContext(ctx context.Context, tableName tables.DynamoDBTableName, input input.DeleteInput, optFns ...func(*dynamodb.Options)) error {
+	return t.dynamodbTemplate.DeleteOneWithContext(ctx, tableName, input, optFns...)
+}
+
 // CreateOneWithTransaction implements TransactinalDynamoDBTemplate.
 func (t *defaultTransactionalDynamoDBTemplate) CreateOneWithTransaction(tableName tables.DynamoDBTableName, inputEntity any) error {
-	// TransactWriteItemの作成
-	item, err := t.newPutTransactionWriteItem(tableName, inputEntity)
-	if err != nil {
-		return err
-	}
-	// TransactWriteItemの追加
-	return t.transactionalDynamoDBAccessor.AppendTransactWriteItem(item)
+	return t.CreateOneWithTransactionInContext(apcontext.Context, tableName, inputEntity)
 }
 
 // CreateOneWithTransactionInContext implements TransactionalDynamoDBTemplate.
@@ -129,13 +154,7 @@ func (t *defaultTransactionalDynamoDBTemplate) newPutTransactionWriteItem(tableN
 
 // UpdateOneWithTransaction implements TransactinalDynamoDBTemplate.
 func (t *defaultTransactionalDynamoDBTemplate) UpdateOneWithTransaction(tableName tables.DynamoDBTableName, input input.UpdateInput) error {
-	t.logger.Debug("UpdateOneWithTransaction")
-	item, err := t.newUpdateTransactionWriteItem(tableName, input)
-	if err != nil {
-		return err
-	}
-	// TransactWriteItemの追加
-	return t.transactionalDynamoDBAccessor.AppendTransactWriteItem(item)
+	return t.CreateOneWithTransactionInContext(apcontext.Context, tableName, input)
 }
 
 // UpdateOneWithTransactionInContext implements TransactionalDynamoDBTemplate.
@@ -176,12 +195,7 @@ func (t *defaultTransactionalDynamoDBTemplate) newUpdateTransactionWriteItem(tab
 
 // DeleteOneWithTransaction implements TransactinalDynamoDBTemplate.
 func (t *defaultTransactionalDynamoDBTemplate) DeleteOneWithTransaction(tableName tables.DynamoDBTableName, input input.DeleteInput) error {
-	item, err := t.newDeleteTransactionWriteItem(tableName, input)
-	if err != nil {
-		return err
-	}
-	// TransactWriteItemの追加
-	return t.transactionalDynamoDBAccessor.AppendTransactWriteItem(item)
+	return t.DeleteOneWithTransactionInContext(apcontext.Context, tableName, input)
 }
 
 // DeleteOneWithTransactionInContext implements TransactionalDynamoDBTemplate.
