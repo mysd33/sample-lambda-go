@@ -102,7 +102,6 @@ func (tm *defaultTransactionManager) ExecuteTransactionWithContext(ctx context.C
 		} else {
 			// Serviceの実行成功時トランザクションをコミット
 			_, err = transaction.Commit(ctx)
-			// TODO: TransactWriteItemsOutputの利用（ログ出力等）
 		}
 	}()
 
