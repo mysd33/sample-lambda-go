@@ -9,6 +9,7 @@ import (
 	"example.com/appbase/pkg/apcontext"
 	myConfig "example.com/appbase/pkg/config"
 	myDynamoDB "example.com/appbase/pkg/dynamodb"
+	"example.com/appbase/pkg/id"
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -32,17 +33,23 @@ type TransactionalDynamoDBAccessor interface {
 }
 
 // NewTransactionalDynamoDBAccessor は、TransactionalDynamoDBAccessorを作成します。
-func NewTransactionalDynamoDBAccessor(logger logging.Logger, myCfg myConfig.Config) (TransactionalDynamoDBAccessor, error) {
+func NewTransactionalDynamoDBAccessor(logger logging.Logger, myCfg myConfig.Config, idGenerator id.IDGenerator) (TransactionalDynamoDBAccessor, error) {
 	dynamodbAccessor, err := myDynamoDB.NewDynamoDBAccessor(logger, myCfg)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	return &defaultTransactionalDynamoDBAccessor{logger: logger, config: myCfg, dynamodbAccessor: dynamodbAccessor}, nil
+	return &defaultTransactionalDynamoDBAccessor{
+		logger:           logger,
+		config:           myCfg,
+		idGenerator:      idGenerator,
+		dynamodbAccessor: dynamodbAccessor,
+	}, nil
 }
 
 type defaultTransactionalDynamoDBAccessor struct {
 	logger           logging.Logger
 	config           myConfig.Config
+	idGenerator      id.IDGenerator
 	dynamodbAccessor myDynamoDB.DynamoDBAccessor
 }
 
@@ -142,12 +149,10 @@ func (da *defaultTransactionalDynamoDBAccessor) AppendTransactWriteItemWithConte
 	da.logger.Debug("AppendTransactWriteItemWithContext")
 	value := ctx.Value(TRANSACTION_CTX_KEY)
 	if value == nil {
-		// TODO: エラー処理
 		return errors.New("トランザクションが開始されていません")
 	}
 	transaction, ok := value.(Transaction)
 	if !ok {
-		// TODO: エラー処理
 		return errors.New("トランザクションが開始されていません")
 	}
 	transaction.AppendTransactWriteItem(item)
@@ -163,6 +168,15 @@ func (da *defaultTransactionalDynamoDBAccessor) TransactWriteItemsSDK(items []ty
 func (da *defaultTransactionalDynamoDBAccessor) TransactWriteItemsSDKWithContext(ctx context.Context, items []types.TransactWriteItem, optFns ...func(*dynamodb.Options)) (*dynamodb.TransactWriteItemsOutput, error) {
 	da.logger.Debug("TransactWriteItemsSDK: %d件", len(items))
 	input := &dynamodb.TransactWriteItemsInput{TransactItems: items}
+	// AWS SDKのリトライ等で同一トランザクションが二重実行される恐れがあるため、ClientRequestTokenを設定する
+	// https://docs.aws.amazon.com/ja_jp/amazondynamodb/latest/APIReference/API_TransactWriteItems.html#DDB-TransactWriteItems-request-ClientRequestToken
+	// https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/dynamodb#ImportTableInput
+	clientRequestToken, err := da.idGenerator.GenerateUUID()
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	input.ClientRequestToken = &clientRequestToken
+	// ReturnConsumedCapacityを設定
 	if myDynamoDB.ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}

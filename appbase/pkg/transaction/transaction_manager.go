@@ -203,10 +203,19 @@ func (t *defaultTransaction) Commit(ctx context.Context) (*dynamodb.TransactWrit
 	if err != nil {
 		t.logger.Debug("トランザクションコミットエラー")
 		// https://docs.aws.amazon.com/ja_jp/amazondynamodb/latest/developerguide/transaction-apis.html
+		var ipme *types.IdempotentParameterMismatchException
 		var txCanceledException *types.TransactionCanceledException
 		var txConflictException *types.TransactionConflictException
-		// トランザクションコミット失敗の理由をログ出力
-		if errors.As(err, &txCanceledException) {
+		if errors.As(err, &ipme) {
+			// SDKのリトライ等で同一トランザクションが二重実行されるケースにおいて
+			// TransactWriteItemsInputで指定したClientRequestTokenが重複する場合にIdempotentParameterMismatchエラーが発生する場合
+			// https://docs.aws.amazon.com/ja_jp/amazondynamodb/latest/APIReference/API_TransactWriteItems.html#DDB-TransactWriteItems-request-ClientRequestToken
+			// https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/dynamodb#ImportTableInput
+			t.logger.WarnWithError(err, message.W_FW_8013)
+			// ログ出力のみでエラーとしない
+			return nil, nil
+		} else if errors.As(err, &txCanceledException) {
+			// トランザクションコミット失敗の理由をログ出力
 			for _, v := range txCanceledException.CancellationReasons {
 				codePtr := v.Code
 				messagePtr := v.Message

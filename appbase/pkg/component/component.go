@@ -71,18 +71,18 @@ type ApplicationContext interface {
 // NewApplicationContext は、デフォルトのApplicationContextを作成します。
 func NewApplicationContext() ApplicationContext {
 	// 各種AP基盤の構造体を作成
-	id := createIDGenerator()
+	idGenerator := createIDGenerator()
 	messageSource := createMessageSource()
 	logger := createLogger(messageSource)
 	config := createConfig(logger)
 	dateManager := createDateManager(config, logger)
 	apiResponseFormatter := createApiResponseFormatter(logger, messageSource)
-	dynamodbAccessor := createTransactionalDynamoDBAccessor(logger, config)
+	dynamodbAccessor := createTransactionalDynamoDBAccessor(logger, config, idGenerator)
 	dynamoDBTempalte := createDynamoDBTemplate(logger, dynamodbAccessor)
 	queueMessageItemRepository := createQueueMessageItemRepository(config, logger, dynamoDBTempalte)
 	messageRegisterer := createMessageRegisterer(queueMessageItemRepository)
 	sqsAccessor := createTransactionalSQSAccessor(logger, config, messageRegisterer)
-	sqsTemplate := createSQSTemplate(logger, config, id, sqsAccessor)
+	sqsTemplate := createSQSTemplate(logger, config, idGenerator, sqsAccessor)
 	objectStorageAccessor := createObjectStorageAccessor(config, logger)
 	dynamoDBTransactionManager := createDynamoDBTransactionManager(logger, dynamodbAccessor, sqsAccessor, messageRegisterer)
 	dynamoDBTransactionManagerForDBOnly := createDynamoDBTransactionManagerForDBOnly(logger, dynamodbAccessor, messageRegisterer)
@@ -98,7 +98,7 @@ func NewApplicationContext() ApplicationContext {
 	idempotencyManager := createIdempotencyManager(logger, dateManager, config, idempotencyRepository)
 
 	return &defaultApplicationContext{
-		id:                                  id,
+		id:                                  idGenerator,
 		config:                              config,
 		messageSource:                       messageSource,
 		logger:                              logger,
@@ -286,8 +286,8 @@ func createDateManager(config config.Config, logger logging.Logger) date.DateMan
 	return date.NewDateManager(config, logger)
 }
 
-func createTransactionalDynamoDBAccessor(logger logging.Logger, config config.Config) transaction.TransactionalDynamoDBAccessor {
-	accessor, err := transaction.NewTransactionalDynamoDBAccessor(logger, config)
+func createTransactionalDynamoDBAccessor(logger logging.Logger, config config.Config, idGenerator id.IDGenerator) transaction.TransactionalDynamoDBAccessor {
+	accessor, err := transaction.NewTransactionalDynamoDBAccessor(logger, config, idGenerator)
 	if err != nil {
 		// 異常終了
 		panic(err)
