@@ -33,7 +33,7 @@ type TransactionalDynamoDBAccessor interface {
 }
 
 // NewTransactionalDynamoDBAccessor は、TransactionalDynamoDBAccessorを作成します。
-func NewTransactionalDynamoDBAccessor(logger logging.Logger, myCfg myConfig.Config, idGenerator id.IDGenerator) (TransactionalDynamoDBAccessor, error) {
+func NewTransactionalDynamoDBAccessor(logger logging.Logger, myCfg myConfig.Config) (TransactionalDynamoDBAccessor, error) {
 	dynamodbAccessor, err := myDynamoDB.NewDynamoDBAccessor(logger, myCfg)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -41,7 +41,6 @@ func NewTransactionalDynamoDBAccessor(logger logging.Logger, myCfg myConfig.Conf
 	return &defaultTransactionalDynamoDBAccessor{
 		logger:           logger,
 		config:           myCfg,
-		idGenerator:      idGenerator,
 		dynamodbAccessor: dynamodbAccessor,
 	}, nil
 }
@@ -168,17 +167,10 @@ func (da *defaultTransactionalDynamoDBAccessor) TransactWriteItemsSDK(items []ty
 func (da *defaultTransactionalDynamoDBAccessor) TransactWriteItemsSDKWithContext(ctx context.Context, items []types.TransactWriteItem, optFns ...func(*dynamodb.Options)) (*dynamodb.TransactWriteItemsOutput, error) {
 	da.logger.Debug("TransactWriteItemsSDK: %d件", len(items))
 	input := &dynamodb.TransactWriteItemsInput{TransactItems: items}
-	// AWS SDKのリトライ等で同一トランザクションが二重実行される恐れがあるため、ClientRequestTokenを設定する
-	// https://docs.aws.amazon.com/ja_jp/amazondynamodb/latest/APIReference/API_TransactWriteItems.html#DDB-TransactWriteItems-request-ClientRequestToken
-	// https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/dynamodb#ImportTableInput
-	clientRequestToken, err := da.idGenerator.GenerateUUID()
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	input.ClientRequestToken = &clientRequestToken
 	// ReturnConsumedCapacityを設定
 	if myDynamoDB.ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
+
 	}
 	output, err := da.GetDynamoDBClient().TransactWriteItems(ctx, input, optFns...)
 

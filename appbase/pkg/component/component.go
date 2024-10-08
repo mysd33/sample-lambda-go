@@ -77,7 +77,7 @@ func NewApplicationContext() ApplicationContext {
 	config := createConfig(logger)
 	dateManager := createDateManager(config, logger)
 	apiResponseFormatter := createApiResponseFormatter(logger, messageSource)
-	dynamodbAccessor := createTransactionalDynamoDBAccessor(logger, config, idGenerator)
+	dynamodbAccessor := createTransactionalDynamoDBAccessor(logger, config)
 	dynamoDBTempalte := createDynamoDBTemplate(logger, dynamodbAccessor)
 	queueMessageItemRepository := createQueueMessageItemRepository(config, logger, dynamoDBTempalte)
 	messageRegisterer := createMessageRegisterer(queueMessageItemRepository)
@@ -286,8 +286,8 @@ func createDateManager(config config.Config, logger logging.Logger) date.DateMan
 	return date.NewDateManager(config, logger)
 }
 
-func createTransactionalDynamoDBAccessor(logger logging.Logger, config config.Config, idGenerator id.IDGenerator) transaction.TransactionalDynamoDBAccessor {
-	accessor, err := transaction.NewTransactionalDynamoDBAccessor(logger, config, idGenerator)
+func createTransactionalDynamoDBAccessor(logger logging.Logger, config config.Config) transaction.TransactionalDynamoDBAccessor {
+	accessor, err := transaction.NewTransactionalDynamoDBAccessor(logger, config)
 	if err != nil {
 		// 異常終了
 		panic(err)
