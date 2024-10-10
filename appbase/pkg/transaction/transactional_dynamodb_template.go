@@ -154,7 +154,7 @@ func (t *defaultTransactionalDynamoDBTemplate) newPutTransactionWriteItem(tableN
 
 // UpdateOneWithTransaction implements TransactinalDynamoDBTemplate.
 func (t *defaultTransactionalDynamoDBTemplate) UpdateOneWithTransaction(tableName tables.DynamoDBTableName, input input.UpdateInput) error {
-	return t.CreateOneWithTransactionInContext(apcontext.Context, tableName, input)
+	return t.UpdateOneWithTransactionInContext(apcontext.Context, tableName, input)
 }
 
 // UpdateOneWithTransactionInContext implements TransactionalDynamoDBTemplate.
