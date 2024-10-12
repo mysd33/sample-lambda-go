@@ -115,7 +115,13 @@ func (tr *todoRepositoryImplByDynamoDB) CreateOne(todo *model.Todo) (*model.Todo
 	if err != nil {
 		if errors.Is(err, mydynamodb.ErrKeyDuplicaiton) {
 			// キーの重複の場合
-			return nil, errors.NewBusinessError(message.W_EX_8003, todoId)
+			// 都度、処理実行時に生成するUUIDが重複するということは、DynamoDB登録後に、何らかの原因でエラーとなり
+			// AWS SDKでのリトライによる重複実行が発生している場合なので、Warnログを出力しエラーとしない。
+			tr.logger.Warn(message.W_EX_8003, todoId)
+			return todo, nil
+
+			// 業務によっては、ErrKeyDuplicaitonが返却された場合に、業務エラーとすることもある。
+			//return nil, errors.NewBusinessError(message.W_EX_8003, todoId)
 		}
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
