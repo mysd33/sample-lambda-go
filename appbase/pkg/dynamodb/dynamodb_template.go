@@ -241,6 +241,7 @@ func (t *defaultDynamoDBTemplate) FindSomeByGSIKeyWithContext(ctx context.Contex
 		ProjectionExpression:      expr.Projection(),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
 		Limit:                     input.LimitPerQuery,
 		ScanIndexForward:          ScanIndexForward(input.IndexKey.SortkeyOrderBy),
 	}
