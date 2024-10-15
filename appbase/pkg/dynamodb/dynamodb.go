@@ -119,6 +119,9 @@ func (da *defaultDynamoDBAccessor) GetItemSdk(input *dynamodb.GetItemInput, optF
 
 // GetItemSdkWithContext implements DynamoDBAccessor.
 func (da *defaultDynamoDBAccessor) GetItemSdkWithContext(ctx context.Context, input *dynamodb.GetItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.GetItemOutput, error) {
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
@@ -139,6 +142,9 @@ func (da *defaultDynamoDBAccessor) QuerySdk(input *dynamodb.QueryInput, optFns .
 
 // QuerySDKWithContext implements DynamoDBAccessor.
 func (da *defaultDynamoDBAccessor) QuerySDKWithContext(ctx context.Context, input *dynamodb.QueryInput, optFns ...func(*dynamodb.Options)) (*dynamodb.QueryOutput, error) {
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
@@ -160,6 +166,9 @@ func (da *defaultDynamoDBAccessor) QueryPagesSdk(input *dynamodb.QueryInput, fn 
 
 // QueryPagesSdkWithContext implements DynamoDBAccessor.
 func (da *defaultDynamoDBAccessor) QueryPagesSdkWithContext(ctx context.Context, input *dynamodb.QueryInput, fn func(*dynamodb.QueryOutput) bool, optFns ...func(*dynamodb.Options)) error {
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	paginator := dynamodb.NewQueryPaginator(da.dynamodbClient, input)
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(ctx, optFns...)
@@ -183,6 +192,9 @@ func (da *defaultDynamoDBAccessor) PutItemSdk(input *dynamodb.PutItemInput, optF
 
 // PutItemSdkWithContext implements DynamoDBAccessor.
 func (da *defaultDynamoDBAccessor) PutItemSdkWithContext(ctx context.Context, input *dynamodb.PutItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.PutItemOutput, error) {
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
@@ -204,6 +216,9 @@ func (da *defaultDynamoDBAccessor) UpdateItemSdk(input *dynamodb.UpdateItemInput
 
 // UpdateItemSdkWithContext implements DynamoDBAccessor.
 func (da *defaultDynamoDBAccessor) UpdateItemSdkWithContext(ctx context.Context, input *dynamodb.UpdateItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.UpdateItemOutput, error) {
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
@@ -224,6 +239,9 @@ func (da *defaultDynamoDBAccessor) DeleteItemSdk(input *dynamodb.DeleteItemInput
 
 // DeleteItemSdkWithContext implements DynamoDBAccessor.
 func (da *defaultDynamoDBAccessor) DeleteItemSdkWithContext(ctx context.Context, input *dynamodb.DeleteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.DeleteItemOutput, error) {
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
@@ -244,6 +262,9 @@ func (da *defaultDynamoDBAccessor) BatchGetItemSdk(input *dynamodb.BatchGetItemI
 
 // BatchGetItemSdkWithContext implements DynamoDBAccessor.
 func (da *defaultDynamoDBAccessor) BatchGetItemSdkWithContext(ctx context.Context, input *dynamodb.BatchGetItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.BatchGetItemOutput, error) {
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}
@@ -264,6 +285,9 @@ func (da *defaultDynamoDBAccessor) BatchWriteItemSdk(input *dynamodb.BatchWriteI
 
 // BatchWriteItemSdkWithContext implements DynamoDBAccessor.
 func (da *defaultDynamoDBAccessor) BatchWriteItemSdkWithContext(ctx context.Context, input *dynamodb.BatchWriteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.BatchWriteItemOutput, error) {
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	if ReturnConsumedCapacity(da.config) {
 		input.ReturnConsumedCapacity = types.ReturnConsumedCapacityTotal
 	}

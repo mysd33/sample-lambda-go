@@ -96,14 +96,15 @@ func (sa *defaultTransactionalSQSAccessor) AppendTransactMessage(queueName strin
 // AppendTransactMessageWithContext implements TransactionalSQSAccessor.
 func (sa *defaultTransactionalSQSAccessor) AppendTransactMessageWithContext(ctx context.Context, queueName string, input *sqs.SendMessageInput) error {
 	sa.logger.Debug("AppendTransactMessageWithContext")
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	value := ctx.Value(TRANSACTION_CTX_KEY)
 	if value == nil {
-		// TODO: エラー処理
 		return errors.New("トランザクションが開始されていません")
 	}
 	transaction, ok := value.(Transaction)
 	if !ok {
-		// TODO: エラー処理
 		return errors.New("トランザクションが開始されていません")
 	}
 	transaction.AppendTransactMessage(&Message{QueueName: queueName, Input: input})
@@ -118,7 +119,9 @@ func (sa *defaultTransactionalSQSAccessor) TransactSendMessages(inputs []*Messag
 // TransactSendMessagesWithContext implements TransactionalSQSAccessor.
 func (sa *defaultTransactionalSQSAccessor) TransactSendMessagesWithContext(ctx context.Context, inputs []*Message, optFns ...func(*sqs.Options)) error {
 	sa.logger.Debug("TransactSendMessages: %d件", len(inputs))
-
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	for _, v := range inputs {
 		// メッセージに削除時間を追加する
 		sa.addDeleteTime(v)

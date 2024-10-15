@@ -101,6 +101,9 @@ func (sa *defaultSQSAccessor) SendMessageSdk(queueName string, input *sqs.SendMe
 
 // SendMessageSdkWithContext implements SQSAccessor.
 func (sa *defaultSQSAccessor) SendMessageSdkWithContext(ctx context.Context, queueName string, input *sqs.SendMessageInput, optFns ...func(*sqs.Options)) (*sqs.SendMessageOutput, error) {
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	// QueueのURLの取得・設定
 	queueUrl, ok := sa.queueUrls[queueName]
 	if ok {

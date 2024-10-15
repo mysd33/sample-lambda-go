@@ -88,6 +88,10 @@ func (c *defaultHTTPClient) Get(url string, header http.Header, params map[strin
 
 // GetWithContext implements HTTPClient.
 func (c *defaultHTTPClient) GetWithContext(ctx context.Context, url string, header http.Header, params map[string]string, opts ...Option) (*ResponseData, error) {
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
+
 	// オプションの取得
 	options := &Options{}
 	for _, opt := range opts {
@@ -114,6 +118,10 @@ func (c *defaultHTTPClient) Post(url string, header http.Header, bbody []byte, o
 
 // PostWithContext implements HTTPClient.
 func (c *defaultHTTPClient) PostWithContext(ctx context.Context, url string, header http.Header, bbody []byte, opts ...Option) (*ResponseData, error) {
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
+
 	// オプションの取得
 	options := &Options{}
 	for _, opt := range opts {

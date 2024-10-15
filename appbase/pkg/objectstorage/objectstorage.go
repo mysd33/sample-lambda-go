@@ -270,6 +270,9 @@ func (a *defaultObjectStorageAccessor) List(bucketName string, folderPath string
 // ListWithContext implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) ListWithContext(ctx context.Context, bucketName string, folderPath string, optFns ...func(*s3.Options)) ([]types.Object, error) {
 	a.logger.Debug("List bucketName:%s, folderPath:%s", bucketName, folderPath)
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	input := &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucketName),
 		Prefix: aws.String(folderPath),
@@ -295,6 +298,9 @@ func (a *defaultObjectStorageAccessor) Exists(bucketName string, objectKey strin
 // ExistsWithContext implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) ExistsWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) (bool, error) {
 	a.logger.Debug("Exists bucketName:%s, objectKey:%s", bucketName, objectKey)
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	_, err := a.GetMetadataWithContext(ctx, bucketName, objectKey, optFns...)
 	if err != nil {
 		var notFound *types.NotFound
@@ -315,6 +321,9 @@ func (a *defaultObjectStorageAccessor) GetSize(bucketName string, objectKey stri
 // GetSizeWithContext implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) GetSizeWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) (int64, error) {
 	a.logger.Debug("GetSize bucketName:%s, objectKey:%s", bucketName, objectKey)
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	output, err := a.GetMetadataWithContext(ctx, bucketName, objectKey, optFns...)
 	if err != nil {
 		return 0, err
@@ -330,6 +339,9 @@ func (a *defaultObjectStorageAccessor) GetMetadata(bucketName string, objectKey 
 // GetMetadataWithContext implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) GetMetadataWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) (*s3.HeadObjectOutput, error) {
 	a.logger.Debug("GetMetadata bucketName:%s, objectKey:%s", bucketName, objectKey)
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	input := &s3.HeadObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
@@ -361,6 +373,9 @@ func (a *defaultObjectStorageAccessor) UploadWithOwnerFullControl(bucketName str
 // UploadWithOwnerFullControlContext implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) UploadWithOwnerFullControlContext(ctx context.Context, bucketName string, objectKey string, objectBody []byte, optFns ...func(*s3.Options)) (*manager.UploadOutput, error) {
 	a.logger.Debug("UploadWithOwnerFullControl bucketName:%s, objectKey:%s", bucketName, objectKey)
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	reader := bytes.NewReader(objectBody)
 	input := &s3.PutObjectInput{
 		Bucket: aws.String(bucketName),
@@ -398,6 +413,10 @@ func (a *defaultObjectStorageAccessor) UploadFromReader(bucketName string, objec
 // UploadFromReaderWithContext implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) UploadFromReaderWithContext(ctx context.Context, bucketName string, objectKey string, reader io.Reader, optFns ...func(*s3.Options)) (*manager.UploadOutput, error) {
 	a.logger.Debug("UploadFromReader bucketName:%s, objectKey:%s", bucketName, objectKey)
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
+
 	input := &s3.PutObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
@@ -440,6 +459,9 @@ func (a *defaultObjectStorageAccessor) ReadAt(bucketName string, objectKey strin
 // ReadAtWithContext implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) ReadAtWithContext(ctx context.Context, bucketName string, objectKey string, p []byte, offset int64, optFns ...func(*s3.Options)) (int, error) {
 	a.logger.Debug("ReadAt bucketName:%s, objectKey:%s, offset:%d", bucketName, objectKey, offset)
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
@@ -465,6 +487,9 @@ func (a *defaultObjectStorageAccessor) Download(bucketName string, objectKey str
 // DownloadWithContext implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DownloadWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) ([]byte, error) {
 	a.logger.Debug("Download bucketName:%s, objectKey:%s", bucketName, objectKey)
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	// GetObjectを使用する方法だと、コメントアウト部分のコードの通り、1回のリクエスト呼び出しでデータ取得できるが、
 	// 本サンプルでは、Downloaderを使用してマルチパート対応した方法を使用している。
 	// その代わり、HeadObjectを呼び出し、サイズ情報を取得しバッファを確保してからダウンロードする必要があるので、
@@ -518,6 +543,9 @@ func (a *defaultObjectStorageAccessor) DownloadAsReader(bucketName string, objec
 // DownloadAsReaderWithContext implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DownloadAsReaderWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) (io.ReadCloser, error) {
 	a.logger.Debug("DownloadAsReader bucketName:%s, objectKey:%s", bucketName, objectKey)
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
@@ -537,6 +565,9 @@ func (a *defaultObjectStorageAccessor) DownloadToWriter(bucketName string, objec
 // DownloadToWriterWithContext implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DownloadToWriterWithContext(ctx context.Context, bucketName string, objectKey string, writer io.WriterAt, optFns ...func(*s3.Options)) error {
 	a.logger.Debug("DownloadToWriter bucketName:%s, objectKey:%s", bucketName, objectKey)
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
@@ -578,6 +609,9 @@ func (a *defaultObjectStorageAccessor) Delele(bucketName string, objectKey strin
 // DeleteWithContext implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DeleteWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) error {
 	a.logger.Debug("Delete bucketName:%s, objectKey:%s", bucketName, objectKey)
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	input := &s3.DeleteObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
@@ -597,6 +631,9 @@ func (a *defaultObjectStorageAccessor) DeleteByVersionId(bucketName string, obje
 // DeleteByVersionIdWithContext implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DeleteByVersionIdWithContext(ctx context.Context, bucketName string, objectKey string, versionId string, optFns ...func(*s3.Options)) error {
 	a.logger.Debug("DeleteByVersionId bucketName:%s, objectKey:%s, versionId:%s", bucketName, objectKey, versionId)
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	input := &s3.DeleteObjectInput{
 		Bucket:    aws.String(bucketName),
 		Key:       aws.String(objectKey),
@@ -617,7 +654,9 @@ func (a *defaultObjectStorageAccessor) DeleteAllVersions(bucketName string, obje
 // DeleteAllVersionsWithContext implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DeleteAllVersionsWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) error {
 	a.logger.Debug("DeleteAllVersions bucketName:%s, objectKey:%s", bucketName, objectKey)
-
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	// オブジェクトの全てのバージョンIDを取得
 	versions, err := a.listObjectVersions(ctx, bucketName, objectKey, optFns...)
 	if err != nil {
@@ -646,7 +685,7 @@ func (a *defaultObjectStorageAccessor) DeleteAllVersionsWithContext(ctx context.
 				Objects: objects,
 			},
 		}
-		output, err := a.s3Client.DeleteObjects(apcontext.Context, input, optFns...)
+		output, err := a.s3Client.DeleteObjects(ctx, input, optFns...)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -709,6 +748,9 @@ func (a *defaultObjectStorageAccessor) DeleteFolder(bucketName string, folderPat
 // DeleteFolderWithContext implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) DeleteFolderWithContext(ctx context.Context, bucketName string, folderPath string, optFns ...func(*s3.Options)) error {
 	a.logger.Debug("DeleteFolder bucketName:%s, folderPath:%s", bucketName, folderPath)
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	// コピー元フォルダに存在するオブジェクトを取得
 	objects, err := a.List(bucketName, folderPath)
 	if err != nil {
@@ -744,6 +786,9 @@ func (a *defaultObjectStorageAccessor) CopyAcrossBuckets(bucketName string, obje
 // CopyAcrossBucketsWithContext implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) CopyAcrossBucketsWithContext(ctx context.Context, bucketName string, objectKey string, targetBucketName string, targetFolderPath string, optFns ...func(*s3.Options)) error {
 	a.logger.Debug("CopyAcrossBuckets bucketName:%s, objectKey:%s, targetBucketName:%s, targetFolderPath:%s", bucketName, objectKey, targetBucketName, targetFolderPath)
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	i := strings.LastIndex(objectKey, "/")
 	fileName := objectKey[i+1:]
 	a.logger.Debug("fileName:%s", fileName)
@@ -778,6 +823,9 @@ func (a *defaultObjectStorageAccessor) CopyFolderAcrossBuckets(bucketName string
 // CopyFolderAcrossBucketsWithContext implements ObjectStorageAccessor.
 func (a *defaultObjectStorageAccessor) CopyFolderAcrossBucketsWithContext(ctx context.Context, bucketName string, srcFolderPath string, targetBucketName string, targetFolderPath string, nested bool, optFns ...func(*s3.Options)) error {
 	a.logger.Debug("CopyFolderAcrossBuckets bucketName:%s, srcFolderPath:%s, targetBucketName:%s, targetFolderPath:%s, nested:%v", bucketName, srcFolderPath, targetBucketName, targetFolderPath, nested)
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	srcFolderPath = strings.Trim(srcFolderPath, "/")
 	targetFolderPath = strings.Trim(targetFolderPath, "/")
 	// コピー元とコピー先が同じ場合は何もしない

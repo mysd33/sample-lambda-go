@@ -146,6 +146,9 @@ func (da *defaultTransactionalDynamoDBAccessor) AppendTransactWriteItem(item *ty
 // AppendTransactWriteItemWithContext implements TransactionalDynamoDBAccessor.
 func (da *defaultTransactionalDynamoDBAccessor) AppendTransactWriteItemWithContext(ctx context.Context, item *types.TransactWriteItem) error {
 	da.logger.Debug("AppendTransactWriteItemWithContext")
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	value := ctx.Value(TRANSACTION_CTX_KEY)
 	if value == nil {
 		return errors.New("トランザクションが開始されていません")
@@ -166,6 +169,9 @@ func (da *defaultTransactionalDynamoDBAccessor) TransactWriteItemsSDK(items []ty
 // TransactWriteItemsSDKWithContext implements TransactionalDynamoDBAccessor.
 func (da *defaultTransactionalDynamoDBAccessor) TransactWriteItemsSDKWithContext(ctx context.Context, items []types.TransactWriteItem, optFns ...func(*dynamodb.Options)) (*dynamodb.TransactWriteItemsOutput, error) {
 	da.logger.Debug("TransactWriteItemsSDK: %d件", len(items))
+	if ctx == nil {
+		ctx = apcontext.Context
+	}
 	input := &dynamodb.TransactWriteItemsInput{TransactItems: items}
 	// ReturnConsumedCapacityを設定
 	if myDynamoDB.ReturnConsumedCapacity(da.config) {
