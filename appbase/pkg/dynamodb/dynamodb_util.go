@@ -79,7 +79,7 @@ func createQueryExpression(primaryKey *input.PrimaryKey, attributes []string, wh
 		eb = eb.WithProjection(*proj)
 	}
 	// フィルタ条件の設定
-	filterCond, err := CreateFilterCondition(whereCauses)
+	filterCond, err := CreateWhereCondition(whereCauses)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func CreateUpdateExpression(input input.UpdateInput) (*expression.Expression, er
 	// Update表現の作成
 	eb := expression.NewBuilder().WithUpdate(upd)
 	// 更新条件の作成
-	updCond, err := CreateFilterCondition(input.WhereClauses)
+	updCond, err := CreateWhereCondition(input.WhereClauses)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -123,7 +123,7 @@ func CreateUpdateExpression(input input.UpdateInput) (*expression.Expression, er
 // CreateDeleteExpression は、削除条件のExpressionを作成します。
 func CreateDeleteExpression(input input.DeleteInput) (*expression.Expression, error) {
 	// 削除条件の作成
-	delCond, err := CreateFilterCondition(input.WhereClauses)
+	delCond, err := CreateWhereCondition(input.WhereClauses)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -185,8 +185,8 @@ func CreateProjection(attributeNames []string) *expression.ProjectionBuilder {
 	return &proj
 }
 
-// CreateFilterCondition は、フィルタ条件を作成します。
-func CreateFilterCondition(whereClauses []*input.WhereClause) (*expression.ConditionBuilder, error) {
+// CreateWhereCondition は、Where句をもとにした条件を作成します。
+func CreateWhereCondition(whereClauses []*input.WhereClause) (*expression.ConditionBuilder, error) {
 	fn := func(where input.WhereClause, cond *expression.ConditionBuilder) (*expression.ConditionBuilder, error) {
 		var tmp expression.ConditionBuilder
 		switch where.WhereOp {
