@@ -7,11 +7,6 @@ type DynamoDBTableName string
 
 var pkMap map[DynamoDBTableName]*PKKeyPair
 
-type PK struct {
-	PartitionKey string
-	SortKey      *string
-}
-
 type PKKeyPair struct {
 	PartitionKey string
 	SortKey      *string
