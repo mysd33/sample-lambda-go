@@ -316,14 +316,24 @@ func (t *defaultDynamoDBTemplate) DeleteOneWithContext(ctx context.Context, tabl
 		return errors.Wrap(err, "DelteOneで削除条件の生成時エラー")
 	}
 	// DeleteItemInput
-	deleteItemInput := &dynamodb.DeleteItemInput{
-		TableName:                 aws.String(string(tableName)),
-		Key:                       keyMap,
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-		ConditionExpression:       expr.Condition(),
-		ReturnValues:              types.ReturnValueNone,
+	var deleteItemInput *dynamodb.DeleteItemInput
+	if expr == nil {
+		deleteItemInput = &dynamodb.DeleteItemInput{
+			TableName:    aws.String(string(tableName)),
+			Key:          keyMap,
+			ReturnValues: types.ReturnValueNone,
+		}
+	} else {
+		deleteItemInput = &dynamodb.DeleteItemInput{
+			TableName:                 aws.String(string(tableName)),
+			Key:                       keyMap,
+			ExpressionAttributeNames:  expr.Names(),
+			ExpressionAttributeValues: expr.Values(),
+			ConditionExpression:       expr.Condition(),
+			ReturnValues:              types.ReturnValueNone,
+		}
 	}
+
 	// DeleteItemの実行
 	_, err = t.dynamodbAccessor.DeleteItemSdkWithContext(ctx, deleteItemInput, optFns...)
 	if err != nil {

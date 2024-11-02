@@ -128,6 +128,9 @@ func CreateDeleteExpression(input input.DeleteInput) (*expression.Expression, er
 		return nil, errors.WithStack(err)
 	}
 	// Delete表現の作成
+	if delCond == nil {
+		return nil, nil
+	}
 	eb := expression.NewBuilder().WithCondition(*delCond)
 	expr, err := eb.Build()
 	if err != nil {

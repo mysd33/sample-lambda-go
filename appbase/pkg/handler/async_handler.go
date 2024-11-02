@@ -80,7 +80,7 @@ func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQS
 		}
 		// 既にエラーになったメッセージのMessageIdを格納するための集合を初期化
 		failedMessageGroupIdSet := make(map[string]struct{})
-		for _, v := range event.Records {
+		for i, v := range event.Records {
 			// ハンドラから受け取ったもとのContext（ctx）を毎回コンテキスト領域に格納しなおす
 			apcontext.Context = ctx
 
@@ -96,6 +96,7 @@ func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQS
 				// FIFOの場合は、メッセージグループIDもログの付加情報として追加
 				h.logger.AddInfo("SQS MessageGroupId", messageGroupId)
 
+				h.logger.Info(message.I_FW_0008, i+1)
 				// FIFOの場合、既に同一のメッセージグループIDで処理が失敗している場合は、当該メッセージもエラーとする
 				if _, ok := failedMessageGroupIdSet[messageGroupId]; ok {
 					// 同一のメッセージグループで処理が失敗している旨を警告ログ出力
@@ -104,6 +105,8 @@ func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQS
 					response.BatchItemFailures = append(response.BatchItemFailures, events.SQSBatchItemFailure{ItemIdentifier: v.MessageId})
 					continue
 				}
+			} else {
+				h.logger.Info(message.I_FW_0008, i+1)
 			}
 
 			// SQSのメッセージを1件取得しコントローラを呼び出し
