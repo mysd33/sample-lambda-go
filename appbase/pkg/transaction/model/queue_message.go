@@ -5,9 +5,10 @@ package model
 
 // QueueMessageItem は、キューメッセージ管理テーブルのアイテムを表す構造体です。
 type QueueMessageItem struct {
-	MessageId  string `dynamodbav:"message_id"`
-	DeleteTime int    `dynamodbav:"delete_time"`
-	Status     string `dynamodbav:"status"`
+	MessageId      string `dynamodbav:"message_id"`
+	MessageGroupId string `dynamodbav:"message_group_id"`
+	DeleteTime     int    `dynamodbav:"delete_time"`
+	Status         string `dynamodbav:"status"`
 }
 
 /*

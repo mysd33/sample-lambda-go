@@ -78,6 +78,8 @@ func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQS
 			// FIFOの場合はメッセージをソート
 			h.sortMessages(event.Records)
 		}
+		// 既にエラーになったメッセージのMessageIdを格納するための集合を初期化
+		failedMessageGroupIdSet := make(map[string]struct{})
 		for _, v := range event.Records {
 			// ハンドラから受け取ったもとのContext（ctx）を毎回コンテキスト領域に格納しなおす
 			apcontext.Context = ctx
@@ -88,8 +90,24 @@ func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQS
 			h.logger.AddInfo("AWS RequestID", lc.AwsRequestID)
 			h.logger.AddInfo("SQS MessageId", v.MessageId)
 
+			var messageGroupId string
+			if isFIFO {
+				messageGroupId = v.Attributes[string(types.MessageSystemAttributeNameMessageGroupId)]
+				// FIFOの場合は、メッセージグループIDもログの付加情報として追加
+				h.logger.AddInfo("SQS MessageGroupId", messageGroupId)
+
+				// FIFOの場合、既に同一のメッセージグループIDで処理が失敗している場合は、当該メッセージもエラーとする
+				if _, ok := failedMessageGroupIdSet[messageGroupId]; ok {
+					// 同一のメッセージグループで処理が失敗している旨を警告ログ出力
+					h.logger.Warn(message.W_FW_8014, messageGroupId)
+					// BatchItemFailuresにメッセージIDを追加し、継続処理する
+					response.BatchItemFailures = append(response.BatchItemFailures, events.SQSBatchItemFailure{ItemIdentifier: v.MessageId})
+					continue
+				}
+			}
+
 			// SQSのメッセージを1件取得しコントローラを呼び出し
-			err := h.doHandle(v, response, isFIFO, asyncControllerFunc)
+			err := h.doHandle(v, asyncControllerFunc)
 			if err != nil {
 				if errors.Is(err, idempotency.CompletedProcessIdempotencyError) {
 					// 二重実行防止（冪等性）機能で、二重実行エラーを検知した場合、
@@ -98,6 +116,10 @@ func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQS
 					// なお、実行中の処理の二重実行エラーを検知をした場合は、その後実行中の処理が失敗する可能性があるため、
 					// 再試行できるようにSQSのキューからメッセージを削除しないようにするため、
 					// BatchItemFailuresにメッセージIDを追加するルートへ進む。
+				}
+				if isFIFO {
+					// FIFOの場合は、失敗したメッセージグループIDを記録
+					failedMessageGroupIdSet[messageGroupId] = struct{}{}
 				}
 				// 部分的なバッチで一部処理失敗した場合は、エラーは返却しない
 				// 失敗したメッセージ以降のメッセージIDをBatchItemFailuresに登録
@@ -110,11 +132,7 @@ func (h *AsyncLambdaHandler) Handle(asyncControllerFunc AsyncControllerFunc) SQS
 }
 
 // doHandle は、SQSのメッセージを1件に対して、ディレード処理（ジョブ）を実行します。
-func (h *AsyncLambdaHandler) doHandle(sqsMsg events.SQSMessage, response events.SQSEventResponse, isFIFO bool, asyncControllerFunc AsyncControllerFunc) error {
-	// FIFOの場合は、以前のメッセージが失敗している場合は、当該メッセージもエラー処理をスキップする
-	if isFIFO && response.BatchItemFailures != nil {
-		return errors.New("以前のメッセージが失敗しているためエラー")
-	}
+func (h *AsyncLambdaHandler) doHandle(sqsMsg events.SQSMessage, asyncControllerFunc AsyncControllerFunc) error {
 	queueName := h.getQueueName(sqsMsg)
 	messageId := sqsMsg.MessageId
 

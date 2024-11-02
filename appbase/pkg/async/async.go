@@ -124,22 +124,35 @@ func (sa *defaultSQSAccessor) SendMessageSdkWithContext(ctx context.Context, que
 		// キャッシュへ格納
 		sa.queueUrls[queueName] = *queueUrlOutput.QueueUrl
 	}
-
+	// ログ出力
 	if input.MessageGroupId != nil {
 		if input.MessageDeduplicationId != nil {
+			sa.logger.Info(message.I_FW_0006, queueName, *input.MessageGroupId, *input.MessageDeduplicationId)
 			sa.logger.Debug("MessageGroupId=%s, MessageDeduplicationId=%s, Message=%s", *input.MessageGroupId, *input.MessageDeduplicationId, *input.MessageBody)
 		} else {
+			sa.logger.Info(message.I_FW_0006, queueName, *input.MessageGroupId, "N/A")
 			sa.logger.Debug("MessageGroupId=%s, Message=%s", *input.MessageGroupId, *input.MessageBody)
 		}
 	} else {
+		sa.logger.Info(message.I_FW_0006, queueName, "N/A", "N/A")
 		sa.logger.Debug("Message=%s", *input.MessageBody)
 	}
-	sa.logger.Info(message.I_FW_0006, queueName)
+
 	//　SQSへメッセージ送信する
 	output, err := sa.sqsClient.SendMessage(ctx, input, optFns...)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	sa.logger.Info(message.I_FW_0007, queueName, *output.MessageId)
+
+	// ログ出力
+	if input.MessageGroupId != nil {
+		if input.MessageDeduplicationId != nil {
+			sa.logger.Info(message.I_FW_0007, queueName, *output.MessageId, *input.MessageGroupId, *input.MessageDeduplicationId)
+		} else {
+			sa.logger.Info(message.I_FW_0007, queueName, *output.MessageId, *input.MessageGroupId, "N/A")
+		}
+	} else {
+		sa.logger.Info(message.I_FW_0007, queueName, *output.MessageId, "N/A", "N/A")
+	}
 	return output, nil
 }

@@ -645,7 +645,7 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
                         # メッセージの受信回数（リトライ回数）を変更したい場合に適宜修正    
                         "ApproximateReceiveCount": "1",   
                         "AWSTraceHeader": "Parent=0000000000000000;Sampled=0",                        
-                        "MessageGroupId": "049a0ab8-a882-11ee-80df-0242ac110005",                                                        
+                        # メッセージグループIDを修正 "049a0ab8-a882-11ee-80df-0242ac110005",                                                        
                         "SequenceNumber": "0"                                      
                     },                    
                     "messageAttributes": {
