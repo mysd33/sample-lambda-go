@@ -525,6 +525,20 @@ curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "Buy Milk"
 
 curl http://127.0.0.1:3000/todo-api/v1/todo/(TODO ID)
 
+# Bookサービス
+# 書籍の登録（WindowsでGit Bashだとcurlで日本語データのPostがうまくいかないのでファイルにしている）
+curl -X POST -H "Content-Type: application/json" -d @curl/books/post1.json http://127.0.0.1:3000/books-api/v1/books
+curl -X POST -H "Content-Type: application/json" -d @curl/books/post2.json http://127.0.0.1:3000/books-api/v1/books
+curl -X POST -H "Content-Type: application/json" -d @curl/books/post3.json http://127.0.0.1:3000/books-api/v1/books
+curl -X POST -H "Content-Type: application/json" -d @curl/books/post4.json http://127.0.0.1:3000/books-api/v1/books
+curl -X POST -H "Content-Type: application/json" -d @curl/books/post5.json http://127.0.0.1:3000/books-api/v1/books
+# タイトルが「こころ」の書籍を取得
+curl http://127.0.0.1:3000/books-api/v1/books?title=%E3%81%93%E3%81%93%E3%82%8D
+# 著者が「村上春樹」の書籍を取得
+curl http://127.0.0.1:3000/books-api/v1/books?author=%E6%9D%91%E4%B8%8A%E6%98%A5%E6%A8%B9
+# 出版社が「新潮社」の書籍を取得
+curl http://127.0.0.1:3000/books-api/v1/books?author=%E6%96%B0%E6%BD%AE%E7%A4%BE
+
 # BFF
 curl -X POST -H "Content-Type: application/json" -d '{ "user_name" : "Taro"}' http://127.0.0.1:3000/bff-api/v1/users
 

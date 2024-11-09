@@ -34,9 +34,10 @@ build: clean
 	sam build
 	xcopy /I /S configs .aws-sam\build\BffFunction\configs
 	xcopy /I /S configs .aws-sam\build\UsersFunction\configs	
-	xcopy /I /S configs .aws-sam\build\TodoFunction\configs	
+	xcopy /I /S configs .aws-sam\build\TodoFunction\configs		
 	xcopy /I /S configs .aws-sam\build\TodoAsyncFunction\configs
 	xcopy /I /S configs .aws-sam\build\TodoAsyncFifoFunction\configs
+	xcopy /I /S configs .aws-sam\build\BooksFunction\configs	
 # for linux
 # TODO	
 
@@ -70,6 +71,7 @@ build_dbg: clean
 	xcopy /I /S configs .aws-sam\build\TodoFunction\configs	
 	xcopy /I /S configs .aws-sam\build\TodoAsyncFunction\configs
 	xcopy /I /S configs .aws-sam\build\TodoAsyncFifoFunction\configs
+	xcopy /I /S configs .aws-sam\build\BooksFunction\configs	
 # for linux
 # TODO	
 

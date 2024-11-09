@@ -35,6 +35,9 @@ Parameters:
   TodoFunctionName:
     Type: String
     Default: todo-function
+  BooksFunctionName:
+    Type: String
+    Default: book-function
   BffFunctionName:
     Type: String
     Default: bff-function
@@ -114,9 +117,9 @@ Globals:
       Format: '{ "requestId":"$context.requestId", "extendedRequestId":"$context.extendedRequestId", "ip": "$context.identity.sourceIp", "caller":"$context.identity.caller", "user":"$context.identity.user", "requestTime":"$context.requestTime", "httpMethod":"$context.httpMethod", "resourcePath":"$context.resourcePath", "contextPath":"$context.path", "status":"$context.status", "protocol":"$context.protocol", "responseLength":"$context.responseLength", "integrationLatency":"$context.integration.latency", "responseLatency":"$context.responseLatency" }'
       DestinationArn: !GetAtt ApiGwAccessLogGroup.Arn
 Resources:
-  HelloWorldFunction:
 # Lambda Function
 # HelloWorld 
+  HelloWorldFunction:
     Type: AWS::Serverless::Function
     Metadata:
       BuildMethod: go1.x
@@ -227,6 +230,24 @@ Resources:
               Fn::Sub: ${StackPrefix}-SQSFifoQueueArn
             FunctionResponseTypes:
               - ReportBatchItemFailures              
+# Book Function
+  BooksFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: go1.x
+    Properties:
+      Handler: books
+      FunctionName: !Ref BooksFunctionName
+      CodeUri: app/cmd/books/
+      Role:
+        Fn::ImportValue: !Sub ${StackPrefix}-LambdaRoleArn
+      Events:
+        Event:
+          Type: Api
+          Properties:
+            Path: /books-api/{proxy+}
+            Method: ANY
+            RestApiId: !Ref BookApi
 # API Gateway Private REST API
 # Bff API(Regional Public API)
   BffApi:
@@ -303,7 +324,29 @@ Resources:
                 StringEquals:
                   aws:SourceVpce: !ImportValue
                     Fn::Sub: ${StackPrefix}-PrivateAPIVPCEndpoint-ID
-
+# Book API(Private API)
+  BookApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: book-api
+      StageName: !Ref Stage
+      EndpointConfiguration:
+        Type: PRIVATE
+        VPCEndpointIds:
+          - Fn::ImportValue: !Sub ${StackPrefix}-PrivateAPIVPCEndpoint-ID      
+      Auth:
+        ResourcePolicy:
+          CustomStatements:
+            - Effect: Allow
+              Principal: '*'
+              Action: execute-api:Invoke
+              Resource:
+                - !Sub execute-api:/${Stage}/POST/books-api/*
+                - !Sub execute-api:/${Stage}/GET/books-api/*
+              Condition:
+                StringEquals:
+                  aws:SourceVpce: !ImportValue
+                    Fn::Sub: ${StackPrefix}-PrivateAPIVPCEndpoint-ID
 # IAM Role for API Gateway Account
   APIGatewayRole:
     Type: AWS::IAM::Role
@@ -359,6 +402,11 @@ Resources:
     Properties:
       LogGroupName: !Sub /aws/lambda/${TodoAsyncFifoFunctionName}
       RetentionInDays: !Ref LogRetensionInDays 
+  BooksFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${BooksFunctionName}
+      RetentionInDays: !Ref LogRetensionInDays      
 # Application Insights
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
@@ -418,3 +466,17 @@ Outputs:
   TodoAsyncFunction:
     Description: Todo Async Lambda Function ARN
     Value: !GetAtt TodoAsyncFunction.Arn
+  BookAPIBaseURL:
+    Description: API Gateway endpoint Base URL for Books
+    Value: !Sub https://${BookApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
+    Export: 
+      Name: !Sub ${StackPrefix}-BookAPIBaseURL-${Stage}    
+  BookApi:
+    Description: API Gateway endpoint URL for Books
+    Value: !Sub https://${BookApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/books-api/v1/books
+  BooksFunction:
+    Description: Books Lambda Function ARN
+    Value: !GetAtt BooksFunction.Arn
+  BooksFunctionDeploymentGroup:
+    Description: Books Lambda Function DeploymentGroup ARN
+    Value: !Ref BooksFunctionDeploymentGroup
