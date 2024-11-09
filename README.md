@@ -508,6 +508,17 @@ sam local start-api --env-vars local-env.json
 make local_startapi 
 ```
 
+* MongoDB（DocumentDB Local）のDockerコンテナを起動
+
+```sh
+cd mongodb
+docker compose up -d
+```
+
+* Mongo Expressでデータベースの確認
+    * ブラウザで、[http://localhost:8081](http://localhost:8081)にアクセスするとMongo Expressのコンソールが表示される
+    * TODO :データベースの作成手順を記載
+
 * APの動作確認
 ```sh
 # hello-world
