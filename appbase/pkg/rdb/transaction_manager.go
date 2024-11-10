@@ -18,11 +18,11 @@ import (
 )
 
 const (
-	RDB_USER_NAME     = "username"
+	RDB_USERNAME_NAME = "username"
 	RDB_PASSWORD_NAME = "password"
 	RDB_ENDPOINT_NAME = "RDB_ENDPOINT"
 	RDB_PORT_NAME     = "RDB_PORT"
-	RDB_DB_NAME_NAME  = "RDB_DB_NAME"
+	RDB_DBNAME_NAME   = "RDB_DB_NAME"
 	RDB_SSL_MODE_NAME = "RDB_SSL_MODE"
 )
 
@@ -82,32 +82,27 @@ func (tm *defaultTransactionManager) rdbConnect() (*sql.DB, error) {
 	// AppConfigを用いており、AppConfigAgentによりキャッシュされたものを取得するので
 	// APIのスロットリングの問題を防止できている
 
-	// RDBに作成したユーザ名
-	rdbUser, found := tm.config.GetWithContains(RDB_USER_NAME)
+	// RDBユーザ名
+	rdbUser, found := tm.config.GetWithContains(RDB_USERNAME_NAME)
 	if !found {
-		return nil, errors.New("RDB_USER_NAMEが設定されていません")
+		return nil, errors.Newf("%sが設定されていません", RDB_USERNAME_NAME)
 	}
-	tm.logger.Debug("RDB_USER_NAME: %s", rdbUser)
 	// RDBユーザのパスワード
 	rdbPassword, found := tm.config.GetWithContains(RDB_PASSWORD_NAME)
 	if !found {
-		return nil, errors.New("RDB_PASSWORD_NAMEが設定されていません")
+		return nil, errors.Newf("%sが設定されていません", RDB_PASSWORD_NAME)
 	}
-	tm.logger.Debug("RDB_PASSWORD_NAME: %s", rdbPassword)
 	// RDS Proxyのエンドポイント
 	rdbEndpoint, found := tm.config.GetWithContains(RDB_ENDPOINT_NAME)
 	if !found {
-		return nil, errors.New("RDB_ENDPOINT_NAMEが設定されていません")
+		return nil, errors.Newf("%sが設定されていません", RDB_ENDPOINT_NAME)
 	}
-	// RDS Proxyのポート
-	rdbPort, found := tm.config.GetWithContains(RDB_PORT_NAME)
-	if !found {
-		return nil, errors.New("RDB_PORT_NAMEが設定されていません")
-	}
+	// RDS Proxyのポート（デフォルトは5432番）
+	rdbPort := tm.config.Get(RDB_PORT_NAME, "5432")
 	// DB名
-	rdbName, found := tm.config.GetWithContains(RDB_DB_NAME_NAME)
+	rdbName, found := tm.config.GetWithContains(RDB_DBNAME_NAME)
 	if !found {
-		return nil, errors.New("RDB_DB_NAME_NAMEが設定されていません")
+		return nil, errors.Newf("%sが設定されていません", RDB_DBNAME_NAME)
 	}
 	// SSLMode
 	rdbSslMode := tm.config.Get(RDB_SSL_MODE_NAME, "require")
@@ -122,6 +117,7 @@ func (tm *defaultTransactionManager) rdbConnect() (*sql.DB, error) {
 		rdbPort,
 		rdbName,
 		rdbSslMode)
+	tm.logger.Debug("接続文字列: %s", connectStr)
 	db, err := xray.SQLContext("postgres", connectStr)
 
 	// X-Rayを使わない場合のDB接続取得の実装例
@@ -133,6 +129,7 @@ func (tm *defaultTransactionManager) rdbConnect() (*sql.DB, error) {
 			rdbUser,
 			rdbPassword,
 			rdbName)
+		tm.logger.Debug("接続文字列: %s", connectStr)
 		db, err := sql.Open("postgres", connectStr)*/
 
 	if err != nil {
