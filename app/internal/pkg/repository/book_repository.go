@@ -9,7 +9,8 @@ import (
 // BookCriteria は、書籍の検索条件を表す構造体です。
 type BookCriteria struct {
 	// （参考） bsonの構造タグを利用した、MongoDBのフィールド名の指定
-	// https://www.mongodb.com/ja-jp/docs/drivers/go/current/usage-examples/insertOne/
+	// https://www.mongodb.com/ja-jp/docs/drivers/go/current/usage-examples/findOne/
+
 	// https://www.mongodb.com/ja-jp/docs/drivers/go/current/fundamentals/bson/#struct-tags
 	Title string `bson:"title,omitempty"`
 	// Author は、書籍の著者です。

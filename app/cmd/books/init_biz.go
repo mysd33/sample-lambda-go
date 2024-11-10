@@ -19,7 +19,7 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 		panic(err)
 	}
 	// リポジトリの作成
-	bookRepository := repository.NewBookRepositoryForDocumentDB(ac.GetLogger(), ac.GetConfig())
+	bookRepository := repository.NewBookRepositoryForDocumentDB(ac.GetLogger(), ac.GetConfig(), ac.GetDocumentDBAccessor())
 	// スタブ
 	//bookRepository := repository.NewBookRepositoryStub()
 	// サービスの作成

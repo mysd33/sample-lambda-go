@@ -8,6 +8,7 @@ import (
 	"example.com/appbase/pkg/async"
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/date"
+	"example.com/appbase/pkg/documentdb"
 	"example.com/appbase/pkg/dynamodb"
 	"example.com/appbase/pkg/handler"
 	"example.com/appbase/pkg/httpclient"
@@ -50,6 +51,8 @@ type ApplicationContext interface {
 	GetRDBAccessor() rdb.RDBAccessor
 	// GetRDBTransactionManager は、RDBトランザクション管理機能のインタフェースTransactionManagerを取得します。
 	GetRDBTransactionManager() rdb.TransactionManager
+	// GetDocumentDBAccessor は、DocumentDBアクセス機能のインタフェースDocumentDBAccessorを取得します。
+	GetDocumentDBAccessor() documentdb.DocumentDBAccessor
 	// GetHTTPClient は、HTTPクライアント機能のインタフェースHTTPClientを取得します。
 	GetHTTPClient() httpclient.HTTPClient
 	// GetInterceptor は、集約例外ハンドリング機能のインターセプタのインタフェースHandlerInterceptorを取得します。
@@ -88,6 +91,7 @@ func NewApplicationContext() ApplicationContext {
 	dynamoDBTransactionManagerForDBOnly := createDynamoDBTransactionManagerForDBOnly(logger, dynamodbAccessor, messageRegisterer)
 	rdbAccessor := createRDBAccessor()
 	rdbTransactionManager := rdb.NewTransactionManager(logger, config, rdbAccessor)
+	documetDBAccessor := createDocumentDBAccessor(config, logger)
 	httpclient := createHTTPClient(config, logger)
 	interceptor := createHanderInterceptor(config, logger)
 	apiLambdaHandler := createAPILambdaHandler(config, logger, messageSource, apiResponseFormatter)
@@ -112,6 +116,7 @@ func NewApplicationContext() ApplicationContext {
 		objectStorageAccessor:               objectStorageAccessor,
 		rdbAccessor:                         rdbAccessor,
 		rdbTransactionManager:               rdbTransactionManager,
+		documetDBAccessor:                   documetDBAccessor,
 		httpClient:                          httpclient,
 		interceptor:                         interceptor,
 		apiLambdaHandler:                    apiLambdaHandler,
@@ -137,6 +142,7 @@ type defaultApplicationContext struct {
 	objectStorageAccessor               objectstorage.ObjectStorageAccessor
 	rdbAccessor                         rdb.RDBAccessor
 	rdbTransactionManager               rdb.TransactionManager
+	documetDBAccessor                   documentdb.DocumentDBAccessor
 	httpClient                          httpclient.HTTPClient
 	interceptor                         handler.HandlerInterceptor
 	apiLambdaHandler                    *handler.APILambdaHandler
@@ -214,6 +220,11 @@ func (ac *defaultApplicationContext) GetSQSTemplate() async.SQSTemplate {
 // GetObjectStorageAccessor implements ApplicationContext.
 func (ac *defaultApplicationContext) GetObjectStorageAccessor() objectstorage.ObjectStorageAccessor {
 	return ac.objectStorageAccessor
+}
+
+// GetDocumentDBAccessor implements ApplicationContext.
+func (ac *defaultApplicationContext) GetDocumentDBAccessor() documentdb.DocumentDBAccessor {
+	return ac.documetDBAccessor
 }
 
 // GetHTTPClient implements ApplicationContext.
@@ -336,6 +347,15 @@ func createObjectStorageAccessor(config config.Config, logger logging.Logger) ob
 
 func createRDBAccessor() rdb.RDBAccessor {
 	return rdb.NewRDBAccessor()
+}
+
+func createDocumentDBAccessor(config config.Config, logger logging.Logger) documentdb.DocumentDBAccessor {
+	accessor, err := documentdb.NewDocumentDBAccessor(config, logger)
+	if err != nil {
+		// 異常終了
+		panic(err)
+	}
+	return accessor
 }
 
 func createHTTPClient(config config.Config, logger logging.Logger) httpclient.HTTPClient {
