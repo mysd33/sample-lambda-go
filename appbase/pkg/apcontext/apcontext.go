@@ -5,6 +5,7 @@ package apcontext
 
 import (
 	"context"
+	"time"
 
 	"github.com/aws/aws-lambda-go/lambdacontext"
 )
@@ -19,4 +20,12 @@ type ContextKey string
 func GetLambdaContext(ctx context.Context) *lambdacontext.LambdaContext {
 	lc, _ := lambdacontext.FromContext(ctx)
 	return lc
+}
+
+func GetDefaultContextWithTimeout(timeoutSeconds int) (context.Context, context.CancelFunc) {
+	return GetContextWithTimeout(Context, timeoutSeconds)
+}
+
+func GetContextWithTimeout(ctx context.Context, timeoutSeconds int) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(ctx, time.Duration(timeoutSeconds)*time.Second)
 }

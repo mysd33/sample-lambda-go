@@ -306,7 +306,13 @@ curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/todo-api/v
 ```
 
 * BookサービスのAPI実行例
-    * TBD
+
+```sh
+# 書籍の登録
+curl -X POST -H "Content-Type: application/json" -d '{"title": "こころ", "author": "夏目漱石", "publisher": "新潮社", "published_date": "2004-03-01", "isbn": "111-1-1111-1111-1"}' https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/books-api/v1/books
+# タイトルが「こころ」の書籍を取得(title=こころ)
+curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/books-api/v1/books?title=%E3%81%93%E3%81%93%E3%82%8D
+```
 
 
 ## 17. APの実行確認（フロントエンド）
@@ -336,6 +342,24 @@ curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v
 
 # 対象のユーザ情報とやることを一緒に取得
 {"user":{"user_id":"416ad789-6fde-11ee-a3ec-0242ac110004","user_name":"Taro"},"todo":{"todo_id":"60d48f8f-6fde-11ee-a60c-0242ac110005","todo_title":"ミルクを買う"}}
+```
+
+```sh
+# TODO: API作成予定
+# Bookサービスを利用して、書籍情報を登録
+curl -X POST -H "Content-Type: application/json" -d @curl/books/post1.json https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/books
+curl -X POST -H "Content-Type: application/json" -d @curl/books/post2.json https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/books
+curl -X POST -H "Content-Type: application/json" -d @curl/books/post3.json https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/books
+curl -X POST -H "Content-Type: application/json" -d @curl/books/post4.json https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/books
+curl -X POST -H "Content-Type: application/json" -d @curl/books/post5.json https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/books
+# 著者が「村上春樹」の書籍を取得（author=村上春樹）
+curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/books?author=%E6%9D%91%E4%B8%8A%E6%98%A5%E6%A8%B9
+# 出版社が「新潮社」の書籍を取得（publisher=新潮社）
+curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/books?publisher=%E6%96%B0%E6%BD%AE%E7%A4%BE
+# 著者が「村上春樹」で出版社が「講談社」の書籍を取得（author=村上春樹&publisher=講談社）
+curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/books?author=%E6%9D%91%E4%B8%8A%E6%98%A5%E6%A8%B9\&publisher=%E8%AC%9B%E8%AB%87%E7%A4%BE
+# Bookサービスを利用して、書籍情報を検索（author=村上春樹&publisher=講談社）
+curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/books?author=%E6%9D%91%E4%B8%8A%E6%98%A5%E6%A8%B9\&publisher=%E8%AC%9B%E8%AB%87%E7%A4%BE#
 ```
 
 * ディレード処理の実行例
@@ -554,19 +578,23 @@ curl -X POST -H "Content-Type: application/json" -d @curl/books/post2.json http:
 curl -X POST -H "Content-Type: application/json" -d @curl/books/post3.json http://127.0.0.1:3000/books-api/v1/books
 curl -X POST -H "Content-Type: application/json" -d @curl/books/post4.json http://127.0.0.1:3000/books-api/v1/books
 curl -X POST -H "Content-Type: application/json" -d @curl/books/post5.json http://127.0.0.1:3000/books-api/v1/books
-# タイトルが「こころ」の書籍を取得
+# タイトルが「こころ」の書籍を取得(title=こころ)
 curl http://127.0.0.1:3000/books-api/v1/books?title=%E3%81%93%E3%81%93%E3%82%8D
-# 著者が「村上春樹」の書籍を取得
+# 著者が「村上春樹」の書籍を取得（author=村上春樹）
 curl http://127.0.0.1:3000/books-api/v1/books?author=%E6%9D%91%E4%B8%8A%E6%98%A5%E6%A8%B9
-# 出版社が「新潮社」の書籍を取得
+# 出版社が「新潮社」の書籍を取得（publisher=新潮社）
 curl http://127.0.0.1:3000/books-api/v1/books?publisher=%E6%96%B0%E6%BD%AE%E7%A4%BE
-# 著者が「村上春樹」で出版社が「講談社」の書籍を取得
+# 著者が「村上春樹」で出版社が「講談社」の書籍を取得（author=村上春樹&publisher=講談社）
 curl http://127.0.0.1:3000/books-api/v1/books?author=%E6%9D%91%E4%B8%8A%E6%98%A5%E6%A8%B9\&publisher=%E8%AC%9B%E8%AB%87%E7%A4%BE
 
 # BFF
 curl -X POST -H "Content-Type: application/json" -d '{ "user_name" : "Taro"}' http://127.0.0.1:3000/bff-api/v1/users
 
 curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "Buy Milk"}' http://127.0.0.1:3000/bff-api/v1/todo
+
+# TODO: API作成予定
+# curl -X POST -H "Content-Type: application/json" -d @curl/books/post1.json http://127.0.0.1:3000/bff-api/v1/books
+# curl http://127.0.0.1:3000/bff-api/v1/books?author=%E6%9D%91%E4%B8%8A%E6%98%A5%E6%A8%B9\&publisher=%E8%AC%9B%E8%AB%87%E7%A4%BE
 
 #curlコマンドの場合は&をエスケープする
 curl http://127.0.0.1:3000/bff-api/v1/todo?user_id=（ユーザID）\&todo_id=(TODO ID)

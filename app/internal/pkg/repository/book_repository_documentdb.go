@@ -4,7 +4,6 @@ import (
 	"app/internal/pkg/message"
 	"app/internal/pkg/model"
 
-	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/documentdb"
 	"example.com/appbase/pkg/errors"
@@ -25,17 +24,19 @@ func NewBookRepositoryForDocumentDB(logger logging.Logger, config config.Config,
 	// Collectionの取得
 	collection := documentDBAccessor.GetMongoDatabase().Collection(BOOK_COLLECTION_NAME)
 	return &bookRepositoryImplByDocumentDB{
-		collection: collection,
-		logger:     logger,
-		config:     config,
+		documentDBAccessor: documentDBAccessor,
+		collection:         collection,
+		logger:             logger,
+		config:             config,
 	}
 }
 
 // bookRepositoryImplByDocumentDB は、BookRepositoryのDocumentDB（MongoDB）実装構造体です。
 type bookRepositoryImplByDocumentDB struct {
-	collection *mongo.Collection
-	logger     logging.Logger
-	config     config.Config
+	documentDBAccessor documentdb.DocumentDBAccessor
+	collection         *mongo.Collection
+	logger             logging.Logger
+	config             config.Config
 }
 
 // （参考）DocumentDBおよびMongoDBを使ったプログラミングの知識は、以下のURLを参照
@@ -47,7 +48,11 @@ type bookRepositoryImplByDocumentDB struct {
 func (b *bookRepositoryImplByDocumentDB) CreateOne(book *model.Book) (*model.Book, error) {
 	// ドキュメントの登録
 	//　(参考)https://www.mongodb.com/ja-jp/docs/drivers/go/current/usage-examples/insertOne/
-	result, err := b.collection.InsertOne(apcontext.Context, &book)
+
+	// タイムアウトの設定
+	ctx, cacel := b.documentDBAccessor.GetDefaultContextWithTimeout()
+	defer cacel()
+	result, err := b.collection.InsertOne(ctx, &book)
 	if err != nil {
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
@@ -58,7 +63,9 @@ func (b *bookRepositoryImplByDocumentDB) CreateOne(book *model.Book) (*model.Boo
 
 // FindSomeByCriteria implements BookRepository.
 func (b *bookRepositoryImplByDocumentDB) FindSomeByCriteria(criteria *BookCriteria) ([]model.Book, error) {
-	ctx := apcontext.Context
+	// タイムアウトの設定
+	ctx, cacel := b.documentDBAccessor.GetDefaultContextWithTimeout()
+	defer cacel()
 
 	// 複数ドキュメントの検索
 	// （参考）https://www.mongodb.com/ja-jp/docs/drivers/go/current/usage-examples/find/
