@@ -8,11 +8,14 @@ import (
 
 // BookCriteria は、書籍の検索条件を表す構造体です。
 type BookCriteria struct {
-	Title string `json:"title"`
+	// （参考） bsonの構造タグを利用した、MongoDBのフィールド名の指定
+	// https://www.mongodb.com/ja-jp/docs/drivers/go/current/usage-examples/insertOne/
+	// https://www.mongodb.com/ja-jp/docs/drivers/go/current/fundamentals/bson/#struct-tags
+	Title string `bson:"title,omitempty"`
 	// Author は、書籍の著者です。
-	Author string `json:"author"`
+	Author string `bson:"author,omitempty"`
 	// Publisher は、書籍の出版社です。
-	Publisher string `json:"publisher"`
+	Publisher string `bson:"publisher,omitempty"`
 }
 
 // BookRepository は、書籍を管理するRepositoryインタフェースです。
@@ -23,8 +26,8 @@ type BookRepository interface {
 	CreateOne(book *model.Book) (*model.Book, error)
 }
 
-// NewBookRepository は、BookRepositoryを作成します。
-func NewBookRepository() BookRepository {
+// NewBookRepositoryStub は、BookRepositoryを作成します。
+func NewBookRepositoryStub() BookRepository {
 	return &bookRepositoryStub{}
 }
 

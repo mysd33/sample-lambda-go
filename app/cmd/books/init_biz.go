@@ -18,9 +18,10 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	if err != nil {
 		panic(err)
 	}
-	// TODO: スタブをDocumentDBアクセスの実装に置き換える
 	// リポジトリの作成
-	bookRepository := repository.NewBookRepository()
+	bookRepository := repository.NewBookRepositoryForDocumentDB(ac.GetLogger(), ac.GetConfig())
+	// スタブ
+	//bookRepository := repository.NewBookRepositoryStub()
 	// サービスの作成
 	bookService := service.New(ac.GetLogger(), ac.GetConfig(), bookRepository)
 	// コントローラの作成

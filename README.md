@@ -7,6 +7,9 @@
     * LambdaからDynamoDBやRDS AuroraへのDBアクセスへのアクセスを実現
     * LambdaはVPC内Lambdaとして、RDS Aurora（RDS Proxy経由）でのアクセスも可能としている
 
+> [!NOTE]
+> 現状、DocumentDBアクセスのサンプルAP追加に対応中
+
 * ディレード処理方式
     * Lambdaから、SQSへのアクセスし、非同期処理の実行依頼を実現
     * SQSトリガにLambda実行
@@ -163,26 +166,29 @@ aws cloudformation validate-template --template-body file://cfn-dynamodb.yaml
 aws cloudformation create-stack --stack-name Demo-DynamoDB-Stack --template-body file://cfn-dynamodb.yaml
 ```
 
-## 10. SQSの作成
+## 10. DocumentDBの作成
+* TBD
+
+## 11. SQSの作成
 ```sh
 aws cloudformation validate-template --template-body file://cfn-sqs.yaml
 aws cloudformation create-stack --stack-name Demo-SQS-Stack --template-body file://cfn-sqs.yaml
 ```
 
-## 11. S3の作成
+## 12. S3の作成
 ```sh
 aws cloudformation validate-template --template-body file://cfn-s3.yaml
 aws cloudformation create-stack --stack-name Demo-S3-Stack --template-body file://cfn-s3.yaml
 ```
 
-## 12. AppConfigの作成
+## 13. AppConfigの作成
 * AppConfigの基本リソースを作成する。
 ```sh
 aws cloudformation validate-template --template-body file://cfn-appconfig.yaml
 aws cloudformation create-stack --stack-name Demo-AppConfig-Stack --template-body file://cfn-appconfig.yaml
 ```
 
-## 13. AWS SAMでLambda/API Gatewayのデプロイ       
+## 14. AWS SAMでLambda/API Gatewayのデプロイ       
 * SAMビルド    
 ```sh
 # トップのフォルダに戻る
@@ -229,7 +235,7 @@ sam deploy
 make deploy
 ```
 
-## 14. AppConfigのデプロイ
+## 15. AppConfigのデプロイ
 * Hosted Configurationの設定バージョンの作成と初回デプロイする。
 ```sh
 #cfnフォルダに移動
@@ -250,7 +256,7 @@ aws cloudformation validate-template --template-body file://cfn-appconfig-sm-dep
 aws cloudformation create-stack --stack-name Demo-AppConfigSMDeploy-Stack --template-body file://cfn-appconfig-sm-deploy.yaml --parameters ParameterKey=SecretsManagerVersion,ParameterValue=（SecretsManagerVersionのバージョンID）
 ```
 
-## 15. APの実行確認（バックエンド）
+## 16. APの実行確認（バックエンド）
 * マネージドコンソールから、EC2(Bation)へSystems Manager Session Managerで接続して、curlコマンドで動作確認
     * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
 
@@ -299,7 +305,11 @@ curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/todo-api/v
 {"todo_id":"04a14ad3-f6a5-11ed-b40f-f2ead45b980a","todo_title":"ミルクを買う"}
 ```
 
-## 16. APの実行確認（フロントエンド）
+* BookサービスのAPI実行例
+    * TBD
+
+
+## 17. APの実行確認（フロントエンド）
 * 手元の端末のコンソールから、curlコマンドで動作確認
     * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
 * Windowsではgit bash等で実行できるが日本語が文字化けするので、PostmanやTalend API Tester等のツールを使ったほうがよい
@@ -345,7 +355,7 @@ curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Mil
 
 ```
 
-## 17. AppConfingの設定変更＆デプロイ
+## 18. AppConfingの設定変更＆デプロイ
 * cfn-appconfig-hosted-deploy.yaml内のホスト化された設定の内容を修正
 ```yaml
   AppConfigHostedConfigurationVersion:
@@ -382,7 +392,7 @@ aws cloudformation update-stack --stack-name Demo-AppConfigHostedDeploy-Stack --
 {"level":"info","ts":1699780051.3576484,"caller":"service/user_service.go:39","msg":"hoge_name=foo2"}
 ```
 
-## 18. AWSリソースの削除
+## 19. AWSリソースの削除
 * AppConfig Deploymentリソースの削除
 ```sh
 aws cloudformation delete-stack --stack-name Demo-AppConfigSMDeploy-Stack
@@ -416,7 +426,7 @@ aws cloudformation delete-stack --stack-name Demo-VPC-Stack
 aws cloudformation delete-stack --stack-name Demo-IAM-Stack 
 ```
 
-## 19. CloudWatch Logsのロググループ削除
+## 20. CloudWatch Logsのロググループ削除
 
 ```
 aws logs delete-log-group --log-group-name /aws/apigateway/welcome
@@ -427,7 +437,7 @@ aws logs describe-log-groups --log-group-name-prefix API-Gateway-Execution-Logs 
 aws logs delete-log-group --log-group-name（返却された各ロググループ名）
 ```
 
-## ローカルでの実行確認
+## 21. ローカルでの実行確認
 * 前述の手順の通り、AWS上でLambda等をデプロイしなくてもsam localコマンドを使ってローカル実行確認も可能である
 
 * Postgres SQLのDockerコンテナを起動
@@ -515,9 +525,10 @@ cd mongodb
 docker compose up -d
 ```
 
-* Mongo Expressでデータベースの確認
+* Mongo Expressでデータベースの作成
     * ブラウザで、[http://localhost:8081](http://localhost:8081)にアクセスするとMongo Expressのコンソールが表示される
-    * TODO :データベースの作成手順を記載
+    * 「+Create Database」ボタンをクリックし、以下のデータベースを作成する
+        * 「Database Name」…「sampledb」
 
 * APの動作確認
 ```sh
@@ -548,7 +559,9 @@ curl http://127.0.0.1:3000/books-api/v1/books?title=%E3%81%93%E3%81%93%E3%82%8D
 # 著者が「村上春樹」の書籍を取得
 curl http://127.0.0.1:3000/books-api/v1/books?author=%E6%9D%91%E4%B8%8A%E6%98%A5%E6%A8%B9
 # 出版社が「新潮社」の書籍を取得
-curl http://127.0.0.1:3000/books-api/v1/books?author=%E6%96%B0%E6%BD%AE%E7%A4%BE
+curl http://127.0.0.1:3000/books-api/v1/books?publisher=%E6%96%B0%E6%BD%AE%E7%A4%BE
+# 著者が「村上春樹」で出版社が「講談社」の書籍を取得
+curl http://127.0.0.1:3000/books-api/v1/books?author=%E6%9D%91%E4%B8%8A%E6%98%A5%E6%A8%B9\&publisher=%E8%AC%9B%E8%AB%87%E7%A4%BE
 
 # BFF
 curl -X POST -H "Content-Type: application/json" -d '{ "user_name" : "Taro"}' http://127.0.0.1:3000/bff-api/v1/users
