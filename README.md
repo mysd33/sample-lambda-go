@@ -1,7 +1,7 @@
 # Lambda/GoのAWS SAMサンプルAP
 ## 構成イメージ
 > [!NOTE]
-> 現状、DocumentDBアクセスのサンプルAP追加に対応中
+> 現状、DocumentDBアクセスのサンプルAP追加に対応のため動作確認中です。
 
 * オンラインリアルタイム処理方式
     * API GatewayをトリガにLambda実行
@@ -108,14 +108,24 @@ aws cloudformation create-stack --stack-name Demo-NATGW-Stack --template-body fi
 * リソース作成に少し時間がかかる。(20分程度)
 ```sh
 aws cloudformation validate-template --template-body file://cfn-rds.yaml
-aws cloudformation create-stack --stack-name Demo-RDS-Stack --template-body file://cfn-rds.yaml --parameters ParameterKey=DBUsername,ParameterValue=postgres ParameterKey=DBPassword,ParameterValue=password
+aws cloudformation create-stack --stack-name Demo-RDS-Stack --template-body file://cfn-rds.yaml --parameters ParameterKey=DBUsername,ParameterValue=postgres
+```
+
+* SecretsManagerが生成したパスワードを確認しておく
+```sh
+aws secretsmanager get-secret-value --secret-id Demo-RDS-Secrets
 ```
 
 ## 7. DocumentDB、SecretsManager作成
 * リソース作成に少し時間がかかる。（5分程度）
-```
+```sh
 aws cloudformation validate-template --template-body file://cfn-documentdb.yaml
-aws cloudformation create-stack --stack-name Demo-DocumentDB-Stack --template-body file://cfn-documentdb.yaml --parameters ParameterKey=DBUsername,ParameterValue=root ParameterKey=DBPassword,ParameterValue=password
+ws cloudformation create-stack --stack-name Demo-DocumentDB-Stack --template-body file://cfn-documentdb.yaml --parameters ParameterKey=DBUsername,ParameterValue=root
+```
+
+* SecretsManagerが生成したパスワードを確認しておく
+```sh
+aws secretsmanager get-secret-value --secret-id Demo-DocDB-Secrets
 ```
 
 ## 8. EC2(Bastion)の作成
@@ -142,6 +152,8 @@ sudo dnf install postgresql6 -y
 #Auroraに直接接続
 #CloudFormationのDemo-RDS-Stackスタックの出力「RDSClusterEndpointAddress」の値を参照
 psql -h (Auroraのクラスタエンドポイント) -U postgres -d testdb    
+
+#パスワードは、SecretsManagerの「Demo-RDS-Secrets」の「password」の値を参照し入力
 
 #ユーザテーブル作成
 CREATE TABLE IF NOT EXISTS m_user (user_id VARCHAR(50) PRIMARY KEY, user_name VARCHAR(50));
@@ -180,7 +192,8 @@ sudo su ec2-user
 cd ~
 wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
 
-# mongo --ssl --host (DocumentDBのエンドポイント) --sslCAFile global-bundle.pem --username root --password password
+# mongo --ssl --host (DocumentDBのエンドポイント) --sslCAFile global-bundle.pem --username root --password (パスワード)
+# パスワードは、SecretsManagerの「Demo-DocDB-Secrets」の「password」の値を参照し入力
 # 例
 mongo --ssl --host demo-documentdbcluster.cluster-crby0oqsjgv1.ap-northeast-1.docdb.amazonaws.com:27017 --sslCAFile global-bundle.pem --username root --password password
 

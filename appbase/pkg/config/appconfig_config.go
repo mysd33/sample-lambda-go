@@ -121,7 +121,7 @@ func loadAppConfigConfig(logger logging.Logger) (map[string]string, error) {
 
 // loadHostedAppConfig は、AWS AppConfigからHosted Configurationの設定をロードします。
 func loadHostedAppConfig(logger logging.Logger) (map[string]string, error) {
-	// Hosted Configurationのエンドポイントを環境変数から取得
+	// Hosted ConfigurationのエンドポイントURLを環境変数から取得
 	hostedCfgUrl, ok := os.LookupEnv(APPCONFIG_HOSTED_EXTENSION_URL_NAME)
 	if !ok {
 		// 環境変数が設定されていない場合は、空で返す
@@ -148,7 +148,7 @@ func loadHostedAppConfig(logger logging.Logger) (map[string]string, error) {
 
 // loadSecretManagerConfig は、AWS AppConfigからSecretManagerの設定をロードします。
 func loadSecretManagerConfig(logger logging.Logger) (map[string]string, error) {
-	// SecretManagerのエンドポイントを環境変数から取得
+	// SecretManagerのエンドポイントURLを環境変数から取得
 	smCfgUrlList, ok := os.LookupEnv(APPCONFIG_SM_EXTENSION_URL_LIST_NAME)
 	if !ok {
 		// 環境変数が設定されていない場合は、空で返す
@@ -170,6 +170,9 @@ func loadSecretManagerConfig(logger logging.Logger) (map[string]string, error) {
 
 // doLoadSecretManagerConfig は、AWS AppConfigから１つのSecretManagerの設定をロードします。
 func doLoadSecretManagerConfig(logger logging.Logger, cfgUrl string) (map[string]string, error) {
+	// URLから「/」で分割して、最後の要素にあるProfile名を取得
+	urlParts := strings.Split(cfgUrl, "/")
+	profileName := urlParts[len(urlParts)-1]
 	// AppConfig Lambda ExtensionsのエンドポイントへアクセスしてSecretManagerの設定データを取得
 	response, err := http.Get(cfgUrl)
 	if err != nil {
@@ -186,5 +189,11 @@ func doLoadSecretManagerConfig(logger logging.Logger, cfgUrl string) (map[string
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return nil, errors.Errorf("SecretsManagerのAppConfig[%s]のJSONアンマーシャルエラー:%w", cfgUrl, err)
 	}
-	return cfg, nil
+	// AppConfigの設定プロファイル名をプレフィックスとしたキーのマップを作成
+	// 例：AppConfigの設定が「docdb_smconfig」の場合、キーが「docdb_smconfig_」で始まるようにする
+	var prefixedCfg = make(map[string]string)
+	for k, v := range cfg {
+		prefixedCfg[profileName+"_"+k] = v
+	}
+	return prefixedCfg, nil
 }

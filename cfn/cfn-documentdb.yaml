@@ -17,15 +17,6 @@ Parameters:
     AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
     ConstraintDescription: Must begin with a letter and contain only alphanumeric characters.
 
-  DBPassword:
-    NoEcho: 'true'
-    Description: The database admin account password
-    Type: String
-    MinLength: '1'
-    MaxLength: '41'
-    AllowedPattern: '[a-zA-Z0-9]+'
-    ConstraintDescription: must contain only alphanumeric characters.
-
   DBInstanceClass:
     Description: 'Instance class. Please refer to:
       https://docs.aws.amazon.com/documentdb/latest/developerguide/db-instance-classes.html#db-instance-classes-by-region'
@@ -54,7 +45,7 @@ Resources:
     Properties:
       DBClusterIdentifier: !Sub ${StackPrefix}-DocumentDBCluster
       MasterUsername: !Ref DBUsername
-      MasterUserPassword: !Ref DBPassword
+      MasterUserPassword: !Sub '{{resolve:secretsmanager:${StackPrefix}-DocDB-Secrets:SecretString:password}}'
       EngineVersion: !Ref DBEngineVersion
       DBSubnetGroupName: !Ref DocumentDBSubnetGroup
       VpcSecurityGroupIds: 
@@ -70,15 +61,15 @@ Resources:
       DBInstanceClass: !Ref DBInstanceClass
 
 # Secrets Manager for DocumentDB
+# https://docs.aws.amazon.com/ja_jp/secretsmanager/latest/userguide/reference_secret_json_structure.html#reference_secret_json_structure_docdb
   DocumentDBSecretsManager:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub ${StackPrefix}-DocDB-Secrets
       Description: DocumentDB Secrets
-      SecretString: !Sub '{
-        "docdb_username": "${DBUsername}", 
-        "docdb_password": "${DBPassword}"
-      }'
+      GenerateSecretString:
+        SecretStringTemplate: !Sub '{"username": "${DBUsername}"}'
+        GenerateStringKey: "password"      
       Tags:
         - Key: Name
           Value: !Sub ${StackPrefix}-DocDB-SecretsManager

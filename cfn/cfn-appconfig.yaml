@@ -21,10 +21,10 @@ Parameters:
     Default: config
   RDSSecretsManagerConfigurationProfileName:
     Type: String
-    Default: rds-sm-config
+    Default: rds_smconfig
   DocDBSecretsManagerConfigurationProfileName:
     Type: String
-    Default: doc-db-sm-config
+    Default: docdb_smconfig
 
 #Mappings: 
 

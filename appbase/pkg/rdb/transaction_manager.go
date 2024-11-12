@@ -18,8 +18,10 @@ import (
 )
 
 const (
-	RDB_USERNAME_NAME = "username"
-	RDB_PASSWORD_NAME = "password"
+	// TODO: SecretsManagerのシークレット名を含むので、定数ではなく設定変更できるようにする。
+	RDB_USERNAME_NAME = "rds_smconfig_username"
+	RDB_PASSWORD_NAME = "rds_smconfig_password"
+
 	RDB_ENDPOINT_NAME = "RDB_ENDPOINT"
 	RDB_PORT_NAME     = "RDB_PORT"
 	RDB_DBNAME_NAME   = "RDB_DB_NAME"
