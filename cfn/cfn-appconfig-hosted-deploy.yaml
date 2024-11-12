@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: AppConfig Deployment Template for CloudFormation Demo. Depends on cfn-appconfig.yaml, cfn-rds.yaml, cfn-s3.yaml, template.yaml.
+Description: AppConfig Deployment Template for CloudFormation Demo. Depends on cfn-appconfig.yaml, cfn-rds.yaml, cfn-documentdb.yaml, cfn-s3.yaml, template.yaml.
 #Metadata: 
 Parameters: 
   StackPrefix:
@@ -49,7 +49,12 @@ Resources:
             - "\nRDB_PORT: "
             - Fn::ImportValue: !Sub ${StackPrefix}-RDSClusterEndpointPort
             - "\nRDB_DB_NAME: "
-            - Fn::ImportValue: !Sub ${StackPrefix}-RDSDBName     
+            - Fn::ImportValue: !Sub ${StackPrefix}-RDSDBName   
+            - "\nDOCUMENTDB_ENDPOINT: "
+            - Fn::ImportValue: !Sub ${StackPrefix}-DocDBClusterEndpoint
+            - "\nDOCUMENTDB_PORT: "
+            - Fn::ImportValue: !Sub ${StackPrefix}-DocDBClusterPort
+            - "\nDOCUMENTDB_DB_NAME: sampledb"
             - "\nUSERS_API_BASE_URL: "
             - Fn::ImportValue: !Sub ${StackPrefix}-UsersAPIBaseURL-${Stage}
             - "\nTODO_API_BASE_URL: "

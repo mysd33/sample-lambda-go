@@ -113,7 +113,30 @@ Resources:
           Description: Ingress from the Bastion        
       Tags:
         - Key: Name
-          Value: !Sub ${StackPrefix}-Aurora-SG           
+          Value: !Sub ${StackPrefix}-Aurora-SG    
+
+# Security Group of DocumentDB
+  DocumentDBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:      
+      GroupDescription: DocumentDB Security Group
+      VpcId:
+        Fn::ImportValue: !Sub ${StackPrefix}-VPC-ID
+      SecurityGroupIngress:
+        - SourceSecurityGroupId: !Ref LambdaSecurityGroup
+          IpProtocol: tcp
+          FromPort: 27017
+          ToPort: 27017
+          Description: Ingress from Lambda      
+        - SourceSecurityGroupId: !Ref BastionSecurityGroup
+          IpProtocol: tcp
+          FromPort: 27017
+          ToPort: 27017
+          Description: Ingress from the Bastion          
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-DocDB-SG     
+
 Outputs:
   BastionSecurityGroupID:
     Description: BastionSecurityGroup ID
@@ -145,3 +168,8 @@ Outputs:
     Value:  !Ref AuroraSecurityGroup
     Export: 
       Name: !Sub ${StackPrefix}-AuroraSecurityGroup-ID
+  DocumentDBSecurityGroupID:
+    Description: DocumentDBSecurityGroup ID
+    Value:  !Ref DocumentDBSecurityGroup
+    Export: 
+      Name: !Sub ${StackPrefix}-DocumentDBSecurityGroup-ID

@@ -30,7 +30,7 @@ Parameters:
   DBEngineVersion:
     Description: Version number of the database engine
     Type: String
-    Default: 14.6  
+    Default: 16.4
   DBEngineFamily:
     Description: Family of the database engine
     Type: String
@@ -113,7 +113,7 @@ Resources:
         }'
       Tags:
         - Key: Name
-          Value: !Sub ${StackPrefix}-SecretsManager     
+          Value: !Sub ${StackPrefix}-RDS-SecretsManager     
 
 # RDS Proxy
   RDSProxy:

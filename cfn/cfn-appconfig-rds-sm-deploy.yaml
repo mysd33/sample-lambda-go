@@ -14,7 +14,7 @@ Parameters:
 #Conditions: 
 
 Resources: 
-  AppConfigSecretsManagerProfileDeployment:
+  AppConfigRDSSecretsManagerProfileDeployment:
     Type: AWS::AppConfig::Deployment
     Properties:
       ApplicationId:
@@ -22,7 +22,7 @@ Resources:
       EnvironmentId:
         Fn::ImportValue: !Sub ${StackPrefix}-AppConfigEnvID
       ConfigurationProfileId:
-        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigSecretsManagerProfileID
+        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigRDSSecretsManagerProfileID
       ConfigurationVersion: !Ref SecretsManagerVersion
 #      DeploymentStrategyId: AppConfig.AllAtOnce
 #      DeploymentStrategyId: AppConfig.Linear50PercentEvery30Seconds
@@ -31,4 +31,4 @@ Resources:
         Fn::ImportValue: !Sub ${StackPrefix}-AppConfigDeploymentStrategyID      
       Tags:
         - Key: Name
-          Value: !Sub ${StackPrefix}-AppConfigSecretsManagerProfileDeployment
+          Value: !Sub ${StackPrefix}-AppConfigRDSSecretsManagerProfileDeployment

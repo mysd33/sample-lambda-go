@@ -86,8 +86,8 @@ Globals:
         # AppConfig
         APPCONFIG_HOSTED_EXTENSION_URL:
           Fn::ImportValue: !Sub ${StackPrefix}-AppConfigHostedProfileLambdaExtension${Stage}URL        
-        APPCONFIG_SM_EXTENSION_URL:
-          Fn::ImportValue: !Sub ${StackPrefix}-AppConfigSMProfileLambdaExtension${Stage}URL
+        APPCONFIG_SM_EXTENSION_URL_LIST:
+          Fn::ImportValue: !Sub ${StackPrefix}-AppConfigSMProfileLambdaExtension${Stage}URLs
         AWS_APPCONFIG_EXTENSION_PREFETCH_LIST:
           Fn::ImportValue: !Sub ${StackPrefix}-AppConfigLambdaExtension${Stage}Path
         # Timezone

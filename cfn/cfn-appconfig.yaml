@@ -19,9 +19,12 @@ Parameters:
   HostedConfigurationProfileName:
     Type: String
     Default: config
-  SecretsManagerConfigurationProfileName:
+  RDSSecretsManagerConfigurationProfileName:
     Type: String
-    Default: sm-config
+    Default: rds-sm-config
+  DocDBSecretsManagerConfigurationProfileName:
+    Type: String
+    Default: doc-db-sm-config
 
 #Mappings: 
 
@@ -56,17 +59,29 @@ Resources:
         - Key: Name
           Value: !Sub ${StackPrefix}-AppConfigProfile
 
-  AppConfigSecretsManagerProfile:
+  AppConfigRDSSecretsManagerProfile:
     Type: AWS::AppConfig::ConfigurationProfile
     Properties:
       ApplicationId: !Ref AppConfigApplication
       LocationUri: !Sub secretsmanager://${StackPrefix}-RDS-Secrets
       RetrievalRoleArn:
         Fn::ImportValue: !Sub ${StackPrefix}-AppConfigRoleArn
-      Name: !Ref SecretsManagerConfigurationProfileName
+      Name: !Ref RDSSecretsManagerConfigurationProfileName
       Tags:
         - Key: Name
-          Value: !Sub ${StackPrefix}-AppConfigSecretsManagerProfile      
+          Value: !Sub ${StackPrefix}-AppConfigRDSSecretsManagerProfile    
+
+  AppConfigDocDBSecretsManagerProfile:
+    Type: AWS::AppConfig::ConfigurationProfile
+    Properties:
+      ApplicationId: !Ref AppConfigApplication
+      LocationUri: !Sub secretsmanager://${StackPrefix}-DocDB-Secrets
+      RetrievalRoleArn:
+        Fn::ImportValue: !Sub ${StackPrefix}-AppConfigRoleArn
+      Name: !Ref DocDBSecretsManagerConfigurationProfileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-AppConfigDocDBSecretsManagerProfile  
 
   AppConfigDeploymentStrategy:
     Type: AWS::AppConfig::DeploymentStrategy
@@ -110,22 +125,37 @@ Outputs:
     Value: !Sub http://localhost:2772/applications/${ApplicationName}/environments/${Stage}/configurations/${HostedConfigurationProfileName}    
     Export: 
       Name: !Sub ${StackPrefix}-AppConfigHostedProfileLambdaExtension${Stage}URL
-  AppConfigSecretsManagerProfileID:
+  AppConfigRDSSecretsManagerProfileID:
     Description: AppConfig SecretsManager ConfigurationProfile ID
-    Value: !Ref AppConfigSecretsManagerProfile
+    Value: !Ref AppConfigRDSSecretsManagerProfile
     Export: 
-      Name: !Sub ${StackPrefix}-AppConfigSecretsManagerProfileID
-  SecretsManagerAppConfigLambdaExtensionURL:  
+      Name: !Sub ${StackPrefix}-AppConfigRDSSecretsManagerProfileID
+  RDSSecretsManagerAppConfigLambdaExtensionURL:  
     Description: Secrets Manager AppConfig Lambda Extension Endpoint URL
-    Value: !Sub http://localhost:2772/applications/${ApplicationName}/environments/${Stage}/configurations/${SecretsManagerConfigurationProfileName} 
+    Value: !Sub http://localhost:2772/applications/${ApplicationName}/environments/${Stage}/configurations/${RDSSecretsManagerConfigurationProfileName} 
     Export: 
-      Name: !Sub ${StackPrefix}-AppConfigSMProfileLambdaExtension${Stage}URL
+      Name: !Sub ${StackPrefix}-AppConfigRDSSMProfileLambdaExtension${Stage}URL
+  DocDBSecretsManagerAppConfigLambdaExtensionURL:  
+    Description: Secrets Manager AppConfig Lambda Extension Endpoint URL
+    Value: !Sub http://localhost:2772/applications/${ApplicationName}/environments/${Stage}/configurations/${DocDBSecretsManagerConfigurationProfileName} 
+    Export: 
+      Name: !Sub ${StackPrefix}-AppConfigDocDBSMProfileLambdaExtension${Stage}URL
+  SecretsManagerAppConfigLambdaExtensionURLs:
+    Description: Secrets Manager AppConfig Lambda Extension Endpoint URLs
+    Value: 
+      Fn::Join:
+        - ","
+        - - !Sub http://localhost:2772/applications/${ApplicationName}/environments/${Stage}/configurations/${RDSSecretsManagerConfigurationProfileName}
+          - !Sub http://localhost:2772/applications/${ApplicationName}/environments/${Stage}/configurations/${DocDBSecretsManagerConfigurationProfileName}
+    Export: 
+      Name: !Sub ${StackPrefix}-AppConfigSMProfileLambdaExtension${Stage}URLs
   AppConfigLambdaExtensionPath:
     Description: AppConfig Lambda Extension Endpoint Path
     Value: 
       Fn::Join:
         - ","
         - - !Sub /applications/${ApplicationName}/environments/${Stage}/configurations/${HostedConfigurationProfileName}
-          - !Sub /applications/${ApplicationName}/environments/${Stage}/configurations/${SecretsManagerConfigurationProfileName}
+          - !Sub /applications/${ApplicationName}/environments/${Stage}/configurations/${RDSSecretsManagerConfigurationProfileName}
+          - !Sub /applications/${ApplicationName}/environments/${Stage}/configurations/${DocDBSecretsManagerConfigurationProfileName}
     Export: 
       Name: !Sub ${StackPrefix}-AppConfigLambdaExtension${Stage}Path

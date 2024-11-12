@@ -1,0 +1,101 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: DocumentDB Template for CloudFormation Demo. Depends on cfn-iam.yaml, cfn-vpc.yaml, cfn-sg.yaml
+#Metadata: 
+
+Parameters:
+  StackPrefix:
+    Description: Stack Resource Name Prefix
+    Type: String
+    Default: Demo
+
+  DBUsername:
+    NoEcho: 'true'
+    Description: The database admin account username
+    Type: String
+    MinLength: '1'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
+    ConstraintDescription: Must begin with a letter and contain only alphanumeric characters.
+
+  DBPassword:
+    NoEcho: 'true'
+    Description: The database admin account password
+    Type: String
+    MinLength: '1'
+    MaxLength: '41'
+    AllowedPattern: '[a-zA-Z0-9]+'
+    ConstraintDescription: must contain only alphanumeric characters.
+
+  DBInstanceClass:
+    Description: 'Instance class. Please refer to:
+      https://docs.aws.amazon.com/documentdb/latest/developerguide/db-instance-classes.html#db-instance-classes-by-region'
+    Type: String
+    Default: db.t3.medium
+  
+  DBEngineVersion:
+    Description: Version number of the database engine
+    Type: String
+    Default: 5.0.0
+
+Resources:
+# DocumentDB
+  DocumentDBSubnetGroup:
+    Type: AWS::DocDB::DBSubnetGroup
+    Properties:
+      DBSubnetGroupName: !Sub ${StackPrefix}-DocumentDBSubnetGroup
+      DBSubnetGroupDescription: DocumentDB Subnet Group
+      SubnetIds: 
+        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetThreeId
+        - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetFourId
+      
+  DocumentDBCluster:
+    Type: AWS::DocDB::DBCluster
+    DeletionPolicy: Delete
+    Properties:
+      DBClusterIdentifier: !Sub ${StackPrefix}-DocumentDBCluster
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      EngineVersion: !Ref DBEngineVersion
+      DBSubnetGroupName: !Ref DocumentDBSubnetGroup
+      VpcSecurityGroupIds: 
+        - Fn::ImportValue: !Sub ${StackPrefix}-DocumentDBSecurityGroup-ID
+
+  # In Production Environment, it recommends Three DBInstances, 
+  # but for the demo, we are using only one.
+  DocumentDBInstance1:
+    Type: AWS::DocDB::DBInstance
+    Properties:      
+      DBClusterIdentifier: !Ref DocumentDBCluster
+      DBInstanceIdentifier: !Sub ${StackPrefix}-DocumentDBInstance1
+      DBInstanceClass: !Ref DBInstanceClass
+
+# Secrets Manager for DocumentDB
+  DocumentDBSecretsManager:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub ${StackPrefix}-DocDB-Secrets
+      Description: DocumentDB Secrets
+      SecretString: !Sub '{
+        "docdb_username": "${DBUsername}", 
+        "docdb_password": "${DBPassword}"
+      }'
+      Tags:
+        - Key: Name
+          Value: !Sub ${StackPrefix}-DocDB-SecretsManager
+
+Outputs:
+  DocumentDBClusterId:
+    Value: !Ref DocumentDBCluster
+  DocumentDBClusterEndpoint:
+    Value: !GetAtt DocumentDBCluster.Endpoint
+    Export: 
+      Name: !Sub ${StackPrefix}-DocDBClusterEndpoint
+  DocumentDBClusterPort:
+    Value: !GetAtt DocumentDBCluster.Port
+    Export: 
+      Name: !Sub ${StackPrefix}-DocDBClusterPort
+  DocumentDBSecretsManagerArn:
+    Description: DocumentDB Secrets Manager Arn
+    Value: !Ref DocumentDBSecretsManager 
+    Export: 
+      Name: !Sub ${StackPrefix}-DocDBSecretsManagerArn    

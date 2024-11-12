@@ -9,6 +9,7 @@ import (
 	"maps"
 	"net/http"
 	"os"
+	"strings"
 
 	"example.com/appbase/pkg/logging"
 	"example.com/appbase/pkg/message"
@@ -17,8 +18,8 @@ import (
 )
 
 const (
-	APPCONFIG_HOSTED_EXTENSION_URL_NAME = "APPCONFIG_HOSTED_EXTENSION_URL"
-	APPCONFIG_SM_EXTENSION_URL_NAME     = "APPCONFIG_SM_EXTENSION_URL"
+	APPCONFIG_HOSTED_EXTENSION_URL_NAME  = "APPCONFIG_HOSTED_EXTENSION_URL"
+	APPCONFIG_SM_EXTENSION_URL_LIST_NAME = "APPCONFIG_SM_EXTENSION_URL_LIST"
 )
 
 // appConfigConfigは、AWS AppConfigによるConfig実装です。
@@ -129,18 +130,18 @@ func loadHostedAppConfig(logger logging.Logger) (map[string]string, error) {
 	// AppConfig Lambda ExtensionsのエンドポイントへアクセスしてHosted Configurationの設定データを取得
 	response, err := http.Get(hostedCfgUrl)
 	if err != nil {
-		return nil, errors.Errorf("Hosted ConfigurtionのAppConfig読み込みエラー:%w", err)
+		return nil, errors.Errorf("Hosted ConfigurtionのAppConfig[%s]通信エラー:%w", hostedCfgUrl, err)
 	}
 	var cfg map[string]string
 	defer response.Body.Close()
 	data, err := io.ReadAll(response.Body)
 	if err != nil {
-		return nil, errors.Errorf("Hosted ConfigurtionのAppConfig読み込みエラー:%w", err)
+		return nil, errors.Errorf("Hosted ConfigurtionのAppConfig[%s]読み込みエラー:%w", hostedCfgUrl, err)
 	}
 	logger.Debug("Hosted ConfigurationのAppConfig読み込み(yaml)):%s\n", string(data))
 	// YAMLの設定データを読み込み
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return nil, errors.Errorf("Hosted ConfigurtionのAppConfig読み込みエラー:%w", err)
+		return nil, errors.Errorf("Hosted ConfigurtionのAppConfig[%s]YAMLアンマーシャルエラー:%w", hostedCfgUrl, err)
 	}
 	return cfg, nil
 }
@@ -148,26 +149,42 @@ func loadHostedAppConfig(logger logging.Logger) (map[string]string, error) {
 // loadSecretManagerConfig は、AWS AppConfigからSecretManagerの設定をロードします。
 func loadSecretManagerConfig(logger logging.Logger) (map[string]string, error) {
 	// SecretManagerのエンドポイントを環境変数から取得
-	smCfgUrl, ok := os.LookupEnv(APPCONFIG_SM_EXTENSION_URL_NAME)
+	smCfgUrlList, ok := os.LookupEnv(APPCONFIG_SM_EXTENSION_URL_LIST_NAME)
 	if !ok {
 		// 環境変数が設定されていない場合は、空で返す
 		return nil, nil
 	}
+	// カンマ区切りで複数のSecretManagerのエンドポイントが指定されている場合は、それぞれの設定を取得してマージ
+	smCfgUrls := strings.Split(smCfgUrlList, ",")
+	var cfg map[string]string
+	for _, smCfgUrl := range smCfgUrls {
+		tmpCfg, err := doLoadSecretManagerConfig(logger, smCfgUrl)
+		if err != nil {
+			return nil, err
+		}
+		// 設定をマージ
+		maps.Copy(cfg, tmpCfg)
+	}
+	return cfg, nil
+}
+
+// doLoadSecretManagerConfig は、AWS AppConfigから１つのSecretManagerの設定をロードします。
+func doLoadSecretManagerConfig(logger logging.Logger, cfgUrl string) (map[string]string, error) {
 	// AppConfig Lambda ExtensionsのエンドポイントへアクセスしてSecretManagerの設定データを取得
-	response, err := http.Get(smCfgUrl)
+	response, err := http.Get(cfgUrl)
 	if err != nil {
-		return nil, errors.Errorf("SecretManagerのAppConfig読み込みエラー:%w", err)
+		return nil, errors.Errorf("SecretsManagerのAppConfig[%s]通信エラー:%w", cfgUrl, err)
 	}
 	var cfg map[string]string
 	defer response.Body.Close()
 	data, err := io.ReadAll(response.Body)
 	if err != nil {
-		return nil, errors.Errorf("SecretManagerのAppConfig読み込みエラー:%w", err)
+		return nil, errors.Errorf("SecretsManagerのAppConfig[%s]読み込みエラー:%w", cfgUrl, err)
 	}
 	logger.Debug("SecretManagerのAppConfig読み込み(json):%s\n", string(data))
 	// JSONの設定データを読み込み
 	if err := json.Unmarshal(data, &cfg); err != nil {
-		return nil, errors.Errorf("SecretManagerのAppConfig読み込みエラー:%w", err)
+		return nil, errors.Errorf("SecretsManagerのAppConfig[%s]のJSONアンマーシャルエラー:%w", cfgUrl, err)
 	}
 	return cfg, nil
 }
