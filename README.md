@@ -103,6 +103,10 @@ aws cloudformation validate-template --template-body file://cfn-ngw.yaml
 aws cloudformation create-stack --stack-name Demo-NATGW-Stack --template-body file://cfn-ngw.yaml
 ```
 
+> [!NOTE]
+> AuroraとDocumentDB削除に失敗するので、
+> SecretsManagerのスタックを別にして先に作るように修正予定
+
 ## 6. RDS Aurora Serverless v2 for PostgreSQL、SecretsManager、RDS Proxy作成
 * リソース作成に少し時間がかかる。(20分程度)
 ```sh
@@ -252,6 +256,7 @@ xcopy /I /S configs .aws-sam\build\UsersFunction\configs
 xcopy /I /S configs .aws-sam\build\TodoFunction\configs	
 xcopy /I /S configs .aws-sam\build\TodoAsyncFunction\configs
 xcopy /I /S configs .aws-sam\build\TodoAsyncFifoFunction\configs
+xcopy /I /S configs .aws-sam\build\BooksFunction\configs	
 
 # Windowsでもmakeをインストールすればmakeだけでいけます
 make
@@ -268,6 +273,7 @@ xcopy /I /S configs .aws-sam\build\UsersFunction\configs
 xcopy /I /S configs .aws-sam\build\TodoFunction\configs	
 xcopy /I /S configs .aws-sam\build\TodoAsyncFunction\configs
 xcopy /I /S configs .aws-sam\build\TodoAsyncFifoFunction\configs
+xcopy /I /S configs .aws-sam\build\BooksFunction\configs	
 
 # Windowsでもmakeをインストールすればmakeだけでいけます
 make
@@ -520,11 +526,22 @@ aws cloudformation delete-stack --stack-name Demo-IAM-Stack
 
 ```
 aws logs delete-log-group --log-group-name /aws/apigateway/welcome
+aws logs delete-log-group --log-group-name /aws/lambda-insights
 aws logs delete-log-group --log-group-name /aws/rds/proxy/demo-rds-proxy
 aws logs delete-log-group --log-group-name /aws/rds/cluster/aurora-postgresql-cluster/postgresql
 
+# API Gatewayの実行ログの削除
 aws logs describe-log-groups --log-group-name-prefix API-Gateway-Execution-Logs --query logGroups[*].logGroupName
 aws logs delete-log-group --log-group-name（返却された各ロググループ名）
+
+# 以下は、Lambdaのロググループが残ってしまっていた場合は実行し削除
+# AppConfig Agentの終了のタイミングによっては残ってしまうことがある
+aws logs delete-log-group --log-group-name /aws/lambda/user-function
+aws logs delete-log-group --log-group-name /aws/lambda/book-function
+aws logs delete-log-group --log-group-name /aws/lambda/todo-function
+aws logs delete-log-group --log-group-name /aws/lambda/bff-function
+aws logs delete-log-group --log-group-name /aws/lambda/todo-async-function
+aws logs delete-log-group --log-group-name /aws/lambda/todo-async-fifo-function
 ```
 
 ## 22. ローカルでの実行確認
