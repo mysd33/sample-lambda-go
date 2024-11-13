@@ -126,16 +126,21 @@ Outputs:
     Export: 
       Name: !Sub ${StackPrefix}-AppConfigHostedProfileLambdaExtension${Stage}URL
   AppConfigRDSSecretsManagerProfileID:
-    Description: AppConfig SecretsManager ConfigurationProfile ID
+    Description: AppConfig SecretsManager for RDS ConfigurationProfile ID
     Value: !Ref AppConfigRDSSecretsManagerProfile
     Export: 
       Name: !Sub ${StackPrefix}-AppConfigRDSSecretsManagerProfileID
-  RDSSecretsManagerAppConfigLambdaExtensionURL:  
+  AppConfigDocDBSecretsManagerProfileID:
+    Description: AppConfig SecretsManager for DocumentDB ConfigurationProfile ID
+    Value: !Ref AppConfigDocDBSecretsManagerProfile
+    Export: 
+      Name: !Sub ${StackPrefix}-AppConfigDocDBSecretsManagerProfileID
+  SecretsManagerRDSAppConfigLambdaExtensionURL:  
     Description: Secrets Manager AppConfig Lambda Extension Endpoint URL
     Value: !Sub http://localhost:2772/applications/${ApplicationName}/environments/${Stage}/configurations/${RDSSecretsManagerConfigurationProfileName} 
     Export: 
       Name: !Sub ${StackPrefix}-AppConfigRDSSMProfileLambdaExtension${Stage}URL
-  DocDBSecretsManagerAppConfigLambdaExtensionURL:  
+  SecretsManagerDocDBAppConfigLambdaExtensionURL:  
     Description: Secrets Manager AppConfig Lambda Extension Endpoint URL
     Value: !Sub http://localhost:2772/applications/${ApplicationName}/environments/${Stage}/configurations/${DocDBSecretsManagerConfigurationProfileName} 
     Export: 

@@ -26,7 +26,7 @@ Parameters:
   DBEngineFamily:
     Description: Family of the database engine
     Type: String
-    Default: aurora-postgresql14
+    Default: aurora-postgresql16
   #DBInstanceClassName:
   #  Description: DB Instance Class
   #  Type: String
@@ -103,6 +103,8 @@ Resources:
       GenerateSecretString:
         SecretStringTemplate: !Sub '{"username": "${DBUsername}"}'
         GenerateStringKey: "password"
+        PasswordLength: 16
+        ExcludeCharacters: "\"@/\\"      
       Tags:
         - Key: Name
           Value: !Sub ${StackPrefix}-RDS-SecretsManager     

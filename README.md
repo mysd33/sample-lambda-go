@@ -1,8 +1,5 @@
 # Lambda/GoのAWS SAMサンプルAP
 ## 構成イメージ
-> [!NOTE]
-> 現状、DocumentDBアクセスのサンプルAP追加に対応のため動作確認中です。
-
 * オンラインリアルタイム処理方式
     * API GatewayをトリガにLambda実行
     * フロントエンドは、Regional Public APIで公開し、バックエンドはPrivate APIで公開
@@ -120,7 +117,7 @@ aws secretsmanager get-secret-value --secret-id Demo-RDS-Secrets
 * リソース作成に少し時間がかかる。（5分程度）
 ```sh
 aws cloudformation validate-template --template-body file://cfn-documentdb.yaml
-ws cloudformation create-stack --stack-name Demo-DocumentDB-Stack --template-body file://cfn-documentdb.yaml --parameters ParameterKey=DBUsername,ParameterValue=root
+aws cloudformation create-stack --stack-name Demo-DocumentDB-Stack --template-body file://cfn-documentdb.yaml --parameters ParameterKey=DBUsername,ParameterValue=root
 ```
 
 * SecretsManagerが生成したパスワードを確認しておく
@@ -147,7 +144,7 @@ aws cloudformation create-stack --stack-name Demo-Bastion-Stack --template-body 
 ```sh
 sudo dnf update -y
 
-sudo dnf install postgresql6 -y
+sudo dnf install postgresql16 -y
 
 #Auroraに直接接続
 #CloudFormationのDemo-RDS-Stackスタックの出力「RDSClusterEndpointAddress」の値を参照
@@ -304,7 +301,7 @@ aws cloudformation create-stack --stack-name Demo-AppConfigHostedDeploy-Stack --
 aws secretsmanager list-secret-version-ids --secret-id Demo-RDS-Secrets --query Versions[?contains(VersionStages,`AWSCURRENT`)].VersionId
 
 # CloudFormationの実行
-aws cloudformation validate-template --template-body file://cfn-appconfig-sm-deploy.yaml
+aws cloudformation validate-template --template-body file://cfn-appconfig-rds-sm-deploy.yaml
 aws cloudformation create-stack --stack-name Demo-AppConfigRDSSMDeploy-Stack --template-body file://cfn-appconfig-rds-sm-deploy.yaml --parameters ParameterKey=SecretsManagerVersion,ParameterValue=（SecretsManagerVersionのバージョンID）
 ```
 
@@ -316,7 +313,7 @@ aws cloudformation create-stack --stack-name Demo-AppConfigRDSSMDeploy-Stack --t
 aws secretsmanager list-secret-version-ids --secret-id Demo-DocDB-Secrets --query Versions[?contains(VersionStages,`AWSCURRENT`)].VersionId
 
 # CloudFormationの実行
-aws cloudformation validate-template --template-body file://cfn-appconfig-sm-deploy.yaml
+aws cloudformation validate-template --template-body file://cfn-appconfig-docdb-sm-deploy.yaml
 aws cloudformation create-stack --stack-name Demo-AppConfigDocDBSMDeploy-Stack --template-body file://cfn-appconfig-docdb-sm-deploy.yaml --parameters ParameterKey=SecretsManagerVersion,ParameterValue=（SecretsManagerVersionのバージョンID）
 ```
 

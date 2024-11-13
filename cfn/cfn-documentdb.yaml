@@ -7,7 +7,6 @@ Parameters:
     Description: Stack Resource Name Prefix
     Type: String
     Default: Demo
-
   DBUsername:
     NoEcho: 'true'
     Description: The database admin account username
@@ -16,13 +15,11 @@ Parameters:
     MaxLength: '16'
     AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
     ConstraintDescription: Must begin with a letter and contain only alphanumeric characters.
-
   DBInstanceClass:
     Description: 'Instance class. Please refer to:
       https://docs.aws.amazon.com/documentdb/latest/developerguide/db-instance-classes.html#db-instance-classes-by-region'
     Type: String
     Default: db.t3.medium
-  
   DBEngineVersion:
     Description: Version number of the database engine
     Type: String
@@ -38,7 +35,6 @@ Resources:
       SubnetIds: 
         - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetThreeId
         - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetFourId
-      
   DocumentDBCluster:
     Type: AWS::DocDB::DBCluster
     DeletionPolicy: Delete
@@ -50,7 +46,6 @@ Resources:
       DBSubnetGroupName: !Ref DocumentDBSubnetGroup
       VpcSecurityGroupIds: 
         - Fn::ImportValue: !Sub ${StackPrefix}-DocumentDBSecurityGroup-ID
-
   # In Production Environment, it recommends Three DBInstances, 
   # but for the demo, we are using only one.
   DocumentDBInstance1:
@@ -69,7 +64,9 @@ Resources:
       Description: DocumentDB Secrets
       GenerateSecretString:
         SecretStringTemplate: !Sub '{"username": "${DBUsername}"}'
-        GenerateStringKey: "password"      
+        GenerateStringKey: "password"
+        PasswordLength: 16
+        ExcludeCharacters: "\"@/\\"
       Tags:
         - Key: Name
           Value: !Sub ${StackPrefix}-DocDB-SecretsManager
