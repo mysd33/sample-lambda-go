@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"net/url"
 	"os"
 
 	"example.com/appbase/pkg/apcontext"
@@ -75,6 +76,8 @@ func NewDocumentDBAccessor(config config.Config, logger logging.Logger) (Documen
 	if !found {
 		return nil, errors.Newf("%s が設定されていません", DOCUMENTDB_PASSWORD_NAME)
 	}
+	// コロンなど特殊な文字等を含むため、パスワードをエスケープ
+	escpapedPassword := url.QueryEscape(password)
 
 	var client *mongo.Client
 	var err error
@@ -83,7 +86,7 @@ func NewDocumentDBAccessor(config config.Config, logger logging.Logger) (Documen
 		// ローカル実行時のMongoDB用の接続文字列作成
 		// （参考）https://qiita.com/chenglin/items/ecf6f67e8f80c4750204
 		connectionStringTemplate := "mongodb://%s:%s@%s:%s/%s?authSource=admin"
-		connectionString := fmt.Sprintf(connectionStringTemplate, userName, password, documentdbEndpoint, documentdbPort, dbName)
+		connectionString := fmt.Sprintf(connectionStringTemplate, userName, escpapedPassword, documentdbEndpoint, documentdbPort, dbName)
 		logger.Debug("接続文字列: %s", connectionString)
 		// ローカルのMongoDBに接続しmongo.Clientを取得
 
@@ -95,7 +98,7 @@ func NewDocumentDBAccessor(config config.Config, logger logging.Logger) (Documen
 		// DocumentDBのリードプリファレンス（デフォルトはsecondaryPreferred）
 		readPreference := config.Get(DOCUMENTDB_READ_PREFERENCE_NAME, "secondaryPreferred")
 		connectionStringTemplate := "mongodb://%s:%s@%s:%s/%s?tls=true&replicaSet=rs0&readpreference=%s"
-		connectionString := fmt.Sprintf(connectionStringTemplate, userName, password, documentdbEndpoint, documentdbPort, dbName, readPreference)
+		connectionString := fmt.Sprintf(connectionStringTemplate, userName, escpapedPassword, documentdbEndpoint, documentdbPort, dbName, readPreference)
 		logger.Debug("接続文字列: %s", connectionString)
 		// DocumentDBの場合、global-bundle.pemという DocumentDBの公開鍵を使用してTLS接続を行う
 		caFilePath := config.Get(DOCUMENTDB_CA_FILEPATH_NAME, "configs/global-bundle.pem")

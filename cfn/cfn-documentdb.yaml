@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: DocumentDB Template for CloudFormation Demo. Depends on cfn-iam.yaml, cfn-vpc.yaml, cfn-sg.yaml
+Description: DocumentDB Template for CloudFormation Demo. Depends on cfn-iam.yaml, cfn-vpc.yaml, cfn-sg.yaml, cfn-secrets.yaml
 #Metadata: 
 
 Parameters:
@@ -7,14 +7,6 @@ Parameters:
     Description: Stack Resource Name Prefix
     Type: String
     Default: Demo
-  DBUsername:
-    NoEcho: 'true'
-    Description: The database admin account username
-    Type: String
-    MinLength: '1'
-    MaxLength: '16'
-    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
-    ConstraintDescription: Must begin with a letter and contain only alphanumeric characters.
   DBInstanceClass:
     Description: 'Instance class. Please refer to:
       https://docs.aws.amazon.com/documentdb/latest/developerguide/db-instance-classes.html#db-instance-classes-by-region'
@@ -55,22 +47,6 @@ Resources:
       DBInstanceIdentifier: !Sub ${StackPrefix}-DocumentDBInstance1
       DBInstanceClass: !Ref DBInstanceClass
 
-# Secrets Manager for DocumentDB
-# https://docs.aws.amazon.com/ja_jp/secretsmanager/latest/userguide/reference_secret_json_structure.html#reference_secret_json_structure_docdb
-  DocumentDBSecretsManager:
-    Type: AWS::SecretsManager::Secret
-    Properties:
-      Name: !Sub ${StackPrefix}-DocDB-Secrets
-      Description: DocumentDB Secrets
-      GenerateSecretString:
-        SecretStringTemplate: !Sub '{"username": "${DBUsername}"}'
-        GenerateStringKey: "password"
-        PasswordLength: 16
-        ExcludeCharacters: "\"@/\\"
-      Tags:
-        - Key: Name
-          Value: !Sub ${StackPrefix}-DocDB-SecretsManager
-
 Outputs:
   DocumentDBClusterId:
     Value: !Ref DocumentDBCluster
@@ -81,9 +57,4 @@ Outputs:
   DocumentDBClusterPort:
     Value: !GetAtt DocumentDBCluster.Port
     Export: 
-      Name: !Sub ${StackPrefix}-DocDBClusterPort
-  DocumentDBSecretsManagerArn:
-    Description: DocumentDB Secrets Manager Arn
-    Value: !Ref DocumentDBSecretsManager 
-    Export: 
-      Name: !Sub ${StackPrefix}-DocDBSecretsManagerArn    
+      Name: !Sub ${StackPrefix}-DocDBClusterPort  

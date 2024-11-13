@@ -116,7 +116,7 @@ func (tm *defaultTransactionManager) rdbConnect() (*sql.DB, error) {
 		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		rdbUser,
 		// パスワードに「[」等の特殊文字が入っている場合の対処
-		url.PathEscape(rdbPassword),
+		url.QueryEscape(rdbPassword),
 		rdbEndpoint,
 		rdbPort,
 		rdbName,
@@ -131,7 +131,7 @@ func (tm *defaultTransactionManager) rdbConnect() (*sql.DB, error) {
 			rdbEndpoint,
 			rdbPort,
 			rdbUser,
-			rdbPassword,
+			url.QueryEscape(rdbPassword),
 			rdbName)
 		tm.logger.Debug("接続文字列: %s", connectStr)
 		db, err := sql.Open("postgres", connectStr)*/

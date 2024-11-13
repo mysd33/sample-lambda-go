@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: RDS Aurora PostgreSQL RDS Proxy Template for CloudFormation Demo. Depends on cfn-iam.yaml, cfn-vpc.yaml, cfn-sg.yaml
+Description: RDS Aurora PostgreSQL RDS Proxy Template for CloudFormation Demo. Depends on cfn-iam.yaml, cfn-vpc.yaml, cfn-sg.yaml, cfn-secrets.yaml
 #Metadata: 
 
 Parameters: 
@@ -7,14 +7,6 @@ Parameters:
     Description: Stack Resource Name Prefix
     Type: String
     Default: Demo
-  DBUsername:
-    NoEcho: 'true'
-    Description: Username for PostgreSQL database access
-    Type: String
-    MinLength: '1'
-    MaxLength: '16'
-    AllowedPattern: '[a-zA-Z][a-zA-Z0-9]*'
-    ConstraintDescription: must begin with a letter and contain only alphanumeric characters.
   DBName:
     Description: Database Name
     Type: String
@@ -92,30 +84,15 @@ Resources:
       #DBInstanceClass: !Ref DBInstanceClassName
       DBInstanceIdentifier: aurora-postgresql-instance2      
       Engine: aurora-postgresql
-
-# Secrets Manager
-# https://docs.aws.amazon.com/ja_jp/secretsmanager/latest/userguide/reference_secret_json_structure.html#reference_secret_json_structure_rds
-  RDSSecretsManager:
-    Type: AWS::SecretsManager::Secret
-    Properties:
-      Name: !Sub ${StackPrefix}-RDS-Secrets
-      Description: RDS Aurora Secrets
-      GenerateSecretString:
-        SecretStringTemplate: !Sub '{"username": "${DBUsername}"}'
-        GenerateStringKey: "password"
-        PasswordLength: 16
-        ExcludeCharacters: "\"@/\\"      
-      Tags:
-        - Key: Name
-          Value: !Sub ${StackPrefix}-RDS-SecretsManager     
-
+  
 # RDS Proxy
   RDSProxy:
     Type: AWS::RDS::DBProxy
     Properties:
       Auth:
         - AuthScheme: SECRETS
-          SecretArn: !Ref RDSSecretsManager            
+          SecretArn:
+            Fn::ImportValue: !Sub ${StackPrefix}-RDSSecretsManagerArn
           IAMAuth: DISABLED
       DBProxyName: !Sub ${StackPrefix}-rds-proxy
       DebugLogging: false
@@ -163,11 +140,6 @@ Outputs:
     Value: !Ref DBName
     Export: 
       Name: !Sub ${StackPrefix}-RDSDBName
-  RDSSecretsManagerArn:
-    Description: RDS Secrets Manager Arn
-    Value: !Ref RDSSecretsManager
-    Export: 
-      Name: !Sub ${StackPrefix}-RDSSecretsManagerArn
   RDSProxyEndpoint:
     Description: RDS Proxy Endpoint
     Value: !GetAtt RDSProxy.Endpoint

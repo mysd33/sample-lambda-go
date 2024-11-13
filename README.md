@@ -103,35 +103,35 @@ aws cloudformation validate-template --template-body file://cfn-ngw.yaml
 aws cloudformation create-stack --stack-name Demo-NATGW-Stack --template-body file://cfn-ngw.yaml
 ```
 
-> [!NOTE]
-> AuroraとDocumentDB削除に失敗するので、
-> SecretsManagerのスタックを別にして先に作るように修正予定
-
-## 6. RDS Aurora Serverless v2 for PostgreSQL、SecretsManager、RDS Proxy作成
-* リソース作成に少し時間がかかる。(20分程度)
+## 6. SecretsManagerの作成
+* Aurora、DocumentDBの認証情報をSecretsManagerに作成する。
 ```sh
-aws cloudformation validate-template --template-body file://cfn-rds.yaml
-aws cloudformation create-stack --stack-name Demo-RDS-Stack --template-body file://cfn-rds.yaml --parameters ParameterKey=DBUsername,ParameterValue=postgres
+aws cloudformation validate-template --template-body file://cfn-secrets.yaml
+aws cloudformation create-stack --stack-name Demo-SM-Stack --template-body file://cfn-secrets.yaml --parameters ParameterKey=AuroraDBUsername,ParameterValue=postgres ParameterKey=DocDBUsername,ParameterValue=root
 ```
-
-* SecretsManagerが生成したパスワードを確認しておく
+* SecretsManagerが生成したパスワード等を確認しておく
 ```sh
+# Aurora
 aws secretsmanager get-secret-value --secret-id Demo-RDS-Secrets
-```
-
-## 7. DocumentDB、SecretsManager作成
-* リソース作成に少し時間がかかる。（5分程度）
-```sh
-aws cloudformation validate-template --template-body file://cfn-documentdb.yaml
-aws cloudformation create-stack --stack-name Demo-DocumentDB-Stack --template-body file://cfn-documentdb.yaml --parameters ParameterKey=DBUsername,ParameterValue=root
-```
-
-* SecretsManagerが生成したパスワードを確認しておく
-```sh
+# DocomentDB
 aws secretsmanager get-secret-value --secret-id Demo-DocDB-Secrets
 ```
 
-## 8. EC2(Bastion)の作成
+## 7. RDS Aurora Serverless v2 for PostgreSQL、RDS Proxy作成
+* リソース作成に少し時間がかかる。(20分程度)
+```sh
+aws cloudformation validate-template --template-body file://cfn-rds.yaml
+aws cloudformation create-stack --stack-name Demo-RDS-Stack --template-body file://cfn-rds.yaml
+```
+
+## 8. DocumentDB作成
+* リソース作成に少し時間がかかる。（5分程度）
+```sh
+aws cloudformation validate-template --template-body file://cfn-documentdb.yaml
+aws cloudformation create-stack --stack-name Demo-DocumentDB-Stack --template-body file://cfn-documentdb.yaml
+```
+
+## 9. EC2(Bastion)の作成
 * psqlによるRDBのテーブル作成や、APIGatewayのPrivate APIにアクセスするための踏み台を作成
 ```sh
 aws cloudformation validate-template --template-body file://cfn-bastion-ec2.yaml
@@ -141,7 +141,7 @@ aws cloudformation create-stack --stack-name Demo-Bastion-Stack --template-body 
 * 必要に応じてキーペア名等のパラメータを指定
     * 「--parameters ParameterKey=KeyPairName,ParameterValue=myKeyPair」
 
-## 9. RDBのテーブル作成
+## 10. RDBのテーブル作成
 * マネージドコンソールからEC2にセッションマネージャで接続し、Bastionにログインする。psqlをインストールし、DB接続する。
     * 以下参考に、Bastionにpsqlをインストールするとよい
         * https://docs.aws.amazon.com/ja_jp/AmazonRDS/latest/UserGuide/CHAP_GettingStarted.CreatingConnecting.PostgreSQL.html#CHAP_GettingStarted.Connecting.PostgreSQL
@@ -173,7 +173,7 @@ psql -h (RDS Proxyのエンドポイント) -U postgres -d testdb
 
 ```
 
-## 10. DocumentDBのデータベース作成
+## 11. DocumentDBのデータベース作成
 * マネージドコンソールからEC2にセッションマネージャで接続し、Bastionにログインする。mongoシェルをインストールし、DB接続する。
     * 以下参考に、Bastionにmongoシェルをインストールするとよい
         * https://docs.aws.amazon.com/ja_jp/documentdb/latest/developerguide/get-started-guide.html#get-start-mongoshell
@@ -210,40 +210,55 @@ mongo --ssl --host demo-documentdbcluster.cluster-crby0oqsjgv1.ap-northeast-1.do
 
 # booksコレクションのデータを表示
 > db.books.find()
+
+# 以下のように表示されればOK
+{ "_id" : ObjectId("67352225289897f98f461d35"), "title" : "こころ", "author" : "夏目漱石", "publisher" : "新潮社", "published_date" : "2004-03-01", "isbn" : "111-1-1111-1111-1" }
+{ "_id" : ObjectId("6735222c289897f98f461d36"), "title" : "坊っちゃん", "author" : "夏目漱石", "publisher" : "新潮社", "published_date" : "2003-04-01", "isbn" : "111-1-1111-1111-2" }
+
 # booksコレクションへのクエリ（タイトルがこころを検索）
 > db.books.find({"title": "こころ"}).pretty()
+
+# 以下のように表示されればOK
+{
+        "_id" : ObjectId("67352225289897f98f461d35"),
+        "title" : "こころ",
+        "author" : "夏目漱石",
+        "publisher" : "新潮社",
+        "published_date" : "2004-03-01",
+        "isbn" : "111-1-1111-1111-1"
+}
 
 # データベースの表示（sampledbがあることを確認）
 show dbs
 ```
 
-## 11. DynamoDBのテーブル作成
+## 12. DynamoDBのテーブル作成
 * DynamoDBに「todo」、「temp」、「queue_message」の各テーブルを作成する。
 ```sh
 aws cloudformation validate-template --template-body file://cfn-dynamodb.yaml
 aws cloudformation create-stack --stack-name Demo-DynamoDB-Stack --template-body file://cfn-dynamodb.yaml
 ```
 
-## 12. SQSの作成
+## 13. SQSの作成
 ```sh
 aws cloudformation validate-template --template-body file://cfn-sqs.yaml
 aws cloudformation create-stack --stack-name Demo-SQS-Stack --template-body file://cfn-sqs.yaml
 ```
 
-## 13. S3の作成
+## 14. S3の作成
 ```sh
 aws cloudformation validate-template --template-body file://cfn-s3.yaml
 aws cloudformation create-stack --stack-name Demo-S3-Stack --template-body file://cfn-s3.yaml
 ```
 
-## 14. AppConfigの作成
+## 15. AppConfigの作成
 * AppConfigの基本リソースを作成する。
 ```sh
 aws cloudformation validate-template --template-body file://cfn-appconfig.yaml
 aws cloudformation create-stack --stack-name Demo-AppConfig-Stack --template-body file://cfn-appconfig.yaml
 ```
 
-## 15. AWS SAMでLambda/API Gatewayのデプロイ       
+## 16. AWS SAMでLambda/API Gatewayのデプロイ       
 * SAMビルド    
 ```sh
 # トップのフォルダに戻る
@@ -292,7 +307,7 @@ sam deploy
 make deploy
 ```
 
-## 16. AppConfigのデプロイ
+## 17. AppConfigのデプロイ
 * Hosted Configurationの設定バージョンの作成と初回デプロイする。
 ```sh
 #cfnフォルダに移動
@@ -326,7 +341,7 @@ aws cloudformation create-stack --stack-name Demo-AppConfigDocDBSMDeploy-Stack -
 ```
 
 
-## 17. APの実行確認（バックエンド）
+## 18. APの実行確認（バックエンド）
 * マネージドコンソールから、EC2(Bation)へSystems Manager Session Managerで接続して、curlコマンドで動作確認
     * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
 
@@ -385,7 +400,7 @@ curl -X POST -H "Content-Type: application/json" -d '{"title": "こころ", "aut
 curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/books-api/v1/books?title=%E3%81%93%E3%81%93%E3%82%8D
 ```
 
-## 18. APの実行確認（フロントエンド）
+## 19. APの実行確認（フロントエンド）
 * 手元の端末のコンソールから、curlコマンドで動作確認
     * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
 * Windowsではgit bash等で実行できるが日本語が文字化けするので、PostmanやTalend API Tester等のツールを使ったほうがよい
@@ -449,7 +464,7 @@ curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Mil
 
 ```
 
-## 19. AppConfingの設定変更＆デプロイ
+## 20. AppConfingの設定変更＆デプロイ
 * cfn-appconfig-hosted-deploy.yaml内のホスト化された設定の内容を修正
 ```yaml
   AppConfigHostedConfigurationVersion:
@@ -486,7 +501,7 @@ aws cloudformation update-stack --stack-name Demo-AppConfigHostedDeploy-Stack --
 {"level":"info","ts":1699780051.3576484,"caller":"service/user_service.go:39","msg":"hoge_name=foo2"}
 ```
 
-## 20. AWSリソースの削除
+## 21. AWSリソースの削除
 * AppConfig Deploymentリソースの削除
 ```sh
 aws cloudformation delete-stack --stack-name Demo-AppConfigDocDBSMDeploy-Stack
@@ -515,6 +530,7 @@ aws cloudformation delete-stack --stack-name Demo-SQS-Stack
 aws cloudformation delete-stack --stack-name Demo-DynamoDB-Stack
 aws cloudformation delete-stack --stack-name Demo-DocumentDB-Stack
 aws cloudformation delete-stack --stack-name Demo-RDS-Stack
+aws cloudformation delete-stack --stack-name Demo-SM-Stack
 aws cloudformation delete-stack --stack-name Demo-NATGW-Stack
 aws cloudformation delete-stack --stack-name Demo-VPE-Stack
 aws cloudformation delete-stack --stack-name Demo-SG-Stack
@@ -522,7 +538,7 @@ aws cloudformation delete-stack --stack-name Demo-VPC-Stack
 aws cloudformation delete-stack --stack-name Demo-IAM-Stack 
 ```
 
-## 21. CloudWatch Logsのロググループ削除
+## 22. CloudWatch Logsのロググループ削除
 
 ```
 aws logs delete-log-group --log-group-name /aws/apigateway/welcome
@@ -544,7 +560,7 @@ aws logs delete-log-group --log-group-name /aws/lambda/todo-async-function
 aws logs delete-log-group --log-group-name /aws/lambda/todo-async-fifo-function
 ```
 
-## 22. ローカルでの実行確認
+## 23. ローカルでの実行確認
 * 前述の手順の通り、AWS上でLambda等をデプロイしなくてもsam localコマンドを使ってローカル実行確認も可能である
 
 * Postgres SQLのDockerコンテナを起動
