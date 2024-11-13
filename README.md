@@ -15,7 +15,7 @@
 
 * LambdaからAWS SDKを用いたDynamoDB、SQS、S3等の各種AWSリソースへのアクセスに対応
     * AWS SDK for Go v2に対応した実装
-        * v2では、AWS SDKやX-Ray SDKの利用方法がv1の時とAPIがかなり変更されている
+        * v2では、AWS SDKやX-Ray SDKの利用方法がv1の時とAPIがかなり変更されている    
 
 ![構成イメージ](image/demo.png)
 
@@ -42,7 +42,9 @@
         ![X-Rayの可視化の例3](image/xray-bff.png)
     * SQS、S3等の呼び出しの可視化の例
         ![X-Rayの可視化の例4](image/xray-sqs-delayed.png)
-
+    * DocumentDBの呼び出しは、mongo-go-driverがX-Ray SDKに対応していないとのことで、未実施。
+        * [issue](https://github.com/aws/aws-xray-sdk-go/issues/348)
+        
 * RDS Proxyの利用時の注意
     * ピン留め
         * SQLを記載するにあたり、従来はプリペアドステートメントを使用するのが一般的であるが、RDS Proxyを使用する場合には、[ピン留め(Pinning)](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-managing.html#rds-proxy-pinning)という現象が発生してしまう。その間、コネクションが切断されるまで占有されつづけてしまい再利用できず、大量のリクエストを同時に処理する場合にはコネクション枯渇し性能面に影響が出る恐れがある。
