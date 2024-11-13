@@ -6,6 +6,7 @@ package rdb
 import (
 	"database/sql"
 	"fmt"
+	"net/url"
 
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/config"
@@ -114,7 +115,8 @@ func (tm *defaultTransactionManager) rdbConnect() (*sql.DB, error) {
 	connectStr := fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
 		rdbUser,
-		rdbPassword,
+		// パスワードに「[」等の特殊文字が入っている場合の対処
+		url.PathEscape(rdbPassword),
 		rdbEndpoint,
 		rdbPort,
 		rdbName,

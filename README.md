@@ -373,9 +373,9 @@ curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/todo-api/v
 # 書籍の登録
 curl -X POST -H "Content-Type: application/json" -d '{"title": "こころ", "author": "夏目漱石", "publisher": "新潮社", "published_date": "2004-03-01", "isbn": "111-1-1111-1111-1"}' https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/books-api/v1/books
 # タイトルが「こころ」の書籍を取得(title=こころ)
+# 以前の手順で、bastionからも「こころ」の書籍情報を登録していると、2件取得される
 curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/books-api/v1/books?title=%E3%81%93%E3%81%93%E3%82%8D
 ```
-
 
 ## 18. APの実行確認（フロントエンド）
 * 手元の端末のコンソールから、curlコマンドで動作確認

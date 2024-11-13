@@ -156,7 +156,7 @@ func loadSecretManagerConfig(logger logging.Logger) (map[string]string, error) {
 	}
 	// カンマ区切りで複数のSecretManagerのエンドポイントが指定されている場合は、それぞれの設定を取得してマージ
 	smCfgUrls := strings.Split(smCfgUrlList, ",")
-	var cfg map[string]string
+	cfg := make(map[string]string)
 	for _, smCfgUrl := range smCfgUrls {
 		tmpCfg, err := doLoadSecretManagerConfig(logger, smCfgUrl)
 		if err != nil {
@@ -184,16 +184,17 @@ func doLoadSecretManagerConfig(logger logging.Logger, cfgUrl string) (map[string
 	if err != nil {
 		return nil, errors.Errorf("SecretsManagerのAppConfig[%s]読み込みエラー:%w", cfgUrl, err)
 	}
-	logger.Debug("SecretManagerのAppConfig読み込み(json):%s\n", string(data))
+	logger.Debug("SecretManagerのAppConfig[%s]読み込み(json):%s\n", cfgUrl, string(data))
 	// JSONの設定データを読み込み
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return nil, errors.Errorf("SecretsManagerのAppConfig[%s]のJSONアンマーシャルエラー:%w", cfgUrl, err)
 	}
 	// AppConfigの設定プロファイル名をプレフィックスとしたキーのマップを作成
 	// 例：AppConfigの設定が「docdb_smconfig」の場合、キーが「docdb_smconfig_」で始まるようにする
-	var prefixedCfg = make(map[string]string)
+	var prefixedCfg = make(map[string]string, len(cfg))
 	for k, v := range cfg {
 		prefixedCfg[profileName+"_"+k] = v
 	}
+	logger.Debug("AppConfig設定[%s](SM)_プレフィックス付与:%v\n", cfgUrl, prefixedCfg)
 	return prefixedCfg, nil
 }
