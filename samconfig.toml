@@ -31,3 +31,12 @@ warm_containers = "EAGER"
 
 [default.local_start_lambda.parameters]
 warm_containers = "EAGER"
+
+[prd.deploy.parameters]
+stack_name = "todo-go-app-prd"
+resolve_s3 = true
+s3_prefix = "todo-go-app"
+region = "ap-northeast-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "StackPrefix=\"Demo\" TracingValue=\"Active\" Stage=\"Prod\" MemorySize=\"128\" Timeout=\"5\" HelloWorldFunctionName=\"hello-world\" UsersFunctionName=\"user-function\" TodoFunctionName=\"todo-function\" BooksFunctionName=\"book-function\" BffFunctionName=\"bff-function\" TodoAsyncFunctionName=\"todo-async-function\" TodoAsyncFifoFunctionName=\"todo-async-fifo-function\" LogLevel=\"DEBUG\" LogRetensionInDays=\"7\" AppConfigLayerArn=\"arn:aws:lambda:ap-northeast-1:980059726660:layer:AWS-AppConfig-Extension:98\" LambdaInsightsLayerArn=\"arn:aws:lambda:ap-northeast-1:580247275435:layer:LambdaInsightsExtension:80\""
+image_repositories = []

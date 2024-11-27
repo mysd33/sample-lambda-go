@@ -307,6 +307,19 @@ sam deploy
 make deploy
 ```
 
+* （参考）samconfig.tomlで定義した特定の環境を指定する場合
+```sh
+sam deploy --config-env (環境名)
+# 例
+sam deploy --config-env prd
+
+# Windowsでもmakeをインストールすればmakeでいけます
+make deploy_env env=(環境名)
+# 例
+make deploy_env env=prd
+```
+
+
 ## 17. AppConfigのデプロイ
 * Hosted Configurationの設定バージョンの作成と初回デプロイする。
 ```sh
