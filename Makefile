@@ -1,5 +1,5 @@
 .PHONY: clean fmt lint vet validate build validate_dbg build_dbg unit_test integration_test
-.PHONY: local_invoke_% local_startapi local_startapi_dbg_% deploy deploy_guided deploy_env delete
+.PHONY: local_invoke_% local_startapi local_startapi_dbg_% deploy deploy_guided deploy_env create_changeset_env delete
 .PHONY: doc_appbase doc_app
 
 .DEFAULT_GOAL := build
@@ -92,6 +92,10 @@ deploy:
 deploy_env:
 	sam deploy --config-env ${env}
 
+# ex) make create_changeset_env env=prd
+create_changeset_env:
+	sam deploy --no-execute-changeset --config-env ${env}	
+
 delete:
 	sam delete
 
@@ -100,4 +104,3 @@ doc_appbase:
 
 doc_app:
 	cd app & godoc
-
