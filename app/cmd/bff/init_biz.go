@@ -25,6 +25,7 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	todoRepository := repository.NewTodoRepositoryForRestAPI(ac.GetHTTPClient(), ac.GetLogger(), ac.GetConfig())
 	tempRepository := repository.NewTempRepository(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(),
 		ac.GetLogger(), ac.GetConfig(), ac.GetIDGenerator())
+	bookRepository := repository.NewBookRepositoryForRestAPI(ac.GetHTTPClient(), ac.GetLogger(), ac.GetConfig())
 	// Configからキュー名を取得する
 	sampleQueueName := ac.GetConfig().Get("SampleQueueName", "SampleQueue")
 	ac.GetLogger().Debug("SampleQueueName:%s", sampleQueueName)
@@ -33,7 +34,7 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 	asyncMessageRepository := repository.NewAsyncMessageRepository(ac.GetSQSTemplate(), sampleQueueName, sampleFifoQueueName)
 	// サービスの作成
 	bffService := service.New(ac.GetLogger(), ac.GetConfig(), ac.GetIDGenerator(), ac.GetObjectStorageAccessor(),
-		userRepository, todoRepository, tempRepository, asyncMessageRepository)
+		userRepository, todoRepository, tempRepository, asyncMessageRepository, bookRepository)
 	// コントローラの作成
 	bffController := controller.New(ac.GetLogger(), ac.GetDynamoDBTransactionManager(), bffService)
 	// ハンドラインタセプタの取得
@@ -51,6 +52,8 @@ func initBiz(ac component.ApplicationContext, r *gin.Engine) {
 		v1.POST("/users", interceptor.Handle(bffController.RegisterUser))
 		v1.POST("/todo", interceptor.Handle(bffController.RegisterTodo))
 		v1.POST("/todo-async", interceptor.Handle(bffController.RegisterTodosAsync))
+		v1.GET("/books", interceptor.Handle(bffController.FindBooksByCriteria))
+		v1.POST("/books", interceptor.Handle(bffController.RegisterBook))
 
 		//エラー確認用
 		v1.POST("/error/:errortype", interceptor.Handle(errorTestContoller.Execute))

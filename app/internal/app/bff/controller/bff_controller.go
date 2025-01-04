@@ -5,6 +5,7 @@ import (
 	"app/internal/app/bff/service"
 	"app/internal/pkg/message"
 	"app/internal/pkg/model"
+	"app/internal/pkg/repository"
 
 	"example.com/appbase/pkg/domain"
 	"example.com/appbase/pkg/errors"
@@ -46,6 +47,30 @@ type ResponseRegisterTodoAsync struct {
 	Result string `json:"result"`
 }
 
+// RequestFindBook は、書籍検索のREST APIで受け取るリクエストデータの構造体です。
+type RequestFindBook struct {
+	// Title は、書籍のタイトルです。
+	Title string `label:"タイトル" form:"title"`
+	// Author は、書籍の著者です。
+	Author string `label:"著者" form:"author"`
+	// Publisher は、書籍の出版社です。
+	Publisher string `label:"出版社" form:"publisher"`
+}
+
+// RequestRegisterBook は、書籍登録のREST APIで受け取るリクエストデータの構造体です。
+type RequestRegisterBook struct {
+	// Title は、書籍のタイトルです。
+	Title string `label:"タイトル" json:"title" binding:"required"`
+	// Author は、書籍の著者です。
+	Author string `label:"著者" json:"author" binding:"required"`
+	// Publisher は、書籍の出版社です。
+	Publisher string `label:"出版社" json:"publisher"`
+	// PublishedDate は、書籍の発売日です。
+	PublishedDate string `label:"発売日" json:"published_date" binding:"datetime=2006-01-02"`
+	// ISBNは、書籍のISBNです。
+	ISBN string `label:"ISBN" json:"isbn"`
+}
+
 // BffController は、Bff業務のControllerインタフェースです。
 type BffController interface {
 	// FindTodo は、クエリパラメータで指定されたtodo_idとuser_idのTodoを照会します。
@@ -56,6 +81,10 @@ type BffController interface {
 	RegisterTodo(ctx *gin.Context) (any, error)
 	// RegisterTodoAsync は、リクエストデータで受け取ったTodoのリストを非同期で登録します。
 	RegisterTodosAsync(ctx *gin.Context) (any, error)
+	// FindBooksByCriteria は、クエリパラメータで指定された検索条件に合致する書籍を検索します。
+	FindBooksByCriteria(ctx *gin.Context) (any, error)
+	// RegisterBook は、リクエストデータで受け取った書籍を登録します。
+	RegisterBook(ctx *gin.Context) (any, error)
 }
 
 // New は、BffControllerを作成します。
@@ -161,4 +190,34 @@ func (c *bffControllerImpl) RegisterTodosAsync(ctx *gin.Context) (any, error) {
 	}
 
 	return &ResponseRegisterTodoAsync{Result: "ok"}, nil
+}
+
+// FindBooksByCriteria implements BffController.
+func (c *bffControllerImpl) FindBooksByCriteria(ctx *gin.Context) (any, error) {
+	var request RequestFindBook
+	if err := ctx.ShouldBindQuery(&request); err != nil {
+		return nil, errors.NewValidationErrorWithCause(err, message.W_EX_5001)
+	}
+	bookCriteria := &repository.BookCriteria{
+		Title:     request.Title,
+		Author:    request.Author,
+		Publisher: request.Publisher,
+	}
+	return c.service.FindBooksByCriteria(bookCriteria)
+}
+
+// RegisterBook implements BffController.
+func (c *bffControllerImpl) RegisterBook(ctx *gin.Context) (any, error) {
+	var request RequestRegisterBook
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		return nil, errors.NewValidationErrorWithCause(err, message.W_EX_5001)
+	}
+	book := &model.Book{
+		Title:         request.Title,
+		Author:        request.Author,
+		Publisher:     request.Publisher,
+		PublishedDate: request.PublishedDate,
+		ISBN:          request.ISBN,
+	}
+	return c.service.RegisterBook(book)
 }

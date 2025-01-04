@@ -32,6 +32,10 @@ type BffService interface {
 	RegisterTodosAsync(todoTitles []string, dbtx string) error
 	// RegisterTodosAsyncByFIFO は、FIFOキューでタイトルのリストtodoTitlesのTodoを非同期で登録します。
 	RegisterTodosAsyncByFIFO(todoTitles []string, dbtx string) error
+	// FindBooksByCriteria は、条件に合致する書籍を取得します。
+	FindBooksByCriteria(criteria *repository.BookCriteria) ([]model.Book, error)
+	// RegisterBook は、書籍を登録します。
+	RegisterBook(book *model.Book) (*model.Book, error)
 }
 
 // New は、BffServiceを作成します。
@@ -43,6 +47,7 @@ func New(logger logging.Logger,
 	todoRepository repository.TodoRepository,
 	tempRepository repository.TempRepository,
 	asyncMessageRepository repository.AsyncMessageRepository,
+	bookRepository repository.BookRepository,
 ) BffService {
 	return &bffServiceImpl{
 		logger:                 logger,
@@ -53,6 +58,7 @@ func New(logger logging.Logger,
 		todoRepository:         todoRepository,
 		tempRepository:         tempRepository,
 		asyncMessageRepository: asyncMessageRepository,
+		bookRepository:         bookRepository,
 	}
 }
 
@@ -66,6 +72,7 @@ type bffServiceImpl struct {
 	todoRepository         repository.TodoRepository
 	tempRepository         repository.TempRepository
 	asyncMessageRepository repository.AsyncMessageRepository
+	bookRepository         repository.BookRepository
 }
 
 // RegisterUser implements BffService.
@@ -168,4 +175,14 @@ func (bs *bffServiceImpl) registerTemp(todoTitles []string) (*model.Temp, error)
 	// Tempテーブルの登録
 	bs.tempRepository.CreateOneTx(temp)
 	return temp, nil
+}
+
+// FindBooksByCriteria implements BffService.
+func (bs *bffServiceImpl) FindBooksByCriteria(criteria *repository.BookCriteria) ([]model.Book, error) {
+	return bs.bookRepository.FindSomeByCriteria(criteria)
+}
+
+// RegisterBook implements BffService.
+func (bs *bffServiceImpl) RegisterBook(book *model.Book) (*model.Book, error) {
+	return bs.bookRepository.CreateOne(book)
 }

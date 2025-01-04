@@ -443,7 +443,6 @@ curl https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v
 ```
 
 ```sh
-# TODO: API作成予定
 # Bookサービスを利用して、書籍情報を登録
 curl -X POST -H "Content-Type: application/json" -d @curl/books/post1.json https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/books
 curl -X POST -H "Content-Type: application/json" -d @curl/books/post2.json https://adoscoxed14.execute-api.ap-northeast-1.amazonaws.com/Prod/bff-api/v1/books
@@ -701,12 +700,10 @@ curl http://127.0.0.1:3000/books-api/v1/books?author=%E6%9D%91%E4%B8%8A%E6%98%A5
 
 # BFF
 curl -X POST -H "Content-Type: application/json" -d '{ "user_name" : "Taro"}' http://127.0.0.1:3000/bff-api/v1/users
-
 curl -X POST -H "Content-Type: application/json" -d '{ "todo_title" : "Buy Milk"}' http://127.0.0.1:3000/bff-api/v1/todo
 
-# TODO: API作成予定
-# curl -X POST -H "Content-Type: application/json" -d @curl/books/post1.json http://127.0.0.1:3000/bff-api/v1/books
-# curl http://127.0.0.1:3000/bff-api/v1/books?author=%E6%9D%91%E4%B8%8A%E6%98%A5%E6%A8%B9\&publisher=%E8%AC%9B%E8%AB%87%E7%A4%BE
+curl -X POST -H "Content-Type: application/json" -d @curl/books/post1.json http://127.0.0.1:3000/bff-api/v1/books
+curl http://127.0.0.1:3000/bff-api/v1/books?author=%E6%9D%91%E4%B8%8A%E6%98%A5%E6%A8%B9\&publisher=%E8%AC%9B%E8%AB%87%E7%A4%BE
 
 #curlコマンドの場合は&をエスケープする
 curl http://127.0.0.1:3000/bff-api/v1/todo?user_id=（ユーザID）\&todo_id=(TODO ID)

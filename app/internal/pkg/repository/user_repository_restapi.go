@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	USERS_API_BASE_URL = "USERS_API_BASE_URL"
+	USERS_API_BASE_URL_NAME = "USERS_API_BASE_URL"
 )
 
 // NewUserRepositoryForRestAPI は、REST APIのためのUserRepository実装を作成します。
@@ -30,7 +30,7 @@ type userRepositoryImplByRestAPI struct {
 
 // FindOne implements UserRepository.
 func (ur *userRepositoryImplByRestAPI) FindOne(userId string) (*model.User, error) {
-	baseUrl, found := ur.config.GetWithContains(USERS_API_BASE_URL)
+	baseUrl, found := ur.config.GetWithContains(USERS_API_BASE_URL_NAME)
 	if !found {
 		return nil, errors.NewSystemError(fmt.Errorf("USERS_API_BASE_URLがありません"), message.E_EX_9001)
 	}
@@ -55,7 +55,7 @@ func (ur *userRepositoryImplByRestAPI) FindOne(userId string) (*model.User, erro
 
 // CreateOne implements UserRepository.
 func (ur *userRepositoryImplByRestAPI) CreateOne(user *model.User) (*model.User, error) {
-	baseUrl, found := ur.config.GetWithContains(USERS_API_BASE_URL)
+	baseUrl, found := ur.config.GetWithContains(USERS_API_BASE_URL_NAME)
 	if !found {
 		return nil, errors.NewSystemError(fmt.Errorf("USERS_API_BASE_URLがありません"), message.E_EX_9001)
 	}

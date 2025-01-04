@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	TODO_API_BASE_URL = "TODO_API_BASE_URL"
+	TODO_API_BASE_URL_NAME = "TODO_API_BASE_URL"
 )
 
 // NewTodoRepositoryForRestAPI は、REST APIのためのTodoRepository実装を作成します。
@@ -30,7 +30,7 @@ type todoRepositoryImplByRestAPI struct {
 
 // FindOne implements TodoRepository.
 func (tr *todoRepositoryImplByRestAPI) FindOne(todoId string) (*model.Todo, error) {
-	baseUrl, found := tr.config.GetWithContains(TODO_API_BASE_URL)
+	baseUrl, found := tr.config.GetWithContains(TODO_API_BASE_URL_NAME)
 	if !found {
 		return nil, errors.NewSystemError(fmt.Errorf("TODO_API_BASE_URLがありません"), message.E_EX_9001)
 	}
@@ -62,7 +62,7 @@ func (tr *todoRepositoryImplByRestAPI) FindOne(todoId string) (*model.Todo, erro
 
 // CreateOne implements TodoRepository.
 func (tr *todoRepositoryImplByRestAPI) CreateOne(todo *model.Todo) (*model.Todo, error) {
-	baseUrl, found := tr.config.GetWithContains(TODO_API_BASE_URL)
+	baseUrl, found := tr.config.GetWithContains(TODO_API_BASE_URL_NAME)
 	if !found {
 		return nil, errors.NewSystemError(fmt.Errorf("TODO_API_BASE_URLがありません"), message.E_EX_9001)
 	}

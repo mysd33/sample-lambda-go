@@ -59,6 +59,8 @@ Resources:
             - Fn::ImportValue: !Sub ${StackPrefix}-UsersAPIBaseURL-${Stage}
             - "\nTODO_API_BASE_URL: "
             - Fn::ImportValue: !Sub ${StackPrefix}-TodoAPIBaseURL-${Stage}
+            - "\nBOOKS_API_BASE_URL: "
+            - Fn::ImportValue: !Sub ${StackPrefix}-BooksAPIBaseURL-${Stage}
             - "\nS3_BUCKET_NAME: "            
             - Fn::ImportValue: !Sub ${StackPrefix}-S3BucketName
 
