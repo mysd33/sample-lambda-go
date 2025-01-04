@@ -233,7 +233,7 @@ show dbs
 ```
 
 ## 12. DynamoDBのテーブル作成
-* DynamoDBに「todo」、「temp」、「queue_message」の各テーブルを作成する。
+* DynamoDBに「todo」、「temp」、「queue_message」、「idempotency」の各テーブルを作成する。
 ```sh
 aws cloudformation validate-template --template-body file://cfn-dynamodb.yaml
 aws cloudformation create-stack --stack-name Demo-DynamoDB-Stack --template-body file://cfn-dynamodb.yaml
