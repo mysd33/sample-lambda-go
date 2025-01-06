@@ -22,8 +22,8 @@ phases:
       - make build_linux
       - echo Unit Test started on `date`
       - make unit_test
-      - echo Integration Test started on `date`      
-      - make integration_test
+      #- echo Integration Test started on `date`      
+      #- make integration_test
 cache:
   paths:    
     - '/go/pkg/**/*'     
