@@ -7,6 +7,26 @@ Parameters:
     Description: Stack Resource Name Prefix
     Type: String
     Default: Demo 
+  CodeBuildProjectName:
+    Description: CodeBuild Project Name
+    Type: String
+    Default: demo-sam-ci
+  CodeCommitRepositoryName:
+    Description: Source Code Repository Location of CodeCommit
+    Type: String
+    Default: sample-lambda-go
+  CodePipelineName:
+    Description: CodePipeline Name
+    Type: String
+    Default: demo-sam-pipeline
+  ArtifactS3BucketName:
+    Description: Artifact Location of S3 Bucket
+    Type: String
+    Default: mysd33bucket123
+#  CacheS3Location:
+#    Description: Artifact Location of S3 Bucket Name/Prefix
+#    Type: String
+#    Default: mysd33bucket123/cache       
 #Mappings: 
 
 #Conditions: 
@@ -197,6 +217,142 @@ Resources:
       PolicyName: !Sub ${StackPrefix}-S3Policy
       Roles:
         - !Ref LambdaRole
+
+  #IAM Role and IAM Policy for CodeBuild
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /service-role/
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'  
+  #TODO: Review IAM Policy  
+  CodeBuildPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+        - Action:
+          - logs:CreateLogGroup
+          - logs:CreateLogStream
+          - logs:PutLogEvents
+          Effect: Allow
+          Resource:
+          - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${CodeBuildProjectName}
+          - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${CodeBuildProjectName}:*          
+        - Action:
+          - codecommit:GitPull
+          Effect: Allow
+          Resource:          
+            - !Sub arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:${CodeCommitRepositoryName}    
+        - Action:
+          - s3:PutObject
+          - s3:GetObject
+          - s3:GetObjectVersion
+          - s3:GetBucketAcl
+          - s3:GetBucketLocation
+          Effect: Allow
+          Resource: 
+            - !Sub arn:aws:s3:::${ArtifactS3BucketName}
+            - !Sub arn:aws:s3:::${ArtifactS3BucketName}/*      
+#            - !Sub arn:aws:s3:::${CacheS3Location}            
+#            - !Sub arn:aws:s3:::${CacheS3Location}/*
+        - Action:
+          - codeartifact:List*
+          - codeartifact:Describe*
+          - codeartifact:Get*
+          - codeartifact:Read*
+          - codeartifact:PublishPackageVersion          
+          - codeartifact:PutPackageMetadata
+          Effect: Allow
+          Resource: 
+            - !Sub arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/*
+            - !Sub arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/*
+            - !Sub arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:package/*
+        - Action:
+          - sts:GetServiceBearerToken
+          Effect: Allow
+          Resource:
+            - "*"
+          Condition:
+            StringEquals:
+              'sts:AWSServiceName': codeartifact.amazonaws.com
+      PolicyName: !Sub ${StackPrefix}-CodeBuildPolicy
+      Roles:
+      - !Ref CodeBuildRole
+
+  #CodePipeline Cloud Watch Event IAM Role and IAM Policy
+  CodePipelineCloudWatchEventRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: CodePipelineCloudWatchEventRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - events.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: CloudWatch-Event-Policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: codepipeline:StartPipelineExecution
+                Resource:
+                  - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipelineName}
+
+  #IAM Role and IAM Policy for CodePipeline
+  #TODO: Review Required Actions of Policy Document
+  CodePipelineServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: CodePipelineServiceRole
+      Path: /
+      AssumeRolePolicyDocument: 
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: AWS-CodePipeline-Service-Policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'codecommit:CancelUploadArchive'
+                  - 'codecommit:GetBranch'
+                  - 'codecommit:GetCommit'
+                  - 'codecommit:GetUploadArchiveStatus'
+                  - 'codecommit:UploadArchive'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'codebuild:BatchGetBuilds'
+                  - 'codebuild:StartBuild'
+                Resource: '*'                              
+              - Effect: Allow
+                Action:
+                  - 'iam:PassRole'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'cloudwatch:*'
+                  - 's3:*'
+                Resource: '*'
 Outputs:
   BastionInstanceProfile:
     Description: BastionInstanceProfile Logical ID
@@ -218,4 +374,18 @@ Outputs:
     Value: !GetAtt LambdaRole.Arn
     Export: 
       Name: !Sub ${StackPrefix}-LambdaRoleArn      
-   
+  CodeBuildRoleArn:
+    Description: CodeBuildRole Arn
+    Value: !GetAtt CodeBuildRole.Arn
+    Export: 
+      Name: !Sub ${StackPrefix}-CodeBuildRole-Arn
+  CodePipelineCloudWatchEventRoleArn:
+    Description: CodePipelineCloudWatchEventRole Arn
+    Value: !GetAtt CodePipelineCloudWatchEventRole.Arn
+    Export: 
+      Name: !Sub ${StackPrefix}-CodePipelineCloudWatchEventRole-Arn
+  CodePipelineServiceRoleArn:
+    Description: CodePipelineServiceRole Arn
+    Value: !GetAtt CodePipelineServiceRole.Arn
+    Export: 
+      Name: !Sub ${StackPrefix}-CodePipelineServiceRole-Arn

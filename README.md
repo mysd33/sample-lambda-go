@@ -73,7 +73,7 @@
 #cfnフォルダに移動
 cd cfn
 aws cloudformation validate-template --template-body file://cfn-iam.yaml
-aws cloudformation create-stack --stack-name Demo-IAM-Stack --template-body file://cfn-iam.yaml --capabilities CAPABILITY_IAM
+aws cloudformation create-stack --stack-name Demo-IAM-Stack --template-body file://cfn-iam.yaml --capabilities CAPABILITY_NAMED_IAM
 ```
 
 ## 2. VPCおよびサブネット、InternetGateway等の作成
@@ -258,7 +258,9 @@ aws cloudformation validate-template --template-body file://cfn-appconfig.yaml
 aws cloudformation create-stack --stack-name Demo-AppConfig-Stack --template-body file://cfn-appconfig.yaml
 ```
 
-## 16. AWS SAMでLambda/API Gatewayのデプロイ       
+## 16. AWS SAMでLambda/API Gatewayの手動でのAPのビルド・デプロイ     
+* CI/CDを行う場合は、この手順は不要で [CI/CDの手順](#17-cicd)を実施してください。
+
 * SAMビルド    
 ```sh
 # トップのフォルダに戻る
@@ -319,8 +321,32 @@ make deploy_env env=(環境名)
 make deploy_env env=prd
 ```
 
+## 17. CI/CD
+* 作成中
 
-## 17. AppConfigのデプロイ
+* CIジョブ用のCodeBuildの作成
+
+```sh
+#cfnフォルダに移動
+cd cfn
+aws cloudformation validate-template --template-body file://cfn-codebuild-ci.yaml
+aws cloudformation create-stack --stack-name Demo-CodeBuild-CI-Stack --template-body file://cfn-codebuild-ci.yaml
+```
+
+* CDジョブ用のCodeBuildの作成
+```sh
+TBD
+```
+
+* CodePipelineの作成
+    * CIジョブとCDジョブを組み合わせたCodePipelineを作成
+    * 実行すると、CIジョブが実行され、その後、SAMのアプリケーションがデプロイされる予定。
+```sh
+aws cloudformation validate-template --template-body file://cfn-codepipeline.yaml
+aws cloudformation create-stack --stack-name Demo-CodePipeline-Stack --template-body file://cfn-codepipeline.yaml
+```
+
+## 18. AppConfigのデプロイ
 * Hosted Configurationの設定バージョンの作成と初回デプロイする。
 ```sh
 #cfnフォルダに移動
@@ -354,7 +380,7 @@ aws cloudformation create-stack --stack-name Demo-AppConfigDocDBSMDeploy-Stack -
 ```
 
 
-## 18. APの実行確認（バックエンド）
+## 19. APの実行確認（バックエンド）
 * マネージドコンソールから、EC2(Bation)へSystems Manager Session Managerで接続して、curlコマンドで動作確認
     * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
 
@@ -413,7 +439,7 @@ curl -X POST -H "Content-Type: application/json" -d '{"title": "こころ", "aut
 curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/books-api/v1/books?title=%E3%81%93%E3%81%93%E3%82%8D
 ```
 
-## 19. APの実行確認（フロントエンド）
+## 20. APの実行確認（フロントエンド）
 * 手元の端末のコンソールから、curlコマンドで動作確認
     * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
 * Windowsではgit bash等で実行できるが日本語が文字化けするので、PostmanやTalend API Tester等のツールを使ったほうがよい
@@ -476,7 +502,7 @@ curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Mil
 
 ```
 
-## 20. AppConfingの設定変更＆デプロイ
+## 21. AppConfingの設定変更＆デプロイ
 * cfn-appconfig-hosted-deploy.yaml内のホスト化された設定の内容を修正
 ```yaml
   AppConfigHostedConfigurationVersion:
@@ -513,7 +539,7 @@ aws cloudformation update-stack --stack-name Demo-AppConfigHostedDeploy-Stack --
 {"level":"info","ts":1699780051.3576484,"caller":"service/user_service.go:39","msg":"hoge_name=foo2"}
 ```
 
-## 21. AWSリソースの削除
+## 22. AWSリソースの削除
 * AppConfig Deploymentリソースの削除
 ```sh
 aws cloudformation delete-stack --stack-name Demo-AppConfigDocDBSMDeploy-Stack
@@ -550,7 +576,7 @@ aws cloudformation delete-stack --stack-name Demo-VPC-Stack
 aws cloudformation delete-stack --stack-name Demo-IAM-Stack 
 ```
 
-## 22. CloudWatch Logsのロググループ削除
+## 23. CloudWatch Logsのロググループ削除
 
 ```
 aws logs delete-log-group --log-group-name /aws/apigateway/welcome
@@ -572,7 +598,7 @@ aws logs delete-log-group --log-group-name /aws/lambda/todo-async-function
 aws logs delete-log-group --log-group-name /aws/lambda/todo-async-fifo-function
 ```
 
-## 23. ローカルでの実行確認
+## 24. ローカルでの実行確認
 * 前述の手順の通り、AWS上でLambda等をデプロイしなくてもsam localコマンドを使ってローカル実行確認も可能である
 
 * Postgres SQLのDockerコンテナを起動

@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CodeBuild Template for CloudFormation Demo. Depends on cfn-iam.yaml
+#Metadata: 
+
+Parameters: 
+  StackPrefix:
+    Description: Stack Resource Name Prefix
+    Type: String
+    Default: Demo
+  ProjectName:
+    Description: CodeBuild Project Name
+    Type: String
+    Default: demo-sam-ci
+  BuildSpecPath:
+    Description: File Path for buildpsec.yml
+    Type: String
+    Default: buildspec-ci.yml
+#Mappings: 
+
+#Conditions: 
+
+Resources:
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:      
+      Name: !Sub ${ProjectName}
+      Description: AWS SAM CI Project
+      Source:
+        Type: CODEPIPELINE        
+        BuildSpec: !Ref BuildSpecPath
+      Artifacts:
+        Type: CODEPIPELINE      
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:5.0
+        PrivilegedMode: true
+      ServiceRole:
+        Fn::ImportValue: !Sub ${StackPrefix}-CodeBuildRole-Arn 
+      TimeoutInMinutes: 10      
+      LogsConfig:
+        CloudWatchLogs:
+          Status: ENABLED
+Outputs:
+  CodeBuildProjectName:
+    Description: CodeBuild Project Name
+    Value: !Ref ProjectName
+    Export: 
+      Name: !Sub ${StackPrefix}-SAM-CI-CodeBuildProjectName
