@@ -1,0 +1,17 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      golang: 1.22
+      #golang: latest
+  pre_build:
+    commands:
+      - echo Pre_build started on `date`
+      - go version
+      - sam --version
+
+  build:
+    commands:      
+      - echo Build started on `date`
+      - make build
