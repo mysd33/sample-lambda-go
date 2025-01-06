@@ -11,7 +11,7 @@ phases:
       - go version
       - sam --version
       - cd appbase && go mod download
-      - cd app && go mod download
+      - cd ../app && go mod download
 
   build:
     commands:      
