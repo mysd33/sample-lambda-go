@@ -10,8 +10,10 @@ phases:
       - echo Pre_build started on `date`
       - go version
       - sam --version
+      # go mod download
       - cd appbase && go mod download
       - cd ../app && go mod download
+      - cd ..
 
   build:
     commands:      
