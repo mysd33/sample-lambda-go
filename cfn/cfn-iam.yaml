@@ -23,10 +23,10 @@ Parameters:
     Description: Artifact Location of S3 Bucket
     Type: String
     Default: mysd33bucket123
-#  CacheS3Location:
-#    Description: Artifact Location of S3 Bucket Name/Prefix
-#    Type: String
-#    Default: mysd33bucket123/cache       
+  CacheS3Location:
+    Description: Artifact Location of S3 Bucket Name/Prefix
+    Type: String
+    Default: mysd33bucket123/cache       
 #Mappings: 
 
 #Conditions: 
@@ -257,12 +257,13 @@ Resources:
           - s3:GetObjectVersion
           - s3:GetBucketAcl
           - s3:GetBucketLocation
+          - s3:ListBucket
           Effect: Allow
           Resource: 
             - !Sub arn:aws:s3:::${ArtifactS3BucketName}
             - !Sub arn:aws:s3:::${ArtifactS3BucketName}/*      
-#            - !Sub arn:aws:s3:::${CacheS3Location}            
-#            - !Sub arn:aws:s3:::${CacheS3Location}/*
+            - !Sub arn:aws:s3:::${CacheS3Location}            
+            - !Sub arn:aws:s3:::${CacheS3Location}/*
         - Action:
           - codeartifact:List*
           - codeartifact:Describe*
