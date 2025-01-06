@@ -9,6 +9,7 @@ phases:
     commands:
       - echo Pre_build started on `date`
       - go version
+      - echo GOMODCACHE `go env | grep GOMODCACHE`
       - sam --version
       # go mod download
       - cd appbase && go mod download
