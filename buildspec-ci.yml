@@ -20,6 +20,7 @@ phases:
     commands:      
       - echo Build started on `date`
       - make build_linux
+      - make unit_test
 cache:
   paths:    
     - '/go/pkg/**/*'     
