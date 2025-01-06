@@ -1,4 +1,4 @@
-.PHONY: clean fmt lint vet validate build validate_dbg build_dbg unit_test integration_test
+.PHONY: clean clean_linux fmt lint vet validate build build_linux validate_dbg build_dbg unit_test integration_test
 .PHONY: local_invoke_% local_startapi local_startapi_dbg_% deploy deploy_guided deploy_env create_changeset_env delete
 .PHONY: doc_appbase doc_app
 
@@ -9,8 +9,10 @@ clean:
 	if exist ".aws-sam" (	\
 		rmdir /s /q .aws-sam	\
 	)
+
+clean_linux:
 # for Linux
-#	rm -rf .aws-sam
+	rm -rf .aws-sam
 
 fmt:
 	cd app & go fmt ./...
@@ -38,8 +40,16 @@ build: clean
 	xcopy /I /S configs .aws-sam\build\TodoAsyncFunction\configs
 	xcopy /I /S configs .aws-sam\build\TodoAsyncFifoFunction\configs
 	xcopy /I /S configs .aws-sam\build\BooksFunction\configs	
+
+build_linux: clean_linux
 # for linux
-# TODO	
+	sam build
+	cp -r configs .aws-sam/build/BffFunction/configs
+	cp -r configs .aws-sam/build/UsersFunction/configs
+	cp -r configs .aws-sam/build/TodoFunction/configs
+	cp -r configs .aws-sam/build/TodoAsyncFunction/configs
+	cp -r configs .aws-sam/build/TodoAsyncFifoFunction/configs
+	cp -r configs .aws-sam/build/BooksFunction/configs
 
 unit_test:
 	cd app & go test -v ./internal/...

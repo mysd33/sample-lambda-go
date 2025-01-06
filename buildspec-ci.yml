@@ -14,4 +14,4 @@ phases:
   build:
     commands:      
       - echo Build started on `date`
-      - make build
+      - make build_linux
