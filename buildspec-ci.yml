@@ -10,8 +10,12 @@ phases:
       - echo Pre_build started on `date`
       - go version
       - sam --version
+      - go mod download
 
   build:
     commands:      
       - echo Build started on `date`
       - make build_linux
+cache:
+  paths:    
+    - '/go/pkg/**/*'     
