@@ -39,7 +39,7 @@ const (
 )
 
 // デフォルトのurl.QueryEscape関数の挙動を変えるためのReplacer
-// 「+」を「%20」に変換し、「%2」Fを「/」に戻す
+// 「+」を「%20」に変換し、「%2F」を「/」に戻す
 var r = strings.NewReplacer("+", "%20", "%2F", "/")
 
 // ObjectStorageAccessor は、オブジェクトストレージへアクセスするためのインタフェースです。
@@ -136,8 +136,8 @@ type ObjectStorageAccessor interface {
 	// goroutine向けに、渡されたContextを利用して実行します。
 	// サイズが5MiBを超える場合は、透過的にマルチパートダウンロードを行います。
 	DownloadToFileWithContext(ctx context.Context, bucketName string, objectKey string, filePath string, optFns ...func(*s3.Options)) error
-	// Delele は、オブジェクトストレージからデータを削除します。
-	Delele(bucketName string, objectKey string, optFns ...func(*s3.Options)) error
+	// Delete は、オブジェクトストレージからデータを削除します。
+	Delete(bucketName string, objectKey string, optFns ...func(*s3.Options)) error
 	// DeleteWithContext は、オブジェクトストレージからデータを削除します。goroutine向けに、渡されたContextを利用して実行します。
 	DeleteWithContext(ctx context.Context, bucketName string, objectKey string, optFns ...func(*s3.Options)) error
 	// DeleteByVersionId は、オブジェクトストレージから特定のバージョンのデータを削除します。
@@ -601,8 +601,8 @@ func (a *defaultObjectStorageAccessor) DownloadToFileWithContext(ctx context.Con
 	return a.DownloadToWriterWithContext(ctx, bucketName, objectKey, f, optFns...)
 }
 
-// Delele implements ObjectStorageAccessor.
-func (a *defaultObjectStorageAccessor) Delele(bucketName string, objectKey string, optFns ...func(*s3.Options)) error {
+// Delete implements ObjectStorageAccessor.
+func (a *defaultObjectStorageAccessor) Delete(bucketName string, objectKey string, optFns ...func(*s3.Options)) error {
 	return a.DeleteWithContext(apcontext.Context, bucketName, objectKey, optFns...)
 }
 
