@@ -186,7 +186,7 @@ func (t *defaultTransaction) Commit(ctx context.Context) (*dynamodb.TransactWrit
 			return nil, errors.WithStack(err)
 		}
 	}
-	// ディレード処理の場合は、メッセージ管理テーブルのアイテムの重複メッセージIDを登録する更新トランザクションを追加
+	// ディレード処理の場合は、キューメッセージ管理テーブルのアイテムのステータス更新するトランザクションを追加
 	err = t.transactUpdateQueueMessageItem(ctx)
 	if err != nil {
 		return nil, err
@@ -242,7 +242,7 @@ func (t *defaultTransaction) Rollback() {
 	}
 }
 
-// transactUpdateQueueMessageItem は、メッセージ管理テーブルのアイテムの重複メッセージIDを登録する更新トランザクションを追加します。
+// transactUpdateQueueMessageItem は、メッセージ管理テーブルのアイテムのステータス更新するトランザクションを追加します。
 func (t *defaultTransaction) transactUpdateQueueMessageItem(ctx context.Context) error {
 	// Contextから非同期処理情報を取得
 	asyncHandlerInfo := ctx.Value(constant.ASYNC_HANDLER_INFO_CTX_KEY)
@@ -257,6 +257,6 @@ func (t *defaultTransaction) transactUpdateQueueMessageItem(ctx context.Context)
 		queueMessageItem.Status = constant.QUEUE_MESSAGE_STATUS_COMPLETE
 		return t.messageRegsiterer.UpdateMessage(queueMessageItem)
 	}
-	//TODO: エラー定義
+
 	return errors.Errorf("非同期処理情報の型が誤りのため、処理できません。")
 }
