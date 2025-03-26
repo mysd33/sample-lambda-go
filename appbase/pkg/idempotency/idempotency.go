@@ -106,6 +106,7 @@ func (i *defaultIdempotencyManager) startProcessIdepotency(idempotencyKey string
 				return myerrors.NewOtherError(InprogressProcessIdempotencyError, message.W_FW_8007, idempotencyKey)
 			}
 		}
+		return err
 	}
 	return nil
 }
