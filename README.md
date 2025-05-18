@@ -667,17 +667,6 @@ docker compose up -d
     * 「Object Browser」メニューから、「Create bucket」をクリックし、以下のバケットを作成する
         * 「Bucket Name」…「samplebucket123」
 
-* sam local start-apiコマンドを実行
-    * local-env.jsonファイルに記載されてた、環境変数で上書きして実行
-
-```sh
-cd ..
-sam local start-api --env-vars local-env.json
-
-# Windowsでもmakeをインストールすればmakeでいけます
-
-make local_startapi 
-```
 
 * MongoDB（DocumentDB Local）のDockerコンテナを起動
 
@@ -690,6 +679,18 @@ docker compose up -d
     * ブラウザで、[http://localhost:8081](http://localhost:8081)にアクセスするとMongo Expressのコンソールが表示される
     * 「+Create Database」ボタンをクリックし、以下のデータベースを作成する
         * 「Database Name」…「sampledb」
+        
+* sam local start-apiコマンドを実行
+    * local-env.jsonファイルに記載されてた、環境変数で上書きして実行
+
+```sh
+cd ..
+sam local start-api --env-vars local-env.json
+
+# Windowsでもmakeをインストールすればmakeでいけます
+
+make local_startapi 
+```
 
 * APの動作確認
 ```sh
