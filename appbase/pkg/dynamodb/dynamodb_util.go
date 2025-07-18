@@ -103,6 +103,10 @@ func CreateUpdateExpression(input input.UpdateInput) (*expression.Expression, er
 			upd = upd.Set(expression.Name(attr.Name), expression.Value(attr.Value))
 		}
 	}
+	// 削除項目の設定
+	for _, name := range input.RemoveAttributeNames {
+		upd = upd.Remove(expression.Name(name))
+	}
 	// Update表現の作成
 	eb := expression.NewBuilder().WithUpdate(upd)
 	// 更新条件の作成

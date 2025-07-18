@@ -51,6 +51,8 @@ type UpdateInput struct {
 	WhereClauses []*WhereClause
 	// 更新項目
 	UpdateAttributes []*Attribute
+	// 削除項目名（更新時に、属性の値事態を削除したい）
+	RemoveAttributeNames []string
 }
 
 // DeleteInput は、削除時のインプット構造体
