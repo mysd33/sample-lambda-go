@@ -50,8 +50,8 @@ func (b *bookRepositoryImplByDocumentDB) CreateOne(book *model.Book) (*model.Boo
 	//　(参考)https://www.mongodb.com/ja-jp/docs/drivers/go/current/usage-examples/insertOne/
 
 	// タイムアウトの設定
-	ctx, cacel := b.documentDBAccessor.GetDefaultContextWithTimeout()
-	defer cacel()
+	ctx, cancel := b.documentDBAccessor.GetDefaultContextWithTimeout()
+	defer cancel()
 	result, err := b.collection.InsertOne(ctx, &book)
 	if err != nil {
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
@@ -64,8 +64,8 @@ func (b *bookRepositoryImplByDocumentDB) CreateOne(book *model.Book) (*model.Boo
 // FindSomeByCriteria implements BookRepository.
 func (b *bookRepositoryImplByDocumentDB) FindSomeByCriteria(criteria *BookCriteria) ([]model.Book, error) {
 	// タイムアウトの設定
-	ctx, cacel := b.documentDBAccessor.GetDefaultContextWithTimeout()
-	defer cacel()
+	ctx, cancel := b.documentDBAccessor.GetDefaultContextWithTimeout()
+	defer cancel()
 
 	// 複数ドキュメントの検索
 	// （参考）https://www.mongodb.com/ja-jp/docs/drivers/go/current/usage-examples/find/
