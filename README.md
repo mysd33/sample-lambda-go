@@ -645,6 +645,7 @@ testdb> \q
       
 
     * [LocalStack](https://github.com/localstack/localstack)の場合
+        * TODO: DockerComposeでの起動方法の整備
 
 
 * SQL Local実行の起動
@@ -668,7 +669,7 @@ testdb> \q
 > MinIOは、GNU AGPL v3によるOSSライセンスと商用ライセンスのデュアルライセンスで提供されており、MinIOを同梱しての配布、利用等には注意すること。
 > また、現在、MinIOは、[Dockerイメージの配布を停止してしまった](https://github.com/minio/minio/issues/21647)ようなので、代替案としてLocalStackを利用する方法を整理した。これにより、他のAWSサービスのローカル実行もLocalStackで一元的に実行する手順も今後整備する。
 
-* S3 Localのストレージの起動
+* S3 Local実行の起動
     * [LocalStack](https://github.com/localstack/localstack)の場合        
 
         ```sh
@@ -694,7 +695,7 @@ testdb> \q
             aws s3 ls --endpoint-url=http://localhost:4566 --profile localstack
             ```
 
-        * バケット内のファイルの確認
+        * バケット内のファイルの確認（サンプルAP実行後に使用）
 
             ```sh            
             aws s3 ls --endpoint-url=http://localhost:4566 --profile localstack s3://samplebucket123 --recursive
@@ -729,15 +730,8 @@ testdb> \q
             * 「+Create Database」ボタンをクリックし、以下のデータベースを作成する
                 * 「Database Name」…「sampledb」
 
-    * LocalStackの場合
+    * [LocalStack](https://github.com/localstack/localstack)の場合
         * TODO: DockerComposeでの起動方法の整備
-            * https://docs.localstack.cloud/aws/getting-started/installation/#docker-compose
-
-        ```sh
-        cd ..
-        cd localstack
-        docker compose up -d
-        ```         
 
 * sam local start-apiコマンドを実行
     * local-env.jsonファイルに記載されてた、環境変数で上書きして実行
