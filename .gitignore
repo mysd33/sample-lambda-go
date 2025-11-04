@@ -3,3 +3,4 @@
 *.dtmp
 *.db
 minio/data/
+localstack/volume
