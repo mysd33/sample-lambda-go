@@ -622,64 +622,123 @@ testdb> \dt
 testdb> \q
 ```
 
-* [DynamoDB Local](https://docs.aws.amazon.com/ja_jp/amazondynamodb/latest/developerguide/DynamoDBLocal.html)と[dynamodb-admin](https://github.com/aaronshaf/dynamodb-admin)のDockerコンテナを起動
+* DynamoDB Local実行の起動
+    * AWSのDynamoDB Localの場合
+        * [DynamoDB Local](https://docs.aws.amazon.com/ja_jp/amazondynamodb/latest/developerguide/DynamoDBLocal.html)と[dynamodb-admin](https://github.com/aaronshaf/dynamodb-admin)のDockerコンテナを起動
+            * Windowsでうまく起動しない場合は、いったん権限の問題で引っかかるdocker/dynamodbフォルダを削除してみて再作成してみてください。
 
-```sh
-cd ..
-cd dynamodb-local
-docker compose up -d
-```
+        ```sh
+        cd ..
+        cd dynamodb-local
+        docker compose up -d
+        ```
 
-* dynamodb-adminでtodoテーブルを作成        
-    * ブラウザで[http://localhost:8001/](http://localhost:8001/)にアクセスし「Create Table」ボタンをクリック    
-    * 以下のテーブルを作成
-        * 「Table Name」…「todo」、「Hash Attribute Name」…「todo_id」、「Hash Attribute Type」…「String」で作成
-        * 「Table Name」…「temp」、「Hash Attribute Name」…「id」、「Hash Attribute Type」…「String」で作成
-        * 「Table Name」…「queue_message」、「Hash Attribute Name」…「message_id」、「Hash Attribute Type」…「String」で作成        
-        * 「Table Name」…「idempotency」、「Hash Attribute Name」…「idempotency_key」、「Hash Attribute Type」…「String」で作成
+        * dynamodb-adminでtodoテーブルを作成        
+            * ブラウザで[http://localhost:8001/](http://localhost:8001/)にアクセスし「Create Table」ボタンをクリック    
+            * 以下のテーブルを作成
+                * 「Table Name」…「todo」、「Hash Attribute Name」…「todo_id」、「Hash Attribute Type」…「String」で作成
+                * 「Table Name」…「temp」、「Hash Attribute Name」…「id」、「Hash Attribute Type」…「String」で作成
+                * 「Table Name」…「queue_message」、「Hash Attribute Name」…「message_id」、「Hash Attribute Type」…「String」で作成        
+                * 「Table Name」…「idempotency」、「Hash Attribute Name」…「idempotency_key」、「Hash Attribute Type」…「String」で作成
 
-* TODO: NoSQL Workbenchの場合のテーブル作成手順も記載
-    
+        * TODO: NoSQL WorkbenchでDynamoDB Localにアクセスする場合のテーブル作成手順も記載
+      
 
-* [Elastic MQ](https://github.com/softwaremill/elasticmq)（SQL Local実行）のコンテナを起動
-
-```sh
-cd ..
-cd elasticmq
-docker compose up -d
-```
-
-* キューの確認
-    * ブラウザで、[http://localhost:9325](http://localhost:9325)にアクセスするとキューの状態が確認できる
-    * custom.confの設定に基づき、SampleQueueと、SampleQueue-DLQという標準キュー、SampleFIFOQueue.fifoというFIFOキューが作成されていることが分かる
-
-* [MinIO](https://min.io/)のDockerコンテナを起動
-
-```sh
-cd ..
-cd minio
-docker compose up -d
-```
-
-* バケットの作成
-    * ブラウザで、[http://localhost:9001](http://localhost:9001)にアクセスするとMinIOのコンソールが表示される
-    * ログイン画面で、UsernameとPasswordに、それぞれ「minioadmin」を入力しログインする
-    * 「Object Browser」メニューから、「Create bucket」をクリックし、以下のバケットを作成する
-        * 「Bucket Name」…「samplebucket123」
+    * [LocalStack](https://github.com/localstack/localstack)の場合
 
 
-* MongoDB（DocumentDB Local）のDockerコンテナを起動
+* SQL Local実行の起動
+    * [Elastic MQ](https://github.com/softwaremill/elasticmq)の場合
+        * Elastic MQのコンテナを起動
 
-```sh
-cd mongodb
-docker compose up -d
-```
+        ```sh
+        cd ..
+        cd elasticmq
+        docker compose up -d
+        ```
 
-* Mongo Expressでデータベースの作成
-    * ブラウザで、[http://localhost:8081](http://localhost:8081)にアクセスするとMongo Expressのコンソールが表示される
-    * 「+Create Database」ボタンをクリックし、以下のデータベースを作成する
-        * 「Database Name」…「sampledb」
-        
+        * キューの確認
+            * ブラウザで、[http://localhost:9325](http://localhost:9325)にアクセスするとキューの状態が確認できる
+            * custom.confの設定に基づき、SampleQueueと、SampleQueue-DLQという標準キュー、SampleFIFOQueue.fifoというFIFOキューが作成されていることが分かる
+
+    * [LocalStack](https://github.com/localstack/localstack)の場合
+        * TODO: DockerComposeでの起動方法の整備
+
+> [!NOTE]
+> MinIOは、GNU AGPL v3によるOSSライセンスと商用ライセンスのデュアルライセンスで提供されており、MinIOを同梱しての配布、利用等には注意すること。
+> また、現在、MinIOは、[Dockerイメージの配布を停止してしまった](https://github.com/minio/minio/issues/21647)ようなので、代替案としてLocalStackを利用する方法を整理した。これにより、他のAWSサービスのローカル実行もLocalStackで一元的に実行する手順も今後整備する。
+
+* S3 Localのストレージの起動
+    * [LocalStack](https://github.com/localstack/localstack)の場合        
+
+        ```sh
+        cd ..
+        cd localstack
+        docker compose up -d
+        ```            
+
+        ```sh
+        $ aws configure --profile localstack
+        AWS Access Key ID [None]: DUMMY
+        AWS Secret Access Key [None]: DUMMY
+        Default region name [None]: ap-northeast-1
+        Default output format [None]: json
+        ```
+
+        * バケットの作成
+
+            ```sh
+            # バケットの作成
+            aws s3 mb --endpoint-url=http://localhost:4566 --profile localstack s3://samplebucket123 
+            # バケットの確認
+            aws s3 ls --endpoint-url=http://localhost:4566 --profile localstack
+            ```
+
+        * バケット内のファイルの確認
+
+            ```sh            
+            aws s3 ls --endpoint-url=http://localhost:4566 --profile localstack s3://samplebucket123 --recursive
+            ```        
+
+    * [MinIO](https://min.io/)の場合
+        * MinIOのDockerコンテナを起動
+
+        ```sh
+        cd ..
+        cd minio
+        docker compose up -d
+        ```
+
+        * バケットの作成
+            * ブラウザで、[http://localhost:9001](http://localhost:9001)にアクセスするとMinIOのコンソールが表示される
+            * ログイン画面で、UsernameとPasswordに、それぞれ「minioadmin」を入力しログインする
+            * 「Object Browser」メニューから、「Create bucket」をクリックし、以下のバケットを作成する
+                * 「Bucket Name」…「samplebucket123」
+
+* DocumentDB Local実行の起動
+    * MongoDB(DocumentDB互換)の場合
+        * MongoDBのDockerコンテナを起動
+
+            ```sh
+            cd mongodb
+            docker compose up -d
+            ```
+
+        * Mongo Expressでデータベースの作成
+            * ブラウザで、[http://localhost:8081](http://localhost:8081)にアクセスするとMongo Expressのコンソールが表示される
+            * 「+Create Database」ボタンをクリックし、以下のデータベースを作成する
+                * 「Database Name」…「sampledb」
+
+    * LocalStackの場合
+        * TODO: DockerComposeでの起動方法の整備
+            * https://docs.localstack.cloud/aws/getting-started/installation/#docker-compose
+
+        ```sh
+        cd ..
+        cd localstack
+        docker compose up -d
+        ```         
+
 * sam local start-apiコマンドを実行
     * local-env.jsonファイルに記載されてた、環境変数で上書きして実行
 

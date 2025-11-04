@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   elasticmq:
     image: softwaremill/elasticmq-native
