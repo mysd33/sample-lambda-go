@@ -71,8 +71,13 @@ func (c *todoAsyncControllerImpl) doRegisterAllAsync(sqsMessage events.SQSMessag
 		// 登録失敗の業務エラーにするか、スキップするかはケースバイケース
 		return errors.NewBusinessErrorWithCause(err, message.W_EX_8008)
 	} else if transaction.IsTransactionConflict(err) {
-		// 登録失敗の業務エラーにするか、スキップするかはケースバイケース
+		// 登録失敗の業務エラーにするか、システムエラーにするかはケースバイケース
 		return errors.NewBusinessErrorWithCause(err, message.W_EX_8008)
 	}
+	/* 混在するケースでも業務エラーにする配慮する場合はこちらを使用
+	} else if transaction.IsTransactionConditionalCheckFailedOrTransactionConflict(err) {
+		// 登録失敗の業務エラーにするか、システムエラーにするかはケースバイケース
+		return errors.NewBusinessErrorWithCause(err, message.W_EX_8008)
+	}*/
 	return err
 }

@@ -100,9 +100,14 @@ func (c *todoControllerImpl) Register(ctx *gin.Context) (any, error) {
 			// 登録失敗の業務エラーにするか、スキップするかはケースバイケース
 			return nil, errors.NewBusinessErrorWithCause(err, message.W_EX_8004, request.TodoTitle)
 		} else if transaction.IsTransactionConflict(err) {
-			// 登録失敗の業務エラーにするか、スキップするかはケースバイケース
+			// 登録失敗の業務エラーにするか、システムエラーにするかはケースバイケース
 			return nil, errors.NewBusinessErrorWithCause(err, message.W_EX_8004, request.TodoTitle)
 		}
+		/* 混在するケースでも業務エラーにする配慮する場合はこちらを使用
+		} else if transaction.IsTransactionConditionalCheckFailedOrTransactionConflict(err) {
+			// 登録失敗の業務エラーにするか、システムエラーにするかはケースバイケース
+			return nil, errors.NewBusinessErrorWithCause(err, message.W_EX_8004, request.TodoTitle)
+		}*/
 		return nil, err
 	}
 	return result, nil
