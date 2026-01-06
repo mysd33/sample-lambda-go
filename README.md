@@ -13,6 +13,16 @@
     * 標準キュー、FIFOキューの両方に対応
     * DynamoDBのトランザクション管理機能を利用した、メッセージ送達とDynamoDBトランザクションの整合性を担保する仕組みを実装
 
+* 純バッチ処理方式
+    * EventBridgeによるスケジュール起動によりLambda実行
+    * ジョブのフロー制御が必要な場合は、EventBridgeからStep Functionsを起動し、各ステートでLambda関数を実行する
+    * TODO: サンプルは未実装
+
+* 本サンプルAPのソフトウェアアーキテクチャの図は以下の通り。
+
+    ![ソフトウェアアーキテクチャ](image/architecture.png)
+
+
 * LambdaからAWS SDKを用いたDynamoDB、SQS、S3等の各種AWSリソースへのアクセスに対応
     * AWS SDK for Go v2に対応した実装
         * v2では、AWS SDKやX-Ray SDKの利用方法がv1の時とAPIがかなり変更されている    
