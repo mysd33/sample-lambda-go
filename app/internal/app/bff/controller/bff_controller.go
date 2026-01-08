@@ -184,12 +184,12 @@ func (c *bffControllerImpl) RegisterTodosAsync(ctx *gin.Context) (any, error) {
 			return nil, errors.NewBusinessErrorWithCause(err, message.W_EX_8005)
 		} else if transaction.IsTransactionConflict(err) {
 			// 登録失敗の業務エラーにするか、システムエラーにするかはケースバイケース
-			return nil, errors.NewBusinessErrorWithCause(err, message.W_EX_8005)
+			return nil, errors.NewSystemError(err, message.E_EX_9006)
 		}
-		/* 混在するケースでも業務エラーにする配慮する場合はこちらを使用
+		/* 2つの理由コードが混在するケースでも業務エラーにする配慮する場合はこちらを使用
 		} else if transaction.IsTransactionConditionalCheckFailedOrTransactionConflict(err) {
 			// 登録失敗の業務エラーにするか、システムエラーにするかはケースバイケース
-			return nil, errors.NewBusinessErrorWithCause(err, message.W_EX_8004, request.TodoTitle)
+			return nil, errors.NewBusinessErrorWithCause(err, message.W_EX_8005)
 		}*/
 		return nil, err
 	}

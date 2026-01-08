@@ -55,6 +55,7 @@ func IsTransactionConditionalCheckFailedOrTransactionConflict(err error) bool {
 			if *reason.Code == reasonCodeNone {
 				// Noneの場合は、スキップ
 				continue
+				// 対象の原因以外のエラーが含まれている場合は、falseを返す
 			} else if *reason.Code != reasonCodeConditionalCheckFailed && *reason.Code != reasonCodeTransactionConflict {
 				return false
 			}
