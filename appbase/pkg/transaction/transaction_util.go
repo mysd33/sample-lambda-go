@@ -5,6 +5,7 @@ package transaction
 
 import (
 	"errors"
+	"slices"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
@@ -21,7 +22,7 @@ const (
 // https://docs.aws.amazon.com/ja_jp/amazondynamodb/latest/APIReference/API_TransactWriteItems.html
 func IsTransactionConditionalCheckFailed(err error) bool {
 	var txCanceledException *types.TransactionCanceledException
-	return errors.As(err, &txCanceledException) && containsOnlyTargetCancellationReason(txCanceledException, reasonCodeConditionalCheckFailed)
+	return errors.As(err, &txCanceledException) && containsTargetCancellationReasons(txCanceledException, reasonCodeConditionalCheckFailed)
 }
 
 // IsTransactionConflict は、エラーの原因がトランザクション実行中にトランザクションの競合が発生
@@ -34,7 +35,7 @@ func IsTransactionConflict(err error) bool {
 	var txCanceledException *types.TransactionCanceledException
 	var txConflictException *types.TransactionConflictException
 	if errors.As(err, &txCanceledException) {
-		return containsOnlyTargetCancellationReason(txCanceledException, reasonCodeTransactionConflict)
+		return containsTargetCancellationReasons(txCanceledException, reasonCodeTransactionConflict)
 	}
 	return errors.As(err, &txConflictException)
 }
@@ -50,33 +51,21 @@ func IsTransactionConditionalCheckFailedOrTransactionConflict(err error) bool {
 	var txCanceledException *types.TransactionCanceledException
 	var txConflictException *types.TransactionConflictException
 	if errors.As(err, &txCanceledException) {
-		contains := false
-		for _, reason := range txCanceledException.CancellationReasons {
-			if *reason.Code == reasonCodeNone {
-				// Noneの場合は、スキップ
-				continue
-				// 対象の原因以外のエラーが含まれている場合は、falseを返す
-			} else if *reason.Code != reasonCodeConditionalCheckFailed && *reason.Code != reasonCodeTransactionConflict {
-				return false
-			}
-			// 対象の原因が含まれている場合は、trueにする
-			contains = true
-		}
-		return contains
+		return containsTargetCancellationReasons(txCanceledException, reasonCodeConditionalCheckFailed, reasonCodeTransactionConflict)
 	}
 	return errors.As(err, &txConflictException)
 }
 
-// containsOnlyTargetCancellationReason は、TransactionCanceledExceptionの原因に指定された原因が含まれているかを判定します。
+// containsTargetCancellationReasons は、TransactionCanceledExceptionの原因に指定された原因のいずれかが含まれているかを判定します。
 // 指定された原因以外のエラーが含まれている場合は、falseを返します。
-func containsOnlyTargetCancellationReason(txCanceledException *types.TransactionCanceledException, targetReason string) bool {
+func containsTargetCancellationReasons(txCanceledException *types.TransactionCanceledException, targetReasons ...string) bool {
 	contains := false
 	for _, reason := range txCanceledException.CancellationReasons {
 		if *reason.Code == reasonCodeNone {
 			// Noneの場合は、スキップ
 			continue
-		} else if *reason.Code != targetReason {
-			//	対象の原因以外のエラーが含まれている場合は、falseを返す
+		} else if !slices.Contains(targetReasons, *reason.Code) {
+			// 対象の原因以外のエラーが含まれている場合は、falseを返す
 			return false
 		}
 		// 対象の原因が含まれている場合は、trueにする
