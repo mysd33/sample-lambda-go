@@ -1192,9 +1192,9 @@ make doc_app
 | エラー（例外） | エラーコード（メッセージID）やメッセージを管理可能な共通的な入力エラー、ビジネスエラー、システムエラー用のGoのErrorオブジェクトを提供する。cockroachdb/errorsによりスタックトレースがログ出力できるようにする。 | ○ | com.example/appbase/pkg/errors |
  集約例外ハンドリング | オンラインAP制御機能、トランザクション管理機能と連携し、エラー（例外）発生時、エラーログの出力、DBのロールバック、エラー画面やエラー電文の返却といった共通的なエラーハンドリングを実施する。 | ○ | com.example/appbase/pkg/handler<br/>com.example/appbase/pkg/transaction |
 | RDBアクセス | go標準のdatabase/sqlパッケージを利用しRDBへアクセスする。DB接続等の共通処理を個別に実装しなくてもよい仕組みとする。 | ○ | com.example/appbase/pkg/rdb |
-| RDBトランザクション管理機能 | サービス（ビジネスロジック）の実行前後にRDBのトランザクション開始・終了を機能を提供する。 | ○ | com.example/appbase/pkg/rdb |
+| RDBトランザクション管理 | サービス（ビジネスロジック）の実行前後にRDBのトランザクション開始・終了を自動で実施する機能を提供する。 | ○ | com.example/appbase/pkg/rdb |
 | DynamoDBアクセス | AWS SDKを利用しDynamoDBへアクセスする汎化したAPIを提供する。 | ○ | com.example/appbase/pkg/dynamodb |
-| DynamoDBトランザクション管理機能 | サービス（ビジネスロジック）の実行前後にDynamoDBのトランザクション開始・終了を機能を提供する。 | ○ | com.example/appbase/pkg/transaction<br/>com.example/appbase/pkg/domain |
+| DynamoDBトランザクション管理 | サービス（ビジネスロジック）の実行前後にDynamoDBのトランザクション開始・終了を自動で実施する機能を提供する。 | ○ | com.example/appbase/pkg/transaction<br/>com.example/appbase/pkg/domain |
 | DocumentDB（Mongo）アクセス | MongoDB Goドライバー(go.mongodb.org/mongo-driver/mongo)を利用しDBへアクセスする。DB接続等の共通処理を個別に実装しなくてもよい仕組みとする。  | ○ | com.example/appbase/pkg/documentdb |
 | 非同期実行依頼 | AWS SDKを利用してSQSへ非同期処理実行依頼メッセージを送信する汎化したAPIを提供する。また、業務APでDynamoDBアクセスを伴う場合、DynamoDBトランザクション管理機能を用いてDB更新とメッセージ送達のデータ整合性を担保する。 | ○ | com.example/appbase/pkg/async<br/>com.example/appbase/pkg/transaction |
 | オブジェクトストレージアクセス| AWS SDKを利用し、S3にアクセスする汎化したAPIを提供する。 | ○ | com.example/appbase/pkg/objectstorage |
