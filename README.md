@@ -676,14 +676,34 @@ testdb> \q
         * TODO: DockerComposeでの起動方法の整備
 
 > [!NOTE]
-> MinIOは、GNU AGPL v3によるOSSライセンスと商用ライセンスのデュアルライセンスで提供されており、MinIOを同梱しての配布、利用等には注意すること。
-> また、現在、MinIOは、[Dockerイメージの配布を停止してしまった](https://github.com/minio/minio/issues/21647)ようなので、代替案としてLocalStackを利用する方法を整理した。これにより、他のAWSサービスのローカル実行もLocalStackで一元的に実行する手順も今後整備する。
-
+> [MinIOのOSSのGitHub](https://github.com/minio/minio)はアーカイブされて、以前の[OSSのDockerイメージの配布を停止](https://github.com/minio/minio/issues/21647)してしまった模様。現在は、MinIOは、AIStor Serverとして、Free版とEnterprise版の2つのエディションで提供されている。
+> 以下の[ダウンロードサイト](https://www.min.io/download/aistor-server?platform=docker)の手順にしたがって、MinIOのDockerイメージをダウンロードして、ローカルでMinIOを起動することが可能である。Free版は[MinIO AIStor Free Tier License Agreement](https://www.min.io/legal/aistor-free-agreement)に同意することで利用可能となっており、スタンドアロンモードのみでの利用、開発作業、プロトタイピング、研究等の目的での利用に制限されている。なお、Free版でもライセンスキーの取得が必要である。
+> なお、以前のバージョンをまだ使用している場合、OSSライセンスと商用ライセンスのデュアルライセンスで提供されており、OSSライセンスは[GNU AGPL v3](https://www.min.io/commercial-license)であったためMinIOを同梱しての配布、利用等には注意すること。
+ 
 > [!NOTE]
 > LocalStackの無料版では、CIクレジット（CI環境での実行）は含まれていないため、利用には注意すること。  
 > また、[LocalStackの今後の展望](https://blog.localstack.cloud/the-road-ahead-for-localstack/)では、Community版とPro版を1つのDockerイメージに統合することや、無料版であっても、アカウント登録が必要になることがアナウンスされているため、今後の動向に注意すること。
 
 * S3 Local実行の起動
+    * [MinIO](https://min.io/)の場合
+        * [MinIOのダウンロードサイト](https://www.min.io/download/aistor-server?platform=docker)の手順にしたがって、[REQUEST TRIAL LICENSE]のボタンをクリックし、必要事項を記入しライセンスキーを取得する。（メールアドレス宛にライセンスキーのメールが届くので、メール内のリンクをクリックしてライセンキーを確認する）
+
+        * 取得したライセンスキーを、[minioフォルダ](minio)に、`minio.license`というファイル名で保存する
+
+        * MinIOのDockerコンテナを起動
+
+        ```sh
+        cd ..
+        cd minio
+        docker compose up -d
+        ```
+
+        * バケットの作成
+            * ブラウザで、[http://localhost:9001](http://localhost:9001)にアクセスするとMinIOのコンソールが表示される
+            * ログイン画面で、UsernameとPasswordに、それぞれ「minioadmin」を入力しログインする
+            * 「Object Browser」メニューから、「Create bucket」をクリックし、以下のバケットを作成する
+                * 「Bucket Name」…「samplebucket123」
+
     * [LocalStack](https://github.com/localstack/localstack)の場合        
 
         ```sh
@@ -714,21 +734,6 @@ testdb> \q
             ```sh            
             aws s3 ls --endpoint-url=http://localhost:4566 --profile localstack s3://samplebucket123 --recursive
             ```        
-
-    * [MinIO](https://min.io/)の場合
-        * MinIOのDockerコンテナを起動
-
-        ```sh
-        cd ..
-        cd minio
-        docker compose up -d
-        ```
-
-        * バケットの作成
-            * ブラウザで、[http://localhost:9001](http://localhost:9001)にアクセスするとMinIOのコンソールが表示される
-            * ログイン画面で、UsernameとPasswordに、それぞれ「minioadmin」を入力しログインする
-            * 「Object Browser」メニューから、「Create bucket」をクリックし、以下のバケットを作成する
-                * 「Bucket Name」…「samplebucket123」
 
 * DocumentDB Local実行の起動
     * MongoDB(DocumentDB互換)の場合

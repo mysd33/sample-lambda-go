@@ -1,10 +1,11 @@
 services:
   minio:
-    image: minio/minio
-    container_name: minio
+    image: quay.io/minio/aistor/minio
+    container_name: aistor-server-minio
     ports:
       - 9000:9000
       - 9001:9001  
     volumes:
       - ./data:/data
+      - ./minio.license:/minio.license
     command: server /data --console-address ":9001"
