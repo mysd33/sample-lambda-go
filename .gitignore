@@ -5,3 +5,4 @@
 minio/data/
 minio/minio.license
 localstack/volume
+floci/data/

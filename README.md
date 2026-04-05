@@ -654,10 +654,6 @@ testdb> \q
         * TODO: NoSQL WorkbenchでDynamoDB Localにアクセスする場合のテーブル作成手順も記載
       
 
-    * [LocalStack](https://github.com/localstack/localstack)の場合
-        * TODO: DockerComposeでの起動方法の整備
-
-
 * SQL Local実行の起動
     * [Elastic MQ](https://github.com/softwaremill/elasticmq)の場合
         * Elastic MQのコンテナを起動
@@ -672,8 +668,6 @@ testdb> \q
             * ブラウザで、[http://localhost:9325](http://localhost:9325)にアクセスするとキューの状態が確認できる
             * custom.confの設定に基づき、SampleQueueと、SampleQueue-DLQという標準キュー、SampleFIFOQueue.fifoというFIFOキューが作成されていることが分かる
 
-    * [LocalStack](https://github.com/localstack/localstack)の場合
-        * TODO: DockerComposeでの起動方法の整備
 
 > [!NOTE]
 > [MinIOのOSSのGitHub](https://github.com/minio/minio)はアーカイブされて、以前の[OSSのDockerイメージの配布を停止](https://github.com/minio/minio/issues/21647)してしまった模様。現在は、MinIOは、AIStor Serverとして、Free版とEnterprise版の2つのエディションで提供されている。
@@ -681,8 +675,8 @@ testdb> \q
 > なお、以前のバージョンをまだ使用している場合、OSSライセンスと商用ライセンスのデュアルライセンスで提供されており、OSSライセンスは[GNU AGPL v3](https://www.min.io/commercial-license)であったためMinIOを同梱しての配布、利用等には注意すること。
  
 > [!NOTE]
-> LocalStackの無料版では、CIクレジット（CI環境での実行）は含まれていないため、利用には注意すること。  
-> また、[LocalStackの今後の展望](https://blog.localstack.cloud/the-road-ahead-for-localstack/)では、Community版とPro版を1つのDockerイメージに統合することや、無料版であっても、アカウント登録が必要になることがアナウンスされているため、今後の動向に注意すること。
+> LocalStackのHobbyプラン（無料版）は非商用利用限定となったため、注意すること。
+> 類似のOSSのサービスとして[Floci](https://github.com/floci-io/floci)があるので、利用を検討してみるとよい。
 
 * S3 Local実行の起動
     * [MinIO](https://min.io/)の場合
@@ -704,7 +698,11 @@ testdb> \q
             * 「Object Browser」メニューから、「Create bucket」をクリックし、以下のバケットを作成する
                 * 「Bucket Name」…「samplebucket123」
 
-    * [LocalStack](https://github.com/localstack/localstack)の場合        
+    * LocalStackの場合
+        * [LocalStackのサイト](https://www.localstack.cloud/pricing#Tab%201)で、Freeプランに記載された、Create Your Accountでアカウントを構築しておく。
+            * `LOCALSTACK_AUTH_TOKEN`という環境変数に、LocalStackのサイトでアカウント作成後に表示されるAuth Tokenを設定しておく必要がある。
+        * [https://docs.localstack.cloud/aws/getting-started/installation/]に従い、LocalStack CLIのインストーラ、pip、Docker等、いずれかの方法でインストールする
+            * ここでは[Docker Composeでの起動例](https://docs.localstack.cloud/aws/getting-started/installation/#docker-compose)を記載する。すでに、サンプルとしてlocalstackフォルダにdocker-compose.ymlが用意されているので、以下の通り起動する。
 
         ```sh
         cd ..
@@ -735,6 +733,18 @@ testdb> \q
             aws s3 ls --endpoint-url=http://localhost:4566 --profile localstack s3://samplebucket123 --recursive
             ```        
 
+    * Flociの場合
+        * [Flociのサイト](https://github.com/floci-io/floci)の手順に従い、インストールし、Flociを起動        
+        * ここでは、すでに、サンプルとしてflociフォルダにdocker-compose.ymlが用意されているので、以下の通り起動する。
+            
+            ```sh
+            cd floci
+            docker compose up -d
+            ```        
+
+        * 起動後は、localhostの4566番ポートで起動するので、以降の操作は、localstackと同様である。
+
+
 * DocumentDB Local実行の起動
     * MongoDB(DocumentDB互換)の場合
         * MongoDBのDockerコンテナを起動
@@ -749,8 +759,6 @@ testdb> \q
             * 「+Create Database」ボタンをクリックし、以下のデータベースを作成する
                 * 「Database Name」…「sampledb」
 
-    * [LocalStack](https://github.com/localstack/localstack)の場合
-        * TODO: DockerComposeでの起動方法の整備
 
 * sam local start-apiコマンドを実行
     * local-env.jsonファイルに記載されてた、環境変数で上書きして実行
