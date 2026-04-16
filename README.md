@@ -54,10 +54,20 @@
         ![X-Rayの可視化の例4](image/xray-sqs-delayed.png)
     * DocumentDBの呼び出しは、mongo-go-driverがX-Ray SDKに対応していないとのことで、未実施。
         * [issue](https://github.com/aws/aws-xray-sdk-go/issues/348)
-        
+
+> [!WARNING]
+> [AWS X-Ray SDK / Daemon のサポート終了と OpenTelemetry 移行のお知らせ](https://aws.amazon.com/jp/blogs/news/announcing-aws-x-ray-sdks-daemon-end-of-support-and-opentelemetry-migration/)の記載にあるとおり、AWS X-Ray 用の SDK と Daemon は2026年2月25日にメンテナンスモードに入り、2027年2月25日にサポート終了となる。
+> ADOT(AWS Distro for OpenTelemetry) への移行について今後対応予定である。
+> * 今後更新する際の参考情報
+>   * [AWS X-Ray: Migrate to OpenTelemetry Go](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html)    
+>   * [AWS Distro for OpenTelemetry Lambda](https://aws-otel.github.io/docs/getting-started/lambda)
+>       * 最新の最適化されたアプローチだと、ADOT CollectorのLambdaレイヤーの[サポートランタイム](https://aws-otel.github.io/docs/getting-started/lambda#supported-runtimes)にカスタムラインタイム(provided.al2)が追加されていないように読み取れるため、Goの場合はレガシーアプローチをとる必要がありそう。
+>       * [AWS Distro for OpenTelemetry Lambda Support For Go(the legacy approach)](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)
+
+
 * RDS Proxyの利用時の注意
     * ピン留め
-        * SQLを記載するにあたり、従来はプリペアドステートメントを使用するのが一般的であるが、RDS Proxyを使用する場合には、[ピン留め(Pinning)](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-managing.html#rds-proxy-pinning)という現象が発生してしまう。その間、コネクションが切断されるまで占有されつづけてしまい再利用できず、大量のリクエストを同時に処理する場合にはコネクション枯渇し性能面に影響が出る恐れがある。
+        * SQLを記載するにあたり、従来はプリペアドステートメントを使用するのが一般的であるが、RDS Proxyを使用する場合には、[ピン留め(Pinning)](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-pinning.html)という現象が発生してしまう。その間、コネクションが切断されるまで占有されつづけてしまい再利用できず、大量のリクエストを同時に処理する場合にはコネクション枯渇し性能面に影響が出る恐れがある。
             * ピン留めが発生してるかについては、CloudWatch Logsでロググループ「/aws/
             rds/proxy/demo-rds-proxy」を確認して、以下のような文言が出ていないか確認するとよい。
 
@@ -65,14 +75,21 @@
             The client session was pinned to the database connection [dbConnection=…] for the remainder of the session. The proxy can't reuse this connection until the session ends. Reason: A parse message was detected.
             ```
 
-        * 本サンプルAPのRDBアクセス処理では、プリペアドステートメントを使用しないよう実装することで、ピン留めが発生しないようにしている。この際、注意点として、SQLインジェクションが起きないようにエスケープ処理を忘れずに実装している。
+        * 一般的に、PostgreSQLの場合、RDBトランザクションを利用していなくても、SETコマンドの実行、プリペアドステートメントを利用しているとピン留めが発生してしまう。        
+            * 参考                
+                * [RDSピン留めの回避(Avoiding pinning an RDS Proxy)](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-pinning.html#rds-proxy-pinning.postgres)
+                * [PostgreSQL への接続に関する考慮事項(Considerations for connecting to PostgreSQL)](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-connecting.html#rds-proxy-connecting-postgresql)
+                * https://pages.awscloud.com/rs/112-TZM-766/images/EV_amazon-rds-aws-lambda-update_Jul28-2020_RDS_Proxy.pdf
+                    * pp.13                
+            * 本サンプルAPのRDBアクセス処理では、プリペアドステートメントを使用しないよう実装することで、ピン留めが発生しないようにしている。この際、注意点として、SQLインジェクションが起きないようにエスケープ処理を忘れずに実装している。
 
-        * なお、本サンプルAPのようにX-Ray SDKでSQLトレースする場合、[xray.SQLContext関数を利用する](https://docs.aws.amazon.com/ja_jp/xray/latest/devguide/xray-sdk-go-sqlclients.html)際に確立するDBコネクションでピン留めが発生する。
-            * xray.SQLContext関数を利用する際に、内部で発行されるSQL（"SELECT version(), current_user, current_database()"）がプリペアドステートメントを使用しているためピン留めが発生する。ピン留めの発生は回避できないとのこと。ただ、CloudWatchのRDS Proxyのログを見ても分かるが、直ちにコネクション切断されるため、ピン留めによる影響は小さいと想定される。（AWSサポート回答より）
+            * ~~また、本サンプルAPのようにX-Ray SDKでSQLトレースする場合、[xray.SQLContext関数を利用する](https://docs.aws.amazon.com/ja_jp/xray/latest/devguide/xray-sdk-go-sqlclients.html)際に確立するDBコネクションでピン留めが発生する。~~
+                * ~~xray.SQLContext関数を利用する際に、内部で発行されるSQL（"SELECT version(), current_user, current_database()"）がプリペアドステートメントを使用しているためピン留めが発生する。ピン留めの発生は回避できないとのこと。ただ、CloudWatchのRDS Proxyのログを見ても分かるが、直ちにコネクション切断されるため、ピン留めによる影響は小さいと想定される。（AWSサポート回答より）~~
+
     * RDBトランザクションの利用
         * RDS Proxy経由で接続する場合、１つのトランザクション内での呼び出しは、同じコネクションを使用する。auto commit無効の場合は、トランザクションが終了（commit/rollback）するまで、接続の再利用は行われない。このため、前述のプリペアドステートメントによるピン留めを過度に気にする必要はないとも思える。いずれにしても、ピン留めを理解した上で、トランザクションとRDBコネクションの管理を統制することが大事である。
             * https://pages.awscloud.com/rs/112-TZM-766/images/EV_amazon-rds-aws-lambda-update_Jul28-2020_RDS_Proxy.pdf
-	            * pp.12-13
+	            * pp.12
 
 ## 事前準備
 * ローカル環境に、Go、AWS CLI、AWS SAM CLI、Docker環境が必要です。
@@ -701,7 +718,7 @@ testdb> \q
     * LocalStackの場合
         * [LocalStackのサイト](https://www.localstack.cloud/pricing#Tab%201)で、Freeプランに記載された、Create Your Accountでアカウントを構築しておく。
             * `LOCALSTACK_AUTH_TOKEN`という環境変数に、LocalStackのサイトでアカウント作成後に表示されるAuth Tokenを設定しておく必要がある。
-        * [https://docs.localstack.cloud/aws/getting-started/installation/]に従い、LocalStack CLIのインストーラ、pip、Docker等、いずれかの方法でインストールする
+        * [LocalStackのインストール手順](https://docs.localstack.cloud/aws/getting-started/installation/)に従い、LocalStack CLIのインストーラ、pip、Docker等、いずれかの方法でインストールする
             * ここでは[Docker Composeでの起動例](https://docs.localstack.cloud/aws/getting-started/installation/#docker-compose)を記載する。すでに、サンプルとしてlocalstackフォルダにdocker-compose.ymlが用意されているので、以下の通り起動する。
 
         ```sh
