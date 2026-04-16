@@ -61,7 +61,7 @@
 > * 今後更新する際の参考情報
 >   * [AWS X-Ray: Migrate to OpenTelemetry Go](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html)    
 >   * [AWS Distro for OpenTelemetry Lambda](https://aws-otel.github.io/docs/getting-started/lambda)
->       * 最新の最適化されたアプローチだと、ADOT CollectorのLambdaレイヤーの[サポートランタイム](https://aws-otel.github.io/docs/getting-started/lambda#supported-runtimes)にカスタムラインタイム(provided.al2)が追加されていないように読み取れるため、Goの場合はレガシーアプローチをとる必要がありそう。
+>       * 最新の最適化されたアプローチだと、ADOT CollectorのLambdaレイヤーの[サポートランタイム](https://aws-otel.github.io/docs/getting-started/lambda#supported-runtimes)にOS専用ランタイム(OS-only Runtime provided.al2023)がないように読み取れるため、Goの場合はまだ以下のレガシーアプローチをとる必要がありそう。
 >       * [AWS Distro for OpenTelemetry Lambda Support For Go(the legacy approach)](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)
 
 
@@ -688,7 +688,7 @@ testdb> \q
 
 > [!NOTE]
 > [MinIOのOSSのGitHub](https://github.com/minio/minio)はアーカイブされて、以前の[OSSのDockerイメージの配布を停止](https://github.com/minio/minio/issues/21647)してしまった模様。現在は、MinIOは、AIStor Serverとして、Free版とEnterprise版の2つのエディションで提供されている。
-> 以下の[ダウンロードサイト](https://www.min.io/download/aistor-server?platform=docker)の手順にしたがって、MinIOのDockerイメージをダウンロードして、ローカルでMinIOを起動することが可能である。Free版は[MinIO AIStor Free Tier License Agreement](https://www.min.io/legal/aistor-free-agreement)に同意することで利用可能となっており、スタンドアロンモードのみでの利用、開発作業、プロトタイピング、研究等の目的での利用に制限されている。なお、Free版でもライセンスキーの取得が必要である。
+> MinIOの[ダウンロードサイト](https://www.min.io/download/aistor-server?platform=docker)の手順にしたがって、MinIOのDockerイメージをダウンロードして、ローカルでMinIOを起動することが可能である。Free版は[MinIO AIStor Free Tier License Agreement](https://www.min.io/legal/aistor-free-agreement)に同意することで利用可能となっており、スタンドアロンモードのみでの利用、開発作業、プロトタイピング、研究等の目的での利用に制限されている。なお、Free版でもライセンスキーの取得が必要である。
 > なお、以前のバージョンをまだ使用している場合、OSSライセンスと商用ライセンスのデュアルライセンスで提供されており、OSSライセンスは[GNU AGPL v3](https://www.min.io/commercial-license)であったためMinIOを同梱しての配布、利用等には注意すること。
  
 > [!NOTE]
