@@ -682,7 +682,7 @@ testdb> \q
         ```
 
         * キューの確認
-            * ブラウザで、[http://localhost:9325](http://localhost:9325)にアクセスするとキューの状態が確認できる
+            * ブラウザで、[http://localhost:3000](http://localhost:3000)にアクセスするとキューの状態が確認できる
             * custom.confの設定に基づき、SampleQueueと、SampleQueue-DLQという標準キュー、SampleFIFOQueue.fifoというFIFOキューが作成されていることが分かる
 
 

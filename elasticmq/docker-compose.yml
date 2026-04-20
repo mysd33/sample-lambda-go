@@ -1,9 +1,20 @@
 services:
   elasticmq:
-    image: softwaremill/elasticmq-native
-    container_name: elasticmq
-    volumes:
-      - ./custom.conf:/opt/elasticmq.conf
+    image: softwaremill/elasticmq-native:latest
     ports:
-      - 9324:9324
-      - 9325:9325
+      - "9324:9324"
+    volumes:
+      - ./custom.conf:/opt/elasticmq.conf    
+      - elasticmq-data:/data
+
+  elasticmq-ui:
+    image: softwaremill/elasticmq-ui:latest
+    ports:
+      - "3000:3000"
+    environment:
+      SQS_ENDPOINT: http://elasticmq:9324
+    depends_on:
+      - elasticmq
+
+volumes:
+  elasticmq-data:      
