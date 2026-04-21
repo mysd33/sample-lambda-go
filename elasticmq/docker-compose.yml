@@ -10,7 +10,7 @@ services:
   elasticmq-ui:
     image: softwaremill/elasticmq-ui:latest
     ports:
-      - "3000:3000"
+      - "13000:3000"
     environment:
       SQS_ENDPOINT: http://elasticmq:9324
     depends_on:
