@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"example.com/appbase/pkg/component"
+	"example.com/appbase/pkg/env"
 	"example.com/appbase/pkg/handler"
 	"github.com/aws/aws-lambda-go/lambda"
 	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
@@ -42,15 +43,14 @@ func init() {
 
 // Main関数
 func main() {
-	// TODO: ローカル実行のときにはADOTが動作しないようにOS環境変数で設定切り替えが必要？
-	/*
-		if env.IsLocalOrLocalTest() {
-			// API用Lambdaハンドラ関数で開始
-			lambda.Start(lambdaHandler)
-			return
-		}*/
+	// ローカル実行のときにはADOTが動作しないようにOS環境変数で設定切り替え
+	if env.IsLocalOrLocalTest() {
+		// API用Lambdaハンドラ関数で開始
+		lambda.Start(lambdaHandler)
+		return
+	}
 
-	// ADOTの対応
+	// クラウド環境での実行の場合は、ADOTに対応
 	// https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html#lambda-instrumentation
 	// TODO: ソフトウェアフレームワーク側での部品化を検討。
 	ctx := context.Background()

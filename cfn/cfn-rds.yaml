@@ -32,7 +32,13 @@ Parameters:
   AuroraServerlessMinCapacity: 
     Description: Aurora Serverless V2 ScalingConfiguration MinCapacity
     Type: Number
-    Default: 0.5
+    Default: 0.5    
+    # Aurora Serverless v2 auto-pause feature 
+#    Default: 0
+#  AuroraServerlessAutoPause:
+#    Description: Aurora Serverless V2 AutoPause
+#    Type: Number
+#    Default: 300
 
 Resources:
 # RDS Aurora
@@ -45,13 +51,23 @@ Resources:
         - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetThreeId
         - Fn::ImportValue: !Sub ${StackPrefix}-PrivateSubnetFourId
 
+  RDSDClusterBParameterGroup:
+    Type: AWS::RDS::DBClusterParameterGroup
+    Properties:
+      DBClusterParameterGroupName: !Sub ${StackPrefix}-RDSDClusterBParameterGroup
+      Description: RDS Aurora for PostgreSQL DB Parameter Group
+      Family: !Ref DBEngineFamily
+      # Reference To Create Customize Parameters Group 
+      # https://docs.aws.amazon.com/ja_jp/AmazonRDS/latest/AuroraUserGuide/AuroraPostgreSQL.Reference.ParameterGroups.html      
+      Parameters:
+        timezone: Asia/Tokyo
+
   RDSCluster:
     Type: 'AWS::RDS::DBCluster'
     Properties:
       DatabaseName: !Ref DBName
-      # Reference To Create Customize Parameters Group 
-      # https://docs.aws.amazon.com/ja_jp/AmazonRDS/latest/AuroraUserGuide/AuroraPostgreSQL.Reference.ParameterGroups.html      
-      DBClusterParameterGroupName: !Sub default.${DBEngineFamily}
+      #DBClusterParameterGroupName: !Sub default.${DBEngineFamily}
+      DBClusterParameterGroupName: !Ref RDSDClusterBParameterGroup
       DBClusterIdentifier: aurora-postgresql-cluster
       DBSubnetGroupName: !Ref RDSDBSubnetGroup      
       EnableCloudwatchLogsExports:
@@ -66,6 +82,10 @@ Resources:
       ServerlessV2ScalingConfiguration: 
         MaxCapacity: !Ref AuroraServerlessMaxCapacity
         MinCapacity: !Ref AuroraServerlessMinCapacity
+        SecondsUntilAutoPause: !Ref AuroraServerlessAutoPause
+    #TODO: Snapshot
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
 
   RDSDBInstance1:
     Type: 'AWS::RDS::DBInstance'
@@ -75,6 +95,10 @@ Resources:
       #DBInstanceClass: !Ref DBInstanceClassName      
       DBInstanceIdentifier: aurora-postgresql-instance1      
       Engine: aurora-postgresql
+      PubliclyAccessible: false
+    #TODO: Snapshot
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
   
   RDSDBInstance2:
     Type: 'AWS::RDS::DBInstance'
@@ -84,7 +108,11 @@ Resources:
       #DBInstanceClass: !Ref DBInstanceClassName
       DBInstanceIdentifier: aurora-postgresql-instance2      
       Engine: aurora-postgresql
-  
+      PubliclyAccessible: false
+    #TODO:  Snapshot      
+    UpdateReplacePolicy: Delete      
+    DeletionPolicy: Delete
+
 # RDS Proxy
   RDSProxy:
     Type: AWS::RDS::DBProxy

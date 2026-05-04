@@ -63,10 +63,19 @@ Parameters:
   LambdaInsightsLayerArn:
     Type: String
     Default: arn:aws:lambda:ap-northeast-1:580247275435:layer:LambdaInsightsExtension:80    
+  EnableLambdaLayers:
+    Type: String
+    AllowedValues:
+      - "true"
+      - "false"
+    Default: "true"
 Conditions:
   TracingEnabled: !Equals
     - !Ref TracingValue
     - Active
+  LambdaLayersEnabled: !Equals
+    - !Ref EnableLambdaLayers
+    - "true"
 Globals:
   Function:
     Handler: bootstrap
@@ -104,11 +113,11 @@ Globals:
       Type: AllAtOnce
     Layers:
       # ADOT Collector Lambda Layer
-      - !Ref ADOTCollectorLayerArn
+      - !If [LambdaLayersEnabled, !Ref ADOTCollectorLayerArn, !Ref "AWS::NoValue"]
       # AppConfig Extensions Lambda Layer    
-      - !Ref AppConfigLayerArn
+      - !If [LambdaLayersEnabled, !Ref AppConfigLayerArn, !Ref "AWS::NoValue"]
       # Lambda Insights Extensions Lambda Layer    
-      - !Ref LambdaInsightsLayerArn
+      - !If [LambdaLayersEnabled, !Ref LambdaInsightsLayerArn, !Ref "AWS::NoValue"]
   Api:
     OpenApiVersion: 3.0.3
     TracingEnabled: !If [TracingEnabled , true, false]

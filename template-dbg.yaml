@@ -107,7 +107,7 @@ Globals:
       # ADOT Collector Lambda Layer
 #      - !Ref ADOTCollectorLayerArn    
       # AppConfig Extensions Lambda Layer    
-      - !Ref AppConfigLayerArn
+#      - !Ref AppConfigLayerArn
       # Lambda Insights Extensions Lambda Layer    
 #      - !Ref LambdaInsightsLayerArn
   Api:

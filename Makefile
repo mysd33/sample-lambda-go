@@ -63,10 +63,10 @@ integration_test:
 	cd dynamodb-local && docker-compose stop	
 
 local_invoke_%:
-	sam local invoke --env-vars local-env.json --event events\event-${@:local_invoke_%=%}.json ${@:local_invoke_%=%}
+	sam local invoke --env-vars local-env.json --config-env local --event events\event-${@:local_invoke_%=%}.json ${@:local_invoke_%=%}
 
 local_startapi:
-	sam local start-api --env-vars local-env.json	
+	sam local start-api --env-vars local-env.json --config-env local
 
 # For Debug
 validate_dbg:

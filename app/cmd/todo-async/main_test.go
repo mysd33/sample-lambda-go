@@ -16,11 +16,6 @@ func TestRegisterAllAsync(t *testing.T) {
 	// テスト実行用に動作環境名を環境変数に設定
 	env.SetTestEnv(t)
 
-	//  テスト用にX-Rayのセグメント開始
-	// TODO: ADOT対応に伴い削除 ADOTに対応した記載に修正
-	//ctx, seg := xray.BeginSegment(context.Background(), "main_test")
-	//apcontext.Context = ctx
-	//defer seg.Close(nil)
 	// ApplicationContextの作成
 	ac := component.NewApplicationContext()
 	// 業務の初期化処理実行
