@@ -82,7 +82,7 @@ Resources:
       ServerlessV2ScalingConfiguration: 
         MaxCapacity: !Ref AuroraServerlessMaxCapacity
         MinCapacity: !Ref AuroraServerlessMinCapacity
-        SecondsUntilAutoPause: !Ref AuroraServerlessAutoPause
+#        SecondsUntilAutoPause: !Ref AuroraServerlessAutoPause
     #TODO: Snapshot
     UpdateReplacePolicy: Delete
     DeletionPolicy: Delete
