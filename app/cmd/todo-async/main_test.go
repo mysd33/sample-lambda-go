@@ -17,7 +17,7 @@ func TestRegisterAllAsync(t *testing.T) {
 	env.SetTestEnv(t)
 
 	//  テスト用にX-Rayのセグメント開始
-	// TODO: ADOT対応に伴い削除
+	// TODO: ADOT対応に伴い削除 ADOTに対応した記載に修正
 	//ctx, seg := xray.BeginSegment(context.Background(), "main_test")
 	//apcontext.Context = ctx
 	//defer seg.Close(nil)

@@ -2,12 +2,19 @@ package main
 
 import (
 	"app/cmd/common"
+	"context"
+	"fmt"
 	"testing"
 
 	"example.com/appbase/pkg/component"
 	"example.com/appbase/pkg/handler"
 	"github.com/aws/aws-lambda-go/lambda"
 	ginadapter "github.com/awslabs/aws-lambda-go-api-proxy/gin"
+
+	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda/xrayconfig"
+	"go.opentelemetry.io/contrib/propagators/aws/xray"
+	"go.opentelemetry.io/otel"
 )
 
 var lambdaHandler handler.APITriggeredLambdaHandlerFunc
@@ -35,6 +42,33 @@ func init() {
 
 // Main関数
 func main() {
-	// API用Lambdaハンドラ関数で開始
-	lambda.Start(lambdaHandler)
+	// TODO: ローカル実行のときにはADOTが動作しないようにOS環境変数で設定切り替えが必要？
+	/*
+		if env.IsLocalOrLocalTest() {
+			// API用Lambdaハンドラ関数で開始
+			lambda.Start(lambdaHandler)
+			return
+		}*/
+
+	// ADOTの対応
+	// https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html#lambda-instrumentation
+	// TODO: ソフトウェアフレームワーク側での部品化を検討。
+	ctx := context.Background()
+	tp, err := xrayconfig.NewTracerProvider(ctx)
+	if err != nil {
+		fmt.Printf("error creating tracer provider: %v", err)
+	}
+	defer func(ctx context.Context) {
+		// main関数の終了時にTracerProviderをシャットダウンする。
+		err := tp.Shutdown(ctx)
+		if err != nil {
+			fmt.Printf("error shutting down tracer provider: %v", err)
+		}
+	}(ctx)
+
+	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(xray.Propagator{})
+
+	lambda.Start(otellambda.InstrumentHandler(lambdaHandler, xrayconfig.WithRecommendedOptions(tp)...))
+
 }

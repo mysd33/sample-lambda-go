@@ -6,6 +6,11 @@
         * バックエンドは、動作確認用にVPC内にEC2で構築したBastionからのアクセスにも対応
     * LambdaからDynamoDBやRDS Aurora、DocumentDBといったDBアクセスへのアクセスを実現
     * LambdaはVPC内Lambdaとして、RDS Aurora（RDS Proxy経由）、DocumentDBへのアクセスも可能としている
+    * AWS Lambda Go API Proxyを利用して、Lambda SDKとginを統合し実現している
+
+> [!WARNING]
+> [AWS Lambda Go API Proxy](https://github.com/awslabs/aws-lambda-go-api-proxy)は、2025年5月22日にアーカイブ化されているため、
+> 今後、別の実装技術で同様の機能を実現する必要があるが、現状サンプルAPでの対応のめどが立っていないが、[当該Issue](https://github.com/awslabs/aws-lambda-go-api-proxy/issues/143)の記載から、[Lambda Web Adapter](https://github.com/aws/aws-lambda-web-adapter)の利用が有力な選択肢の一つと考えられる。
 
 * ディレード処理方式
     * Lambdaから、SQSへのアクセスし、非同期処理の実行依頼を実現
@@ -42,28 +47,45 @@
 ![AppConfigイメージ](image/demo3.png)
 
 * X-Rayによる可視化
+
+> [!NOTE]
+> AWS X-Ray 用の SDK と Daemon は2026年2月25日にメンテナンスモードに入り、2027年2月25日にサポート終了となるため、ADOT(AWS Distro for OpenTelemetry) への移行に対応した。
+> * 今後更新する際の参考情報
+>     * Go関連
+>         * [AWS X-Ray: Migrate to OpenTelemetry Go](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html)   
+>         * [Using the AWS Distro for OpenTelemetry Go SDK - Instrumenting the AWS SDK](https://aws-otel.github.io/docs/getting-started/go-sdk/manual-instr#instrumenting-the-aws-sdk)  
+>         * [OpenTelemetry Go Documentation](https://opentelemetry.io/ja/docs/languages/go/)
+>         * [otelhttp - NewTransport](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp#NewTransport)
+>         * [mongodb](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver)
+>             * DocumentDB(MongoDB)のOpenTelemetry対応のためのGoのライブラリ。その前に[MongoDBのGoドライバー](https://github.com/mongodb/mongo-go-driver)への[V2移行](https://github.com/mongodb/mongo-go-driver/blob/master/docs/migration-2.0.md)も必要。
+>         * [otelsql](https://github.com/XSAM/otelsql)
+>             * SQLのOpenTelemetry対応のためのGoのライブラリ
+>     * Lambda/Go関連
+>         * [AWS X-Ray: Migrate to OpenTelemetry Go - Lambda manual instrumentation](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html#lambda-instrumentation)       
+>         * [AWS Distro for OpenTelemetry Lambda](https://aws-otel.github.io/docs/getting-started/lambda)
+>             * ただし、最新の最適化されたアプローチだと、ADOT CollectorのLambdaレイヤーの[サポートランタイム](https://aws-otel.github.io/docs/getting-started/lambda#supported-runtimes)にOS専用ランタイム(OS-only Runtime provided.al2023)がないように読み取れるため、Goの場合はまだ以下のレガシーアプローチをとる必要がありそう。
+>         * [AWS Distro for OpenTelemetry Lambda Support For Go(the legacy approach)](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)
+>             * Lambda/Goだとこっちを参照
+>         * [OpenTelemetry AWS Lambda Instrumentation for Golang](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda#section-readme)
+>         * [Recommended Configurations for OpenTelemetry AWS Lambda Instrumentation with AWS X-Ray](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda/xrayconfig#section-readme)
+
+
     * API Gateway、Lambdaにおいて、X-Rayによる可視化にも対応している
-    * RDB(RDS Aurora)、DynamoDBへのアクセス、REST API、SQSの呼び出しのトレースにも対応
+    * RDB(RDS Aurora)、DynamoDBへのアクセス、REST API、SQSの呼び出しのトレースにも対応    
     * RDB(Aurora)アクセスの可視化の例
+        * TODO 図の差し替え
         ![X-Rayの可視化の例](image/xray-aurora.png)
     * DynamoDBアクセスの可視化の例
+        * TODO 図の差し替え    
         ![X-Rayの可視化の例2](image/xray-dynamodb.png)
     * REST APIの呼び出しの可視化の例
+        * TODO 図の差し替え
         ![X-Rayの可視化の例3](image/xray-bff.png)
     * SQS、S3等の呼び出しの可視化の例
+        * TODO 図の差し替え
         ![X-Rayの可視化の例4](image/xray-sqs-delayed.png)
-    * DocumentDBの呼び出しは、mongo-go-driverがX-Ray SDKに対応していないとのことで、未実施。
-        * [issue](https://github.com/aws/aws-xray-sdk-go/issues/348)
-
-> [!WARNING]
-> [AWS X-Ray SDK / Daemon のサポート終了と OpenTelemetry 移行のお知らせ](https://aws.amazon.com/jp/blogs/news/announcing-aws-x-ray-sdks-daemon-end-of-support-and-opentelemetry-migration/)の記載にあるとおり、AWS X-Ray 用の SDK と Daemon は2026年2月25日にメンテナンスモードに入り、2027年2月25日にサポート終了となる。
-> ADOT(AWS Distro for OpenTelemetry) への移行について今後対応予定である。
-> * 今後更新する際の参考情報
->   * [AWS X-Ray: Migrate to OpenTelemetry Go](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html)    
->   * [AWS Distro for OpenTelemetry Lambda](https://aws-otel.github.io/docs/getting-started/lambda)
->       * 最新の最適化されたアプローチだと、ADOT CollectorのLambdaレイヤーの[サポートランタイム](https://aws-otel.github.io/docs/getting-started/lambda#supported-runtimes)にOS専用ランタイム(OS-only Runtime provided.al2023)がないように読み取れるため、Goの場合はまだ以下のレガシーアプローチをとる必要がありそう。
->       * [AWS Distro for OpenTelemetry Lambda Support For Go(the legacy approach)](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)
-
+    * DocumentDBの呼び出しの可視化の例
+        * TODO 図        
 
 * RDS Proxyの利用時の注意
     * ピン留め
@@ -1233,7 +1255,7 @@ make doc_app
 | 非同期実行依頼 | AWS SDKを利用してSQSへ非同期処理実行依頼メッセージを送信する汎化したAPIを提供する。また、業務APでDynamoDBアクセスを伴う場合、DynamoDBトランザクション管理機能を用いてDB更新とメッセージ送達のデータ整合性を担保する。 | ○ | com.example/appbase/pkg/async<br/>com.example/appbase/pkg/transaction |
 | オブジェクトストレージアクセス| AWS SDKを利用し、S3にアクセスする汎化したAPIを提供する。 | ○ | com.example/appbase/pkg/objectstorage |
 | HTTPクライアント| net/http、ctxhttp等を利用しREST APIの呼び出しを汎化したAPIを提供する。 | ○ | com.example/appbase/pkg/httpclient |
-| 分散トレーシング（X-Ray） | AWS X-Rayを利用して、サービス間の分散トレーシング・可視化を実現する。実現には、AWS SAMのtemplate.ymlで設定でAPI GatewayやLambdaのトレースを有効化する。またAWS SDKが提供するメソッドに、Lambdaのハンドラメソッドの引数のContextを引き渡すようにする。Contextは業務AP側で引き継いでメソッドの引数に引き渡さなくてもソフトウェアフレームワーク側で取得できるようにグローバル変数で管理する。 | ○ | com.example/appbase/pkg/apcontext |
+| 分散トレーシング（X-Ray） | ADOTおよびAWS X-Rayを利用して、サービス間の分散トレーシング・可視化を実現する。実現には、AWS SAMのtemplate.ymlで設定でAPI GatewayやLambdaのトレースを有効化する。またAWS SDKが提供するメソッドに、Lambdaのハンドラメソッドの引数のContextを引き渡すようにする。Contextは業務AP側で引き継いでメソッドの引数に引き渡さなくてもソフトウェアフレームワーク側で取得できるようにグローバル変数で管理する。 | ○ | com.example/appbase/pkg/apcontext |
 | ロギング | zap(go.uber.org/zap)の機能を利用し、プロファイル（環境区分）によって動作環境に応じたログレベル、出力形式（プレーンテキストやJSON形式）等を切替可能とする。また、メッセージ管理機能と連携し、メッセージIDをもとにログ出力可能な汎用的なAPIを提供する。 | ○ | com.example/appbase/pkg/logging |
 | プロパティ管理 | APから環境依存のパラメータを切り出し、プロファイル（環境区分）によって動作環境に応じたパラメータ値に置き換え可能とする。AWS AppConfigおよびAppConfig Agent Lambdaエクステンションを利用してAPの再デプロイせずとも設定変更を反映できる。また、変更が少ない静的な設定値やローカルでのAP実行用に、spf13/viperの機能を利用して、OS環境変数、yamlによる設定ファイルを読み込み反映する。なお、AppConfigに同等のプロパティがある場合には優先的に反映する。 | ○ | com.example/appbase/pkg/env<br/>com.example/appbase/pkg/config |
 | メッセージ管理 | go標準のembededで、ログ等に出力するメッセージを設定ファイルで一元管理する。 | ○ | com.example/appbase/pkg/message |

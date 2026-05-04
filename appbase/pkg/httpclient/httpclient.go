@@ -12,10 +12,8 @@ import (
 	"strings"
 	"time"
 
-	//"github.com/aws/aws-xray-sdk-go/xray"
-
 	"github.com/cockroachdb/errors"
-	"golang.org/x/net/context/ctxhttp"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/config"
@@ -66,9 +64,10 @@ type ResponseData struct {
 
 // defaultHTTPClientは、HTTPClientインタフェースを実装する構造体です。
 type defaultHTTPClient struct {
-	config  config.Config
-	logger  logging.Logger
-	retryer retry.Retryer[*http.Response]
+	config     config.Config
+	httpClient *http.Client
+	logger     logging.Logger
+	retryer    retry.Retryer[*http.Response]
 }
 
 // NewHTTPClient は、HTTPClientを生成します。
@@ -78,6 +77,11 @@ func NewHTTPClient(config config.Config, logger logging.Logger) HTTPClient {
 		config:  config,
 		logger:  logger,
 		retryer: retryer,
+		// X-Ray SDKからADOTへの移行
+		// https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html#http-client-instrumentation
+		httpClient: &http.Client{
+			Transport: otelhttp.NewTransport(http.DefaultTransport),
+		},
 	}
 }
 
@@ -143,7 +147,7 @@ func (c *defaultHTTPClient) PostWithContext(ctx context.Context, url string, hea
 // doGet は、GETメソッドを実行します。
 func (c *defaultHTTPClient) doGet(ctx context.Context, url string, header http.Header, params map[string]string) retry.RetryableFunc[*http.Response] {
 	return func() (*http.Response, error) {
-		req, err := http.NewRequest("GET", url, nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -160,10 +164,8 @@ func (c *defaultHTTPClient) doGet(ctx context.Context, url string, header http.H
 			req.Header = header
 		}
 		c.logger.Info(message.I_FW_0005, "GET", url)
-		// Getメソッドの実行（X-Ray対応）
-		// TODO: ADOT対応に伴い削除
-		//response, err := ctxhttp.Do(ctx, xray.Client(nil), req)
-		response, err := ctxhttp.Do(ctx, http.DefaultClient, req)
+		// Getメソッドの実行（ADOT対応）
+		response, err := c.httpClient.Do(req)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -174,7 +176,7 @@ func (c *defaultHTTPClient) doGet(ctx context.Context, url string, header http.H
 // doPost は、POSTメソッドを実行します。
 func (c *defaultHTTPClient) doPost(ctx context.Context, url string, header http.Header, bbody []byte) retry.RetryableFunc[*http.Response] {
 	return func() (*http.Response, error) {
-		req, err := http.NewRequest("POST", url, bytes.NewReader(bbody))
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(bbody))
 		if err != nil {
 			return nil, err
 		}
@@ -184,10 +186,8 @@ func (c *defaultHTTPClient) doPost(ctx context.Context, url string, header http.
 		}
 		req.Header.Set("Content-Type", "application/json")
 		c.logger.Info(message.I_FW_0005, "POST", url)
-		// POSTメソッドの実行（X-Ray対応）
-		// TODO: ADOT対応に伴い削除
-		//response, err := ctxhttp.Do(ctx, xray.Client(nil), req)
-		response, err := ctxhttp.Do(ctx, http.DefaultClient, req)
+		// Postメソッドの実行（ADOT対応）
+		response, err := c.httpClient.Do(req)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}

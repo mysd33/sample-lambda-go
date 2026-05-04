@@ -14,9 +14,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-
-	//"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 	"github.com/cockroachdb/errors"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws"
 )
 
 const (
@@ -71,8 +70,9 @@ func NewSQSAccessor(logger logging.Logger, myCfg myConfig.Config) (SQSAccessor, 
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	// TODO: ADOT対応に伴い削除
-	//awsv2.AWSV2Instrumentor(&cfg.APIOptions)
+	// X-Ray SDKからADOTの移行
+	// https://aws-otel.github.io/docs/getting-started/go-sdk/manual-instr#instrumenting-the-aws-sdk
+	otelaws.AppendMiddlewares(&cfg.APIOptions)
 	sqlClient := sqs.NewFromConfig(cfg, func(o *sqs.Options) {
 		// ローカル実行のためDynamoDB Local起動先が指定されている場合
 		sqsEndpoint := myCfg.Get(SQS_LOCAL_ENDPOINT_NAME, "")

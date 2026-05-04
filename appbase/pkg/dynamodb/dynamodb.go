@@ -9,13 +9,14 @@ import (
 	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/awssdk"
 	myConfig "example.com/appbase/pkg/config"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws"
+
 	"example.com/appbase/pkg/logging"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
-	//"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 	"github.com/cockroachdb/errors"
 )
 
@@ -42,10 +43,9 @@ func CreateDynamoDBClient(myCfg myConfig.Config) (*dynamodb.Client, error) {
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	// Instrumenting AWS SDK v2
-	// https://github.com/aws/aws-xray-sdk-go
-	// TODO: ADOT対応に伴い削除
-	//awsv2.AWSV2Instrumentor(&cfg.APIOptions)
+	// X-Ray SDKからADOTの移行
+	// https://aws-otel.github.io/docs/getting-started/go-sdk/manual-instr#instrumenting-the-aws-sdk
+	otelaws.AppendMiddlewares(&cfg.APIOptions)
 	return dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
 		// ローカル実行のためDynamoDB Local起動先が指定されている場合
 		dynamodbEndpoint := myCfg.Get(DYNAMODB_LOCAL_ENDPOINT_NAME, "")
