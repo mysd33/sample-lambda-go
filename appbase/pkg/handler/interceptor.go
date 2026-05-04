@@ -59,8 +59,10 @@ func (i *defaultHandlerInterceptor) Handle(controllerFunc ControllerFunc) gin.Ha
 		if err := i.config.Reload(); err != nil {
 			// エラーログの出力
 			logging.LogError(i.logger, err)
-			// エラーをその他のエラー（ginのエラーログ対象外）としてginのContextに格納
-			ctx.Error(err).SetType(gin.ErrorTypeNu)
+			// ginのバージョンアップによりErrorTypeNuが廃止されたため、SetTypeを未設定
+			// エラーをginのContextに格納
+			//ctx.Error(err).SetType(gin.ErrorTypeNu)
+			ctx.Error(err)
 			return
 		}
 		// Controllerの実行

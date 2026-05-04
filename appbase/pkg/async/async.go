@@ -14,7 +14,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
+
+	//"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 	"github.com/cockroachdb/errors"
 )
 
@@ -70,7 +71,8 @@ func NewSQSAccessor(logger logging.Logger, myCfg myConfig.Config) (SQSAccessor, 
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	awsv2.AWSV2Instrumentor(&cfg.APIOptions)
+	// TODO: ADOT対応に伴い削除
+	//awsv2.AWSV2Instrumentor(&cfg.APIOptions)
 	sqlClient := sqs.NewFromConfig(cfg, func(o *sqs.Options) {
 		// ローカル実行のためDynamoDB Local起動先が指定されている場合
 		sqsEndpoint := myCfg.Get(SQS_LOCAL_ENDPOINT_NAME, "")

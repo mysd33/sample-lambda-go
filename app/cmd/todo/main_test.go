@@ -3,17 +3,17 @@ package main
 import (
 	"app/cmd/common"
 	"app/internal/pkg/model"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/component"
 	"example.com/appbase/pkg/env"
-	"github.com/aws/aws-xray-sdk-go/xray"
+
+	//"github.com/aws/aws-xray-sdk-go/xray"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,9 +22,10 @@ func TestPostTodo(t *testing.T) {
 	env.SetTestEnv(t)
 
 	//  テスト用にX-Rayのセグメント開始
-	ctx, seg := xray.BeginSegment(context.Background(), "main_test")
-	apcontext.Context = ctx
-	defer seg.Close(nil)
+	// TODO: ADOT対応に伴い削除
+	//ctx, seg := xray.BeginSegment(context.Background(), "main_test")
+	// apcontext.Context = ctx
+	// defer seg.Close(nil)
 
 	ac := component.NewApplicationContext()
 	apiLambdaHandler := ac.GetAPILambdaHandler()

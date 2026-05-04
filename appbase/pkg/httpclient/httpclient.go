@@ -12,7 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-xray-sdk-go/xray"
+	//"github.com/aws/aws-xray-sdk-go/xray"
+
 	"github.com/cockroachdb/errors"
 	"golang.org/x/net/context/ctxhttp"
 
@@ -160,7 +161,9 @@ func (c *defaultHTTPClient) doGet(ctx context.Context, url string, header http.H
 		}
 		c.logger.Info(message.I_FW_0005, "GET", url)
 		// Getメソッドの実行（X-Ray対応）
-		response, err := ctxhttp.Do(ctx, xray.Client(nil), req)
+		// TODO: ADOT対応に伴い削除
+		//response, err := ctxhttp.Do(ctx, xray.Client(nil), req)
+		response, err := ctxhttp.Do(ctx, http.DefaultClient, req)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -182,7 +185,9 @@ func (c *defaultHTTPClient) doPost(ctx context.Context, url string, header http.
 		req.Header.Set("Content-Type", "application/json")
 		c.logger.Info(message.I_FW_0005, "POST", url)
 		// POSTメソッドの実行（X-Ray対応）
-		response, err := ctxhttp.Do(ctx, xray.Client(nil), req)
+		// TODO: ADOT対応に伴い削除
+		//response, err := ctxhttp.Do(ctx, xray.Client(nil), req)
+		response, err := ctxhttp.Do(ctx, http.DefaultClient, req)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}

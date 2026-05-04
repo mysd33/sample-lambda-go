@@ -23,7 +23,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
+
+	//"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 	"github.com/cockroachdb/errors"
 )
 
@@ -212,7 +213,8 @@ func NewObjectStorageAccessor(myCfg myconfig.Config, logger logging.Logger) (Obj
 	}
 	// Instrumenting AWS SDK v2
 	// https://github.com/aws/aws-xray-sdk-go
-	awsv2.AWSV2Instrumentor(&cfg.APIOptions)
+	// TODO: ADOT対応に伴い削除
+	//awsv2.AWSV2Instrumentor(&cfg.APIOptions)
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		// ローカル実行のためS3のLocal起動先が指定されている場合
 		s3Endpoint := myCfg.Get(S3_LOCAL_ENDPOINT_NAME, "")

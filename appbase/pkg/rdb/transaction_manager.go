@@ -12,7 +12,8 @@ import (
 	"example.com/appbase/pkg/config"
 	"example.com/appbase/pkg/domain"
 	"example.com/appbase/pkg/logging"
-	"github.com/aws/aws-xray-sdk-go/xray"
+
+	//"github.com/aws/aws-xray-sdk-go/xray"
 	"github.com/cockroachdb/errors"
 
 	_ "github.com/lib/pq"
@@ -109,32 +110,36 @@ func (tm *defaultTransactionManager) rdbConnect() (*sql.DB, error) {
 	}
 	// SSLMode
 	rdbSslMode := tm.config.Get(RDB_SSL_MODE_NAME, "require")
+
+	// TODO: ADOT対応に伴い削除
 	// X-Rayを使ったDB接続をすると、プリペアドステートメントを使用していなくても、RDS Proxyでのピン留めが起きてしまう
 	// ただし、ピン留めは短時間のため影響は少ない
 	// X-RayのSQLトレースに対応したDB接続の取得
+	/*
+		connectStr := fmt.Sprintf(
+			"postgres://%s:%s@%s:%s/%s?sslmode=%s",
+			rdbUser,
+			// パスワードに「[」等の特殊文字が入っている場合の対処
+			url.QueryEscape(rdbPassword),
+			rdbEndpoint,
+			rdbPort,
+			rdbName,
+			rdbSslMode)
+		tm.logger.Debug("接続文字列: %s", connectStr)
+		db, err := xray.SQLContext("postgres", connectStr)
+	*/
+
+	// X-Rayを使わない場合のDB接続取得の実装例
 	connectStr := fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s?sslmode=%s",
-		rdbUser,
-		// パスワードに「[」等の特殊文字が入っている場合の対処
-		url.QueryEscape(rdbPassword),
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		rdbEndpoint,
 		rdbPort,
+		rdbUser,
+		url.QueryEscape(rdbPassword),
 		rdbName,
 		rdbSslMode)
 	tm.logger.Debug("接続文字列: %s", connectStr)
-	db, err := xray.SQLContext("postgres", connectStr)
-
-	// X-Rayを使わない場合のDB接続取得の実装例
-	/*
-		connectStr := fmt.Sprintf(
-			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-			rdbEndpoint,
-			rdbPort,
-			rdbUser,
-			url.QueryEscape(rdbPassword),
-			rdbName)
-		tm.logger.Debug("接続文字列: %s", connectStr)
-		db, err := sql.Open("postgres", connectStr)*/
+	db, err := sql.Open("postgres", connectStr)
 
 	if err != nil {
 		return nil, errors.WithStack(err)

@@ -3,15 +3,13 @@ package main
 import (
 	"app/internal/pkg/model"
 	"app/internal/pkg/repository"
-	"context"
 	"fmt"
 	"testing"
 
-	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/component"
 	"example.com/appbase/pkg/env"
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-xray-sdk-go/xray"
+	//"github.com/aws/aws-xray-sdk-go/xray"
 )
 
 func TestRegisterAllAsync(t *testing.T) {
@@ -19,9 +17,10 @@ func TestRegisterAllAsync(t *testing.T) {
 	env.SetTestEnv(t)
 
 	//  テスト用にX-Rayのセグメント開始
-	ctx, seg := xray.BeginSegment(context.Background(), "main_test")
-	apcontext.Context = ctx
-	defer seg.Close(nil)
+	// TODO: ADOT対応に伴い削除
+	//ctx, seg := xray.BeginSegment(context.Background(), "main_test")
+	//apcontext.Context = ctx
+	//defer seg.Close(nil)
 	// ApplicationContextの作成
 	ac := component.NewApplicationContext()
 	// 業務の初期化処理実行

@@ -14,7 +14,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
+
+	//"github.com/aws/aws-xray-sdk-go/instrumentation/awsv2"
 	"github.com/cockroachdb/errors"
 )
 
@@ -43,7 +44,8 @@ func CreateDynamoDBClient(myCfg myConfig.Config) (*dynamodb.Client, error) {
 	}
 	// Instrumenting AWS SDK v2
 	// https://github.com/aws/aws-xray-sdk-go
-	awsv2.AWSV2Instrumentor(&cfg.APIOptions)
+	// TODO: ADOT対応に伴い削除
+	//awsv2.AWSV2Instrumentor(&cfg.APIOptions)
 	return dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {
 		// ローカル実行のためDynamoDB Local起動先が指定されている場合
 		dynamodbEndpoint := myCfg.Get(DYNAMODB_LOCAL_ENDPOINT_NAME, "")

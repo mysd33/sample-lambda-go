@@ -69,8 +69,11 @@ func (h *APILambdaHandler) GetDefaultGinEngine(errorResponse api.ErrorResponse, 
 			// パニックをエラーでラップ
 			err := errors.Errorf("recover from: %+v", recover)
 			h.logger.ErrorWithUnexpectedError(err)
-			// エラーをその他のエラー（ginのエラーログ対象外）として、ginのContextに格納
-			c.Error(err).SetType(gin.ErrorTypeNu)
+
+			// ginのバージョンアップによりErrorTypeNuが廃止されたため、SetTypeを未設定
+			// エラーをginのContextに格納
+			//c.Error(err).SetType(gin.ErrorTypeNu)
+			c.Error(err)
 		}))
 
 	// ミドルウェアをアタッチ
