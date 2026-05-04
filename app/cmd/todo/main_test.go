@@ -3,12 +3,14 @@ package main
 import (
 	"app/cmd/common"
 	"app/internal/pkg/model"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/component"
 	"example.com/appbase/pkg/env"
 
@@ -20,6 +22,9 @@ import (
 func TestPostTodo(t *testing.T) {
 	// テスト実行用に動作環境名を環境変数に設定
 	env.SetTestEnv(t)
+
+	// コンテキストを初期化
+	apcontext.Context = context.Background()
 
 	ac := component.NewApplicationContext()
 	apiLambdaHandler := ac.GetAPILambdaHandler()

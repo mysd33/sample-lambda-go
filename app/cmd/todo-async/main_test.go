@@ -3,18 +3,24 @@ package main
 import (
 	"app/internal/pkg/model"
 	"app/internal/pkg/repository"
+	"context"
 	"fmt"
 	"testing"
 
+	"example.com/appbase/pkg/apcontext"
 	"example.com/appbase/pkg/component"
 	"example.com/appbase/pkg/env"
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/google/uuid"
 	//"github.com/aws/aws-xray-sdk-go/xray"
 )
 
 func TestRegisterAllAsync(t *testing.T) {
 	// テスト実行用に動作環境名を環境変数に設定
 	env.SetTestEnv(t)
+
+	// コンテキストを初期化
+	apcontext.Context = context.Background()
 
 	// ApplicationContextの作成
 	ac := component.NewApplicationContext()
@@ -25,7 +31,7 @@ func TestRegisterAllAsync(t *testing.T) {
 	t.Run("RegisterAllAsyncのテスト", func(t *testing.T) {
 		// TODO: テーブル作成
 		// TODO: tempテーブルのテストデータ登録（仮置きのコード）
-		value := "todoFiles/fef300f7-b37d-11ee-9c20-0242ac110006.json"
+		value := "todoFiles/cd0cab72-4788-11f1-861b-62c1af981055.json"
 		tempRepository := repository.NewTempRepository(ac.GetDynamoDBTemplate(), ac.GetDynamoDBAccessor(), ac.GetLogger(), ac.GetConfig(), ac.GetIDGenerator())
 		testData, err := tempRepository.CreateOne(&model.Temp{Value: value})
 		tempId := testData.ID
@@ -37,7 +43,8 @@ func TestRegisterAllAsync(t *testing.T) {
 
 		// 入力メッセージの作成
 		sqsMessage := events.SQSMessage{
-			Body: fmt.Sprintf("{\"tempId\":\"%s\"}", tempId),
+			MessageId: uuid.NewString(),
+			Body:      fmt.Sprintf("{\"tempId\":\"%s\"}", tempId),
 		}
 		// テスト対処処理実行
 		asyncControllerFunc(sqsMessage)
