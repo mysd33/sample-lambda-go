@@ -9,8 +9,8 @@ import (
 	"example.com/appbase/pkg/errors"
 	"example.com/appbase/pkg/logging"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 const (
@@ -57,7 +57,7 @@ func (b *bookRepositoryImplByDocumentDB) CreateOne(book *model.Book) (*model.Boo
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
 	resultID := result.InsertedID
-	book.ObjectID = resultID.(primitive.ObjectID)
+	book.ObjectID = resultID.(bson.ObjectID)
 	return book, nil
 }
 

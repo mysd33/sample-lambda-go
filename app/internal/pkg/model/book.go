@@ -1,7 +1,7 @@
 // modelのパッケージ
 package model
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import "go.mongodb.org/mongo-driver/v2/bson"
 
 // Book は、書籍の情報を表す構造体です。
 type Book struct {
@@ -10,7 +10,7 @@ type Book struct {
 	// https://www.mongodb.com/ja-jp/docs/drivers/go/current/fundamentals/bson/#struct-tags
 
 	// ObjectID（_id）は、書籍のIDです。DocumentDB(MongoDB)のObjectIDを利用します。
-	ObjectID primitive.ObjectID `json:"object_id,omitempty" bson:"_id,omitempty"`
+	ObjectID bson.ObjectID `json:"object_id,omitempty" bson:"_id,omitempty"`
 	// Title は、書籍のタイトルです。
 	Title string `json:"title" bson:"title"`
 	// Author は、書籍の著者です。

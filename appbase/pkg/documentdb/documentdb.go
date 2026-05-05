@@ -21,8 +21,8 @@ import (
 	"example.com/appbase/pkg/env"
 	"example.com/appbase/pkg/logging"
 	"github.com/cockroachdb/errors"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 const (
@@ -95,7 +95,7 @@ func NewDocumentDBAccessor(config config.Config, logger logging.Logger) (Documen
 		logger.Debug("接続文字列: %s", connectionString)
 		// ローカルのMongoDBに接続しmongo.Clientを取得
 
-		client, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(connectionString))
+		client, err = mongo.Connect(options.Client().ApplyURI(connectionString))
 	} else {
 		// クラウド動作環境の場合、DocumentDB用の接続文字列作成
 		//（参考） https://docs.aws.amazon.com/ja_jp/documentdb/latest/developerguide/connect_programmatically.html#connect_programmatically-tls_enabled
@@ -113,7 +113,7 @@ func NewDocumentDBAccessor(config config.Config, logger logging.Logger) (Documen
 			return nil, errors.Wrap(err, "TLS設定の取得に失敗しました")
 		}
 		// DocumentDBに接続しmongo.Clientを取得
-		client, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(connectionString).SetTLSConfig(tlsConfig))
+		client, err = mongo.Connect(options.Client().ApplyURI(connectionString).SetTLSConfig(tlsConfig))
 	}
 
 	if err != nil {
