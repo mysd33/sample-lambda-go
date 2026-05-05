@@ -49,6 +49,51 @@
 
 * X-Rayによる可視化
 
+    * API Gateway、Lambdaにおいて、X-Rayによる可視化にも対応している    
+    * RDB(RDS Aurora)、DynamoDBへのアクセス、REST API、SQSの呼び出しのトレースにも対応    
+    * ADOTのよるX-Rayの可視化は、以前のX-Ray SDKでの可視化よりも劣り、DynamoDB、SQS、S3のアイコンが正しく表示されず歯車のアイコンで表示されてしまうなどの問題がある。参考比較として、以前のX-Ray SDKでの可視化の例も記載する。
+    * RDB(Aurora)アクセスの可視化の例
+        * otelsqlの設定でSQL実行のみをトレースするようにフィルタしている。フィルタしなかった場合は[こちら](image/adot-aurora-nofilter.png)
+
+        ![ADOTの可視化の例](image/adot-aurora.png)
+        
+        * （参考）X-Ray SDKの場合の可視化
+        
+            ![X-Ray SDKの可視化の例](image/xraysdk-aurora.png)
+
+    * DynamoDBアクセスの可視化の例
+        
+        ![ADOTの可視化の例2](image/adot-dynamodb.png)
+
+        * （参考）X-Ray SDKの場合の可視化
+
+            ![X-Ray SDKの可視化の例2](image/xraysdk-dynamodb.png)
+
+    * フロントエンドAPからバックエンドAPへのREST API呼び出しの可視化の例
+
+        ![ADOTの可視化の例3](image/adot-bff.png)
+
+        * （参考）X-Ray SDKの場合の可視化
+
+            ![X-Ray SDKの可視化の例3](image/xraysdk-bff.png)
+
+    * フロントエンドAPから非同期バッチAPへのディレード処理依頼におけるSQS、S3等の呼び出しの可視化の例
+        
+        ![ADOTの可視化の例4-1](image/adot-sqs-delayed1.png)
+
+        ![ADOTの可視化の例4-2](image/adot-sqs-delayed2.png)        
+
+        ![ADOTの可視化の例4-3](image/adot-sqs-delayed3.png)
+        
+        * （参考）X-Ray SDKの場合の可視化
+
+            ![X-Ray SDKの可視化の例4](image/xraysdk-sqs-delayed.png)
+
+    * DocumentDBの呼び出しの可視化の例
+        * TODO: 今後対応予定
+        * X-Ray SDKの場合の可視化に対応していなかった
+        
+
 > [!NOTE]
 > AWS X-Ray 用の SDK と Daemon は2026年2月25日にメンテナンスモードに入り、2027年2月25日にサポート終了となるため、ADOT(AWS Distro for OpenTelemetry) への移行に対応した。
 > * 移行時の参考情報
@@ -71,22 +116,6 @@
 >         * [Recommended Configurations for OpenTelemetry AWS Lambda Instrumentation with AWS X-Ray](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda/xrayconfig#section-readme)
 
 
-    * API Gateway、Lambdaにおいて、X-Rayによる可視化にも対応している
-    * RDB(RDS Aurora)、DynamoDBへのアクセス、REST API、SQSの呼び出しのトレースにも対応    
-    * RDB(Aurora)アクセスの可視化の例
-        * TODO 図の差し替え
-        ![X-Rayの可視化の例](image/xray-aurora.png)
-    * DynamoDBアクセスの可視化の例
-        * TODO 図の差し替え    
-        ![X-Rayの可視化の例2](image/xray-dynamodb.png)
-    * REST APIの呼び出しの可視化の例
-        * TODO 図の差し替え
-        ![X-Rayの可視化の例3](image/xray-bff.png)
-    * SQS、S3等の呼び出しの可視化の例
-        * TODO 図の差し替え
-        ![X-Rayの可視化の例4](image/xray-sqs-delayed.png)
-    * DocumentDBの呼び出しの可視化の例
-        * TODO 図        
 
 * RDS Proxyの利用時の注意
     * ピン留め
@@ -496,8 +525,9 @@ curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/books-api/
 ## 20. APの実行確認（フロントエンド）
 * 手元の端末のコンソールから、curlコマンドで動作確認
     * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
-* Windowsではgit bash等で実行できるが日本語が文字化けするので、PostmanやTalend API Tester等のツールを使ったほうがよい
 * Windowsのコマンドプロンプトやgit bashで実施する場合は、証明書検証に引っかからないように、`--ssl-no-revoke`オプションをつけるとよい
+* Windowsでgit bash等で実行した場合にもし日本語が文字化けする場合は、PostmanやTalend API Tester等のツールを使うとよい
+
 
 * BFFサービスのAPI実行例
 ```sh
