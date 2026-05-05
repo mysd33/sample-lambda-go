@@ -69,30 +69,35 @@
 
             ![X-Ray SDKの可視化の例2](image/xraysdk-dynamodb.png)
 
+    * DocumentDB（MongoDB）の呼び出しの可視化の例
+        * 「SQL」、「insert」として表示されるので一瞬RDBのトレースに見えてしまうが、参照の場合は「find」として表示されるため、DocumentDB（MongoDB）へのアクセスであることがわかる。
+
+        ![ADOTの可視化の例3-1](image/adot-documentdb.png)
+        
+        ![ADOTの可視化の例3-2](image/adot-documentdb2.png)
+        
+        * X-Ray SDKの場合にはDocumentDB（MongoDB）の可視化に対応していなかった
+
     * フロントエンドAPからバックエンドAPへのREST API呼び出しの可視化の例
 
-        ![ADOTの可視化の例3](image/adot-bff.png)
+        ![ADOTの可視化の例4](image/adot-bff.png)
 
         * （参考）X-Ray SDKの場合のREST API呼び出しの可視化
 
-            ![X-Ray SDKの可視化の例3](image/xraysdk-bff.png)
+            ![X-Ray SDKの可視化の例4](image/xraysdk-bff.png)
 
     * フロントエンドAPから非同期バッチAPへのディレード処理依頼におけるSQS、S3等の呼び出しの可視化の例
         
-        ![ADOTの可視化の例4-1](image/adot-sqs-delayed1.png)
+        ![ADOTの可視化の例5-1](image/adot-sqs-delayed1.png)
 
-        ![ADOTの可視化の例4-2](image/adot-sqs-delayed2.png)        
+        ![ADOTの可視化の例5-2](image/adot-sqs-delayed2.png)        
 
-        ![ADOTの可視化の例4-3](image/adot-sqs-delayed3.png)
+        ![ADOTの可視化の例5-3](image/adot-sqs-delayed3.png)
         
         * （参考）X-Ray SDKの場合の可視化
 
-            ![X-Ray SDKの可視化の例4](image/xraysdk-sqs-delayed.png)
-
-    * DocumentDBの呼び出しの可視化の例
-        * TODO: 今後対応予定
-        * X-Ray SDKの場合の可視化に対応していなかった
-        
+            ![X-Ray SDKの可視化の例5](image/xraysdk-sqs-delayed.png)
+       
 
 > [!NOTE]
 > AWS X-Ray 用の SDK と Daemon は2026年2月25日にメンテナンスモードに入り、2027年2月25日にサポート終了となるため、ADOT(AWS Distro for OpenTelemetry) への移行に対応した。
@@ -102,7 +107,7 @@
 >         * [Using the AWS Distro for OpenTelemetry Go SDK - Instrumenting the AWS SDK](https://aws-otel.github.io/docs/getting-started/go-sdk/manual-instr#instrumenting-the-aws-sdk)  
 >         * [OpenTelemetry Go Documentation](https://opentelemetry.io/ja/docs/languages/go/)
 >         * [otelhttp - NewTransport](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp#NewTransport)
->         * [mongodb](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver)
+>         * [otelmongo](go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/v2/mongo/otelmongo)
 >             * DocumentDB(MongoDB)のOpenTelemetry対応のためのGoのライブラリ。その前に[MongoDBのGoドライバー](https://github.com/mongodb/mongo-go-driver)への[V2移行](https://github.com/mongodb/mongo-go-driver/blob/master/docs/migration-2.0.md)も必要。
 >         * [otelsql](https://github.com/XSAM/otelsql)
 >             * SQLのOpenTelemetry対応のためのGoのライブラリ

@@ -23,6 +23,7 @@ import (
 	"github.com/cockroachdb/errors"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/v2/mongo/otelmongo"
 )
 
 const (
@@ -113,7 +114,9 @@ func NewDocumentDBAccessor(config config.Config, logger logging.Logger) (Documen
 			return nil, errors.Wrap(err, "TLS設定の取得に失敗しました")
 		}
 		// DocumentDBに接続しmongo.Clientを取得
-		client, err = mongo.Connect(options.Client().ApplyURI(connectionString).SetTLSConfig(tlsConfig))
+		// ADOT対応でSetMonitorでotelmongo.NewMonitor()を設定
+		// https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/v2/mongo/otelmongo
+		client, err = mongo.Connect(options.Client().ApplyURI(connectionString).SetTLSConfig(tlsConfig).SetMonitor(otelmongo.NewMonitor()))
 	}
 
 	if err != nil {
