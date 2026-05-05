@@ -1,5 +1,19 @@
 # Lambda/GoのAWS SAMサンプルAP
-## 構成イメージ
+## システム構成図
+
+![構成イメージ](image/system.png)
+
+* Lambda間の呼び出しイメージ
+    * フロントエンド（BFF:Backend For Frontend）からバックエンドの各サービスへアクセスする、SQSを介してディレード実行するという呼び出し関係になっている
+    * User API、Todo APIサービスはバックエンドサービス扱いで、bationから直接アクセスできるようにもなっている
+
+        ![呼び出しイメージ](image/collaboration.png) 
+
+## ソフトウェアアーキテクチャ
+* 本サンプルAPのソフトウェアアーキテクチャの図は以下の通り。
+
+    ![ソフトウェアアーキテクチャ](image/architecture.png)
+
 * オンラインリアルタイム処理方式
     * API GatewayをトリガにLambda実行
     * フロントエンドは、Regional Public APIで公開し、バックエンドはPrivate APIで公開
@@ -7,14 +21,6 @@
     * LambdaからDynamoDBやRDS Aurora、DocumentDBといったDBアクセスへのアクセスを実現
     * LambdaはVPC内Lambdaとして、RDS Aurora（RDS Proxy経由）、DocumentDBへのアクセスも可能としている
     * AWS Lambda Go API Proxyを利用して、Lambda SDKとginを統合し実現している
-
-> [!WARNING]
-> [AWS Lambda Go API Proxy](https://github.com/awslabs/aws-lambda-go-api-proxy)は、2025年5月22日にアーカイブ化されているため、
-> 今後、別の実装技術で同様の機能を実現する必要があるが、現状サンプルAPでの対応のめどが立っていない。
-> [当該Issue](https://github.com/awslabs/aws-lambda-go-api-proxy/issues/143)の記載から、[Lambda Web Adapter](https://github.com/aws/aws-lambda-web-adapter)の利用が有力な選択肢の一つと考えられる
-> * [Golang gin in Zip example](https://github.com/aws/aws-lambda-web-adapter/tree/main/examples/gin-zip)
-> しかしながら、上記のサンプルを見ると、main関数がginの木尾づになってしまうため、Lambda/GoでのADOTの利用するのに相性が悪いように見える。
-> 例えば、[otelgin](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin)を使えばうまくトレースできるか等、動作確認してみる必要がある
 
 * ディレード処理方式
     * Lambdaから、SQSへのアクセスし、非同期処理の実行依頼を実現
@@ -25,36 +31,34 @@
 * 純バッチ処理方式
     * EventBridgeによるスケジュール起動によりLambda実行
     * ジョブのフロー制御が必要な場合は、EventBridgeからStep Functionsを起動し、各ステートでLambda関数を実行する
-    * TODO: サンプルは未実装
+    * TODO: サンプルは未実装  
 
-* 本サンプルAPのソフトウェアアーキテクチャの図は以下の通り。
+> [!WARNING]
+> [AWS Lambda Go API Proxy](https://github.com/awslabs/aws-lambda-go-api-proxy)は、2025年5月22日にアーカイブ化されているため、
+> 今後、別の実装技術で同様の機能を実現する必要があるが、現状サンプルAPでの対応のめどが立っていない。
+> [当該Issue](https://github.com/awslabs/aws-lambda-go-api-proxy/issues/143)の記載から、[Lambda Web Adapter](https://github.com/aws/aws-lambda-web-adapter)の利用が有力な選択肢の一つと考えられる
+> しかしながら、[Golang gin in Zip example](https://github.com/aws/aws-lambda-web-adapter/tree/main/examples/gin-zip)のサンプルコードを見ると、main関数はginを起動しlambda.Start関数を使わない実装になってしまうため、ADOTを利用した場合に[lambda.Start関数へ手動計装](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html#lambda-instrumentation)する実装ができず、相性が悪いように見える。
+> 例えば、[otelgin](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin)を使えば、Lambdaの手動計装を実装せずともうまくトレースできるか等、動作確認してみる必要がある。
 
-    ![ソフトウェアアーキテクチャ](image/architecture.png)
-
-
-* LambdaからAWS SDKを用いたDynamoDB、SQS、S3等の各種AWSリソースへのアクセスに対応
-    * AWS SDK for Go v2に対応した実装
-        * v2では、AWS SDKやX-Ray SDKの利用方法がv1の時とAPIがかなり変更されている    
-
-![構成イメージ](image/demo.png)
-
-* Lambda間の呼び出しイメージ
-    * フロントエンド（BFF:Backend For Frontend）からバックエンドの各サービスへアクセスする、SQSを介してディレード実行するという呼び出し関係になっている
-    * User API、Todo APIサービスはバックエンドサービス扱いで、bationから直接アクセスできるようにもなっている
-
-![呼び出しイメージ](image/demo2.png)
+* Aurora、DynamoDB、DocumentDB、SQS、S3等の各種AWSリソースへのアクセスに対応
+    * Auroraへのアクセスは、database/sqlパッケージを利用
+    * DocumentDBへのアクセスは、MongoDBのGoドライバーを利用
+    * DynamoDB、SQS、S3へのアクセスは、AWS SDK for Goを利用
 
 * AppConfigによる設定の外部化
     * [AppConfig](https://docs.aws.amazon.com/ja_jp/appconfig/latest/userguide/what-is-appconfig.html)を使用し、APから外部管理された設定の取得、AppConfig機能を使ったデプロイに対応している。
     * マネージドなLambdaレイヤにより提供される[AppConfig Agent Lambdaエクステンション](https://docs.aws.amazon.com/ja_jp/appconfig/latest/userguide/appconfig-integration-lambda-extensions.html)を使って、LambdaアプリケーションからAppConfigの設定をキャッシュするとともに、アプリケーションの再デプロイ不要で設定変更を反映することができる。
 
-![AppConfigイメージ](image/demo3.png)
+        ![AppConfigイメージ](image/appconfig.png)
 
-* X-Rayによる可視化
+* ADOT/X-Rayによる可視化
+    * API Gateway、Lambdaにおいて、ADOTによるX-Rayによる可視化にも対応している    
+    * ADOTの場合は、AP側でOpenTelemetryの計装のコードを埋め込み、Lambda Layerで動作するADOT Collectorへ送信する形で実装する。APから送信されたトレースデータをいったんADOT Collectorが受信し、X-Rayへ送信する。
 
-    * API Gateway、Lambdaにおいて、X-Rayによる可視化にも対応している    
-    * RDB(RDS Aurora)、DynamoDBへのアクセス、REST API、SQSの呼び出しのトレースにも対応    
-    * ADOTのよるX-Rayの可視化は、以前のX-Ray SDKでの可視化よりも劣り、DynamoDB、SQS、S3のアイコンが正しく表示されず歯車のアイコンで表示されてしまうなどの問題がある。参考比較として、以前のX-Ray SDKでの可視化の例も記載する。
+        ![ADOTのX-Rayへの送信イメージ](image/adot.png)
+
+    * RDB(Aurora)、DynamoDB、DocumentDBへのアクセス、REST API、SQSの呼び出しのトレースにも対応    
+    * 以前X-Ray SDK/X-Rayデーモンでの可視化を実現していたが、ADOTに移行したところ、現状は、トレースマップの可視化において、DynamoDB、SQS、S3のアイコンが正しく表示されず歯車のアイコンで表示されてしまうなどの問題がある。ADOTとの比較としてX-Ray SDKでの可視化の例も参考に示す。
     * RDB(Aurora)アクセスの可視化の例
         * otelsqlの設定でSQL実行のみをトレースするようにフィルタしている。フィルタしなかった場合は[こちら](image/adot-aurora-nofilter.png)
 
@@ -107,19 +111,22 @@
 > * 移行時の参考情報
 >     * Go関連
 >         * [AWS X-Ray: Migrate to OpenTelemetry Go](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html)   
->         * [Using the AWS Distro for OpenTelemetry Go SDK - Instrumenting the AWS SDK](https://aws-otel.github.io/docs/getting-started/go-sdk/manual-instr#instrumenting-the-aws-sdk)  
->         * [OpenTelemetry Go Documentation](https://opentelemetry.io/ja/docs/languages/go/)
->         * [otelhttp - NewTransport](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp#NewTransport)
->         * [otelmongo](go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/v2/mongo/otelmongo)
->             * DocumentDB(MongoDB)のOpenTelemetry対応のためのGoのライブラリ。その前に[MongoDBのGoドライバー](https://github.com/mongodb/mongo-go-driver)への[V2移行](https://github.com/mongodb/mongo-go-driver/blob/master/docs/migration-2.0.md)も必要。
+>         * [AWS X-Ray: Migrate to OpenTelemetry Go - AWS SDK for Go v2 instrumentation](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html#aws-sdk-instrumentation)  
+>             * DynamoDB、S3、SQS等、AWS SDK for Goを利用したAWSサービスへのアクセスのトレースのための計装方法
+>         * [AWS X-Ray: Migrate to OpenTelemetry Go - Instrumenting outgoing HTTP calls](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html#http-client-instrumentation)  
+>             * [otelhttp - NewTransport](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp#NewTransport)というHTTP通信のOpenTelemetry対応のためのGoのライブラリを利用した、HTTPクライアントのトレースのための計装方法             
 >         * [otelsql](https://github.com/XSAM/otelsql)
->             * SQLのOpenTelemetry対応のためのGoのライブラリ
+>             * SQLのOpenTelemetry対応のためのGoのライブラリ。現状、GoのOpenTelemetryの公式リポジトリにはSQL用のライブラリがないため、サードパーティ製のライブラリを利用している。
+>         * [otelmongo](go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/v2/mongo/otelmongo)
+>             * DocumentDB(MongoDB)のOpenTelemetry対応のためのGoのライブラリ。[MongoDBのGoドライバー](https://github.com/mongodb/mongo-go-driver)の[V2移行](https://github.com/mongodb/mongo-go-driver/blob/master/docs/migration-2.0.md)も必要となる。
+>         * [OpenTelemetry Go Documentation](https://opentelemetry.io/ja/docs/languages/go/)
 >     * Lambda/Go関連
->         * [AWS X-Ray: Migrate to OpenTelemetry Go - Lambda manual instrumentation](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html#lambda-instrumentation)       
+>         * [AWS X-Ray: Migrate to OpenTelemetry Go - Lambda manual instrumentation](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html#lambda-instrumentation)   
+>             * Lambdaのmain関数で、lambda.Start関数を呼び出す前に、OpenTelemetryの計装コードを手動で埋め込む方法が記載されている。
 >         * [AWS Distro for OpenTelemetry Lambda](https://aws-otel.github.io/docs/getting-started/lambda)
->             * ただし、最新の最適化されたアプローチだと、ADOT CollectorのLambdaレイヤーの[サポートランタイム](https://aws-otel.github.io/docs/getting-started/lambda#supported-runtimes)にOS専用ランタイム(OS-only Runtime provided.al2023)がないように読み取れるため、Goの場合はまだ以下のレガシーアプローチをとる必要がありそう。
+>             * ただし、上のリンクに記載された最新の最適化されたアプローチは、ADOT CollectorのLambdaレイヤーの[サポートランタイム](https://aws-otel.github.io/docs/getting-started/lambda#supported-runtimes)にOS専用ランタイム(OS-only Runtime provided.al2023)がないため、Goの場合はまだ以下のレガシーアプローチをとる必要がありそう。
 >         * [AWS Distro for OpenTelemetry Lambda Support For Go(the legacy approach)](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)
->             * Lambda/Goだとこっちのレガシーアプローチで移行した
+>             * Lambda/Goだと、このサイトに従いレガシーアプローチにより提供されるLambdaLayerを使用して移行した。
 >         * [OpenTelemetry AWS Lambda Instrumentation for Golang](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda#section-readme)
 >         * [Recommended Configurations for OpenTelemetry AWS Lambda Instrumentation with AWS X-Ray](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda/xrayconfig#section-readme)
 
