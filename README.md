@@ -3,35 +3,30 @@
 
 ![構成イメージ](image/system.png)
 
-* Lambda間の呼び出しイメージ
-    * フロントエンド（BFF:Backend For Frontend）からバックエンドの各サービスへアクセスする、SQSを介してディレード実行するという呼び出し関係になっている
-    * User API、Todo APIサービスはバックエンドサービス扱いで、bationから直接アクセスできるようにもなっている
-
-        ![呼び出しイメージ](image/collaboration.png) 
-
 ## ソフトウェアアーキテクチャ
 * 本サンプルAPのソフトウェアアーキテクチャの図は以下の通り。
 
     ![ソフトウェアアーキテクチャ](image/architecture.png)
 
-* オンラインリアルタイム処理方式
-    * API GatewayをトリガにLambda実行
-    * フロントエンドは、Regional Public APIで公開し、バックエンドはPrivate APIで公開
-        * バックエンドは、動作確認用にVPC内にEC2で構築したBastionからのアクセスにも対応
-    * LambdaからDynamoDBやRDS Aurora、DocumentDBといったDBアクセスへのアクセスを実現
-    * LambdaはVPC内Lambdaとして、RDS Aurora（RDS Proxy経由）、DocumentDBへのアクセスも可能としている
-    * AWS Lambda Go API Proxyを利用して、Lambda SDKとginを統合し実現している
+* 処理方式
+    * オンラインリアルタイム処理方式
+        * API GatewayをトリガにLambda実行
+        * フロントエンドは、Regional Public APIで公開し、バックエンドはPrivate APIで公開
+            * バックエンドは、動作確認用にVPC内にEC2で構築したBastionからのアクセスにも対応
+        * LambdaからDynamoDBやRDS Aurora、DocumentDBといったDBアクセスへのアクセスを実現
+        * LambdaはVPC内Lambdaとして、RDS Aurora（RDS Proxy経由）、DocumentDBへのアクセスも可能としている
+        * AWS Lambda Go API Proxyを利用して、Lambda SDKとginを統合し実現している
 
-* ディレード処理方式
-    * Lambdaから、SQSへのアクセスし、非同期処理の実行依頼を実現
-    * SQSトリガにLambda実行
-    * 標準キュー、FIFOキューの両方に対応
-    * DynamoDBのトランザクション管理機能を利用した、メッセージ送達とDynamoDBトランザクションの整合性を担保する仕組みを実装
+    * ディレード処理方式
+        * Lambdaから、SQSへのアクセスし、非同期処理の実行依頼を実現
+        * SQSトリガにLambda実行
+        * 標準キュー、FIFOキューの両方に対応
+        * DynamoDBのトランザクション管理機能を利用した、メッセージ送達とDynamoDBトランザクションの整合性を担保する仕組みを実装
 
-* 純バッチ処理方式
-    * EventBridgeによるスケジュール起動によりLambda実行
-    * ジョブのフロー制御が必要な場合は、EventBridgeからStep Functionsを起動し、各ステートでLambda関数を実行する
-    * TODO: サンプルは未実装  
+    * 純バッチ処理方式
+        * EventBridgeによるスケジュール起動によりLambda実行
+        * ジョブのフロー制御が必要な場合は、EventBridgeからStep Functionsを起動し、各ステートでLambda関数を実行する
+        * TODO: サンプルは未実装  
 
 > [!WARNING]
 > [AWS Lambda Go API Proxy](https://github.com/awslabs/aws-lambda-go-api-proxy)は、2025年5月22日にアーカイブ化されているため、
@@ -39,6 +34,13 @@
 > [当該Issue](https://github.com/awslabs/aws-lambda-go-api-proxy/issues/143)の記載から、[Lambda Web Adapter](https://github.com/aws/aws-lambda-web-adapter)の利用が有力な選択肢の一つと考えられる
 > しかしながら、[Golang gin in Zip example](https://github.com/aws/aws-lambda-web-adapter/tree/main/examples/gin-zip)のサンプルコードを見ると、main関数はginを起動しlambda.Start関数を使わない実装になってしまうため、ADOTを利用した場合に[lambda.Start関数へ手動計装](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html#lambda-instrumentation)する実装ができず、相性が悪いように見える。
 > 例えば、[otelgin](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin)を使えば、Lambdaの手動計装を実装せずともうまくトレースできるか等、動作確認してみる必要がある。
+
+
+* Lambda間の呼び出しイメージ
+    * フロントエンド（BFF:Backend For Frontend）からバックエンドの各サービスへアクセスする、SQSを介してディレード実行するという呼び出し関係になっている
+    * User API、Todo APIサービスはバックエンドサービス扱いで、bationから直接アクセスできるようにもなっている
+
+        ![呼び出しイメージ](image/collaboration.png) 
 
 * Aurora、DynamoDB、DocumentDB、SQS、S3等の各種AWSリソースへのアクセスに対応
     * Auroraへのアクセスは、database/sqlパッケージを利用
@@ -129,7 +131,6 @@
 >             * Lambda/Goだと、このサイトに従いレガシーアプローチにより提供されるLambdaLayerを使用して移行した。
 >         * [OpenTelemetry AWS Lambda Instrumentation for Golang](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda#section-readme)
 >         * [Recommended Configurations for OpenTelemetry AWS Lambda Instrumentation with AWS X-Ray](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda/xrayconfig#section-readme)
-
 
 
 * RDS Proxyの利用時の注意
