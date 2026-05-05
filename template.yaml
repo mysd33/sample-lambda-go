@@ -59,10 +59,10 @@ Parameters:
     Default: arn:aws:lambda:ap-northeast-1:901920570463:layer:aws-otel-collector-amd64-ver-0-117-0:1
   AppConfigLayerArn:
     Type: String
-    Default: arn:aws:lambda:ap-northeast-1:980059726660:layer:AWS-AppConfig-Extension:98
+    Default: arn:aws:lambda:ap-northeast-1:980059726660:layer:AWS-AppConfig-Extension:268
   LambdaInsightsLayerArn:
     Type: String
-    Default: arn:aws:lambda:ap-northeast-1:580247275435:layer:LambdaInsightsExtension:80    
+    Default: arn:aws:lambda:ap-northeast-1:580247275435:layer:LambdaInsightsExtension:91
   EnableLambdaLayers:
     Type: String
     AllowedValues:
@@ -472,12 +472,12 @@ Outputs:
   TodoAsyncFunction:
     Description: Todo Async Lambda Function ARN
     Value: !GetAtt TodoAsyncFunction.Arn
-  BookAPIBaseURL:
+  BooksAPIBaseURL:
     Description: API Gateway endpoint Base URL for Books
     Value: !Sub https://${BookApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}
     Export: 
-      Name: !Sub ${StackPrefix}-BookAPIBaseURL-${Stage}    
-  BookApi:
+      Name: !Sub ${StackPrefix}-BooksAPIBaseURL-${Stage}    
+  BooksApi:
     Description: API Gateway endpoint URL for Books
     Value: !Sub https://${BookApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/books-api/v1/books
   BooksFunction:

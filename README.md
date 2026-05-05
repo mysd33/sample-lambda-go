@@ -11,6 +11,7 @@
 > [!WARNING]
 > [AWS Lambda Go API Proxy](https://github.com/awslabs/aws-lambda-go-api-proxy)は、2025年5月22日にアーカイブ化されているため、
 > 今後、別の実装技術で同様の機能を実現する必要があるが、現状サンプルAPでの対応のめどが立っていないが、[当該Issue](https://github.com/awslabs/aws-lambda-go-api-proxy/issues/143)の記載から、[Lambda Web Adapter](https://github.com/aws/aws-lambda-web-adapter)の利用が有力な選択肢の一つと考えられる。
+>     * [Golang gin in Zip example](https://github.com/aws/aws-lambda-web-adapter/tree/main/examples/gin-zip)
 
 * ディレード処理方式
     * Lambdaから、SQSへのアクセスし、非同期処理の実行依頼を実現
@@ -50,7 +51,7 @@
 
 > [!NOTE]
 > AWS X-Ray 用の SDK と Daemon は2026年2月25日にメンテナンスモードに入り、2027年2月25日にサポート終了となるため、ADOT(AWS Distro for OpenTelemetry) への移行に対応した。
-> * 今後更新する際の参考情報
+> * 移行時の参考情報
 >     * Go関連
 >         * [AWS X-Ray: Migrate to OpenTelemetry Go](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html)   
 >         * [Using the AWS Distro for OpenTelemetry Go SDK - Instrumenting the AWS SDK](https://aws-otel.github.io/docs/getting-started/go-sdk/manual-instr#instrumenting-the-aws-sdk)  
@@ -65,7 +66,7 @@
 >         * [AWS Distro for OpenTelemetry Lambda](https://aws-otel.github.io/docs/getting-started/lambda)
 >             * ただし、最新の最適化されたアプローチだと、ADOT CollectorのLambdaレイヤーの[サポートランタイム](https://aws-otel.github.io/docs/getting-started/lambda#supported-runtimes)にOS専用ランタイム(OS-only Runtime provided.al2023)がないように読み取れるため、Goの場合はまだ以下のレガシーアプローチをとる必要がありそう。
 >         * [AWS Distro for OpenTelemetry Lambda Support For Go(the legacy approach)](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)
->             * Lambda/Goだとこっちを参照
+>             * Lambda/Goだとこっちのレガシーアプローチで移行した
 >         * [OpenTelemetry AWS Lambda Instrumentation for Golang](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda#section-readme)
 >         * [Recommended Configurations for OpenTelemetry AWS Lambda Instrumentation with AWS X-Ray](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda/xrayconfig#section-readme)
 
@@ -244,10 +245,10 @@ sudo su ec2-user
 cd ~
 wget https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
 
-# mongo --ssl --host (DocumentDBのエンドポイント) --sslCAFile global-bundle.pem --username root --password (パスワード)
+# mongo --tls --host (DocumentDBのエンドポイント) --tlsCAFile global-bundle.pem --username root
 # パスワードは、SecretsManagerの「Demo-DocDB-Secrets」の「password」の値を参照し入力
 # 例
-mongo --ssl --host demo-documentdbcluster.cluster-crby0oqsjgv1.ap-northeast-1.docdb.amazonaws.com:27017 --sslCAFile global-bundle.pem --username root --password password
+mongo --tls --host demo-documentdbcluster.cluster-crby0oqsjgv1.ap-northeast-1.docdb.amazonaws.com:27017 --tlsCAFile global-bundle.pem --username root
 
 # sampledbという名前のデータベースを作成
 > use sampledb
@@ -279,6 +280,9 @@ mongo --ssl --host demo-documentdbcluster.cluster-crby0oqsjgv1.ap-northeast-1.do
 
 # データベースの表示（sampledbがあることを確認）
 show dbs
+
+# 接続を切断
+exit
 ```
 
 ## 12. DynamoDBのテーブル作成
@@ -371,7 +375,8 @@ make deploy_env env=prd
 ```
 
 ## 17. CI/CD
-* 作成中
+> [!WARNING]
+> 現在。作成中。
 
 * CIジョブ用のCodeBuildの作成
 
@@ -492,6 +497,7 @@ curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/books-api/
 * 手元の端末のコンソールから、curlコマンドで動作確認
     * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
 * Windowsではgit bash等で実行できるが日本語が文字化けするので、PostmanやTalend API Tester等のツールを使ったほうがよい
+* Windowsのコマンドプロンプトやgit bashで実施する場合は、証明書検証に引っかからないように、`--ssl-no-revoke`オプションをつけるとよい
 
 * BFFサービスのAPI実行例
 ```sh

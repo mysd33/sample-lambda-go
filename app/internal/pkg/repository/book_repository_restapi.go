@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	BOOKS_API_BASE_URL_NAME = "USERS_API_BASE_URL"
+	BOOKS_API_BASE_URL_NAME = "BOOKS_API_BASE_URL"
 )
 
 func NewBookRepositoryForRestAPI(httpClient httpclient.HTTPClient, logger logging.Logger, config config.Config) BookRepository {

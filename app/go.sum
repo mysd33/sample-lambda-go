@@ -1,5 +1,7 @@
 github.com/XSAM/otelsql v0.42.0 h1:Li0xF4eJUxG2e0x3D4rvRlys1f27yJKvjTh7ljkUP5o=
 github.com/XSAM/otelsql v0.42.0/go.mod h1:4mOrEv+cS1KmKzrvTktvJnstr5GtKSAK+QHvFR9OcpI=
+github.com/aws-observability/aws-otel-go/exporters/xrayudp v1.0.0 h1:7KBZ503nBhE92gD6qKb+EGqxGgkL3PIKWu8itDRXRzg=
+github.com/aws-observability/aws-otel-go/exporters/xrayudp v1.0.0/go.mod h1:fSUUeQ+AJzro45Zhl6wr5+5gVWxovidCMZzzswqvJG8=
 github.com/aws/aws-lambda-go v1.54.0 h1:EGYpdyRGF88xszqlGcBewz811mJeRS+maNlLZXFheII=
 github.com/aws/aws-lambda-go v1.54.0/go.mod h1:dpMpZgvWx5vuQJfBt0zqBha60q7Dd7RfgJv23DymV8A=
 github.com/aws/aws-sdk-go-v2 v1.41.7 h1:DWpAJt66FmnnaRIOT/8ASTucrvuDPZASqhhLey6tLY8=
