@@ -10,8 +10,11 @@
 
 > [!WARNING]
 > [AWS Lambda Go API Proxy](https://github.com/awslabs/aws-lambda-go-api-proxy)は、2025年5月22日にアーカイブ化されているため、
-> 今後、別の実装技術で同様の機能を実現する必要があるが、現状サンプルAPでの対応のめどが立っていないが、[当該Issue](https://github.com/awslabs/aws-lambda-go-api-proxy/issues/143)の記載から、[Lambda Web Adapter](https://github.com/aws/aws-lambda-web-adapter)の利用が有力な選択肢の一つと考えられる。
+> 今後、別の実装技術で同様の機能を実現する必要があるが、現状サンプルAPでの対応のめどが立っていない。
+> [当該Issue](https://github.com/awslabs/aws-lambda-go-api-proxy/issues/143)の記載から、[Lambda Web Adapter](https://github.com/aws/aws-lambda-web-adapter)の利用が有力な選択肢の一つと考えられる
 > * [Golang gin in Zip example](https://github.com/aws/aws-lambda-web-adapter/tree/main/examples/gin-zip)
+> しかしながら、上記のサンプルを見ると、main関数がginの木尾づになってしまうため、Lambda/GoでのADOTの利用するのに相性が悪いように見える。
+> 例えば、[otelgin](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin)を使えばうまくトレースできるか等、動作確認してみる必要がある
 
 * ディレード処理方式
     * Lambdaから、SQSへのアクセスし、非同期処理の実行依頼を実現
