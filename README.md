@@ -11,7 +11,7 @@
 > [!WARNING]
 > [AWS Lambda Go API Proxy](https://github.com/awslabs/aws-lambda-go-api-proxy)は、2025年5月22日にアーカイブ化されているため、
 > 今後、別の実装技術で同様の機能を実現する必要があるが、現状サンプルAPでの対応のめどが立っていないが、[当該Issue](https://github.com/awslabs/aws-lambda-go-api-proxy/issues/143)の記載から、[Lambda Web Adapter](https://github.com/aws/aws-lambda-web-adapter)の利用が有力な選択肢の一つと考えられる。
->     * [Golang gin in Zip example](https://github.com/aws/aws-lambda-web-adapter/tree/main/examples/gin-zip)
+> * [Golang gin in Zip example](https://github.com/aws/aws-lambda-web-adapter/tree/main/examples/gin-zip)
 
 * ディレード処理方式
     * Lambdaから、SQSへのアクセスし、非同期処理の実行依頼を実現
@@ -57,7 +57,7 @@
 
         ![ADOTの可視化の例](image/adot-aurora.png)
         
-        * （参考）X-Ray SDKの場合の可視化
+        * （参考）X-Ray SDKの場合のRDB(Aurora)アクセスの可視化
         
             ![X-Ray SDKの可視化の例](image/xraysdk-aurora.png)
 
@@ -73,7 +73,7 @@
 
         ![ADOTの可視化の例3](image/adot-bff.png)
 
-        * （参考）X-Ray SDKの場合の可視化
+        * （参考）X-Ray SDKの場合のREST API呼び出しの可視化
 
             ![X-Ray SDKの可視化の例3](image/xraysdk-bff.png)
 
