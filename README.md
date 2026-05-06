@@ -55,6 +55,12 @@
         ![AppConfigイメージ](image/appconfig.png)
 
 ### ADOT/X-Rayによるトレース情報の可視化
+
+> [!NOTE]
+> AWS X-Ray 用の SDK と Daemon は2026年2月25日にメンテナンスモードに入り、2027年2月25日にサポート終了となるため、ADOT(AWS Distro for OpenTelemetry) への移行に対応した。
+> * [移行時の参考情報](ADOT-migration.md)をまとめているので、移行の際の参考にするとよい。
+
+
 * API Gateway、Lambdaにおいて、ADOTによるX-Rayによる可視化にも対応している    
 * ADOTの場合は、AP側でOpenTelemetryの計装のコードを埋め込み、Lambda Layerで動作するADOT Collectorへ送信する形で実装する。APから送信されたトレースデータをいったんADOT Collectorが受信し、X-Rayへ送信する。
 
@@ -106,13 +112,7 @@
     
     * （参考）X-Ray SDKの場合の可視化
 
-        ![X-Ray SDKの可視化の例5](image/xraysdk-sqs-delayed.png)
-    
-
-> [!NOTE]
-> AWS X-Ray 用の SDK と Daemon は2026年2月25日にメンテナンスモードに入り、2027年2月25日にサポート終了となるため、ADOT(AWS Distro for OpenTelemetry) への移行に対応した。
-> * [移行時の参考情報](ADOT-migration.md)をまとめているので、移行の際の参考にするとよい。
-
+        ![X-Ray SDKの可視化の例5](image/xraysdk-sqs-delayed.png)  
 
 ### RDS Proxy
 * 本サンプルAPでは、RDS Proxyを利用してAuroraへの接続を実現している。RDS Proxyは、RDS/Auroraへのコネクションプーリングや自動リトライ、フェイルオーバーの管理などを提供するマネージドサービスである。RDS Proxyを利用することで、Lambdaなどのサーバーレス環境からのRDS/Auroraへの接続の効率化や信頼性の向上が期待できる。
