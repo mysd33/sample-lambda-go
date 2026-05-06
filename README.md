@@ -459,6 +459,8 @@ aws cloudformation create-stack --stack-name Demo-AppConfigHostedDeploy-Stack --
 
 * RDS用のSecretManagerの設定を初回デプロイする。
     * 同一のアプリケーション、環境に対してのデプロイは並列実行できないため、Hosted Configurationの設定のデプロイが完了後に実施すること
+        * 同時に実行してエラーになった場合、CloudTrailのイベントログにConflictExceptionのエラーが出る
+        * その場合は、エラーになったスタックを削除してから再度実行すること    
     * パラメータのSecretsManagerVersionのバージョンIDは、CLIまたはマネコンで確認してパラメータに設定する
 ```sh
 # シークレットのバージョンIDを確認
@@ -550,7 +552,7 @@ curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/books-api/
 * 手元の端末のコンソールから、curlコマンドで動作確認
     * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
 * Windowsのコマンドプロンプトやgit bashで実施する場合は、証明書検証に引っかからないように、`--ssl-no-revoke`オプションをつけるとよい
-* Windowsでgit bash等で実行した場合にもし日本語が文字化けする場合は、PostmanやTalend API Tester等のツールを使うとよい
+* Windowsでgit bash等で実行した場合に日本語が文字化けする場合は、PostmanやTalend API Tester等のツールを使うとよい
 
 
 * BFFサービスのAPI実行例
