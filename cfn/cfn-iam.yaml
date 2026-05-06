@@ -100,11 +100,11 @@ Resources:
           - Effect: Allow
             Action:
               - secretsmanager:GetSecretValue            
-            Resource: !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*
+            Resource: !Sub arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*
           - Effect: Allow
             Action:
               - kms:Decrypt            
-            Resource: !Sub arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/*
+            Resource: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/*
             Condition:
               StringEquals:
                 kms:ViaService: !Sub secretsmanager.${AWS::Region}.amazonaws.com
@@ -168,8 +168,8 @@ Resources:
           - dynamodb:CreateTable
           Effect: Allow
           Resource:
-          - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*
-          - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*/index/*
+          - !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*
+          - !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*/index/*
         - Action:
           - dynamodb:GetShardIterator
           - dynamodb:Scan
@@ -180,7 +180,7 @@ Resources:
           - dynamodb:DescribeLimits
           Effect: Allow
           Resource:          
-          - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*/index/*          
+          - !Sub arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/*/index/*          
       PolicyName: !Sub ${StackPrefix}-LambdaDynamoDBPolicy
       Roles:      
         - !Ref LambdaRole  
@@ -197,7 +197,7 @@ Resources:
           - sqs:GetQueueUrl
           Effect: Allow
           Resource:
-          - !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:*
+          - !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:*
       PolicyName: !Sub ${StackPrefix}-SQSPolicy
       Roles:
         - !Ref LambdaRole
@@ -213,7 +213,7 @@ Resources:
           - s3:ListBucket          
           Effect: Allow
           Resource:
-          - !Sub arn:aws:s3:::*          
+          - arn:aws:s3:::*          
       PolicyName: !Sub ${StackPrefix}-S3Policy
       Roles:
         - !Ref LambdaRole
@@ -244,13 +244,13 @@ Resources:
           - logs:PutLogEvents
           Effect: Allow
           Resource:
-          - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${CodeBuildProjectName}
-          - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${CodeBuildProjectName}:*          
+          - !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${CodeBuildProjectName}
+          - !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${CodeBuildProjectName}:*          
         - Action:
           - codecommit:GitPull
           Effect: Allow
           Resource:          
-            - !Sub arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:${CodeCommitRepositoryName}    
+            - !Sub arn:${AWS::Partition}:codecommit:${AWS::Region}:${AWS::AccountId}:${CodeCommitRepositoryName}    
         - Action:
           - s3:PutObject
           - s3:GetObject
@@ -260,10 +260,10 @@ Resources:
           - s3:ListBucket
           Effect: Allow
           Resource: 
-            - !Sub arn:aws:s3:::${ArtifactS3BucketName}
-            - !Sub arn:aws:s3:::${ArtifactS3BucketName}/*      
-            - !Sub arn:aws:s3:::${CacheS3Location}            
-            - !Sub arn:aws:s3:::${CacheS3Location}/*
+            - !Sub arn:${AWS::Partition}:s3:::${ArtifactS3BucketName}
+            - !Sub arn:${AWS::Partition}:s3:::${ArtifactS3BucketName}/*      
+            - !Sub arn:${AWS::Partition}:s3:::${CacheS3Location}            
+            - !Sub arn:${AWS::Partition}:s3:::${CacheS3Location}/*
         - Action:
           - codeartifact:List*
           - codeartifact:Describe*
@@ -273,9 +273,9 @@ Resources:
           - codeartifact:PutPackageMetadata
           Effect: Allow
           Resource: 
-            - !Sub arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/*
-            - !Sub arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/*
-            - !Sub arn:aws:codeartifact:${AWS::Region}:${AWS::AccountId}:package/*
+            - !Sub arn:${AWS::Partition}:codeartifact:${AWS::Region}:${AWS::AccountId}:domain/*
+            - !Sub arn:${AWS::Partition}:codeartifact:${AWS::Region}:${AWS::AccountId}:repository/*
+            - !Sub arn:${AWS::Partition}:codeartifact:${AWS::Region}:${AWS::AccountId}:package/*
         - Action:
           - sts:GetServiceBearerToken
           Effect: Allow
@@ -310,7 +310,7 @@ Resources:
               - Effect: Allow
                 Action: codepipeline:StartPipelineExecution
                 Resource:
-                  - !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipelineName}
+                  - !Sub arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${CodePipelineName}
 
   #IAM Role and IAM Policy for CodePipeline
   #TODO: Review Required Actions of Policy Document

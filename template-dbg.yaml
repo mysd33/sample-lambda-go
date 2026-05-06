@@ -423,7 +423,7 @@ Resources:
     Type: AWS::ApplicationInsights::Application
     Properties:
       ResourceGroupName: !Ref ApplicationResourceGroup
-      AutoConfigurationEnabled: 'true'
+      AutoConfigurationEnabled: true
 Outputs:
   BffAPI:
     Description: API Gateway endpoint URL for Bff
