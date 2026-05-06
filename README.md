@@ -4,29 +4,30 @@
 ![構成イメージ](image/system.png)
 
 ## ソフトウェアアーキテクチャ
-* 本サンプルAPのソフトウェアアーキテクチャの図は以下の通り。
+### レイヤ・コンポーネント構成
+* 本サンプルAPのレイヤ・コンポーネント構成は以下の通り。
 
     ![ソフトウェアアーキテクチャ](image/architecture.png)
 
-* 処理方式
-    * オンラインリアルタイム処理方式
-        * API GatewayをトリガにLambda実行
-        * フロントエンドは、Regional Public APIで公開し、バックエンドはPrivate APIで公開
-            * バックエンドは、動作確認用にVPC内にEC2で構築したBastionからのアクセスにも対応
-        * LambdaからDynamoDBやRDS Aurora、DocumentDBといったDBアクセスへのアクセスを実現
-        * LambdaはVPC内Lambdaとして、RDS Aurora（RDS Proxy経由）、DocumentDBへのアクセスも可能としている
-        * AWS Lambda Go API Proxyを利用して、Lambda SDKとginを統合し実現している
+### 処理方式
+* オンラインリアルタイム処理方式
+    * API GatewayをトリガにLambda実行
+    * フロントエンドは、Regional Public APIで公開し、バックエンドはPrivate APIで公開
+        * バックエンドは、動作確認用にVPC内にEC2で構築したBastionからのアクセスにも対応
+    * LambdaからDynamoDBやRDS Aurora、DocumentDBといったDBアクセスへのアクセスを実現
+    * LambdaはVPC内Lambdaとして、RDS Aurora（RDS Proxy経由）、DocumentDBへのアクセスも可能としている
+    * AWS Lambda Go API Proxyを利用して、Lambda SDKとginを統合し実現している
 
-    * ディレード処理方式
-        * Lambdaから、SQSへのアクセスし、非同期処理の実行依頼を実現
-        * SQSトリガにLambda実行
-        * 標準キュー、FIFOキューの両方に対応
-        * DynamoDBのトランザクション管理機能を利用した、メッセージ送達とDynamoDBトランザクションの整合性を担保する仕組みを実装
+* ディレード処理方式
+    * Lambdaから、SQSへのアクセスし、非同期処理の実行依頼を実現
+    * SQSトリガにLambda実行
+    * 標準キュー、FIFOキューの両方に対応
+    * DynamoDBのトランザクション管理機能を利用した、メッセージ送達とDynamoDBトランザクションの整合性を担保する仕組みを実装
 
-    * 純バッチ処理方式
-        * EventBridgeによるスケジュール起動によりLambda実行
-        * ジョブのフロー制御が必要な場合は、EventBridgeからStep Functionsを起動し、各ステートでLambda関数を実行する
-        * TODO: サンプルは未実装  
+* 純バッチ処理方式
+    * EventBridgeによるスケジュール起動によりLambda実行
+    * ジョブのフロー制御が必要な場合は、EventBridgeからStep Functionsを起動し、各ステートでLambda関数を実行する
+    * TODO: サンプルは未実装  
 
 > [!WARNING]
 > [AWS Lambda Go API Proxy](https://github.com/awslabs/aws-lambda-go-api-proxy)は、2025年5月22日にアーカイブ化されているため、
@@ -47,66 +48,66 @@
     * DocumentDBへのアクセスは、MongoDBのGoドライバーを利用
     * DynamoDB、SQS、S3へのアクセスは、AWS SDK for Goを利用
 
-* AppConfigによる設定の外部化
+### AppConfigによる環境依存パラメータの外部管理化
     * [AppConfig](https://docs.aws.amazon.com/ja_jp/appconfig/latest/userguide/what-is-appconfig.html)を使用し、APから外部管理された設定の取得、AppConfig機能を使ったデプロイに対応している。
     * マネージドなLambdaレイヤにより提供される[AppConfig Agent Lambdaエクステンション](https://docs.aws.amazon.com/ja_jp/appconfig/latest/userguide/appconfig-integration-lambda-extensions.html)を使って、LambdaアプリケーションからAppConfigの設定をキャッシュするとともに、アプリケーションの再デプロイ不要で設定変更を反映することができる。
 
         ![AppConfigイメージ](image/appconfig.png)
 
-* ADOT/X-Rayによる可視化
-    * API Gateway、Lambdaにおいて、ADOTによるX-Rayによる可視化にも対応している    
-    * ADOTの場合は、AP側でOpenTelemetryの計装のコードを埋め込み、Lambda Layerで動作するADOT Collectorへ送信する形で実装する。APから送信されたトレースデータをいったんADOT Collectorが受信し、X-Rayへ送信する。
+### ADOT/X-Rayによるトレース情報の可視化
+* API Gateway、Lambdaにおいて、ADOTによるX-Rayによる可視化にも対応している    
+* ADOTの場合は、AP側でOpenTelemetryの計装のコードを埋め込み、Lambda Layerで動作するADOT Collectorへ送信する形で実装する。APから送信されたトレースデータをいったんADOT Collectorが受信し、X-Rayへ送信する。
 
-        ![ADOTのX-Rayへの送信イメージ](image/adot.png)
+    ![ADOTのX-Rayへの送信イメージ](image/adot.png)
 
-    * RDB(Aurora)、DynamoDB、DocumentDBへのアクセス、REST API、SQSの呼び出しのトレースにも対応    
-    * 以前X-Ray SDK/X-Rayデーモンでの可視化を実現していたが、ADOTに移行したところ、現状は、トレースマップの可視化において、DynamoDB、SQS、S3のアイコンが正しく表示されず歯車のアイコンで表示されてしまうなどの問題がある。ADOTとの比較としてX-Ray SDKでの可視化の例も参考に示す。
-    * RDB(Aurora)アクセスの可視化の例
-        * otelsqlの設定でSQL実行のみをトレースするようにフィルタしている。フィルタしなかった場合は[こちら](image/adot-aurora-nofilter.png)
+* RDB(Aurora)、DynamoDB、DocumentDBへのアクセス、REST API、SQSの呼び出しのトレースにも対応    
+* 以前X-Ray SDK/X-Rayデーモンでの可視化を実現していたが、ADOTに移行したところ、現状は、トレースマップの可視化において、DynamoDB、SQS、S3のアイコンが正しく表示されず歯車のアイコンで表示されてしまうなどの問題がある。ADOTとの比較としてX-Ray SDKでの可視化の例も参考に示す。
+* RDB(Aurora)アクセスの可視化の例
+    * otelsqlの設定でSQL実行のみをトレースするようにフィルタしている。フィルタしなかった場合は[こちら](image/adot-aurora-nofilter.png)
 
-        ![ADOTの可視化の例](image/adot-aurora.png)
-        
-        * （参考）X-Ray SDKの場合のRDB(Aurora)アクセスの可視化
-        
-            ![X-Ray SDKの可視化の例](image/xraysdk-aurora.png)
+    ![ADOTの可視化の例](image/adot-aurora.png)
+    
+    * （参考）X-Ray SDKの場合のRDB(Aurora)アクセスの可視化
+    
+        ![X-Ray SDKの可視化の例](image/xraysdk-aurora.png)
 
-    * DynamoDBアクセスの可視化の例
-        
-        ![ADOTの可視化の例2](image/adot-dynamodb.png)
+* DynamoDBアクセスの可視化の例
+    
+    ![ADOTの可視化の例2](image/adot-dynamodb.png)
 
-        * （参考）X-Ray SDKの場合の可視化
+    * （参考）X-Ray SDKの場合の可視化
 
-            ![X-Ray SDKの可視化の例2](image/xraysdk-dynamodb.png)
+        ![X-Ray SDKの可視化の例2](image/xraysdk-dynamodb.png)
 
-    * DocumentDB（MongoDB）の呼び出しの可視化の例
-        * 「SQL」、「insert」として表示されるので一瞬RDBのトレースに見えてしまうが、参照の場合は「find」として表示されるため、DocumentDB（MongoDB）へのアクセスであることがわかる。
+* DocumentDB（MongoDB）の呼び出しの可視化の例
+    * 「SQL」、「insert」として表示されるので一瞬RDBのトレースに見えてしまうが、参照の場合は「find」として表示されるため、DocumentDB（MongoDB）へのアクセスであることがわかる。
 
-        ![ADOTの可視化の例3-1](image/adot-documentdb.png)
-        
-        ![ADOTの可視化の例3-2](image/adot-documentdb2.png)
-        
-        * X-Ray SDKの場合にはDocumentDB（MongoDB）の可視化に対応していなかった
+    ![ADOTの可視化の例3-1](image/adot-documentdb.png)
+    
+    ![ADOTの可視化の例3-2](image/adot-documentdb2.png)
+    
+    * X-Ray SDKの場合にはDocumentDB（MongoDB）の可視化に対応していなかった
 
-    * フロントエンドAPからバックエンドAPへのREST API呼び出しの可視化の例
+* フロントエンドAPからバックエンドAPへのREST API呼び出しの可視化の例
 
-        ![ADOTの可視化の例4](image/adot-bff.png)
+    ![ADOTの可視化の例4](image/adot-bff.png)
 
-        * （参考）X-Ray SDKの場合のREST API呼び出しの可視化
+    * （参考）X-Ray SDKの場合のREST API呼び出しの可視化
 
-            ![X-Ray SDKの可視化の例4](image/xraysdk-bff.png)
+        ![X-Ray SDKの可視化の例4](image/xraysdk-bff.png)
 
-    * フロントエンドAPから非同期バッチAPへのディレード処理依頼におけるSQS、S3等の呼び出しの可視化の例
-        
-        ![ADOTの可視化の例5-1](image/adot-sqs-delayed1.png)
+* フロントエンドAPから非同期バッチAPへのディレード処理依頼におけるSQS、S3等の呼び出しの可視化の例
+    
+    ![ADOTの可視化の例5-1](image/adot-sqs-delayed1.png)
 
-        ![ADOTの可視化の例5-2](image/adot-sqs-delayed2.png)        
+    ![ADOTの可視化の例5-2](image/adot-sqs-delayed2.png)        
 
-        ![ADOTの可視化の例5-3](image/adot-sqs-delayed3.png)
-        
-        * （参考）X-Ray SDKの場合の可視化
+    ![ADOTの可視化の例5-3](image/adot-sqs-delayed3.png)
+    
+    * （参考）X-Ray SDKの場合の可視化
 
-            ![X-Ray SDKの可視化の例5](image/xraysdk-sqs-delayed.png)
-       
+        ![X-Ray SDKの可視化の例5](image/xraysdk-sqs-delayed.png)
+    
 
 > [!NOTE]
 > AWS X-Ray 用の SDK と Daemon は2026年2月25日にメンテナンスモードに入り、2027年2月25日にサポート終了となるため、ADOT(AWS Distro for OpenTelemetry) への移行に対応した。
@@ -133,6 +134,8 @@
 >         * [Recommended Configurations for OpenTelemetry AWS Lambda Instrumentation with AWS X-Ray](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda/xrayconfig#section-readme)
 
 
+### RDS Proxy
+* 本サンプルAPでは、RDS Proxyを利用してAuroraへの接続を実現している。RDS Proxyは、RDS/Auroraへのコネクションプーリングや自動リトライ、フェイルオーバーの管理などを提供するマネージドサービスである。RDS Proxyを利用することで、Lambdaなどのサーバーレス環境からのRDS/Auroraへの接続の効率化や信頼性の向上が期待できる。
 * RDS Proxyの利用時の注意
     * ピン留め
         * SQLを記載するにあたり、従来はプリペアドステートメントを使用するのが一般的であるが、RDS Proxyを使用する場合には、[ピン留め(Pinning)](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-pinning.html)という現象が発生してしまう。その間、コネクションが切断されるまで占有されつづけてしまい再利用できず、大量のリクエストを同時に処理する場合にはコネクション枯渇し性能面に影響が出る恐れがある。
@@ -159,9 +162,9 @@
             * https://pages.awscloud.com/rs/112-TZM-766/images/EV_amazon-rds-aws-lambda-update_Jul28-2020_RDS_Proxy.pdf
 	            * pp.12
 
-## 事前準備
-* ローカル環境に、Go、AWS CLI、AWS SAM CLI、Docker環境が必要です。
-    * Goのバージョンは1.22.6を使用しています。
+## 0. 事前準備
+* ローカル環境に、Go、AWS CLI、AWS SAM CLI、Make、Docker等のインストールが必要です。
+    * Goのバージョンは1.26.2を使用しています。
 
 ## 1. IAMの作成
 ```sh
@@ -191,7 +194,7 @@ aws cloudformation create-stack --stack-name Demo-VPE-Stack --template-body file
 ```
 ## 5. NAT Gatewayの作成とプライベートサブネットのルートテーブル更新
 * VPC内Lambdaからインターネットに接続する場合に必要となる。
-* hello-worldのサンプルAPでは[https://checkip.amazonaws.com](https://checkip.amazonaws.com)へアクセスしに行くためのみに必要なので、もしhello-worldのサンプルAPの確認が不要な場合は、作成不要。
+* hello-worldのサンプルAPでは[https://checkip.amazonaws.com](https://checkip.amazonaws.com)へアクセスしに行くためにLambdaからのインターネット接続が必要だが、それ以外はインターネット接続を必要としない。もしhello-worldのサンプルAPの確認が不要な場合は、作成不要。
 
 ```sh
 aws cloudformation validate-template --template-body file://cfn-ngw.yaml
@@ -468,7 +471,11 @@ aws cloudformation create-stack --stack-name Demo-AppConfigRDSSMDeploy-Stack --t
 
 * DocumentDB用のSecretManagerの設定を初回デプロイする。
     * 同一のアプリケーション、環境に対してのデプロイは並列実行できないため、RDS用のSecretMaangerの設定のデプロイが完了後に実施すること
+        * 同時に実行してエラーになった場合、CloudTrailのイベントログにConflictExceptionのエラーが出る
+        * その場合は、エラーになったスタックを削除してから再度実行すること
+        
     * パラメータのSecretsManagerVersionのバージョンIDは、CLIまたはマネコンで確認してパラメータに設定する
+
 ```sh
 # シークレットのバージョンIDを確認
 aws secretsmanager list-secret-version-ids --secret-id Demo-DocDB-Secrets --query Versions[?contains(VersionStages,`AWSCURRENT`)].VersionId
@@ -484,6 +491,7 @@ aws cloudformation create-stack --stack-name Demo-AppConfigDocDBSMDeploy-Stack -
     * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
 
 * hello-worldのAPI実行例    
+    * LambdaからCheckIPへインターネット接続する必要があるので、hello-worldのAPIはNAT Gatewayを作成した後に確認すること
 ```sh
 curl https://5h5zxybd3c.execute-api.ap-northeast-1.amazonaws.com/Prod/hello
 
@@ -1293,23 +1301,23 @@ make doc_app
 | 機能 | 機能概要と実現方式 | 拡張実装 | 拡張実装の格納パッケージ |
 | ---- | ---- | ---- | ---- |
 | DI | ソフトウェアフレームワーク機能の各コンポーネントの依存関係の注入、インスタンス管理を実施する。 | ○ | com.example/appbase/pkg/component |
-| オンラインAP実行制御 | APIの要求受信、ビジネスロジック実行、応答返却まで一連の定型的な処理を実行を制御する共通機能を提供する。AWS Lambda Go API Proxyを利用して、Lambda SDKとginを統合し実現する。 | ○ | com.example/appbase/pkg/handler<br/>com.example/appbase/pkg/api |
-| 非同期AP実行制御 | SQSからの要求受信、ビジネスロジック実行、応答返却まで一連の定型的な処理を実行を制御する共通機能を提供する。Lambda SDKを利用して実現する。また、非同期実行依頼側の業務APでDynamoDBアクセスを伴う場合、DynamoDBトランザクション管理機能を用いてDB更新とメッセージ送達のデータ整合性を担保する。 | ○ | com.example/appbase/pkg/handler<br/>com.example/appbase/pkg/transaction |
+| オンラインAP実行制御 | APIの要求受信、ビジネスロジック実行、応答返却まで一連の定型的な処理を実行を制御する共通機能を提供する。AWS Lambda Go API Proxyを利用して、Lambda SDKとginを統合し実現する。 | ○ | com.example/appbase/pkg/handler<br>com.example/appbase/pkg/api |
+| 非同期AP実行制御 | SQSからの要求受信、ビジネスロジック実行、応答返却まで一連の定型的な処理を実行を制御する共通機能を提供する。Lambda SDKを利用して実現する。また、非同期実行依頼側の業務APでDynamoDBアクセスを伴う場合、DynamoDBトランザクション管理機能を用いてDB更新とメッセージ送達のデータ整合性を担保する。 | ○ | com.example/appbase/pkg/handler<br>com.example/appbase/pkg/transaction |
 | 二重実行防止（冪等性） | SQSの標準キューの場合には複数回同一メッセージが配信されるケースがある。また、FIFOキューでもLambdaのイベントソースマッピングの場合、EventBridgeをトリガとするLambdaやStepFunctionsでも同一イベントが重複して発生するため、いずれの場合にもLambdaが二重実行される恐れがあるため、DynamoDBのテーブルの条件付き更新を使って、PutItem時に、ConditionExpressionですでに同一のメッセージIDやイベントIDを主キーとするアイテムがないかチェックすることで、二重実行防止し冪等性を担保する機能を提供する。  | ○ | com.example/appbase/pkg/idempotency |
 | 入力チェック| APIのリクエストデータの入力チェックを実施する、ginのバインディング機能でgo-playground/validator/v10を使ったバリデーションを実現する。バリデーションエラーメッセージの日本語化に対応する。 | ○ | com.example/appbase/pkg/validator |
 | エラー（例外） | エラーコード（メッセージID）やメッセージを管理可能な共通的な入力エラー、ビジネスエラー、システムエラー用のGoのErrorオブジェクトを提供する。cockroachdb/errorsによりスタックトレースがログ出力できるようにする。 | ○ | com.example/appbase/pkg/errors |
- 集約例外ハンドリング | オンラインAP制御機能、トランザクション管理機能と連携し、エラー（例外）発生時、エラーログの出力、DBのロールバック、エラー画面やエラー電文の返却といった共通的なエラーハンドリングを実施する。 | ○ | com.example/appbase/pkg/handler<br/>com.example/appbase/pkg/transaction |
+ 集約例外ハンドリング | オンラインAP制御機能、トランザクション管理機能と連携し、エラー（例外）発生時、エラーログの出力、DBのロールバック、エラー画面やエラー電文の返却といった共通的なエラーハンドリングを実施する。 | ○ | com.example/appbase/pkg/handler<br>com.example/appbase/pkg/transaction |
 | RDBアクセス | go標準のdatabase/sqlパッケージを利用しRDBへアクセスする。DB接続等の共通処理を個別に実装しなくてもよい仕組みとする。 | ○ | com.example/appbase/pkg/rdb |
 | RDBトランザクション管理 | サービス（ビジネスロジック）の実行前後にRDBのトランザクション開始・終了を自動で実施する機能を提供する。 | ○ | com.example/appbase/pkg/rdb |
 | DynamoDBアクセス | AWS SDKを利用しDynamoDBへアクセスする汎化したAPIを提供する。 | ○ | com.example/appbase/pkg/dynamodb |
-| DynamoDBトランザクション管理 | サービス（ビジネスロジック）の実行前後にDynamoDBのトランザクション開始・終了を自動で実施する機能を提供する。 | ○ | com.example/appbase/pkg/transaction<br/>com.example/appbase/pkg/domain |
+| DynamoDBトランザクション管理 | サービス（ビジネスロジック）の実行前後にDynamoDBのトランザクション開始・終了を自動で実施する機能を提供する。 | ○ | com.example/appbase/pkg/transaction<br>com.example/appbase/pkg/domain |
 | DocumentDB（Mongo）アクセス | MongoDB Goドライバー(go.mongodb.org/mongo-driver/mongo)を利用しDBへアクセスする。DB接続等の共通処理を個別に実装しなくてもよい仕組みとする。  | ○ | com.example/appbase/pkg/documentdb |
-| 非同期実行依頼 | AWS SDKを利用してSQSへ非同期処理実行依頼メッセージを送信する汎化したAPIを提供する。また、業務APでDynamoDBアクセスを伴う場合、DynamoDBトランザクション管理機能を用いてDB更新とメッセージ送達のデータ整合性を担保する。 | ○ | com.example/appbase/pkg/async<br/>com.example/appbase/pkg/transaction |
+| 非同期実行依頼 | AWS SDKを利用してSQSへ非同期処理実行依頼メッセージを送信する汎化したAPIを提供する。また、業務APでDynamoDBアクセスを伴う場合、DynamoDBトランザクション管理機能を用いてDB更新とメッセージ送達のデータ整合性を担保する。 | ○ | com.example/appbase/pkg/async<br>com.example/appbase/pkg/transaction |
 | オブジェクトストレージアクセス| AWS SDKを利用し、S3にアクセスする汎化したAPIを提供する。 | ○ | com.example/appbase/pkg/objectstorage |
 | HTTPクライアント| net/http、ctxhttp等を利用しREST APIの呼び出しを汎化したAPIを提供する。 | ○ | com.example/appbase/pkg/httpclient |
-| 分散トレーシング（X-Ray） | ADOTおよびAWS X-Rayを利用して、サービス間の分散トレーシング・可視化を実現する。実現には、AWS SAMのtemplate.ymlで設定でAPI GatewayやLambdaのトレースを有効化する。またAWS SDKが提供するメソッドに、Lambdaのハンドラメソッドの引数のContextを引き渡すようにする。Contextは業務AP側で引き継いでメソッドの引数に引き渡さなくてもソフトウェアフレームワーク側で取得できるようにグローバル変数で管理する。 | ○ | com.example/appbase/pkg/apcontext |
+| 分散トレーシング（X-Ray） | ADOTおよびAWS X-Rayを利用して、サービス間の分散トレーシング・可視化を実現する。実現には、AWS SAMのtemplate.ymlで設定でAPI GatewayやLambdaのトレースの有効化、Lambdaのmain関数やAWSリソースへのアクセス機能でのOpenTelemrtyのSDKによる手動計装を実装する。またAWS SDKが提供するメソッドに、Lambdaのハンドラメソッドの引数のContextを引き渡すようにする。Contextは業務AP側で引き継いでメソッドの引数に引き渡さなくてもソフトウェアフレームワーク側で取得できるようにグローバル変数で管理する。 | ○ | com.example/appbase/pkg/otel<br>com.example/appbase/pkg/apcontext |
 | ロギング | zap(go.uber.org/zap)の機能を利用し、プロファイル（環境区分）によって動作環境に応じたログレベル、出力形式（プレーンテキストやJSON形式）等を切替可能とする。また、メッセージ管理機能と連携し、メッセージIDをもとにログ出力可能な汎用的なAPIを提供する。 | ○ | com.example/appbase/pkg/logging |
-| プロパティ管理 | APから環境依存のパラメータを切り出し、プロファイル（環境区分）によって動作環境に応じたパラメータ値に置き換え可能とする。AWS AppConfigおよびAppConfig Agent Lambdaエクステンションを利用してAPの再デプロイせずとも設定変更を反映できる。また、変更が少ない静的な設定値やローカルでのAP実行用に、spf13/viperの機能を利用して、OS環境変数、yamlによる設定ファイルを読み込み反映する。なお、AppConfigに同等のプロパティがある場合には優先的に反映する。 | ○ | com.example/appbase/pkg/env<br/>com.example/appbase/pkg/config |
+| プロパティ管理 | APから環境依存のパラメータを切り出し、プロファイル（環境区分）によって動作環境に応じたパラメータ値に置き換え可能とする。AWS AppConfigおよびAppConfig Agent Lambdaエクステンションを利用してAPの再デプロイせずとも設定変更を反映できる。また、変更が少ない静的な設定値やローカルでのAP実行用に、spf13/viperの機能を利用して、OS環境変数、yamlによる設定ファイルを読み込み反映する。なお、AppConfigに同等のプロパティがある場合には優先的に反映する。 | ○ | com.example/appbase/pkg/env<br>com.example/appbase/pkg/config |
 | メッセージ管理 | go標準のembededで、ログ等に出力するメッセージを設定ファイルで一元管理する。 | ○ | com.example/appbase/pkg/message |
 | ID生成 | google/uuidを使用したUUID等を生成する。 | ○ | com.example/appbase/pkg/id |
 | システム日時取得 | go標準のtimeパッケージを使用してシステムの現在日時を取得する。テスト用にプロパティから取得した固定の日時を返却するように設定切り替え可能とする。 | ○ | com.example/appbase/pkg/date |
