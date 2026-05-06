@@ -182,9 +182,9 @@ go get github.com/XSAM/otelsql
                 * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-9ed197f55c53ff9eabd8328a275330896a4aa033bb40a5fe75ce3c703e56261a
 
 ### 4. 懸念事項
-1. OpenTelemetry SDK関連ライブラリをgo getしようとしても、cockroachdb/errorsが依存する
-    * google.golang.org/genprotoのライブラリが競合してしまい（おそらくOpenTelemetryと、cockroachdb/errorsが参照しているgenprotoのバージョンが異なるのか、genprotoが旧バージョンと新バージョンで分割形態が変わったため競合してしまう）、go getに失敗してしまい、モジュール追加ができない問題が発生した。
-    * 試行錯誤した結果、回避策として、go.modで、google.golang.org/genprotoの特定のバージョンをexcludeしたのですが、これが、いいやり方かはわからない。最終的には、cockroachdb/errorsのバージョンアップを待つまでの暫定的な回避策。
+1. OpenTelemetry SDK関連ライブラリをgo getしようとしても、cockroachdb/errorsが依存するgoogle.golang.org/genprotoのライブラリが競合してしまい、go getに失敗してしまう問題が発生
+    * おそらくOpenTelemetryと、cockroachdb/errorsが参照しているgenprotoのバージョンが異なるのか、genprotoが旧バージョンと新バージョンで分割形態が変わったため競合してしまう、go getに失敗してしまい、モジュール追加ができない問題が発生した。
+    * 試行錯誤した結果、回避策として、go.modで、google.golang.org/genprotoの特定のバージョンをexcludeしたが、これが、一番いいやり方かはわからない。最終的には、cockroachdb/errorsのバージョンアップを待つまでの暫定的な回避策としている。
         * https://github.com/mysd33/sample-lambda-go/blob/adot/appbase/go.mod#L6
 1. go言語＝OS専用ランタイム（カスタムランタイム：provided.al2023）が、最新のADOTの推奨実装方法に対応しておらず、レガシーアプローチをとるしか無さそう
     * [AWS Distro for OpenTelemetry Lambda](https://aws-otel.github.io/docs/getting-started/lambda)に記載された最新の最適化されたアプローチは、ADOT Collectorの[Lambdaレイヤーのサポートランタイム](https://aws-otel.github.io/docs/getting-started/lambda#supported-runtimes)に、OS専用ランタイム(OS-only Runtime provided.al2023)がないため、Goの場合はまだ以下のレガシーアプローチをとる必要がある。
