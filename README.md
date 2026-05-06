@@ -111,27 +111,7 @@
 
 > [!NOTE]
 > AWS X-Ray 用の SDK と Daemon は2026年2月25日にメンテナンスモードに入り、2027年2月25日にサポート終了となるため、ADOT(AWS Distro for OpenTelemetry) への移行に対応した。
-> * 移行時の参考情報
->     * Go関連
->         * [AWS X-Ray: Migrate to OpenTelemetry Go](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html)   
->         * [AWS X-Ray: Migrate to OpenTelemetry Go - AWS SDK for Go v2 instrumentation](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html#aws-sdk-instrumentation)  
->             * DynamoDB、S3、SQS等、AWS SDK for Goを利用したAWSサービスへのアクセスのトレースのための計装方法
->         * [AWS X-Ray: Migrate to OpenTelemetry Go - Instrumenting outgoing HTTP calls](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html#http-client-instrumentation)  
->             * [otelhttp - NewTransport](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp#NewTransport)というHTTP通信のOpenTelemetry対応のためのGoのライブラリを利用した、HTTPクライアントのトレースのための計装方法             
->         * [otelsql](https://github.com/XSAM/otelsql)
->             * SQLのOpenTelemetry対応のためのGoのライブラリ。現状、GoのOpenTelemetryの公式リポジトリにはSQL用のライブラリがないため、サードパーティ製のライブラリを利用している。
->         * [otelmongo](go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/v2/mongo/otelmongo)
->             * DocumentDB(MongoDB)のOpenTelemetry対応のためのGoのライブラリ。[MongoDBのGoドライバー](https://github.com/mongodb/mongo-go-driver)の[V2移行](https://github.com/mongodb/mongo-go-driver/blob/master/docs/migration-2.0.md)も必要となる。
->         * [OpenTelemetry Go Documentation](https://opentelemetry.io/ja/docs/languages/go/)
->     * Lambda/Go関連
->         * [AWS X-Ray: Migrate to OpenTelemetry Go - Lambda manual instrumentation](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html#lambda-instrumentation)   
->             * Lambdaのmain関数で、lambda.Start関数を呼び出す前に、OpenTelemetryの計装コードを手動で埋め込む方法が記載されている。
->         * [AWS Distro for OpenTelemetry Lambda](https://aws-otel.github.io/docs/getting-started/lambda)
->             * ただし、上のリンクに記載された最新の最適化されたアプローチは、ADOT CollectorのLambdaレイヤーの[サポートランタイム](https://aws-otel.github.io/docs/getting-started/lambda#supported-runtimes)にOS専用ランタイム(OS-only Runtime provided.al2023)がないため、Goの場合はまだ以下のレガシーアプローチをとる必要がありそう。
->         * [AWS Distro for OpenTelemetry Lambda Support For Go(the legacy approach)](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)
->             * Lambda/Goだと、このサイトに従いレガシーアプローチにより提供されるLambdaLayerを使用して移行した。
->         * [OpenTelemetry AWS Lambda Instrumentation for Golang](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda#section-readme)
->         * [Recommended Configurations for OpenTelemetry AWS Lambda Instrumentation with AWS X-Ray](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda/xrayconfig#section-readme)
+> * [移行時の参考情報](ADOT-migration.md)をまとめているので、移行の際の参考にするとよい。
 
 
 ### RDS Proxy
@@ -670,8 +650,14 @@ make delete
 * その他のリソース削除
 
 ```sh
-aws cloudformation delete-stack --stack-name Demo-AppConfig-Stack
 aws cloudformation delete-stack --stack-name Demo-Bastion-Stack
+
+# AppConfigのDeletion Protectionを無効化
+aws appconfig update-account-settings --deletion-protection Enabled=false
+aws cloudformation delete-stack --stack-name Demo-AppConfig-Stack
+# 無効化設定をもとに戻す場合にはAppConfigのDeletion Protectionを再度有効化する
+# aws appconfig update-account-settings --deletion-protection Enabled=true
+
 #aws s3 rm s3://(バケット名) --recursive
 aws s3 rm s3://mysd33bucket123demo --recursive
 aws cloudformation delete-stack --stack-name Demo-S3-Stack
