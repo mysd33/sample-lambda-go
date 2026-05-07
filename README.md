@@ -78,6 +78,7 @@
         ![X-Ray SDKの可視化の例](image/xraysdk-aurora.png)
 
 * DynamoDBアクセスの可視化の例
+    * X-Ray SDKのときと違い、DynamoDBのアイコンが汎用DBのアイコンになってしまう。
     
     ![ADOTの可視化の例2](image/adot-dynamodb.png)
 
@@ -103,6 +104,7 @@
         ![X-Ray SDKの可視化の例4](image/xraysdk-bff.png)
 
 * フロントエンドAPから非同期バッチAPへのディレード処理依頼におけるSQS、S3等の呼び出しの可視化の例
+    * X-Ray SDKのときと違い、SQS、S3のアイコンが歯車のアイコンになってしまったり、ノードがばらばらになってしまう問題がある。
     
     ![ADOTの可視化の例5-1](image/adot-sqs-delayed1.png)
 
