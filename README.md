@@ -615,7 +615,7 @@ aws cloudformation validate-template --template-body file://cfn-appconfig-hosted
 aws cloudformation update-stack --stack-name Demo-AppConfigHostedDeploy-Stack --template-body file://cfn-appconfig-hosted-deploy.yaml
 ```
 
-![AppConfigの設定再デプロイ](image/appconfig.png)
+![AppConfigの設定再デプロイ](image/appconfig-deploy.png)
 
 * Userサービスでユーザ情報を登録するPOSTのAPIを呼び出したときの、設定値を出力するCloudWatchのログの変化を確認するとよい。
 
