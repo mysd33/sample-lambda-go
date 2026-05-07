@@ -101,7 +101,7 @@ go get github.com/XSAM/otelsql
 * いずれのケースの変更も難しくはない。
 
 * AWS SDKでの呼び出し
-    * 以前のX-Ray SDKでのコードを削除して、「otelaws.AppendMiddlewares(&cfg.APIOptions)」を指定するようにする。
+    * 以前のX-Ray SDKでのコードを削除して、`otelaws.AppendMiddlewares(&cfg.APIOptions)`を指定するようにする。
         * DynamoDB
             * https://github.com/mysd33/sample-lambda-go/blob/adot/appbase/pkg/dynamodb/dynamodb.go#L46-L48
             * 差分
@@ -116,19 +116,18 @@ go get github.com/XSAM/otelsql
                 * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-793191c234ec6f6473dd27fbe2ef1b1463263be8faaf88ea133bcc3fe1dc6312
 
 * HTTP通信
-    * 以前GetやPostメソッドにあった、X-Ray SDKでのコードを削除して
-    * http.Clientを作成するときに、「Transport: otelhttp.NewTransport(http.DefaultTransport)」を指定するようにする。
+    * 以前GetやPostメソッドにあった、X-Ray SDKでのコードを削除して、http.Clientを作成するときに、`Transport: otelhttp.NewTransport(http.DefaultTransport)`を指定するようにする。
     * https://github.com/mysd33/sample-lambda-go/blob/adot/appbase/pkg/httpclient/httpclient.go#L80-L84
     * 差分
         * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-38608920822691ca7965fff3ef70d8afcbbf94fbccb873f8da28b2a58bf299f8
 * DocumentDB（MongoDB）
-    * mongo.Connectするときのオプションとして、SetMonitor(otelmongo.NewMonitor())を指定するようにする。
+    * `mongo.Connect`するときのオプションとして、`SetMonitor(otelmongo.NewMonitor())`を指定するようにする。
     * https://github.com/mysd33/sample-lambda-go/blob/adot/appbase/pkg/documentdb/documentdb.go#L116-L119
     * 差分
         * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-b0f4ab11e9a0726587072ca2ece0b13472c9bcadd1d893466aa308fcbab2c398
 　
 * Aurora（RDB SQL）    
-    * 以前のX-RaySDKを使ってコネクション作成していたコードを削除して、otelsql.Openでコネクションを作成するようにする。
+    * 以前のX-RaySDKを使ってコネクション作成していたコードを削除して、`otelsql.Open`でコネクションを作成するようにする。
     * https://github.com/mysd33/sample-lambda-go/blob/adot/appbase/pkg/rdb/transaction_manager.go#L130-L142
     * 差分
         * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-c3bba235c6a75de2765be69a94951f491730136812a47392248217151cf4dd6a        
