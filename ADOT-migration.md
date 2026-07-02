@@ -4,9 +4,10 @@
 * X-Rayの実際のトレースの表示については、[README](README.md#adotx-rayによるトレース情報の可視化)を参照    
 
 > [!NOTE]
-> [ADOTのレガシーアプローチでの旧移行手順](ADOT-migration-old.md)を行っていたが、新しい推奨手順に乗り換えてみた。
-> ここでは、その差分を追記してまとめている。
->
+> [ADOTのレガシーアプローチでの旧移行手順](ADOT-migration-old.md)を行っていたが、新しい推奨手順に更新した。
+> ここでは、X-Ray SDKから新手順の差分を追記してまとめている。
+> 旧手順と新手順の差分は、以下を見るとよい。
+> [https://github.com/mysd33/sample-lambda-go/compare/adot...adot-new](https://github.com/mysd33/sample-lambda-go/compare/adot...adot-new)
 
 ## 1. Before/After
 * タグを切って差分で確認できるようにしている
@@ -35,8 +36,9 @@
     * [AWS X-Ray: Migrate to OpenTelemetry Go - Lambda manual instrumentation](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html#lambda-instrumentation)   
         * Lambdaのmain関数で、lambda.Start関数を呼び出す前に、OpenTelemetryの計装コードを手動で埋め込む方法が記載されている。
     * [AWS Distro for OpenTelemetry Lambda](https://aws-otel.github.io/docs/getting-started/lambda)
-    * [AWS Distro for OpenTelemetry Lambda Support For Go(the legacy approach)](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)
-        * Lambda/Goだと、上記の推奨手順のPython Lambdaのドキュメントを参照するように指示があった。        
+        * OS占有ランタイム(provided.al2023)のGoの場合は、PythonのLambdaLayerを使用する
+        * [AWS Distro for OpenTelemetry Lambda Support For Go(the legacy approach)](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)
+            * Lambda/Goだとレガシー手順の記載に、上記の推奨手順のPython Lambdaのドキュメントを参照するように指示がある。
     * [OpenTelemetry AWS Lambda Instrumentation for Golang](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda#section-readme)
     * [Recommended Configurations for OpenTelemetry AWS Lambda Instrumentation with AWS X-Ray](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda/xrayconfig#section-readme)
 
@@ -159,38 +161,45 @@ go get github.com/XSAM/otelsql
     * ある種、[ECSでADOT Collectorをサイドカーコンテナにする](https://github.com/mysd33/ecs-on-fargate-adot-cfn-demo)のと同じ。
 
 * template.yamlの例
-    * https://github.com/mysd33/sample-lambda-go/blob/adot/template.yaml#L59
-    * https://github.com/mysd33/sample-lambda-go/blob/adot/template.yaml#L116
-    * 旧手順との差分
-        * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-1363ef5ce8886100842332c97163aad7934237e1fe49b5d40422b45fdc30f38e
+    * ~~旧手順~~
+        * ~~https://github.com/mysd33/sample-lambda-go/blob/adot/template.yaml#L59~~
+        * ~~https://github.com/mysd33/sample-lambda-go/blob/adot/template.yaml#L116~~
+        * ~~差分~~
+            * ~~https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-1363ef5ce8886100842332c97163aad7934237e1fe49b5d40422b45fdc30f38e~~
 
-  * 新しい推奨手順での差分
-        * TBD: 記載箇所
+    * [推奨手順](https://aws-otel.github.io/docs/getting-started/lambda)
+        * [手動でのLambdaLayer追加手順](https://aws-otel.github.io/docs/getting-started/lambda#manually-add-aws-distro-for-opentelemetry-adot-lambda-layers)に従い、LambdaLayerを追加するようにtemplate.yamlを修正する。
+        * LambdaLayerを推奨手順にある[PythonのLambdaLayer](https://aws-otel.github.io/docs/getting-started/lambda#adot-lambda-layer-arns)に修正
+            * 旧手順では、GoのLambdaLayerを利用していたが、推奨手順ではGoのものはなく、PythonのLambdaLayerを使用するように定義
+                * https://github.com/mysd33/sample-lambda-go/blob/adot-new/template.yaml#L60
+                * https://github.com/mysd33/sample-lambda-go/blob/adot-new/template.yaml#L119
 
-        * LambdaLayerを推奨手順にあるPythonのものに修正
-            * 旧手順では、GoのLambdaLayerを利用していたが、推奨手順ではGoのものはなく、PythonのLambdaLayerを使用
-
-            ```
-            arn:aws:lambda:ap-northeast-1:615299751070:layer:AWSOpenTelemetryDistroPython:25
-            ```
+                ```
+                arn:aws:lambda:ap-northeast-1:615299751070:layer:AWSOpenTelemetryDistroPython:25
+                ```
 
         * 環境変数`AWS_LAMBDA_EXEC_WRAPPER`の設定が必要
+            * https://github.com/mysd33/sample-lambda-go/blob/adot-new/template.yaml#L107
+
             ```
             AWS_LAMBDA_EXEC_WRAPPER: /opt/otel-instrument
             ```
-
+        * 差分
+            * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot-new#diff-1363ef5ce8886100842332c97163aad7934237e1fe49b5d40422b45fdc30f38e
 
 * Lambda実行ロールにIAMポリシーの追加
-    * 新しい推奨手順での差分
+    * [推奨手順](https://aws-otel.github.io/docs/getting-started/lambda)
         * ADOT CollectorのLambda Layerを利用する場合、Lambda実行ロールにIAMポリシー「CloudWatchLambdaApplicationSignalsExecutionRolePolicy」を追加する必要がある。
             * 旧手順までは、X-RayのIAMポリシー「AWSXrayWriteOnlyAccess」であった
-        * TBD: 記載箇所
+        * https://github.com/mysd33/sample-lambda-go/blob/adot-new/cfn/cfn-iam.yaml#L132
+    * 差分
+        * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot-new#diff-8666be21e7aba1cd1765d4c5d6f11be352b2d1cf90e8e2677533143ecd68d1b1
         
 * X-RayのVPCEndpointの追加
     * VPC内LambdaであってもX-RaySDK/DaemonだとVPC Endpointは不要だったが、ADOTにするとX-RayのVPC Endpointが必要になる。
     * https://github.com/mysd33/sample-lambda-go/blob/adot/cfn/cfn-vpe.yaml#L103
     * 差分
-        * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-9ed197f55c53ff9eabd8328a275330896a4aa033bb40a5fe75ce3c703e56261a
+        * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot-new#diff-9ed197f55c53ff9eabd8328a275330896a4aa033bb40a5fe75ce3c703e56261a
 
 * LambdaLayerの有効・無効の切り替え
     * sam local等のローカル実行の場合に、ADOTのLamdaLayerを定義してしまうと、ADOTのCollectorがX-Rayへアクセスを試みてしまい探してもないため、Lambdaがタイムアウトエラーになってしまう。
@@ -198,13 +207,13 @@ go get github.com/XSAM/otelsql
         * sampconfig.tomlの例
             * https://github.com/mysd33/sample-lambda-go/blob/adot/samconfig.toml#L47
             * 差分
-                * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-9ed197f55c53ff9eabd8328a275330896a4aa033bb40a5fe75ce3c703e56261a
+                * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot-new#diff-9ed197f55c53ff9eabd8328a275330896a4aa033bb40a5fe75ce3c703e56261a
 
     * Makefileにも、sam local実行するときのオプションにも付与してあげると、楽になる。
         * Makefileの例
             * https://github.com/mysd33/sample-lambda-go/blob/adot/Makefile#L69C47-L69C66
             * 差分
-                * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-9ed197f55c53ff9eabd8328a275330896a4aa033bb40a5fe75ce3c703e56261a
+                * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot-new#diff-76ed074a9305c04054cdebb9e9aad2d818052b07091de1f20cad0bbac34ffb52
 
 ### 4. 懸念事項
 1. OpenTelemetry SDK関連ライブラリをgo getしようとしても、cockroachdb/errorsが依存するgoogle.golang.org/genprotoのライブラリが競合してしまい、go getに失敗してしまう問題が発生
