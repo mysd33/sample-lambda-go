@@ -32,13 +32,13 @@ Parameters:
   AuroraServerlessMinCapacity: 
     Description: Aurora Serverless V2 ScalingConfiguration MinCapacity
     Type: Number
-    Default: 0.5    
+#    Default: 0.5    
     # Aurora Serverless v2 auto-pause feature 
-#    Default: 0
-#  AuroraServerlessAutoPause:
-#    Description: Aurora Serverless V2 AutoPause
-#    Type: Number
-#    Default: 300
+    Default: 0
+  AuroraServerlessAutoPause:
+    Description: Aurora Serverless V2 AutoPause
+    Type: Number
+    Default: 300
 
 Resources:
 # RDS Aurora
@@ -82,7 +82,7 @@ Resources:
       ServerlessV2ScalingConfiguration: 
         MaxCapacity: !Ref AuroraServerlessMaxCapacity
         MinCapacity: !Ref AuroraServerlessMinCapacity
-#        SecondsUntilAutoPause: !Ref AuroraServerlessAutoPause
+        SecondsUntilAutoPause: !Ref AuroraServerlessAutoPause
     #TODO: Snapshot
     UpdateReplacePolicy: Delete
     DeletionPolicy: Delete
