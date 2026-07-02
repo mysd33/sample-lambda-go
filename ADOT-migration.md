@@ -12,8 +12,8 @@
 ## 1. Before/After
 * タグを切って差分で確認できるようにしている
     * [Before（X-Ray SDK/Daemon）](https://github.com/mysd33/sample-lambda-go/releases/tag/xray-sdk)
-    * [After（ADOT）](https://github.com/mysd33/sample-lambda-go/releases/tag/adot)
-    * [差分比較](https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot)
+    * [After（ADOT）](https://github.com/mysd33/sample-lambda-go/releases/tag/adot-new)
+    * [差分比較](https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot-new)
 
 ## 2. 移行時の参考情報
 
@@ -52,11 +52,11 @@
     * ソフトウェアフレームワーク(appbase)の例
         * `go get`で追加して、コード修正後、`go mod tidy`
         * go.modの例
-            * https://github.com/mysd33/sample-lambda-go/blob/adot/appbase/go.mod
+            * https://github.com/mysd33/sample-lambda-go/blob/adot-new/appbase/go.mod
     * AP(app)の例
         * 基本、ソフトウェアフレームワーク側に隠蔽されるので、go mod tidyするとindirectで参照する形になる
         * go.modの例
-            * https://github.com/mysd33/sample-lambda-go/blob/adot/app/go.mod
+            * https://github.com/mysd33/sample-lambda-go/blob/adot-new/app/go.mod
 　
 * Go関連（OpenTelemetry SDK）
 
@@ -109,32 +109,32 @@ go get github.com/XSAM/otelsql
 * AWS SDKでの呼び出し
     * 以前のX-Ray SDKでのコードを削除して、`otelaws.AppendMiddlewares(&cfg.APIOptions)`を指定するようにする。
         * DynamoDB
-            * https://github.com/mysd33/sample-lambda-go/blob/adot/appbase/pkg/dynamodb/dynamodb.go#L46-L48
+            * https://github.com/mysd33/sample-lambda-go/blob/adot-new/appbase/pkg/dynamodb/dynamodb.go#L46-L48
             * 差分
                 * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-b11d1783a1b4aa01e3c160f168dacd13e787fd0fcecac3c6e15d6005e476e4e7
         * S3
-            * https://github.com/mysd33/sample-lambda-go/blob/adot/appbase/pkg/objectstorage/objectstorage.go#L213-L215
+            * https://github.com/mysd33/sample-lambda-go/blob/adot-new/appbase/pkg/objectstorage/objectstorage.go#L213-L215
             * 差分
                 * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-5d832e78d288943c3710446b4d71c5cd3442cee5ac81c6f7be7b57ffd1c25100
         * SQS
-            * https://github.com/mysd33/sample-lambda-go/blob/adot/appbase/pkg/async/async.go#L73-L75
+            * https://github.com/mysd33/sample-lambda-go/blob/adot-new/appbase/pkg/async/async.go#L73-L75
             * 差分
                 * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-793191c234ec6f6473dd27fbe2ef1b1463263be8faaf88ea133bcc3fe1dc6312
 
 * HTTP通信
     * 以前GetやPostメソッドにあった、X-Ray SDKでのコードを削除して、http.Clientを作成するときに、`Transport: otelhttp.NewTransport(http.DefaultTransport)`を指定するようにする。
-    * https://github.com/mysd33/sample-lambda-go/blob/adot/appbase/pkg/httpclient/httpclient.go#L80-L84
+    * https://github.com/mysd33/sample-lambda-go/blob/adot-new/appbase/pkg/httpclient/httpclient.go#L80-L84
     * 差分
         * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-38608920822691ca7965fff3ef70d8afcbbf94fbccb873f8da28b2a58bf299f8
 * DocumentDB（MongoDB）
     * `mongo.Connect`するときのオプションとして、`SetMonitor(otelmongo.NewMonitor())`を指定するようにする。
-    * https://github.com/mysd33/sample-lambda-go/blob/adot/appbase/pkg/documentdb/documentdb.go#L116-L119
+    * https://github.com/mysd33/sample-lambda-go/blob/adot-new/appbase/pkg/documentdb/documentdb.go#L116-L119
     * 差分
         * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-b0f4ab11e9a0726587072ca2ece0b13472c9bcadd1d893466aa308fcbab2c398
 　
 * Aurora（RDB SQL）    
     * 以前のX-RaySDKを使ってコネクション作成していたコードを削除して、`otelsql.Open`でコネクションを作成するようにする。
-    * https://github.com/mysd33/sample-lambda-go/blob/adot/appbase/pkg/rdb/transaction_manager.go#L130-L142
+    * https://github.com/mysd33/sample-lambda-go/blob/adot-new/appbase/pkg/rdb/transaction_manager.go#L130-L142
     * 差分
         * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-c3bba235c6a75de2765be69a94951f491730136812a47392248217151cf4dd6a        
 
@@ -144,15 +144,15 @@ go get github.com/XSAM/otelsql
 * なお、注意点として、sam local等のローカル実行の場合は、ADOTのコードを呼び出すとADOTのCollectorがX-Rayをずっと探しに行こうとしてもアクセスできないことでLambdaがタイムアウトエラーになってしまうので、環境変数`ENV`を見てローカル実行のときには、ADOTのコードを呼ばないように通常のlambda.Startに切り替えている。
     * 後述のtemplate.yaml側のLambdaLayerの有効・無効の切り替えも合わせて実施　
     * ソフトウェアフレームワーク(appbase/pkg/otelパッケージ)
-        * https://github.com/mysd33/sample-lambda-go/blob/adot/appbase/pkg/otel/otel_lambda.go#L26
+        * https://github.com/mysd33/sample-lambda-go/blob/adot-new/appbase/pkg/otel/otel_lambda.go#L26
     * ソフトウェアフレームワーク化により、業務AP側のmain関数は従来のlambda.Start関数をotel.StartLambda関数に変更すれば済むので、修正影響が極小化されている。
         * 業務AP（API Gatewayトリガ）:main関数 
-            * https://github.com/mysd33/sample-lambda-go/blob/adot/app/cmd/todo/main.go#L40
+            * https://github.com/mysd33/sample-lambda-go/blob/adot-new/app/cmd/todo/main.go#L40
             * 差分
                 * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-8c4d1aedce9da260399b20accca5f3904b392df44e3c8c55cbc51e47ff5a38fb
         * 業務AP（SQSトリガ）:main関数
             * API Gatewayトリガと全く同じ修正
-            * https://github.com/mysd33/sample-lambda-go/blob/adot/app/cmd/todo-async/main.go#L32
+            * https://github.com/mysd33/sample-lambda-go/blob/adot-new/app/cmd/todo-async/main.go#L32
             * 差分
                 * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-c8c9de4c18a5d7d14cae6670c4bf2cbde7eb60394b0259746972a85560f8d5df
 
@@ -197,21 +197,21 @@ go get github.com/XSAM/otelsql
         
 * X-RayのVPCEndpointの追加
     * VPC内LambdaであってもX-RaySDK/DaemonだとVPC Endpointは不要だったが、ADOTにするとX-RayのVPC Endpointが必要になる。
-    * https://github.com/mysd33/sample-lambda-go/blob/adot/cfn/cfn-vpe.yaml#L103
+    * https://github.com/mysd33/sample-lambda-go/blob/adot-new/cfn/cfn-vpe.yaml#L103
     * 差分
         * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot-new#diff-9ed197f55c53ff9eabd8328a275330896a4aa033bb40a5fe75ce3c703e56261a
 
 * LambdaLayerの有効・無効の切り替え
     * sam local等のローカル実行の場合に、ADOTのLamdaLayerを定義してしまうと、ADOTのCollectorがX-Rayへアクセスを試みてしまい探してもないため、Lambdaがタイムアウトエラーになってしまう。
     * samconfig.tomlの仕組みと組み合わせて、sam localするときに `--config-env local`オプションをつけて実行すると、template.yamlのパラメータ「`LambdaLayersEEnabled`」が「`false`」になるようにして、この場合は、LambdaLayerが有効化されないようにしている。    
-        * sampconfig.tomlの例
-            * https://github.com/mysd33/sample-lambda-go/blob/adot/samconfig.toml#L47
+        * samconfig.tomlの例
+            * https://github.com/mysd33/sample-lambda-go/blob/adot-new/samconfig.toml#L47
             * 差分
-                * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot-new#diff-9ed197f55c53ff9eabd8328a275330896a4aa033bb40a5fe75ce3c703e56261a
+                * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot-new#diff-eeb7eaf77ca8ad1dfaf438d0e504ca99dca36448af1078b3881b67fb019853c9
 
     * Makefileにも、sam local実行するときのオプションにも付与してあげると、楽になる。
         * Makefileの例
-            * https://github.com/mysd33/sample-lambda-go/blob/adot/Makefile#L69C47-L69C66
+            * https://github.com/mysd33/sample-lambda-go/blob/adot-new/Makefile#L69C47-L69C66
             * 差分
                 * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot-new#diff-76ed074a9305c04054cdebb9e9aad2d818052b07091de1f20cad0bbac34ffb52
 
@@ -219,7 +219,7 @@ go get github.com/XSAM/otelsql
 1. OpenTelemetry SDK関連ライブラリをgo getしようとしても、cockroachdb/errorsが依存するgoogle.golang.org/genprotoのライブラリが競合してしまい、go getに失敗してしまう問題が発生
     * おそらくOpenTelemetryと、cockroachdb/errorsが参照しているgenprotoのバージョンが異なるのか、genprotoが旧バージョンと新バージョンで分割形態が変わったため競合してしまう、go getに失敗してしまい、モジュール追加ができない問題が発生した。
     * 試行錯誤した結果、回避策として、go.modで、google.golang.org/genprotoの特定のバージョンをexcludeしたが、これが、一番いいやり方かはわからない。最終的には、cockroachdb/errorsのバージョンアップを待つまでの暫定的な回避策としている。
-        * https://github.com/mysd33/sample-lambda-go/blob/adot/appbase/go.mod#L6
+        * https://github.com/mysd33/sample-lambda-go/blob/adot-new/appbase/go.mod#L6
 1. go言語＝OS専用ランタイム（カスタムランタイム：provided.al2023）が、最新のADOTの推奨実装方法に対応しておらず、レガシーアプローチをとるしか無さそう
     * [AWS Distro for OpenTelemetry Lambda](https://aws-otel.github.io/docs/getting-started/lambda)に記載された最新の最適化されたアプローチは、ADOT Collectorの[Lambdaレイヤーのサポートランタイム](https://aws-otel.github.io/docs/getting-started/lambda#supported-runtimes)に、OS専用ランタイム(OS-only Runtime provided.al2023)がないため、Goの場合はまだ以下のレガシーアプローチをとる必要がある。
     * [AWS Distro for OpenTelemetry Lambda Support For Go(the legacy approach)](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)の手順に従い、レガシーアプローチにより提供されるLambdaLayerを使用して移行した。

@@ -169,17 +169,16 @@ go get github.com/XSAM/otelsql
 * LambdaLayerの有効・無効の切り替え
     * sam local等のローカル実行の場合に、ADOTのLamdaLayerを定義してしまうと、ADOTのCollectorがX-Rayへアクセスを試みてしまい探してもないため、Lambdaがタイムアウトエラーになってしまう。
     * samconfig.tomlの仕組みと組み合わせて、sam localするときに `--config-env local`オプションをつけて実行すると、template.yamlのパラメータ「`LambdaLayersEEnabled`」が「`false`」になるようにして、この場合は、LambdaLayerが有効化されないようにしている。    
-        * sampconfig.tomlの例
+        * samconfig.tomlの例
             * https://github.com/mysd33/sample-lambda-go/blob/adot/samconfig.toml#L47
-            * 差分
-                * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-9ed197f55c53ff9eabd8328a275330896a4aa033bb40a5fe75ce3c703e56261a
+            * 差分                
+                * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-eeb7eaf77ca8ad1dfaf438d0e504ca99dca36448af1078b3881b67fb019853c9
 
     * Makefileにも、sam local実行するときのオプションにも付与してあげると、楽になる。
         * Makefileの例
             * https://github.com/mysd33/sample-lambda-go/blob/adot/Makefile#L69C47-L69C66
             * 差分
-                * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-9ed197f55c53ff9eabd8328a275330896a4aa033bb40a5fe75ce3c703e56261a
-
+                * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-76ed074a9305c04054cdebb9e9aad2d818052b07091de1f20cad0bbac34ffb52
 ### 4. 懸念事項
 1. OpenTelemetry SDK関連ライブラリをgo getしようとしても、cockroachdb/errorsが依存するgoogle.golang.org/genprotoのライブラリが競合してしまい、go getに失敗してしまう問題が発生
     * おそらくOpenTelemetryと、cockroachdb/errorsが参照しているgenprotoのバージョンが異なるのか、genprotoが旧バージョンと新バージョンで分割形態が変わったため競合してしまう、go getに失敗してしまい、モジュール追加ができない問題が発生した。
