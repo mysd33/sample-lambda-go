@@ -1,4 +1,9 @@
 # X-Ray SDK/DaemonからADOTへの移行（レガシーアプローチ）
+
+> [!WARNING]
+> ADOTのレガシーアプローチでの旧移行手順を行っていたが、新しい推奨手順に更新したので、この手順は古いため、参照しないこと。  
+> 新しい手順は[ADOT-migration.md](ADOT-migration.md)を参照してください。
+
 * AWS X-Ray 用の SDK と Daemon は2026年2月25日にメンテナンスモードに入り、2027年2月25日にサポート終了となるため、ADOT(AWS Distro for OpenTelemetry) への移行に対応した。
 * 割と大がかりな移行作業だったため、移行の際の参考情報をまとめている。
 * X-Rayの実際のトレースの表示については、[README](README.md#adotx-rayによるトレース情報の可視化)を参照    
@@ -30,7 +35,8 @@
     * [AWS X-Ray: Migrate to OpenTelemetry Go - Lambda manual instrumentation](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html#lambda-instrumentation)   
         * Lambdaのmain関数で、lambda.Start関数を呼び出す前に、OpenTelemetryの計装コードを手動で埋め込む方法が記載されている。
     * [AWS Distro for OpenTelemetry Lambda](https://aws-otel.github.io/docs/getting-started/lambda)
-        * ただし、上のリンクに記載された最新の最適化されたアプローチは、ADOT CollectorのLambdaレイヤーの[サポートランタイム](https://aws-otel.github.io/docs/getting-started/lambda#supported-runtimes)にOS専用ランタイム(OS-only Runtime provided.al2023)がないため、Goの場合はまだ以下のレガシーアプローチをとる必要がありそう。
+        * ~~ただし、上のリンクに記載された最新の最適化されたアプローチは、ADOT CollectorのLambdaレイヤーの[サポートランタイム](https://aws-otel.github.io/docs/getting-started/lambda#supported-runtimes)にOS専用ランタイム(OS-only Runtime provided.al2023)がないため、Goの場合はまだ以下のレガシーアプローチをとる必要がありそう。~~
+            * 結局、PythonのLambdaレイヤーを使えばいいので、推奨手順でよかった。
     * [AWS Distro for OpenTelemetry Lambda Support For Go(the legacy approach)](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)
         * Lambda/Goだと、このサイトに従いレガシーアプローチにより提供されるLambdaLayerを使用して移行した。
     * [OpenTelemetry AWS Lambda Instrumentation for Golang](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda#section-readme)
