@@ -6,8 +6,8 @@
 > [!NOTE]
 > [ADOTのレガシーアプローチでの旧移行手順](ADOT-migration-old.md)を行っていたが、新しい推奨手順に更新した。
 > ここでは、X-Ray SDKから新手順の差分を追記してまとめている。
-> 旧手順と新手順の差分は、以下を見るとよい。
-> [https://github.com/mysd33/sample-lambda-go/compare/adot...adot-new](https://github.com/mysd33/sample-lambda-go/compare/adot...adot-new)
+> 旧手順と新手順の差分は、以下のコミットを見るとよい。
+> [https://github.com/mysd33/sample-lambda-go/commit/68edf4d64b020b3446efe18ebb52795448706a67](https://github.com/mysd33/sample-lambda-go/commit/68edf4d64b020b3446efe18ebb52795448706a67)
 
 ## 1. Before/After
 * タグを切って差分で確認できるようにしている
