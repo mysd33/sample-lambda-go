@@ -1,12 +1,7 @@
-# X-Ray SDK/DaemonからADOTへの移行（推奨アプローチ）
+# X-Ray SDK/DaemonからADOTへの移行（レガシーアプローチ）
 * AWS X-Ray 用の SDK と Daemon は2026年2月25日にメンテナンスモードに入り、2027年2月25日にサポート終了となるため、ADOT(AWS Distro for OpenTelemetry) への移行に対応した。
 * 割と大がかりな移行作業だったため、移行の際の参考情報をまとめている。
 * X-Rayの実際のトレースの表示については、[README](README.md#adotx-rayによるトレース情報の可視化)を参照    
-
-> [!NOTE]
-> [ADOTのレガシーアプローチでの旧移行手順](ADOT-migration-old.md)を行っていたが、新しい推奨手順に乗り換えてみた。
-> ここでは、その差分を追記してまとめている。
->
 
 ## 1. Before/After
 * タグを切って差分で確認できるようにしている
@@ -35,8 +30,9 @@
     * [AWS X-Ray: Migrate to OpenTelemetry Go - Lambda manual instrumentation](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html#lambda-instrumentation)   
         * Lambdaのmain関数で、lambda.Start関数を呼び出す前に、OpenTelemetryの計装コードを手動で埋め込む方法が記載されている。
     * [AWS Distro for OpenTelemetry Lambda](https://aws-otel.github.io/docs/getting-started/lambda)
+        * ただし、上のリンクに記載された最新の最適化されたアプローチは、ADOT CollectorのLambdaレイヤーの[サポートランタイム](https://aws-otel.github.io/docs/getting-started/lambda#supported-runtimes)にOS専用ランタイム(OS-only Runtime provided.al2023)がないため、Goの場合はまだ以下のレガシーアプローチをとる必要がありそう。
     * [AWS Distro for OpenTelemetry Lambda Support For Go(the legacy approach)](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)
-        * Lambda/Goだと、上記の推奨手順のPython Lambdaのドキュメントを参照するように指示があった。        
+        * Lambda/Goだと、このサイトに従いレガシーアプローチにより提供されるLambdaLayerを使用して移行した。
     * [OpenTelemetry AWS Lambda Instrumentation for Golang](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda#section-readme)
     * [Recommended Configurations for OpenTelemetry AWS Lambda Instrumentation with AWS X-Ray](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda/xrayconfig#section-readme)
 
@@ -161,31 +157,9 @@ go get github.com/XSAM/otelsql
 * template.yamlの例
     * https://github.com/mysd33/sample-lambda-go/blob/adot/template.yaml#L59
     * https://github.com/mysd33/sample-lambda-go/blob/adot/template.yaml#L116
-    * 旧手順との差分
+    * 差分
         * https://github.com/mysd33/sample-lambda-go/compare/xray-sdk...adot#diff-1363ef5ce8886100842332c97163aad7934237e1fe49b5d40422b45fdc30f38e
 
-  * 新しい推奨手順での差分
-        * TBD: 記載箇所
-
-        * LambdaLayerを推奨手順にあるPythonのものに修正
-            * 旧手順では、GoのLambdaLayerを利用していたが、推奨手順ではGoのものはなく、PythonのLambdaLayerを使用
-
-            ```
-            arn:aws:lambda:ap-northeast-1:615299751070:layer:AWSOpenTelemetryDistroPython:25
-            ```
-
-        * 環境変数`AWS_LAMBDA_EXEC_WRAPPER`の設定が必要
-            ```
-            AWS_LAMBDA_EXEC_WRAPPER: /opt/otel-instrument
-            ```
-
-
-* Lambda実行ロールにIAMポリシーの追加
-    * 新しい推奨手順での差分
-        * ADOT CollectorのLambda Layerを利用する場合、Lambda実行ロールにIAMポリシー「CloudWatchLambdaApplicationSignalsExecutionRolePolicy」を追加する必要がある。
-            * 旧手順までは、X-RayのIAMポリシー「AWSXrayWriteOnlyAccess」であった
-        * TBD: 記載箇所
-        
 * X-RayのVPCEndpointの追加
     * VPC内LambdaであってもX-RaySDK/DaemonだとVPC Endpointは不要だったが、ADOTにするとX-RayのVPC Endpointが必要になる。
     * https://github.com/mysd33/sample-lambda-go/blob/adot/cfn/cfn-vpe.yaml#L103
@@ -215,9 +189,11 @@ go get github.com/XSAM/otelsql
     * [AWS Distro for OpenTelemetry Lambda](https://aws-otel.github.io/docs/getting-started/lambda)に記載された最新の最適化されたアプローチは、ADOT Collectorの[Lambdaレイヤーのサポートランタイム](https://aws-otel.github.io/docs/getting-started/lambda#supported-runtimes)に、OS専用ランタイム(OS-only Runtime provided.al2023)がないため、Goの場合はまだ以下のレガシーアプローチをとる必要がある。
     * [AWS Distro for OpenTelemetry Lambda Support For Go(the legacy approach)](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)の手順に従い、レガシーアプローチにより提供されるLambdaLayerを使用して移行した。
     * 今後、Goでも最新のADOTの実装手順に対応したら、template.yamlなどの実装を変更する必要がありそう。
-1. ~~コールドスタートの処理時間が、かなり遅くなっていた気がする~~n
-    * ~~APは変わっていないのに、以前に比べてコールドスタートが体感3～5倍遅くなっている気がする。実際、X-Rayのトレースの帯もそれくらいの時間、長くなっています。正直、あまり最近使っていないかったので、各種ライブラリを最新バージョンアップしているのでその影響もあるのかもですが、ADOTのCollectorがサイドカーに追加されたことで、その初期化で遅くなっているんじゃないかと思ったりもしています。ADOT移行のときには、単性能検証・テスト・メモリの調整（必要に応じて複合性能テストも）必要になるんじゃないかと思いました。~~
-    * 推奨手順だとレガシー手順のように遅さを感じることはなくなった。
+1. コールドスタートの処理時間が、かなり遅くなっていた気がする
+    * APは変わっていないのに、以前に比べてコールドスタートが体感3～5倍遅くなっている気がする。実際、X-Rayのトレースの帯もそれくらいの時間、長くなっています。
+　正直、あまり最近使っていないかったので、各種ライブラリを最新バージョンアップしているのでその影響もあるのかもですが、
+　ADOTのCollectorがサイドカーに追加されたことで、その初期化で遅くなっているんじゃないかと思ったりもしています。
+　ADOT移行のときには、単性能検証・テスト・メモリの調整（必要に応じて複合性能テストも）必要になるんじゃないかと思いました。
 
 1. X-Rayのトレースマップの見栄えが悪くなる
     * 今後改善されるかもしれないが、X-Ray SDKと比較してトレースマップの見栄えが悪くなってしまい、DynamoDB、SQS、S3固有のアイコンが表示されず、汎用のDBアイコンや、歯車になってしまう。
