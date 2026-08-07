@@ -14,11 +14,11 @@ Parameters:
   DBEngineVersion:
     Description: Version number of the database engine
     Type: String
-    Default: 16.4
+    Default: 18.4
   DBEngineFamily:
     Description: Family of the database engine
     Type: String
-    Default: aurora-postgresql16
+    Default: aurora-postgresql18
   #DBInstanceClassName:
   #  Description: DB Instance Class
   #  Type: String
