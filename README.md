@@ -57,7 +57,7 @@
 ### ADOT/X-Rayによるトレース情報の可視化
 
 > [!NOTE]
-> AWS X-Ray 用の SDK と Daemon は2026年2月25日にメンテナンスモードに入り、2027年2月25日にサポート終了となるため、ADOT(AWS Distro for OpenTelemetry) への移行に対応した。
+> AWS X-Ray 用の SDK と Daemon は[2026年2月25日にメンテナンスモードに入った](https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-daemon-timeline.html)~~り、2027年2月25日にサポート終了となる~~ため、ADOT(AWS Distro for OpenTelemetry) への移行に対応した。
 > * [移行時の参考情報](ADOT-migration.md)をまとめているので、移行の際の参考にするとよい。
 
 

@@ -3,7 +3,7 @@
 > AWSのサポートに確認したところ、現時点では、Go（provided.al2023）では、Cloud WatchのApplication Signalsに対応した、新しい手順は、動作保証されていないことが分かった。  
 > このため、こちらのADOTのレガシーアプローチでの移行手順を参照すること。
 
-* AWS X-Ray 用の SDK と Daemon は2026年2月25日にメンテナンスモードに入り、2027年2月25日にサポート終了となるため、ADOT(AWS Distro for OpenTelemetry) への移行に対応した。
+* AWS X-Ray 用の SDK と Daemon は[2026年2月25日にメンテナンスモードに入った](https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-daemon-timeline.html)~~り、2027年2月25日にサポート終了となる~~ため、ADOT(AWS Distro for OpenTelemetry) への移行に対応した。
 * 割と大がかりな移行作業だったため、移行の際の参考情報をまとめている。
 * X-Rayの実際のトレースの表示については、[README](README.md#adotx-rayによるトレース情報の可視化)を参照    
 
