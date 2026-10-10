@@ -1,6 +1,6 @@
 module example.com/appbase
 
-go 1.26.2
+go 1.27.2
 
 // TODO: cockroachdb/errorsの依存関係のgoogle.golang.org/genprotoのバージョンをそろえるための一時的な措置
 exclude google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1
@@ -25,7 +25,6 @@ require (
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
 	github.com/go-playground/validator/v10 v10.30.2
-	github.com/google/uuid v1.6.0
 	github.com/lib/pq v1.12.3
 	github.com/spf13/cast v1.10.0
 	github.com/spf13/viper v1.21.0
@@ -83,6 +82,7 @@ require (
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.18.6 // indirect

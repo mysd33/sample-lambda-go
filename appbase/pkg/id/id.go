@@ -4,8 +4,8 @@ id パッケージはID生成に関する機能を提供するパッケージで
 package id
 
 import (
-	"github.com/cockroachdb/errors"
-	"github.com/google/uuid"
+	"uuid"
+
 	"github.com/teris-io/shortid"
 )
 
@@ -27,10 +27,8 @@ func NewIDGenerator() IDGenerator {
 
 // GenerateUUID implements IDGenerator.
 func (*defaultIDGenerator) GenerateUUID() (string, error) {
-	uuidObj, err := uuid.NewUUID()
-	if err != nil {
-		errors.WithStack(err)
-	}
+	// Go1.27から標準機能でuuidパッケージが利用可能
+	uuidObj := uuid.New()
 	return uuidObj.String(), nil
 }
 
