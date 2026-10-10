@@ -27,8 +27,10 @@ type LogWarn func(code string, args ...any)
 
 // ValidatorM
 type ValidationManager interface {
-	// AddCustomValidatorはカスタムバリデータを追加します。
+	// AddCustomValidatorはカスタムタグのバリデータを追加します。
 	AddCustomValidator(tag string, customValidatorFunc validator.Func)
+	// AddStructLevelValidatorは相関項目チェックなどの構造体レベルのカスタムバリデータを追加します。
+	AddStructValidator(typeObject any, customValidatorFunc validator.StructLevelFunc)
 }
 
 // defaultValidationManager は、ValidationManagerのデフォルト実装です。
@@ -73,10 +75,19 @@ func NewValidationManager(logDebug LogDebug, logWarn LogWarn) ValidationManager 
 
 // AddCustomValidator implements ValidationManager.
 func (m *defaultValidationManager) AddCustomValidator(tag string, customValidatorFunc validator.Func) {
-	// https://gin-gonic.com/ja/docs/examples/custom-validators/
+	// https://gin-gonic.com/ja/docs/binding/custom-validators/
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		m.logDebug("カスタムバリデータ追加:%s", tag)
 		v.RegisterValidation(tag, customValidatorFunc)
+	}
+}
+
+// AddStructValidator implements ValidationManager.
+func (m *defaultValidationManager) AddStructValidator(typeObject any, customValidatorFunc validator.StructLevelFunc) {
+	// https://github.com/go-playground/validator/blob/master/_examples/struct-level/main.go
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		m.logDebug("構造体レベルのカスタムバリデータ追加:%T", typeObject)
+		v.RegisterStructValidation(customValidatorFunc, typeObject)
 	}
 }
