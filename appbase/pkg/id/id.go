@@ -12,7 +12,7 @@ import (
 // IDGenerator は、ID生成機能を提供するインターフェースです。
 type IDGenerator interface {
 	// GenerateUUID は、UUIDでIDを採番します。
-	GenerateUUID() (string, error)
+	GenerateUUID() string
 	// GenerateShortID は、ShortIDでIDを採番します。
 	GenerateShortID() string
 }
@@ -26,10 +26,11 @@ func NewIDGenerator() IDGenerator {
 }
 
 // GenerateUUID implements IDGenerator.
-func (*defaultIDGenerator) GenerateUUID() (string, error) {
+func (*defaultIDGenerator) GenerateUUID() string {
 	// Go1.27から標準機能でuuidパッケージが利用可能
-	uuidObj := uuid.New()
-	return uuidObj.String(), nil
+	// 標準ではUUIDのバージョン7で生成する実装とする
+	uuidObj := uuid.NewV7()
+	return uuidObj.String()
 }
 
 // GenerateShortID implements IDGenerator.

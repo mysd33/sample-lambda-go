@@ -74,10 +74,7 @@ func (ur *UserRepositoryImplByDynamoDB) FindOne(userId string) (*model.User, err
 
 func (ur *UserRepositoryImplByDynamoDB) CreateOne(user *model.User) (*model.User, error) {
 	// ID採番
-	userId, err := ur.id.GenerateUUID()
-	if err != nil {
-		return nil, errors.NewSystemError(err, message.E_EX_9001)
-	}
+	userId := ur.id.GenerateUUID()
 	user.ID = userId
 	userTable := ur.config.Get(USERS_TABLE_NAME, "users")
 	av, err := attributevalue.MarshalMap(user)

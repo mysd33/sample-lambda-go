@@ -138,10 +138,7 @@ func (bs *bffServiceImpl) RegisterTodosAsyncByFIFO(todoTitles []string, dbtx str
 	// TODOリストの登録を非同期処理実行依頼
 	asyncMessage := &model.AsyncMessage{TempId: tempId}
 	// メッセージグループIDの生成
-	msgGroupId, err := bs.id.GenerateUUID()
-	if err != nil {
-		return errors.NewSystemError(err, message.E_EX_9001)
-	}
+	msgGroupId := bs.id.GenerateUUID()
 	bs.asyncMessageRepository.SendToFIFOQueue(asyncMessage, msgGroupId)
 	return nil
 
@@ -160,10 +157,7 @@ func (bs *bffServiceImpl) registerTemp(todoTitles []string) (*model.Temp, error)
 		return nil, errors.NewSystemError(fmt.Errorf("バケットの設定[%s]が見つかりません", S3_BUCKET_NAME), message.E_EX_9001)
 	}
 	// ファイル名の生成
-	fileName, err := bs.id.GenerateUUID()
-	if err != nil {
-		return nil, errors.NewSystemError(err, message.E_EX_9001)
-	}
+	fileName := bs.id.GenerateUUID()
 	objectKey := fmt.Sprintf(tempFilePath, fileName)
 	_, err = bs.obectStorageAccessor.Upload(bucketName, objectKey, byteMessage)
 	if err != nil {

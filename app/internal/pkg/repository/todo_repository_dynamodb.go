@@ -104,14 +104,11 @@ func (tr *todoRepositoryImplByDynamoDB) FindOne(todoId string) (*model.Todo, err
 
 func (tr *todoRepositoryImplByDynamoDB) CreateOne(todo *model.Todo) (*model.Todo, error) {
 	// ID採番
-	todoId, err := tr.id.GenerateUUID()
-	if err != nil {
-		return nil, errors.NewSystemError(err, message.E_EX_9001)
-	}
+	todoId := tr.id.GenerateUUID()
 	//todoId := "dummy"
 	todo.ID = todoId
 	// DynamoDBTemplateを使ったコード
-	err = tr.dynamodbTemplate.CreateOne(tr.tableName, todo)
+	err := tr.dynamodbTemplate.CreateOne(tr.tableName, todo)
 	if err != nil {
 		if errors.Is(err, mydynamodb.ErrKeyDuplicaiton) {
 			// キーの重複の場合
@@ -151,14 +148,11 @@ func (tr *todoRepositoryImplByDynamoDB) CreateOne(todo *model.Todo) (*model.Todo
 // CreateOneTx implements TodoRepository.
 func (tr *todoRepositoryImplByDynamoDB) CreateOneTx(todo *model.Todo) (*model.Todo, error) {
 	// ID採番
-	todoId, err := tr.id.GenerateUUID()
-	if err != nil {
-		return nil, errors.NewSystemError(err, message.E_EX_9001)
-	}
+	todoId := tr.id.GenerateUUID()
 	//todoId := "dummy"
 	todo.ID = todoId
 	// DynamoDBTemplateを使ったコード
-	err = tr.dynamodbTemplate.CreateOneWithTransaction(tr.tableName, todo)
+	err := tr.dynamodbTemplate.CreateOneWithTransaction(tr.tableName, todo)
 	if err != nil {
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}

@@ -45,8 +45,7 @@ func TestRegister(t *testing.T) {
 	//RepsitoryのMockへの入力値と戻り値の設定
 	mockRepository := new(MockUserRepository)
 	mockInputValue := model.User{Name: inputUserName}
-	uuid, err := id.NewIDGenerator().GenerateUUID()
-	assert.NoError(t, err)
+	uuid := id.NewIDGenerator().GenerateUUID()
 
 	mockReturnValue := model.User{ID: uuid, Name: expectedName}
 	mockRepository.On("CreateOne", &mockInputValue).Return(&mockReturnValue, nil)

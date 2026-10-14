@@ -61,10 +61,7 @@ func (ur *UserRepositoryImplByRDB) FindOne(userId string) (*model.User, error) {
 
 func (ur *UserRepositoryImplByRDB) CreateOne(user *model.User) (*model.User, error) {
 	//ID採番
-	userId, err := ur.id.GenerateUUID()
-	if err != nil {
-		return nil, errors.NewSystemError(err, message.E_EX_9001)
-	}
+	userId := ur.id.GenerateUUID()
 	user.ID = userId
 
 	// RDS Proxy経由で接続する場合、１つのトランザクション内での呼び出しは、同じコネクションを使用する
@@ -88,7 +85,7 @@ func (ur *UserRepositoryImplByRDB) CreateOne(user *model.User) (*model.User, err
 	// SQLインジェクション対策でQuoteLiteralメソッドでエスケープ
 	userIdParam := pq.QuoteLiteral(user.ID)
 	userNameParam := pq.QuoteLiteral(user.Name)
-	_, err = tx.ExecContext(ctx, fmt.Sprintf("INSERT INTO m_user(user_id, user_name) VALUES(%s, %s)", userIdParam, userNameParam))
+	_, err := tx.ExecContext(ctx, fmt.Sprintf("INSERT INTO m_user(user_id, user_name) VALUES(%s, %s)", userIdParam, userNameParam))
 
 	if err != nil {
 		return nil, errors.NewSystemError(err, message.E_EX_9001)

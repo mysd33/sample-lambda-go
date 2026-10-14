@@ -108,16 +108,13 @@ func (r *tempRepositoryImpl) FindOne(id string) (*model.Temp, error) {
 // CreateOneTx implements TempRepository.
 func (r *tempRepositoryImpl) CreateOneTx(temp *model.Temp) (*model.Temp, error) {
 	// ID採番
-	id, err := r.id.GenerateUUID()
-	if err != nil {
-		return nil, errors.NewSystemError(err, message.E_EX_9001)
-	}
+	id := r.id.GenerateUUID()
 	temp.ID = id
 	r.logger.Debug("CreateOneTx Table name: %s", r.tableName)
 	r.logger.Debug("CreateOneTx Temp id: %s", id)
 
 	// DynamoDBTemplateを使ったコード
-	err = r.dynamodbTemplate.CreateOneWithTransaction(r.tableName, temp)
+	err := r.dynamodbTemplate.CreateOneWithTransaction(r.tableName, temp)
 	if err != nil {
 		return nil, errors.NewSystemError(err, message.E_EX_9001)
 	}
@@ -145,16 +142,13 @@ func (r *tempRepositoryImpl) CreateOneTx(temp *model.Temp) (*model.Temp, error) 
 // CreateOne implements TempRepository.
 func (r *tempRepositoryImpl) CreateOne(temp *model.Temp) (*model.Temp, error) {
 	// ID採番
-	id, err := r.id.GenerateUUID()
-	if err != nil {
-		return nil, errors.NewSystemError(err, message.E_EX_9001)
-	}
+	id := r.id.GenerateUUID()
 	temp.ID = id
 	r.logger.Debug("CreateOne Table name: %s", r.tableName)
 	r.logger.Debug("CreateOne Temp id: %s", id)
 
 	// DynamoDBTemplateを使ったコード
-	err = r.dynamodbTemplate.CreateOne(r.tableName, temp)
+	err := r.dynamodbTemplate.CreateOne(r.tableName, temp)
 	if err != nil {
 		if errors.Is(err, mydynamodb.ErrKeyDuplicaiton) {
 			return nil, errors.NewBusinessError(message.W_EX_8007, id)
