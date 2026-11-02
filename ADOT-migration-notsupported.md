@@ -223,18 +223,17 @@ go get github.com/XSAM/otelsql
     * おそらくOpenTelemetryと、cockroachdb/errorsが参照しているgenprotoのバージョンが異なるのか、genprotoが旧バージョンと新バージョンで分割形態が変わったため競合してしまう、go getに失敗してしまい、モジュール追加ができない問題が発生した。
     * 試行錯誤した結果、回避策として、go.modで、google.golang.org/genprotoの特定のバージョンをexcludeしたが、これが、一番いいやり方かはわからない。最終的には、cockroachdb/errorsのバージョンアップを待つまでの暫定的な回避策としている。
         * https://github.com/mysd33/sample-lambda-go/blob/adot-notsupport/appbase/go.mod#L6
-1. go言語＝OS専用ランタイム（カスタムランタイム：provided.al2023）が、最新のADOTの推奨実装方法に対応しておらず、レガシーアプローチをとるしか無さそう
-    * [AWS Distro for OpenTelemetry Lambda](https://aws-otel.github.io/docs/getting-started/lambda)に記載された最新の最適化されたアプローチは、ADOT Collectorの[Lambdaレイヤーのサポートランタイム](https://aws-otel.github.io/docs/getting-started/lambda#supported-runtimes)に、OS専用ランタイム(OS-only Runtime provided.al2023)がないため、Goの場合はまだ以下のレガシーアプローチをとる必要がある。
-    * [AWS Distro for OpenTelemetry Lambda Support For Go](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)の手順に従い、レガシーアプローチにより提供されるLambdaLayerを使用して移行する必要があった。
+1. ~~go言語＝OS専用ランタイム（カスタムランタイム：provided.al2023）が、最新のADOTの推奨実装方法に対応しておらず、レガシーアプローチをとるしか無さそう~~
+    * ~~[AWS Distro for OpenTelemetry Lambda](https://aws-otel.github.io/docs/getting-started/lambda)に記載された最新の最適化されたアプローチは、ADOT Collectorの[Lambdaレイヤーのサポートランタイム](https://aws-otel.github.io/docs/getting-started/lambda#supported-runtimes)に、OS専用ランタイム(OS-only Runtime provided.al2023)がないため、Goの場合はまだ以下のレガシーアプローチをとる必要がある。~~
+    * ~~[AWS Distro for OpenTelemetry Lambda Support For Go](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)の手順に従い、レガシーアプローチにより提供されるLambdaLayerを使用して移行した。~~
     * ~~今後、Goでも最新のADOTの実装手順に対応したら、template.yamlなどの実装を変更する必要がありそう。~~
+    * レガシーアプローチの手順自体がApplication Signalsに対応した手順が更新されている。今後、GoでもApplication Signalsに対応した新しいLambda Layerの手順に対応するかは不明だが、当面、対応されないのではないかと思われる。
 1. ~~コールドスタートの処理時間が、かなり遅くなっていた気がする~~n
     * ~~APは変わっていないのに、以前に比べてコールドスタートが体感3～5倍遅くなっている気がする。実際、X-Rayのトレースの帯もそれくらいの時間、長くなっています。正直、あまり最近使っていないかったので、各種ライブラリを最新バージョンアップしているのでその影響もあるのかもですが、ADOTのCollectorがサイドカーに追加されたことで、その初期化で遅くなっているんじゃないかと思ったりもしています。ADOT移行のときには、単性能検証・テスト・メモリの調整（必要に応じて複合性能テストも）必要になるんじゃないかと思いました。~~
     * 推奨手順だとレガシー手順のように遅さを感じることはなくなった。
-
 1. X-Rayのトレースマップの見栄えが悪くなる
     * 今後改善されるかもしれないが、X-Ray SDKと比較してトレースマップの見栄えが悪くなってしまい、DynamoDB、SQS、S3固有のアイコンが表示されず、汎用のDBアイコンや、歯車になってしまう。
     * 以前のX-Ray SDKの場合とのトレースの図のキャプチャを比較は[README](README.md#adotx-rayによるトレース情報の可視化)を参照。
-
 1. AWS Lambda Go API Proxyのアーカイブ化と今後
     * ADOT自体とは直接関係ないが、[AWS Lambda Go API Proxy](https://github.com/awslabs/aws-lambda-go-api-proxy)は、2025年5月22日にアーカイブ化されてしまった。
     * [当該Issue](https://github.com/awslabs/aws-lambda-go-api-proxy/issues/143)の記載から、[Lambda Web Adapter](https://github.com/aws/aws-lambda-web-adapter)の利用が有力な選択肢の一つと考えられるが、[Golang gin in Zip example](https://github.com/aws/aws-lambda-web-adapter/tree/main/examples/gin-zip)のサンプルコードを見ると、main関数はginを起動しlambda.Start関数を使わない実装になってしまうため、前述の[Lambdaのmain関数へのADOTの手動計装](https://docs.aws.amazon.com/xray/latest/devguide/manual-instrumentation-go.html#lambda-instrumentation)ができず、ADOTと実装の相性が悪いように見える。Lambda Web Adapterを使う場合、[otelgin](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin)を使えば、Lambdaの手動計装を実装せずともうまくトレースできるか？等、動作確認してみる必要があると思われる（が、この場合もコールドスタート影響が気になる）
