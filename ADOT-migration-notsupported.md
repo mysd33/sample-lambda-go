@@ -1,8 +1,9 @@
 # X-Ray SDK/DaemonからADOTへの移行（Application Signalsサポートの新手順）
 
 > [!WARNING]
-> AWSのサポートに確認したところ、現時点では、Go（provided.al2023）では、Cloud WatchのApplication Signalsに対応した、新しい手順は、動作保証されていないことが分かった。  
-> 公式サイトの記事[AWS Distro for OpenTelemetry Lambda Support For Go(the legacy approach)](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)も、サポート確認時に文言修正する旨がフィードバックされて「Go言語に対応した、アプリケーションシグナルをサポートするADOT Lambdaレイヤーは存在しません。」という内容に変わった。  
+ > AWSのサポートに確認したところ、Go（provided.al2023）では、Cloud WatchのApplication Signalsに対応した[新しいLambda Layerを使った手順](https://aws-otel.github.io/docs/getting-started/lambda)は、動作保証されていないことが分かった。  
+> 公式サイトの記事[AWS Distro for OpenTelemetry Lambda Support For Go](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)も、サポート確認時に文言修正する旨がフィードバックされて「Go言語に対応した、アプリケーションシグナルをサポートするADOT Lambdaレイヤーは存在しません。」という内容に変わった。  
+> その後、手順が更新されてレガシーアプローチでスパンをAmazon CloudWatch OTLPトレースエンドポイントに転送しApplication Signalsの対応方法が示されるようになった。  
 > このため、こちらの[ADOTのレガシーアプローチでの移行手順](ADOT-migration.md)を参照すること。
 
 
@@ -38,8 +39,8 @@
         * Lambdaのmain関数で、lambda.Start関数を呼び出す前に、OpenTelemetryの計装コードを手動で埋め込む方法が記載されている。
     * [AWS Distro for OpenTelemetry Lambda](https://aws-otel.github.io/docs/getting-started/lambda)
         * この手順では、OS占有ランタイム(provided.al2023)のGoの場合でも、新手順のPythonのLambdaLayerを使用するやり方で、うまく動いてしまうが、AWSの回答によると、ドキュメント上、Go（provided.al2023）のLambdaLayerが提供されておらず、Goの場合は動作保証できないとのこと。
-        * 公式サイトの記事[AWS Distro for OpenTelemetry Lambda Support For Go(the legacy approach)](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)も、サポート確認時に文言修正する旨がフィードバックされて「Go言語に対応した、アプリケーションシグナルをサポートするADOT Lambdaレイヤーは存在しません。」という内容に変わった。 
-        * [AWS Distro for OpenTelemetry Lambda Support For Go(the legacy approach)](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)
+        * 公式サイトの記事[AWS Distro for OpenTelemetry Lambda Support For Go](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)も、サポート確認時に文言修正する旨がフィードバックされて「Go言語に対応した、アプリケーションシグナルをサポートするADOT Lambdaレイヤーは存在しません。」という内容に変わった。 
+        * [AWS Distro for OpenTelemetry Lambda Support For Go](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)
             * 本来は、Goの場合はレガシー手順に従う必要があるとのこと。
     * [OpenTelemetry AWS Lambda Instrumentation for Golang](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda#section-readme)
     * [Recommended Configurations for OpenTelemetry AWS Lambda Instrumentation with AWS X-Ray](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-lambda-go/otellambda/xrayconfig#section-readme)
@@ -224,8 +225,8 @@ go get github.com/XSAM/otelsql
         * https://github.com/mysd33/sample-lambda-go/blob/adot-notsupport/appbase/go.mod#L6
 1. go言語＝OS専用ランタイム（カスタムランタイム：provided.al2023）が、最新のADOTの推奨実装方法に対応しておらず、レガシーアプローチをとるしか無さそう
     * [AWS Distro for OpenTelemetry Lambda](https://aws-otel.github.io/docs/getting-started/lambda)に記載された最新の最適化されたアプローチは、ADOT Collectorの[Lambdaレイヤーのサポートランタイム](https://aws-otel.github.io/docs/getting-started/lambda#supported-runtimes)に、OS専用ランタイム(OS-only Runtime provided.al2023)がないため、Goの場合はまだ以下のレガシーアプローチをとる必要がある。
-    * [AWS Distro for OpenTelemetry Lambda Support For Go(the legacy approach)](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)の手順に従い、レガシーアプローチにより提供されるLambdaLayerを使用して移行した。
-    * 今後、Goでも最新のADOTの実装手順に対応したら、template.yamlなどの実装を変更する必要がありそう。
+    * [AWS Distro for OpenTelemetry Lambda Support For Go](https://aws-otel.github.io/docs/getting-started/lambda/lambda-go)の手順に従い、レガシーアプローチにより提供されるLambdaLayerを使用して移行する必要があった。
+    * ~~今後、Goでも最新のADOTの実装手順に対応したら、template.yamlなどの実装を変更する必要がありそう。~~
 1. ~~コールドスタートの処理時間が、かなり遅くなっていた気がする~~n
     * ~~APは変わっていないのに、以前に比べてコールドスタートが体感3～5倍遅くなっている気がする。実際、X-Rayのトレースの帯もそれくらいの時間、長くなっています。正直、あまり最近使っていないかったので、各種ライブラリを最新バージョンアップしているのでその影響もあるのかもですが、ADOTのCollectorがサイドカーに追加されたことで、その初期化で遅くなっているんじゃないかと思ったりもしています。ADOT移行のときには、単性能検証・テスト・メモリの調整（必要に応じて複合性能テストも）必要になるんじゃないかと思いました。~~
     * 推奨手順だとレガシー手順のように遅さを感じることはなくなった。

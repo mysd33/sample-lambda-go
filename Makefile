@@ -35,11 +35,18 @@ build: clean
 # for windows	
 	sam build
 	xcopy /I /S configs .aws-sam\build\BffFunction\configs
-	xcopy /I /S configs .aws-sam\build\UsersFunction\configs	
-	xcopy /I /S configs .aws-sam\build\TodoFunction\configs		
+	xcopy /I /S configs .aws-sam\build\UsersFunction\configs
+	xcopy /I /S configs .aws-sam\build\TodoFunction\configs
 	xcopy /I /S configs .aws-sam\build\TodoAsyncFunction\configs
 	xcopy /I /S configs .aws-sam\build\TodoAsyncFifoFunction\configs
-	xcopy /I /S configs .aws-sam\build\BooksFunction\configs	
+	xcopy /I /S configs .aws-sam\build\BooksFunction\configs
+	copy /Y collector.yaml .aws-sam\build\BffFunction\collector.yaml
+	copy /Y collector.yaml .aws-sam\build\UsersFunction\collector.yaml
+	copy /Y collector.yaml .aws-sam\build\TodoFunction\collector.yaml
+	copy /Y collector.yaml .aws-sam\build\TodoAsyncFunction\collector.yaml
+	copy /Y collector.yaml .aws-sam\build\TodoAsyncFifoFunction\collector.yaml
+	copy /Y collector.yaml .aws-sam\build\BooksFunction\collector.yaml
+	
 
 build_linux: clean_linux
 # for linux
@@ -50,6 +57,12 @@ build_linux: clean_linux
 	cp -r configs .aws-sam/build/TodoAsyncFunction/configs
 	cp -r configs .aws-sam/build/TodoAsyncFifoFunction/configs
 	cp -r configs .aws-sam/build/BooksFunction/configs
+	cp collector.yaml .aws-sam/build/BffFunction/collector.yaml
+	cp collector.yaml .aws-sam/build/UsersFunction/collector.yaml
+	cp collector.yaml .aws-sam/build/TodoFunction/collector.yaml
+	cp collector.yaml .aws-sam/build/TodoAsyncFunction/collector.yaml
+	cp collector.yaml .aws-sam/build/TodoAsyncFifoFunction/collector.yaml
+	cp collector.yaml .aws-sam/build/BooksFunction/collector.yaml
 
 unit_test:
 	cd app && go test -v ./internal/...
@@ -76,12 +89,18 @@ validate_dbg:
 build_dbg: clean
 # for windows	
 	sam build --template-file template-dbg.yaml
-	xcopy /I /S configs .aws-sam\build\BffFunction\configs
-	xcopy /I /S configs .aws-sam\build\UsersFunction\configs	
-	xcopy /I /S configs .aws-sam\build\TodoFunction\configs	
-	xcopy /I /S configs .aws-sam\build\TodoAsyncFunction\configs
-	xcopy /I /S configs .aws-sam\build\TodoAsyncFifoFunction\configs
-	xcopy /I /S configs .aws-sam\build\BooksFunction\configs	
+	cp -r configs .aws-sam/build/BffFunction/configs
+	cp -r configs .aws-sam/build/UsersFunction/configs
+	cp -r configs .aws-sam/build/TodoFunction/configs
+	cp -r configs .aws-sam/build/TodoAsyncFunction/configs
+	cp -r configs .aws-sam/build/TodoAsyncFifoFunction/configs
+	cp -r configs .aws-sam/build/BooksFunction/configs
+	cp collector.yaml .aws-sam/build/BffFunction/collector.yaml
+	cp collector.yaml .aws-sam/build/UsersFunction/collector.yaml
+	cp collector.yaml .aws-sam/build/TodoFunction/collector.yaml
+	cp collector.yaml .aws-sam/build/TodoAsyncFunction/collector.yaml
+	cp collector.yaml .aws-sam/build/TodoAsyncFifoFunction/collector.yaml
+	cp collector.yaml .aws-sam/build/BooksFunction/collector.yaml
 # for linux
 # TODO	
 

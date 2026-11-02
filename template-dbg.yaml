@@ -25,7 +25,7 @@ Parameters:
     Default: 128
   Timeout:
     Type: Number
-    Default: 5
+    Default: 28
   HelloWorldFunctionName:
     Type: String
     Default: hello-world
@@ -56,17 +56,26 @@ Parameters:
     Default: 7
   ADOTCollectorLayerArn:
     Type: String
-    Default: arn:aws:lambda:ap-northeast-1:901920570463:layer:aws-otel-collector-amd64-ver-0-117-0:1    
+    Default: arn:aws:lambda:ap-northeast-1:901920570463:layer:aws-otel-collector-amd64-ver-0-156-0:4
   AppConfigLayerArn:
     Type: String
     Default: arn:aws:lambda:ap-northeast-1:980059726660:layer:AWS-AppConfig-Extension:268
   LambdaInsightsLayerArn:
     Type: String
-    Default: arn:aws:lambda:ap-northeast-1:580247275435:layer:LambdaInsightsExtension:91  
+    Default: arn:aws:lambda:ap-northeast-1:580247275435:layer:LambdaInsightsExtension:91
+  EnableLambdaLayers:
+    Type: String
+    AllowedValues:
+      - "true"
+      - "false"
+    Default: "false"
 Conditions:
   TracingEnabled: !Equals
     - !Ref TracingValue
     - Active
+  LambdaLayersEnabled: !Equals
+    - !Ref EnableLambdaLayers
+    - "true"
 Globals:
   Function:
 #    Handler: bootstrap
@@ -98,6 +107,8 @@ Globals:
         TZ: Asia/Tokyo
         # LogLevel
         LOG_LEVEL: !Ref LogLevel
+        # ADOT Environment Variables
+        OPENTELEMETRY_COLLECTOR_CONFIG_URI: /var/task/collector.yaml
     # Deployment Configurtion
     AutoPublishAlias: live
     DeploymentPreference:
@@ -105,11 +116,11 @@ Globals:
       Type: AllAtOnce
     Layers:
       # ADOT Collector Lambda Layer
-#      - !Ref ADOTCollectorLayerArn    
+      - !If [LambdaLayersEnabled, !Ref ADOTCollectorLayerArn, !Ref "AWS::NoValue"]
       # AppConfig Extensions Lambda Layer    
-#      - !Ref AppConfigLayerArn
+      - !If [LambdaLayersEnabled, !Ref AppConfigLayerArn, !Ref "AWS::NoValue"]
       # Lambda Insights Extensions Lambda Layer    
-#      - !Ref LambdaInsightsLayerArn
+      - !If [LambdaLayersEnabled, !Ref LambdaInsightsLayerArn, !Ref "AWS::NoValue"]
   Api:
     OpenApiVersion: 3.0.3
     TracingEnabled: !If [TracingEnabled , true, false]
@@ -144,6 +155,8 @@ Resources:
       Environment:
         Variables:
           PARAM1: VALUE
+          # ADOT Environment Variables
+          OTEL_SERVICE_NAME: !Ref HelloWorldFunctionName
 # Bff Function
   BffFunction:
     Type: AWS::Serverless::Function
@@ -153,6 +166,11 @@ Resources:
       Handler: bff    
       FunctionName: !Ref BffFunctionName
       CodeUri: app/cmd/bff/
+      Environment:
+        Variables:
+          PARAM1: VALUE
+          # ADOT Environment Variables
+          OTEL_SERVICE_NAME: !Ref BffFunctionName
       Role:
         Fn::ImportValue: !Sub ${StackPrefix}-LambdaRoleArn
       Events:
@@ -161,7 +179,8 @@ Resources:
           Properties:
             Path: /bff-api/{proxy+}
             Method: ANY
-            RestApiId: !Ref BffApi          
+            RestApiId: !Ref BffApi
+    
 # User Function
   UsersFunction:
     Type: AWS::Serverless::Function
@@ -170,7 +189,11 @@ Resources:
     Properties:
       Handler: users    
       FunctionName: !Ref UsersFunctionName
-      CodeUri: app/cmd/users/  
+      CodeUri: app/cmd/users/
+      Environment:
+        Variables:
+          # ADOT Environment Variables
+          OTEL_SERVICE_NAME: !Ref UsersFunctionName
       Role:
         Fn::ImportValue: !Sub ${StackPrefix}-LambdaRoleArn      
       Events:
@@ -191,6 +214,10 @@ Resources:
       CodeUri: app/cmd/todo/
       Role:
         Fn::ImportValue: !Sub ${StackPrefix}-LambdaRoleArn  
+      Environment:
+        Variables:
+          # ADOT Environment Variables
+          OTEL_SERVICE_NAME: !Ref TodoFunctionName
       Events:
         Event:
           Type: Api
@@ -207,6 +234,10 @@ Resources:
       Handler: todo-async
       FunctionName: !Ref TodoAsyncFunctionName
       CodeUri: app/cmd/todo-async/
+      Environment:
+        Variables:
+          # ADOT Environment Variables
+          OTEL_SERVICE_NAME: !Ref TodoAsyncFunctionName
       Role: !ImportValue
         Fn::Sub: ${StackPrefix}-LambdaRoleArn
       Events:
@@ -225,6 +256,10 @@ Resources:
       Handler: todo-async-fifo
       FunctionName: !Ref TodoAsyncFifoFunctionName
       CodeUri: app/cmd/todo-async/
+      Environment:
+        Variables:
+          # ADOT Environment Variables
+          OTEL_SERVICE_NAME: !Ref TodoAsyncFifoFunctionName
       Role: !ImportValue
         Fn::Sub: ${StackPrefix}-LambdaRoleArn
       Events:
@@ -246,6 +281,10 @@ Resources:
       CodeUri: app/cmd/books/
       Role:
         Fn::ImportValue: !Sub ${StackPrefix}-LambdaRoleArn
+      Environment:
+        Variables:
+          # ADOT Environment Variables
+          OTEL_SERVICE_NAME: !Ref BooksFunctionName
       Events:
         Event:
           Type: Api

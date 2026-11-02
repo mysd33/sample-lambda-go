@@ -1,0 +1,26 @@
+extensions:
+  sigv4auth:
+    region: ${env:AWS_REGION}
+    service: xray
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: localhost:4317
+      http:
+        endpoint: localhost:4318
+
+exporters:
+  otlp_http:
+    compression: gzip
+    traces_endpoint: https://xray.${env:AWS_REGION}.amazonaws.com/v1/traces
+    auth:
+      authenticator: sigv4auth
+
+service:
+  extensions: [sigv4auth]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlp_http]

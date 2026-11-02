@@ -1,15 +1,15 @@
 # Lambda/GoのAWS SAMサンプルAP
-## システム構成図
+## 1. システム構成図
 
 ![構成イメージ](image/system.png)
 
-## ソフトウェアアーキテクチャ
-### レイヤ・コンポーネント構成
+## 2. ソフトウェアアーキテクチャ
+### 2.1. レイヤ・コンポーネント構成
 * 本サンプルAPのレイヤ・コンポーネント構成は以下の通り。
 
     ![ソフトウェアアーキテクチャ](image/architecture.png)
 
-### 処理方式
+### 2.2. 処理方式
 * オンラインリアルタイム処理方式
     * API GatewayをトリガにLambda実行
     * フロントエンドは、Regional Public APIで公開し、バックエンドはPrivate APIで公開
@@ -48,13 +48,13 @@
     * DocumentDBへのアクセスは、MongoDBのGoドライバーを利用
     * DynamoDB、SQS、S3へのアクセスは、AWS SDK for Goを利用
 
-### AppConfigによる環境依存パラメータの外部管理化
+### 2.3. AppConfigによる環境依存パラメータの外部管理化
 * [AppConfig](https://docs.aws.amazon.com/ja_jp/appconfig/latest/userguide/what-is-appconfig.html)を使用し、APから外部管理された設定の取得、AppConfig機能を使ったデプロイに対応している。
 * マネージドなLambdaレイヤにより提供される[AppConfig Agent Lambdaエクステンション](https://docs.aws.amazon.com/ja_jp/appconfig/latest/userguide/appconfig-integration-lambda-extensions.html)を使って、LambdaアプリケーションからAppConfigの設定をキャッシュするとともに、アプリケーションの再デプロイ不要で設定変更を反映することができる。
 
     ![AppConfigイメージ](image/appconfig.png)
 
-### ADOT/X-Rayによるトレース情報の可視化
+### 2.4. ADOT/X-Rayによるトレース情報の可視化
 
 > [!NOTE]
 > AWS X-Ray 用の SDK と Daemon は[2026年2月25日にメンテナンスモードに入った](https://docs.aws.amazon.com/xray/latest/devguide/xray-sdk-daemon-timeline.html)~~り、2027年2月25日にサポート終了となる~~ため、ADOT(AWS Distro for OpenTelemetry) への移行に対応した。
@@ -67,56 +67,55 @@
     ![ADOTのX-Rayへの送信イメージ](image/adot.png)
 
 * RDB(Aurora)、DynamoDB、DocumentDBへのアクセス、REST API、SQSの呼び出しのトレースにも対応    
-* 以前X-Ray SDK/X-Rayデーモンでの可視化を実現していたが、ADOTに移行したところ、現状は、トレースマップの可視化において、DynamoDB、SQS、S3のアイコンが正しく表示されず歯車のアイコンで表示されてしまうなどの問題がある。ADOTとの比較としてX-Ray SDKでの可視化の例も参考に示す。
+* 以前X-Ray SDK/X-Rayデーモンでの可視化を実現していたが、ADOTに移行したところ、見た目が変わったことから、ADOTとの比較としてX-Ray SDKでの可視化の例も参考に示す。
+    * 以前のADOTの手順と比べて、X-Rayのトレースマップの見栄えが改善され、DynamoDB、SQS、S3固有のアイコンが正しく表示されるようになった。
 * RDB(Aurora)アクセスの可視化の例
     * otelsqlの設定でSQL実行のみをトレースするようにフィルタしている。フィルタしなかった場合は[こちら](image/adot-aurora-nofilter.png)
 
-    ![ADOTの可視化の例](image/adot-aurora.png)
+    ![ADOTの可視化の例](image/adot-as-aurora.png)
     
     * （参考）X-Ray SDKの場合のRDB(Aurora)アクセスの可視化
     
         ![X-Ray SDKの可視化の例](image/xraysdk-aurora.png)
 
 * DynamoDBアクセスの可視化の例
-    * X-Ray SDKのときと違い、DynamoDBのアイコンが汎用DBのアイコンになってしまう。
     
-    ![ADOTの可視化の例2](image/adot-dynamodb.png)
+    ![ADOTの可視化の例2](image/adot-as-dynamodb.png)
 
     * （参考）X-Ray SDKの場合の可視化
 
         ![X-Ray SDKの可視化の例2](image/xraysdk-dynamodb.png)
 
 * DocumentDB（MongoDB）の呼び出しの可視化の例
-    * 「SQL」、「insert」として表示されるので一瞬RDBのトレースに見えてしまうが、参照の場合は「find」として表示されるため、DocumentDB（MongoDB）へのアクセスであることがわかる。
+    * 「Database SQL」、「insert」として文言表示されるところがあるので一瞬RDBのトレースに見えてしまうが、アイコンに「mongodb」、参照の場合は「find」として表示される。
 
-    ![ADOTの可視化の例3-1](image/adot-documentdb.png)
+    ![ADOTの可視化の例3-1](image/adot-as-documentdb.png)
     
-    ![ADOTの可視化の例3-2](image/adot-documentdb2.png)
+    ![ADOTの可視化の例3-2](image/adot-as-documentdb2.png)
     
     * X-Ray SDKの場合にはDocumentDB（MongoDB）の可視化に対応していなかった
 
 * フロントエンドAPからバックエンドAPへのREST API呼び出しの可視化の例
 
-    ![ADOTの可視化の例4](image/adot-bff.png)
+    ![ADOTの可視化の例4](image/adot-as-bff.png)
 
     * （参考）X-Ray SDKの場合のREST API呼び出しの可視化
 
         ![X-Ray SDKの可視化の例4](image/xraysdk-bff.png)
 
 * フロントエンドAPから非同期バッチAPへのディレード処理依頼におけるSQS、S3等の呼び出しの可視化の例
-    * X-Ray SDKのときと違い、SQS、S3のアイコンが歯車のアイコンになってしまったり、ノードがばらばらになってしまう問題がある。
     
-    ![ADOTの可視化の例5-1](image/adot-sqs-delayed1.png)
+    ![ADOTの可視化の例5-1](image/adot-as-sqs-delayed1.png)
 
-    ![ADOTの可視化の例5-2](image/adot-sqs-delayed2.png)        
+    ![ADOTの可視化の例5-2](image/adot-as-sqs-delayed2.png)
 
-    ![ADOTの可視化の例5-3](image/adot-sqs-delayed3.png)
+    ![ADOTの可視化の例5-3](image/adot-as-sqs-delayed3.png)
     
     * （参考）X-Ray SDKの場合の可視化
 
         ![X-Ray SDKの可視化の例5](image/xraysdk-sqs-delayed.png)  
 
-### RDS Proxy
+### 2.5. RDS Proxy
 * 本サンプルAPでは、RDS Proxyを利用してAuroraへの接続を実現している。RDS Proxyは、RDS/Auroraへのコネクションプーリングや自動リトライ、フェイルオーバーの管理などを提供するマネージドサービスである。RDS Proxyを利用することで、Lambdaなどのサーバーレス環境からのRDS/Auroraへの接続の効率化や信頼性の向上が期待できる。
 * RDS Proxyの利用時の注意
     * ピン留め
@@ -144,11 +143,18 @@
             * https://pages.awscloud.com/rs/112-TZM-766/images/EV_amazon-rds-aws-lambda-update_Jul28-2020_RDS_Proxy.pdf
 	            * pp.12
 
-## 0. 事前準備
+## 3. 事前準備
 * ローカル環境に、Go、AWS CLI、AWS SAM CLI、Make、Docker等のインストールが必要です。
-    * Goのバージョンは1.26.2を使用しています。
+    * Goのバージョンは1.27.2を使用しています。
 
-## 1. IAMの作成
+* Application Signalsを使ったADOT、X-Rayの対応で、[CloudWatchのトランザクション検索の有効化](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Enable-TransactionSearch.html)を実施する必要があります。
+    * [CloudWatch コンソール](https://console.aws.amazon.com/cloudwatch/) を開き、ナビゲーションペインの `[Application Signals] `で、`[トランザクション検索] `を選択
+    * `[Enable Transaction Search]` をクリック
+    * `Enable Transaction Search` トグルボタンをオンにする
+    * `For AWS X-Ray users` を選択し、Tracing indexing（デフォルトは無料の`1%`）を、X-Rayのトレースをすぐに確認できるように一時的に`100%`にする
+    * `Save` をクリックして設定を保存する
+
+## 4. IAMの作成
 ```sh
 #cfnフォルダに移動
 cd cfn
@@ -156,25 +162,25 @@ aws cloudformation validate-template --template-body file://cfn-iam.yaml
 aws cloudformation create-stack --stack-name Demo-IAM-Stack --template-body file://cfn-iam.yaml --capabilities CAPABILITY_NAMED_IAM
 ```
 
-## 2. VPCおよびサブネット、InternetGateway等の作成
+## 5. VPCおよびサブネット、InternetGateway等の作成
 ```sh
 aws cloudformation validate-template --template-body file://cfn-vpc.yaml
 aws cloudformation create-stack --stack-name Demo-VPC-Stack --template-body file://cfn-vpc.yaml
 ```
 
-## 3. Security Groupの作成
+## 6. Security Groupの作成
 ```sh
 aws cloudformation validate-template --template-body file://cfn-sg.yaml
 aws cloudformation create-stack --stack-name Demo-SG-Stack --template-body file://cfn-sg.yaml
 ```
 
-## 4. VPC Endpointの作成とプライベートサブネットのルートテーブル更新
+## 7. VPC Endpointの作成とプライベートサブネットのルートテーブル更新
 * API GatewayのPrivate APIのためのVPC Endpointや、VPC内LambdaからDynamoDB、SQS、AppConfig等へアクセスするためのVPC Endpointを作成
 ```sh
 aws cloudformation validate-template --template-body file://cfn-vpe.yaml
 aws cloudformation create-stack --stack-name Demo-VPE-Stack --template-body file://cfn-vpe.yaml
 ```
-## 5. NAT Gatewayの作成とプライベートサブネットのルートテーブル更新
+## 8. NAT Gatewayの作成とプライベートサブネットのルートテーブル更新
 * VPC内Lambdaからインターネットに接続する場合に必要となる。
 * hello-worldのサンプルAPでは[https://checkip.amazonaws.com](https://checkip.amazonaws.com)へアクセスしに行くためにLambdaからのインターネット接続が必要だが、それ以外はインターネット接続を必要としない。もしhello-worldのサンプルAPの確認が不要な場合は、作成不要。
 
@@ -183,7 +189,7 @@ aws cloudformation validate-template --template-body file://cfn-ngw.yaml
 aws cloudformation create-stack --stack-name Demo-NATGW-Stack --template-body file://cfn-ngw.yaml
 ```
 
-## 6. SecretsManagerの作成
+## 9. SecretsManagerの作成
 * Aurora、DocumentDBの認証情報をSecretsManagerに作成する。
 ```sh
 aws cloudformation validate-template --template-body file://cfn-secrets.yaml
@@ -197,21 +203,21 @@ aws secretsmanager get-secret-value --secret-id Demo-RDS-Secrets
 aws secretsmanager get-secret-value --secret-id Demo-DocDB-Secrets
 ```
 
-## 7. RDS Aurora Serverless v2 for PostgreSQL、RDS Proxy作成
+## 10. RDS Aurora Serverless v2 for PostgreSQL、RDS Proxy作成
 * リソース作成に少し時間がかかる。(20分程度)
 ```sh
 aws cloudformation validate-template --template-body file://cfn-rds.yaml
 aws cloudformation create-stack --stack-name Demo-RDS-Stack --template-body file://cfn-rds.yaml
 ```
 
-## 8. DocumentDB作成
+## 11. DocumentDB作成
 * リソース作成に少し時間がかかる。（5分程度）
 ```sh
 aws cloudformation validate-template --template-body file://cfn-documentdb.yaml
 aws cloudformation create-stack --stack-name Demo-DocumentDB-Stack --template-body file://cfn-documentdb.yaml
 ```
 
-## 9. EC2(Bastion)の作成
+## 12. EC2(Bastion)の作成
 * psqlによるRDBのテーブル作成や、APIGatewayのPrivate APIにアクセスするための踏み台を作成
 ```sh
 aws cloudformation validate-template --template-body file://cfn-bastion-ec2.yaml
@@ -221,8 +227,8 @@ aws cloudformation create-stack --stack-name Demo-Bastion-Stack --template-body 
 * 必要に応じてキーペア名等のパラメータを指定
     * 「--parameters ParameterKey=KeyPairName,ParameterValue=myKeyPair」
 
-## 10. RDBのテーブル作成
-* マネージドコンソールからEC2にセッションマネージャで接続し、Bastionにログインする。psqlをインストールし、DB接続する。
+## 13. RDBのテーブル作成
+* マネージメントコンソールからEC2にセッションマネージャで接続し、Bastionにログインする。psqlをインストールし、DB接続する。
     * 以下参考に、Bastionにpsqlをインストールするとよい
         * https://docs.aws.amazon.com/ja_jp/AmazonRDS/latest/UserGuide/CHAP_GettingStarted.CreatingConnecting.PostgreSQL.html#CHAP_GettingStarted.Connecting.PostgreSQL
 * DB接続後、ユーザテーブルを作成する。        
@@ -230,7 +236,7 @@ aws cloudformation create-stack --stack-name Demo-Bastion-Stack --template-body 
 ```sh
 sudo dnf update -y
 
-sudo dnf install postgresql16 -y
+sudo dnf install postgresql18 -y
 
 #Auroraに直接接続
 #CloudFormationのDemo-RDS-Stackスタックの出力「RDSClusterEndpointAddress」の値を参照
@@ -253,8 +259,8 @@ psql -h (RDS Proxyのエンドポイント) -U postgres -d testdb
 
 ```
 
-## 11. DocumentDBのデータベース作成
-* マネージドコンソールからEC2にセッションマネージャで接続し、Bastionにログインする。mongoシェルをインストールし、DB接続する。
+## 14. DocumentDBのデータベース作成
+* マネージメントコンソールからEC2にセッションマネージャで接続し、Bastionにログインする。mongoシェルをインストールし、DB接続する。
     * 以下参考に、Bastionにmongoシェルをインストールするとよい
         * https://docs.aws.amazon.com/ja_jp/documentdb/latest/developerguide/get-started-guide.html#get-start-mongoshell
 
@@ -315,33 +321,33 @@ show dbs
 exit
 ```
 
-## 12. DynamoDBのテーブル作成
+## 15. DynamoDBのテーブル作成
 * DynamoDBに「todo」、「temp」、「queue_message」、「idempotency」の各テーブルを作成する。
 ```sh
 aws cloudformation validate-template --template-body file://cfn-dynamodb.yaml
 aws cloudformation create-stack --stack-name Demo-DynamoDB-Stack --template-body file://cfn-dynamodb.yaml
 ```
 
-## 13. SQSの作成
+## 16. SQSの作成
 ```sh
 aws cloudformation validate-template --template-body file://cfn-sqs.yaml
 aws cloudformation create-stack --stack-name Demo-SQS-Stack --template-body file://cfn-sqs.yaml
 ```
 
-## 14. S3の作成
+## 17. S3の作成
 ```sh
 aws cloudformation validate-template --template-body file://cfn-s3.yaml
 aws cloudformation create-stack --stack-name Demo-S3-Stack --template-body file://cfn-s3.yaml
 ```
 
-## 15. AppConfigの作成
+## 18. AppConfigの作成
 * AppConfigの基本リソースを作成する。
 ```sh
 aws cloudformation validate-template --template-body file://cfn-appconfig.yaml
 aws cloudformation create-stack --stack-name Demo-AppConfig-Stack --template-body file://cfn-appconfig.yaml
 ```
 
-## 16. AWS SAMでLambda/API Gatewayの手動でのAPのビルド・デプロイ     
+## 19. AWS SAMでLambda/API Gatewayの手動でのAPのビルド・デプロイ     
 * CI/CDを行う場合は、この手順は不要で [CI/CDの手順](#17-cicd)を実施してください。
 
 * SAMビルド    
@@ -352,11 +358,17 @@ cd ..
 # ビルド
 sam build
 xcopy /I /S configs .aws-sam\build\BffFunction\configs
-xcopy /I /S configs .aws-sam\build\UsersFunction\configs	
-xcopy /I /S configs .aws-sam\build\TodoFunction\configs	
+xcopy /I /S configs .aws-sam\build\UsersFunction\configs
+xcopy /I /S configs .aws-sam\build\TodoFunction\configs
 xcopy /I /S configs .aws-sam\build\TodoAsyncFunction\configs
 xcopy /I /S configs .aws-sam\build\TodoAsyncFifoFunction\configs
-xcopy /I /S configs .aws-sam\build\BooksFunction\configs	
+xcopy /I /S configs .aws-sam\build\BooksFunction\configs
+copy /Y collector.yaml .aws-sam\build\BffFunction\collector.yaml
+copy /Y collector.yaml .aws-sam\build\UsersFunction\collector.yaml
+copy /Y collector.yaml .aws-sam\build\TodoFunction\collector.yaml
+copy /Y collector.yaml .aws-sam\build\TodoAsyncFunction\collector.yaml
+copy /Y collector.yaml .aws-sam\build\TodoAsyncFifoFunction\collector.yaml
+copy /Y collector.yaml .aws-sam\build\BooksFunction\collector.yaml
 
 # Windowsでもmakeをインストールすればmakeだけでいけます
 make
@@ -369,11 +381,17 @@ rmdir /s /q .aws-sam
 # ビルド
 sam build
 xcopy /I /S configs .aws-sam\build\BffFunction\configs
-xcopy /I /S configs .aws-sam\build\UsersFunction\configs	
-xcopy /I /S configs .aws-sam\build\TodoFunction\configs	
+xcopy /I /S configs .aws-sam\build\UsersFunction\configs
+xcopy /I /S configs .aws-sam\build\TodoFunction\configs
 xcopy /I /S configs .aws-sam\build\TodoAsyncFunction\configs
 xcopy /I /S configs .aws-sam\build\TodoAsyncFifoFunction\configs
-xcopy /I /S configs .aws-sam\build\BooksFunction\configs	
+xcopy /I /S configs .aws-sam\build\BooksFunction\configs
+copy /Y collector.yaml .aws-sam\build\BffFunction\collector.yaml
+copy /Y collector.yaml .aws-sam\build\UsersFunction\collector.yaml
+copy /Y collector.yaml .aws-sam\build\TodoFunction\collector.yaml
+copy /Y collector.yaml .aws-sam\build\TodoAsyncFunction\collector.yaml
+copy /Y collector.yaml .aws-sam\build\TodoAsyncFifoFunction\collector.yaml
+copy /Y collector.yaml .aws-sam\build\BooksFunction\collector.yaml
 
 # Windowsでもmakeをインストールすればmakeだけでいけます
 make
@@ -404,7 +422,7 @@ make deploy_env env=(環境名)
 make deploy_env env=prd
 ```
 
-## 17. CI/CD
+## 20. CI/CD
 > [!WARNING]
 > 現在。作成中。
 
@@ -430,7 +448,7 @@ aws cloudformation validate-template --template-body file://cfn-codepipeline.yam
 aws cloudformation create-stack --stack-name Demo-CodePipeline-Stack --template-body file://cfn-codepipeline.yaml
 ```
 
-## 18. AppConfigのデプロイ
+## 21. AppConfigのデプロイ
 * Hosted Configurationの設定バージョンの作成と初回デプロイする。
 ```sh
 #cfnフォルダに移動
@@ -470,7 +488,7 @@ aws cloudformation create-stack --stack-name Demo-AppConfigDocDBSMDeploy-Stack -
 ```
 
 
-## 19. APの実行確認（バックエンド）
+## 22. APの実行確認（バックエンド）
 * マネージドコンソールから、EC2(Bation)へSystems Manager Session Managerで接続して、curlコマンドで動作確認
     * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
 
@@ -530,7 +548,7 @@ curl -X POST -H "Content-Type: application/json" -d '{"title": "こころ", "aut
 curl https://civuzxdd14.execute-api.ap-northeast-1.amazonaws.com/Prod/books-api/v1/books?title=%E3%81%93%E3%81%93%E3%82%8D
 ```
 
-## 20. APの実行確認（フロントエンド）
+## 23. APの実行確認（フロントエンド）
 * 手元の端末のコンソールから、curlコマンドで動作確認
     * 以下の実行例のURLを、sam deployの結果出力される実際のURLをに置き換えること
 * Windowsのコマンドプロンプトやgit bashで実施する場合は、証明書検証に引っかからないように、`--ssl-no-revoke`オプションをつけるとよい
@@ -595,7 +613,7 @@ curl -X POST -H "Content-Type: application/json" -d '{ "todo_titles" : ["Buy Mil
 
 ```
 
-## 21. AppConfingの設定変更＆デプロイ
+## 24. AppConfingの設定変更＆デプロイ
 * cfn-appconfig-hosted-deploy.yaml内のホスト化された設定の内容を修正
 ```yaml
   AppConfigHostedConfigurationVersion:
@@ -632,7 +650,7 @@ aws cloudformation update-stack --stack-name Demo-AppConfigHostedDeploy-Stack --
 {"level":"info","ts":1699780051.3576484,"caller":"service/user_service.go:39","msg":"hoge_name=foo2"}
 ```
 
-## 22. AWSリソースの削除
+## 25. AWSリソースの削除
 * AppConfig Deploymentリソースの削除
 ```sh
 aws cloudformation delete-stack --stack-name Demo-AppConfigDocDBSMDeploy-Stack
@@ -675,7 +693,7 @@ aws cloudformation delete-stack --stack-name Demo-VPC-Stack
 aws cloudformation delete-stack --stack-name Demo-IAM-Stack 
 ```
 
-## 23. CloudWatch Logsのロググループ削除
+## 26. CloudWatch Logsのロググループ削除
 
 ```
 aws logs delete-log-group --log-group-name /aws/apigateway/welcome
@@ -697,7 +715,7 @@ aws logs delete-log-group --log-group-name /aws/lambda/todo-async-function
 aws logs delete-log-group --log-group-name /aws/lambda/todo-async-fifo-function
 ```
 
-## 24. ローカルでの実行確認
+## 27. ローカルでの実行確認
 * 前述の手順の通り、AWS上でLambda等をデプロイしなくてもsam localコマンドを使ってローカル実行確認も可能である
 
 * Postgres SQLのDockerコンテナを起動
@@ -1047,7 +1065,7 @@ curl -X PUT http://127.0.0.1:3000/bff-api/v1/users
         aws sqs delete-message --queue-url http://localhost:9324/000000000000/SampleFIFOQueue.fifo --endpoint-url http://localhost:9324 --receipt-handle (ReceiptHandleの値)
         ```
 
-## AWS SDKのClientLogMode
+## 28. AWS SDKのClientLogMode
 
 * [AWS SDKのClientLogMode](https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/logging/#clientlogmode)に対応している
 * ソフトウェアフレームワーク機能によるプロパティファイル（configs/config-（プロファイル名）.yml）または、AppConfigのホスト化された設定によりが可能
@@ -1114,7 +1132,7 @@ X-Amzn-Requestid: 1c53023f-b61b-424e-b665-62ca6cdf3f2a
 {"ConsumedCapacity":{"TableName":"todo","CapacityUnits":1.0}}
 ```
 
-## sam localでのリモートデバッグ実行
+## 29. sam localでのリモートデバッグ実行
 
 > [!WARNING]  
 > [aws-sam-cliのissue](https://github.com/aws/aws-sam-cli/issues/3718)によると、当該サンプルAPが使用する「provided.al2」、「provided.al2023」（カスタムランタイム）でのsam localのデバッグ実行は現状サポートされていない。  
@@ -1246,13 +1264,13 @@ X-Amzn-Requestid: 1c53023f-b61b-424e-b665-62ca6cdf3f2a
 
 ![SAM Localのデバッグ画面](image/sam-local-debug.png)
 
-## sam localでの直接デバッグ実行
+## 30. sam localでの直接デバッグ実行
 
 * [AWSの開発者ガイド](https://docs.aws.amazon.com/ja_jp/toolkit-for-vscode/latest/userguide/debug-apigateway.html)の記載にある通り、AWS Toolkitの機能で、VSCodeでの sam localの直接デバッグ実行することも可能である。
 
 * TODO: 作者のWindows端末環境ではエラーになってしまい動作しない。今後、実施できたら手順を記載する。
 
-## godocの表示
+## 31. godocの表示
 * godocをインストール
 ```sh
 go install golang.org/x/tools/cmd/godoc@latest     
@@ -1282,7 +1300,7 @@ make doc_app
     * 「example.com/」の「appbase」パッケージは、[http://localhost:6060/pkg/example.com/appbase/](http://localhost:6060/pkg/example.com/appbase/)に表示される。
     * 「app」パッケージは、ほぼ全てが「internal」パッケージに配置しているため、デフォルトでは表示されない。m=allをクエリパラメータに指定して、[http://localhost:6060/pkg/app/?m=all](http://localhost:6060/pkg/app/?m=all)にアクセスするとよい。
 
-## ソフトウェアフレームワーク
+## 32. ソフトウェアフレームワーク
 * 本サンプルアプリケーションでは、ソフトウェアフレームワーク実装例も同梱している。簡単のため、アプリケーションと同じプロジェクトでソース管理している。
 * ソースコードはappbaseフォルダ配下にexample.com/appbaseパッケージとして格納されている。    
     * 本格的な開発を実施する場合には、業務アプリケーションと別のGitリポジトリとして管理し、参照するようにすべきであるが、ここでは、あえて同じプロジェクトに格納してノウハウを簡単に参考にしてもらいやすいようにしている。
