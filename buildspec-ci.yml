@@ -3,8 +3,7 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      # TODO: golang: 1.27待ち
-      golang: 1.26
+      golang: 1.27
       #golang: latest
   pre_build:
     commands:
